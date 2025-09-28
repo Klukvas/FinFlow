@@ -1,0 +1,43 @@
+### 🟢 Получить все траты
+GET http://localhost:8003/expenses/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzQ0MzE1MTA1fQ.7iDLzibloCG1FnbernnV0PVVnuFyrh9M27Nb_tb2ycY
+
+###
+
+### 🟡 Создать трату
+POST http://localhost:8001/expenses/
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0IiwiZXhwIjoxNzQ0Mzc1MzEyfQ.LVSZk7ARcxX9_mU6DrZFIs8Gz5JH-Zi2PdHPVMClHI4
+
+{
+  "amount": 250.5,
+  "category_id": 4,
+  "description": "Мойка машины",
+  "date": "2025-04-10"
+}
+
+###
+
+### 🔵 Получить трату по ID
+GET http://localhost:8000/expenses/1
+Authorization: Bearer 1
+
+###
+
+### 🟠 Обновить трату
+PUT http://localhost:8000/expenses/1
+Content-Type: application/json
+Authorization: Bearer 1
+
+{
+  "amount": 300.0,
+  "category_id": 2,
+  "description": "Мойка и пылесос",
+  "date": "2025-04-11"
+}
+
+###
+
+### 🔴 Удалить трату
+DELETE http://localhost:8000/expenses/1
+Authorization: Bearer 1

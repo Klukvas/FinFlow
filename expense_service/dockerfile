@@ -1,0 +1,23 @@
+# Используем официальный образ Python
+FROM python:3.11-slim
+
+# Устанавливаем Poetry и postgresql-client для pg_isready
+RUN pip install --upgrade pip && pip install poetry \
+ && apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
+
+# Указываем рабочую директорию
+WORKDIR /app
+
+# Копируем зависимости и устанавливаем
+COPY pyproject.toml poetry.lock* ./
+RUN poetry config virtualenvs.create false \
+ && poetry install --no-interaction --no-ansi
+
+# Копируем код приложения
+COPY . .
+
+# Делаем startup script исполняемым
+RUN chmod +x startup.sh
+
+# Открываем порт и запускаем сервер через startup script
+CMD ["./startup.sh"]

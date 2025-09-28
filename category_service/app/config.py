@@ -1,0 +1,33 @@
+from pydantic_settings import BaseSettings
+from typing import Optional
+import logging
+
+class Settings(BaseSettings):
+    DATABASE_URL: str
+    SECRET_KEY: str
+    ALGORITHM: str = "HS256"
+    INTERNAL_SECRET: str
+    LOG_LEVEL: str = "INFO"
+    MAX_CATEGORY_DEPTH: int = 10
+    CORS_ORIGINS: str = "*"  # In production, specify exact origins
+    
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "case_sensitive": False
+    }
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        """Convert CORS_ORIGINS string to list"""
+        if self.CORS_ORIGINS == "*":
+            return ["*"]
+        return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
+
+settings = Settings()
+
+# Configure logging
+logging.basicConfig(
+    level=getattr(logging, settings.LOG_LEVEL.upper()),
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)

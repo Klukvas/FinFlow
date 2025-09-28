@@ -1,0 +1,83 @@
+### 🟢 Получить все категории
+GET http://localhost:8001/categories/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzQ0MzE1ODA2fQ.IHl6i8X0dNd0uvNkLxm5lkcGsUkP_SenOj9eLXcqGqM
+
+###
+
+### 🟡 Создать категорию
+POST http://localhost:8000/categories/
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0IiwiZXhwIjoxNzQ0Mzc1MjEwfQ.QqsIjJMaDHzYKORRoVu3EbyiX09gnwtW0r4ORcl82Ss
+
+{
+  "name": "Машина"
+}
+
+###
+
+### 🔵 Получить категорию по ID
+GET http://localhost:8000/categories/1
+Authorization: Bearer 1
+
+###
+
+### 🟠 Обновить категорию
+PUT http://localhost:8000/categories/1
+Content-Type: application/json
+Authorization: Bearer 1
+
+{
+  "name": "Автомобиль"
+}
+
+###
+
+### 🔴 Удалить категорию
+DELETE http://localhost:8000/categories/1
+Authorization: Bearer 1
+
+###
+
+### 🟢 Получить все подкатегории
+GET http://localhost:8001/subcategories/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzQ0MzE1MTA1fQ.7iDLzibloCG1FnbernnV0PVVnuFyrh9M27Nb_tb2ycY
+
+###
+
+### 🟡 Создать подкатегорию
+POST http://localhost:8000/subcategories/
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0IiwiZXhwIjoxNzQ0Mzc1MjEwfQ.QqsIjJMaDHzYKORRoVu3EbyiX09gnwtW0r4ORcl82Ss
+
+{
+  "name": "Мойка",
+  "category_id": 4
+}
+
+###
+
+### 🔵 Получить подкатегорию по ID
+GET http://localhost:8000/subcategories/1
+Authorization: Bearer 1
+
+###
+
+### 🟠 Обновить подкатегорию
+PUT http://localhost:8000/subcategories/1
+Content-Type: application/json
+Authorization: Bearer 1
+
+{
+  "name": "Мойка авто",
+  "category_id": 2
+}
+
+###
+
+### 🔴 Удалить подкатегорию
+
+###
+
+### 🔴 Internal - Получить категорию другого пользователя (404 Not Found)
+GET http://localhost:8002/internal/categories/4?user_id=4
+X-Internal-Token: my-secret-token

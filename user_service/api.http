@@ -1,0 +1,26 @@
+### 🟡 Регистрация пользователя
+POST http://localhost:8002/auth/register
+Content-Type: application/json
+
+{
+  "email": "te12123s23213s3s123t12@example.com",
+  "username": "tes213s1231112s32323tuse12r1",
+  "password": "secret123"
+}
+
+###
+
+### 🔑 Логин пользователя
+POST http://localhost:8002/auth/login
+Content-Type: application/json
+
+{
+  "email": "test2@example.com",
+  "password": "secret123"
+}
+
+###
+
+### 👤 Получить текущего пользователя (me)
+GET http://localhost:8000/auth/me
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzQ0MzE1MTA1fQ.7iDLzibloCG1FnbernnV0PVVnuFyrh9M27Nb_tb2ycY

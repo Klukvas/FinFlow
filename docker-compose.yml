@@ -1,0 +1,113 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d
+    ports:
+      - "5433:5432" 
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 2s
+      timeout: 3s
+      retries: 10
+
+  user_service:
+    build:
+      context: ./user_service
+    environment:
+      ENV_FILE: .env.docker
+    env_file:
+      - ./user_service/.env.docker
+    depends_on:
+      db:
+        condition: service_healthy
+    
+    ports:
+      - "8001:8000"
+
+  category_service:
+    build:
+      context: ./category_service
+    environment:
+      ENV_FILE: .env.docker
+    env_file:
+      - ./category_service/.env.docker
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8002:8000"
+
+  expense_service:
+    build:
+      context: ./expense_service
+    environment:
+      ENV_FILE: .env.docker
+    env_file:
+      - ./expense_service/.env.docker
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8003:8000"
+
+  income_service:
+    build:
+      context: ./income_service
+    environment:
+      ENV_FILE: .env.docker
+    env_file:
+      - ./income_service/.env.docker
+    depends_on:
+      db:
+        condition: service_healthy
+      category_service:
+        condition: service_started
+      user_service:
+        condition: service_started
+    ports:
+      - "8004:8003"
+
+  recurring_service:
+    build:
+      context: ./recurring_service
+    environment:
+      ENV_FILE: .env.docker
+    env_file:
+      - ./recurring_service/.env.docker
+    depends_on:
+      db:
+        condition: service_healthy
+      expense_service:
+        condition: service_started
+      income_service:
+        condition: service_started
+      category_service:
+        condition: service_started
+    ports:
+      - "8005:8000"
+
+  goals_service:
+    build:
+      context: ./goals_service
+    environment:
+      ENV_FILE: .env.docker
+    env_file:
+      - ./goals_service/.env.docker
+    depends_on:
+      db:
+        condition: service_healthy
+      user_service:
+        condition: service_started
+    ports:
+      - "8006:8000"
+
+volumes:
+  postgres_data:

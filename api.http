@@ -1,0 +1,56 @@
+### 🔐 Register User
+POST http://localhost:8001/auth/register
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "username": "random",
+  "password": "password123"
+}
+
+### 🔐 Login User
+POST http://localhost:8000/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "password123"
+}
+
+### 📂 Get Categories
+GET http://localhost:8001/categories
+
+### ➕ Create Category
+POST http://localhost:8001/categories
+Content-Type: application/json
+
+{
+  "name": "Food"
+}
+
+### 📂 Get Subcategories
+GET http://localhost:8002/subcategories
+
+### ➕ Create Subcategory
+POST http://localhost:8002/subcategories
+Content-Type: application/json
+
+{
+  "name": "Groceries",
+  "category_id": 1
+}
+
+### 📂 Get Expenses
+GET http://localhost:8003/expenses
+
+### ➕ Create Expense
+POST http://localhost:8003/expenses
+Content-Type: application/json
+Authorization: Bearer {{TOKEN}}
+
+{
+  "amount": 120.5,
+  "description": "Supermarket",
+  "subcategory_id": 1,
+  "date": "2025-04-13"
+}

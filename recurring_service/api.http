@@ -1,0 +1,101 @@
+### Recurring Payments Service API Tests
+
+### Health Check
+GET http://localhost:8005/health
+
+### Create Recurring Payment - Monthly Rent
+POST http://localhost:8005/api/v1/recurring-payments/?user_id=123e4567-e89b-12d3-a456-426614174000
+Content-Type: application/json
+
+{
+  "name": "Аренда квартиры",
+  "description": "Ежемесячная арендная плата",
+  "amount": 50000,
+  "currency": "RUB",
+  "category_id": "123e4567-e89b-12d3-a456-426614174001",
+  "payment_type": "expense",
+  "schedule_type": "monthly",
+  "schedule_config": {
+    "day_of_month": 1
+  },
+  "start_date": "2024-01-01"
+}
+
+### Create Recurring Payment - Weekly Salary
+POST http://localhost:8005/api/v1/recurring-payments/?user_id=123e4567-e89b-12d3-a456-426614174000
+Content-Type: application/json
+
+{
+  "name": "Зарплата",
+  "description": "Еженедельная зарплата",
+  "amount": 100000,
+  "currency": "RUB",
+  "category_id": "123e4567-e89b-12d3-a456-426614174002",
+  "payment_type": "income",
+  "schedule_type": "weekly",
+  "schedule_config": {
+    "day_of_week": 5
+  },
+  "start_date": "2024-01-01"
+}
+
+### Create Recurring Payment - Daily Coffee
+POST http://localhost:8005/api/v1/recurring-payments/?user_id=123e4567-e89b-12d3-a456-426614174000
+Content-Type: application/json
+
+{
+  "name": "Утренний кофе",
+  "description": "Ежедневный кофе в кафе",
+  "amount": 200,
+  "currency": "RUB",
+  "category_id": "123e4567-e89b-12d3-a456-426614174003",
+  "payment_type": "expense",
+  "schedule_type": "daily",
+  "schedule_config": {},
+  "start_date": "2024-01-01"
+}
+
+### Get Recurring Payments
+GET http://localhost:8005/api/v1/recurring-payments/?user_id=123e4567-e89b-12d3-a456-426614174000
+
+### Get Recurring Payments with filters
+GET http://localhost:8005/api/v1/recurring-payments/?user_id=123e4567-e89b-12d3-a456-426614174000&status=active&payment_type=expense
+
+### Get Recurring Payment by ID
+GET http://localhost:8005/api/v1/recurring-payments/PAYMENT_ID_HERE?user_id=123e4567-e89b-12d3-a456-426614174000
+
+### Update Recurring Payment
+PUT http://localhost:8005/api/v1/recurring-payments/PAYMENT_ID_HERE?user_id=123e4567-e89b-12d3-a456-426614174000
+Content-Type: application/json
+
+{
+  "name": "Обновленная аренда",
+  "amount": 55000
+}
+
+### Pause Recurring Payment
+POST http://localhost:8005/api/v1/recurring-payments/PAYMENT_ID_HERE/pause?user_id=123e4567-e89b-12d3-a456-426614174000
+
+### Resume Recurring Payment
+POST http://localhost:8005/api/v1/recurring-payments/PAYMENT_ID_HERE/resume?user_id=123e4567-e89b-12d3-a456-426614174000
+
+### Get Payment Schedules
+GET http://localhost:8005/api/v1/recurring-payments/PAYMENT_ID_HERE/schedules?user_id=123e4567-e89b-12d3-a456-426614174000
+
+### Get Payment Statistics
+GET http://localhost:8005/api/v1/recurring-payments/statistics/summary?user_id=123e4567-e89b-12d3-a456-426614174000
+
+### Internal: Execute Recurring Payments (for cron)
+POST http://localhost:8005/internal/execute-recurring-payments
+
+### Internal: Get Pending Payments
+GET http://localhost:8005/internal/pending-payments
+
+### Internal: Scheduler Status
+GET http://localhost:8005/internal/scheduler/status
+
+### Internal: Execute Payments Now (for testing)
+POST http://localhost:8005/internal/scheduler/execute-now
+
+### Internal: Health Check
+GET http://localhost:8005/internal/health
