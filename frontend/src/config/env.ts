@@ -7,6 +7,7 @@ export const config = {
     incomeServiceUrl: import.meta.env.VITE_INCOME_SERVICE_URL || 'http://localhost:8004',
     recurringServiceUrl: import.meta.env.VITE_RECURRING_SERVICE_URL || 'http://localhost:8005',
     goalsServiceUrl: import.meta.env.VITE_GOALS_SERVICE_URL || 'http://localhost:8006',
+    pdfParserServiceUrl: import.meta.env.VITE_PDF_PARSER_SERVICE_URL || 'http://localhost:8007',
   },
   app: {
     name: import.meta.env.VITE_APP_NAME || 'Financial Accounting',

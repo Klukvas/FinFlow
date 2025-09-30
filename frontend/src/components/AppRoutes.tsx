@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Category, CategoryDetail, Expense, Income, Profile, Recurring, Goals, Home, About, Features, Pricing, Contact } from '@/pages';
+import { Category, CategoryDetail, Expense, Income, Profile, Recurring, Goals, PdfParser, Home, About, Features, Pricing, Contact } from '@/pages';
 import { Layout } from './ui/Layout';
 import { PublicLayout } from './ui/PublicLayout';
 import { ProtectedRoute } from './ProtectedRoute';
@@ -88,6 +88,16 @@ export const AppRoutes: React.FC = () => {
             <ProtectedRoute>
               <Layout>
                 <Profile />
+              </Layout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/pdf-parser" 
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <PdfParser />
               </Layout>
             </ProtectedRoute>
           } 

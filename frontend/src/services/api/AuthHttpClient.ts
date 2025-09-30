@@ -28,9 +28,13 @@ export class AuthHttpClient {
     const token = this.getToken();
 
     const headers: HeadersInit = {
-      'Content-Type': 'application/json',
       ...options.headers,
     };
+
+    // Only set Content-Type for JSON data, not for FormData
+    if (!(options.body instanceof FormData)) {
+      headers['Content-Type'] = 'application/json';
+    }
 
     if (token) {
       headers.Authorization = `Bearer ${token}`;
@@ -92,7 +96,7 @@ export class AuthHttpClient {
   async post<T>(endpoint: string, data?: any): Promise<T | ApiError> {
     return this.makeRequest<T>(endpoint, {
       method: 'POST',
-      body: data ? JSON.stringify(data) : undefined,
+      body: data ? (data instanceof FormData ? data : JSON.stringify(data)) : undefined,
     });
   }
 

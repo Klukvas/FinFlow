@@ -10,7 +10,8 @@ import {
   FaUser,
   FaDollarSign,
   FaRedo,
-  FaBullseye
+  FaBullseye,
+  FaFilePdf
 } from 'react-icons/fa';
 
 interface SidebarProps {
@@ -46,6 +47,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     { path: '/income', icon: FaDollarSign, label: 'Доходы' },
     { path: '/recurring', icon: FaRedo, label: 'Повторяющиеся' },
     { path: '/goals', icon: FaBullseye, label: 'Цели' },
+    { path: '/pdf-parser', icon: FaFilePdf, label: 'PDF Парсер' },
   ];
 
   const sidebarContent = (

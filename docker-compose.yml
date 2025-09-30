@@ -109,5 +109,18 @@ services:
     ports:
       - "8006:8000"
 
+  pdf_parser_service:
+    build:
+      context: ./pdf_parser_service
+    environment:
+      ENV_FILE: env.docker
+    env_file:
+      - ./pdf_parser_service/.env.docker
+    ports:
+      - "8007:8000"
+    volumes:
+      - pdf_uploads:/app/uploads
+
 volumes:
   postgres_data:
+  pdf_uploads:
