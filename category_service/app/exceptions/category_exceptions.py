@@ -26,7 +26,7 @@ class CircularRelationshipError(CategoryValidationError):
 class CategoryDepthExceededError(CategoryValidationError):
     def __init__(self, max_depth: int):
         super().__init__(
-            detail=f"Maximum category depth of {max_depth} levels exceeded"
+            detail=f"Maximum category depth of {max_depth} levels exceeded. Categories can only have {max_depth} levels: Root → Level 1 → Level 2 (max)"
         )
 
 class CategoryNameConflictError(CategoryValidationError):

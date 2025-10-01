@@ -1,3 +1,4 @@
+import { Account } from './Account'
 import {Category}  from './Category'
 import { CategoryDetail } from './CategoryDetail'
 import { Expense } from './Expense'
@@ -16,6 +17,7 @@ import { Pricing } from './Pricing';
 import { Contact } from './Contact';
 
 export { 
+  Account,
   Register, 
   Login, 
   CategoryDetail,

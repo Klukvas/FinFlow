@@ -5,6 +5,8 @@ from datetime import datetime, date
 class IncomeBase(BaseModel):
     amount: float = Field(..., gt=0, description="Income amount (must be greater than 0)")
     category_id: Optional[int] = Field(None, description="Category ID for this income")
+    account_id: Optional[int] = Field(None, gt=0, description="Optional account ID for this income")
+    currency: Optional[str] = Field("USD", max_length=3, min_length=3, description="Currency code for this income (ISO 4217)")
     description: Optional[str] = Field(None, max_length=500, description="Optional description")
     date: Optional[str] = Field(None, description="Income date (defaults to today if not provided)")
 
@@ -16,6 +18,8 @@ class IncomeUpdate(BaseModel):
     """Schema for updating an existing income"""
     amount: Optional[float] = Field(None, gt=0, description="New income amount")
     category_id: Optional[int] = Field(None, description="New category ID")
+    account_id: Optional[int] = Field(None, gt=0, description="New account ID")
+    currency: Optional[str] = Field(None, max_length=3, min_length=3, description="New currency code (ISO 4217)")
     description: Optional[str] = Field(None, max_length=500, description="New description")
     date: Optional[str] = Field(None, description="New income date")
 

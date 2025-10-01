@@ -103,7 +103,7 @@ def get_income(
         401: {"description": "Unauthorized - invalid or missing token"},
     }
 )
-def update_income(
+async def update_income(
     income_id: int = Path(..., gt=0, description="Income ID"),
     income_update: IncomeUpdate = ...,
     user_id: int = Depends(get_current_user_id),
@@ -114,7 +114,7 @@ def update_income(
     
     Only provided fields will be updated.
     """
-    return service.update(income_id, income_update, user_id)
+    return await service.update(income_id, income_update, user_id)
 
 @router.delete(
     "/{income_id}",
@@ -126,7 +126,7 @@ def update_income(
         401: {"description": "Unauthorized - invalid or missing token"},
     }
 )
-def delete_income(
+async def delete_income(
     income_id: int = Path(..., gt=0, description="Income ID"),
     user_id: int = Depends(get_current_user_id),
     service: IncomeService = Depends(get_income_service)
@@ -136,7 +136,7 @@ def delete_income(
     
     Returns success message if deletion was successful.
     """
-    service.delete(income_id, user_id)
+    await service.delete(income_id, user_id)
     return {"message": "Income deleted successfully"}
 
 @router.get(

@@ -1,0 +1,91 @@
+### 🟢 Get all incomes
+GET http://localhost:8003/incomes/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzQ0MzE1MTA1fQ.7iDLzibloCG1FnbernnV0PVVnuFyrh9M27Nb_tb2ycY
+
+###
+
+### 🟢 Create income (with automatic balance addition to account)
+POST http://localhost:8003/incomes/
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzQ0MzE1MTA1fQ.7iDLzibloCG1FnbernnV0PVVnuFyrh9M27Nb_tb2ycY
+
+{
+  "amount": 5000.0,
+  "category_id": 1,
+  "account_id": 1,
+  "description": "Salary payment",
+  "date": "2025-01-27"
+}
+
+### 🟢 Create income without account (balance not affected)
+POST http://localhost:8003/incomes/
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzQ0MzE1MTA1fQ.7iDLzibloCG1FnbernnV0PVVnuFyrh9M27Nb_tb2ycY
+
+{
+  "amount": 200.0,
+  "category_id": 2,
+  "description": "Freelance work"
+}
+
+###
+
+### 🔵 Get income by ID
+GET http://localhost:8003/incomes/1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzQ0MzE1MTA1fQ.7iDLzibloCG1FnbernnV0PVVnuFyrh9M27Nb_tb2ycY
+
+###
+
+### 🟠 Update income (automatically recalculates account balance)
+PUT http://localhost:8003/incomes/1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzQ0MzE1MTA1fQ.7iDLzibloCG1FnbernnV0PVVnuFyrh9M27Nb_tb2ycY
+
+{
+  "amount": 5500.0,
+  "category_id": 1,
+  "account_id": 1,
+  "description": "Updated salary payment",
+  "date": "2025-01-27"
+}
+
+### 🟠 Change income account (restores balance to old account, adds to new account)
+PUT http://localhost:8003/incomes/1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzQ0MzE1MTA1fQ.7iDLzibloCG1FnbernnV0PVVnuFyrh9M27Nb_tb2ycY
+
+{
+  "account_id": 2
+}
+
+###
+
+### 🔴 Delete income (automatically restores account balance)
+DELETE http://localhost:8003/incomes/1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzQ0MzE1MTA1fQ.7iDLzibloCG1FnbernnV0PVVnuFyrh9M27Nb_tb2ycY
+
+###
+
+### 📊 Get income summary
+GET http://localhost:8003/incomes/summary?start_date=2025-01-01&end_date=2025-01-31
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzQ0MzE1MTA1fQ.7iDLzibloCG1FnbernnV0PVVnuFyrh9M27Nb_tb2ycY
+
+###
+
+### 📈 Get income statistics
+GET http://localhost:8003/incomes/stats
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzQ0MzE1MTA1fQ.7iDLzibloCG1FnbernnV0PVVnuFyrh9M27Nb_tb2ycY
+
+###
+
+### Internal endpoints for account service integration
+
+### 🔒 Get incomes by account (internal)
+GET http://localhost:8003/internal/incomes/account/1?user_id=3&limit=50&offset=0
+X-Internal-Token: my-secret-token
+
+###
+
+### 🔒 Validate account for incomes (internal)
+GET http://localhost:8003/internal/incomes/account/1/validate?user_id=3
+X-Internal-Token: my-secret-token

@@ -36,6 +36,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     switch (location.pathname) {
       case '/category':
         return 'Категории';
+      case '/account':
+        return 'Аккаунты';
       case '/expense':
         return 'Расходы';
       case '/income':

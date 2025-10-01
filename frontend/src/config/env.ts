@@ -9,6 +9,8 @@ export const config = {
     goalsServiceUrl: import.meta.env.VITE_GOALS_SERVICE_URL || 'http://localhost:8006',
     pdfParserServiceUrl: import.meta.env.VITE_PDF_PARSER_SERVICE_URL || 'http://localhost:8007',
     debtServiceUrl: import.meta.env.VITE_DEBT_SERVICE_URL || 'http://localhost:8008',
+    accountServiceUrl: import.meta.env.VITE_ACCOUNT_SERVICE_URL || 'http://localhost:8009',
+    currencyServiceUrl: import.meta.env.VITE_CURRENCY_SERVICE_URL || 'http://localhost:8010',
   },
   app: {
     name: import.meta.env.VITE_APP_NAME || 'Financial Accounting',

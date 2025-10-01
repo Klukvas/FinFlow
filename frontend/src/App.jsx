@@ -4,6 +4,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ModalProvider } from './contexts/ModalContext';
+import { CurrencyProvider } from './contexts/CurrencyContext';
 import { AppRoutes } from './components/AppRoutes';
 
 function App() {
@@ -12,9 +13,11 @@ function App() {
       <ThemeProvider>
         <ModalProvider>
           <AuthProvider>
-            <Router>
-              <AppRoutes />
-            </Router>
+            <CurrencyProvider>
+              <Router>
+                <AppRoutes />
+              </Router>
+            </CurrencyProvider>
           </AuthProvider>
         </ModalProvider>
       </ThemeProvider>

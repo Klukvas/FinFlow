@@ -4,7 +4,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwI
 
 ###
 
-### 🟡 Создать трату
+### 🟡 Создать трату (с автоматическим списанием с аккаунта)
 POST http://localhost:8001/expenses/
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0IiwiZXhwIjoxNzQ0Mzc1MzEyfQ.LVSZk7ARcxX9_mU6DrZFIs8Gz5JH-Zi2PdHPVMClHI4
@@ -12,8 +12,20 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0IiwiZXhwI
 {
   "amount": 250.5,
   "category_id": 4,
+  "account_id": 1,
   "description": "Мойка машины",
   "date": "2025-04-10"
+}
+
+### 🟡 Создать трату без аккаунта (баланс не изменяется)
+POST http://localhost:8001/expenses/
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0IiwiZXhwIjoxNzQ0Mzc1MzEyfQ.LVSZk7ARcxX9_mU6DrZFIs8Gz5JH-Zi2PdHPVMClHI4
+
+{
+  "amount": 100.0,
+  "category_id": 2,
+  "description": "Покупка без привязки к аккаунту"
 }
 
 ###
@@ -24,7 +36,7 @@ Authorization: Bearer 1
 
 ###
 
-### 🟠 Обновить трату
+### 🟠 Обновить трату (автоматически пересчитает баланс аккаунта)
 PUT http://localhost:8000/expenses/1
 Content-Type: application/json
 Authorization: Bearer 1
@@ -32,12 +44,22 @@ Authorization: Bearer 1
 {
   "amount": 300.0,
   "category_id": 2,
+  "account_id": 1,
   "description": "Мойка и пылесос",
   "date": "2025-04-11"
 }
 
+### 🟠 Изменить аккаунт траты (восстановит баланс старого, спишет с нового)
+PUT http://localhost:8000/expenses/1
+Content-Type: application/json
+Authorization: Bearer 1
+
+{
+  "account_id": 2
+}
+
 ###
 
-### 🔴 Удалить трату
+### 🔴 Удалить трату (автоматически восстановит баланс аккаунта)
 DELETE http://localhost:8000/expenses/1
 Authorization: Bearer 1

@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useApiClients } from '@/hooks/useApiClients';
-import { Category, IncomeCreate } from '@/types';
+import { Category, IncomeCreate, AccountResponse } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { FormField } from '@/components/ui/forms/FormField';
 import { Input } from '@/components/ui/forms/Input';
+import { MoneyInput } from '@/components/ui/MoneyInput';
+import { CurrencySelect } from '@/components/ui/forms/CurrencySelect';
 import { FaDollarSign, FaCalendarAlt, FaFileAlt, FaFolder } from 'react-icons/fa';
 import { config } from '@/config/env';
 
@@ -12,14 +14,17 @@ interface CreateIncomeProps {
 }
 
 export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) => {
-  const { income, category } = useApiClients();
+  const { income, category, account } = useApiClients();
   const [formData, setFormData] = useState<IncomeCreate>({
     amount: 0,
     category_id: null,
     description: '',
-    date: new Date().toISOString().split('T')[0] as string
+    date: new Date().toISOString().split('T')[0] as string,
+    account_id: null,
+    currency: 'USD'
   });
   const [categories, setCategories] = useState<Category[]>([]);
+  const [accounts, setAccounts] = useState<AccountResponse[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -39,19 +44,37 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) =
       }
     };
 
+    const fetchAccounts = async () => {
+      try {
+        const response = await account.getAccounts();
+        if ('error' in response) {
+          console.error('Failed to fetch accounts:', response.error);
+        } else {
+          setAccounts(response);
+        }
+      } catch (err) {
+        console.error('Error fetching accounts:', err);
+      }
+    };
+
     fetchCategories();
-  }, [category]);
+    fetchAccounts();
+  }, [category, account]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     
-    if (name === 'amount') {
-      setFormData(prev => ({ ...prev, [name]: parseFloat(value) || 0 }));
-    } else if (name === 'category_id') {
+    if (name === 'category_id') {
+      setFormData(prev => ({ ...prev, [name]: value ? parseInt(value) : null }));
+    } else if (name === 'account_id') {
       setFormData(prev => ({ ...prev, [name]: value ? parseInt(value) : null }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
+  };
+
+  const handleAmountChange = (value: string) => {
+    setFormData(prev => ({ ...prev, amount: parseFloat(value) || 0 }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -85,7 +108,9 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) =
           amount: 0,
           category_id: null,
           description: '',
-          date: new Date().toISOString().split('T')[0]
+          date: new Date().toISOString().split('T')[0],
+          account_id: null,
+          currency: 'USD'
         });
       }
     } catch (err) {
@@ -100,28 +125,27 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) =
     <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
       <div className="space-y-4 sm:space-y-6">
         {/* Сумма */}
+        <MoneyInput
+          label="Сумма"
+          value={formData.amount || ''}
+          onChange={handleAmountChange}
+          placeholder="Введите сумму дохода"
+          required
+          error={formData.amount <= 0 ? 'Сумма должна быть больше 0' : undefined}
+          className="w-full"
+        />
+
+        {/* Валюта */}
         <div className="space-y-2">
-          <label className="block text-sm font-semibold theme-text-primary" htmlFor="amount">
-            Сумма
-            <span className="text-red-500 ml-1">*</span>
+          <label className="block text-sm font-semibold theme-text-primary" htmlFor="currency">
+            Валюта
           </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <span className="theme-text-tertiary text-lg">₴</span>
-            </div>
-            <input
-              type="number"
-              id="amount"
-              name="amount"
-              value={formData.amount || ''}
-              onChange={handleInputChange}
-              step="0.01"
-              min="0.01"
-              placeholder="Введите сумму дохода"
-              className="w-full pl-8 pr-3 sm:pr-4 py-3 theme-surface theme-border border rounded-lg sm:rounded-xl theme-text-primary placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px]"
-              required
-            />
-          </div>
+          <CurrencySelect
+            value={formData.currency || 'USD'}
+            onChange={(value) => handleInputChange({ target: { name: 'currency', value } } as any)}
+            className="w-full px-3 sm:px-4 py-3 theme-surface theme-border border rounded-lg sm:rounded-xl theme-text-primary focus:ring-2 focus:ring-green-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px]"
+            showFlags={true}
+          />
         </div>
 
         {/* Категория */}
@@ -141,6 +165,28 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) =
             {categories.map((cat) => (
               <option key={cat.id} value={cat.id}>
                 {cat.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Аккаунт */}
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold theme-text-primary" htmlFor="account_id">
+            Аккаунт
+            <span className="theme-text-tertiary font-normal ml-1">(необязательно)</span>
+          </label>
+          <select
+            id="account_id"
+            name="account_id"
+            value={formData.account_id || ''}
+            onChange={handleInputChange}
+            className="w-full px-3 sm:px-4 py-3 theme-surface theme-border border rounded-lg sm:rounded-xl theme-text-primary focus:ring-2 focus:ring-green-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px]"
+          >
+            <option value="">Без аккаунта</option>
+            {accounts.map((account) => (
+              <option key={account.id} value={account.id}>
+                {account.name} ({account.currency})
               </option>
             ))}
           </select>

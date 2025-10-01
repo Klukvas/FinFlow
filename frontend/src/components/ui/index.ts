@@ -4,6 +4,7 @@ import { DeleteButton } from "./DeleteButton";
 import { EditButton } from "./EditButton";
 import { Button } from "./Button";
 import { Input } from "./forms/Input";
+import { MoneyInput } from "./MoneyInput";
 import { Card, CardContent, CardHeader, CardTitle } from "./Card";
 import { Badge } from "./Badge";
 import { Label } from "./Label";
@@ -16,6 +17,7 @@ export {
   EditButton, 
   Button, 
   Input, 
+  MoneyInput,
   Card, 
   CardContent, 
   CardHeader, 

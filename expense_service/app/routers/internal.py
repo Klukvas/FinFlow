@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, Query, HTTPException, status
-from typing import Annotated
+from typing import Annotated, List
 
 from app.schemas.expense import ExpenseCreate, ExpenseResponse
 from app.services.expense import ExpenseService
 from app.dependencies import get_expense_service_internal, verify_internal_token
 from app.utils.logger import get_logger
+from app.models.expense import Expense
 
 # Create a separate router for internal endpoints
 router = APIRouter(prefix="/internal", tags=["Internal"])
@@ -60,4 +61,121 @@ async def internal_expense_create(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error while creating expense"
+        )
+
+
+@router.get(
+    '/expenses/account/{account_id}',
+    response_model=List[ExpenseResponse],
+    summary="Get expenses by account",
+    description="Internal endpoint to get expenses for a specific account",
+    responses={
+        200: {"description": "Expenses retrieved successfully"},
+        403: {"description": "Invalid internal token"},
+        404: {"description": "Account not found"},
+    }
+)
+async def get_expenses_by_account(
+    account_id: int,
+    user_id: Annotated[int, Query(description="User ID to validate ownership", gt=0)],
+    limit: Annotated[int, Query(description="Maximum number of expenses to return", ge=1, le=1000)] = 100,
+    offset: Annotated[int, Query(description="Number of expenses to skip", ge=0)] = 0,
+    service: ExpenseService = Depends(get_expense_service_internal),
+    _: None = Depends(verify_internal_token)
+) -> List[ExpenseResponse]:
+    """
+    Internal endpoint to get expenses for a specific account.
+    
+    This endpoint is used by the account service to:
+    - Fetch expenses associated with a specific account
+    - Validate account ownership
+    - Support account transaction summaries
+    
+    Args:
+        account_id: The ID of the account
+        user_id: The ID of the user who owns the account
+        limit: Maximum number of expenses to return
+        offset: Number of expenses to skip
+        service: Injected expense service instance
+        
+    Returns:
+        List[ExpenseResponse]: List of expenses for the account
+        
+    Raises:
+        HTTPException: 403 if invalid internal token
+        HTTPException: 404 if account not found
+    """
+    try:
+        # Get expenses for the account
+        expenses = service.db.query(Expense).filter(
+            Expense.account_id == account_id,
+            Expense.user_id == user_id
+        ).order_by(Expense.date.desc()).offset(offset).limit(limit).all()
+        
+        logger.info(f"Retrieved {len(expenses)} expenses for account {account_id} and user {user_id}")
+        
+        return expenses
+        
+    except Exception as e:
+        logger.error(f"Unexpected error retrieving expenses by account: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error while retrieving expenses"
+        )
+
+
+@router.get(
+    '/expenses/account/{account_id}/validate',
+    summary="Validate account for expenses",
+    description="Internal endpoint to validate that an account can be used for expenses",
+    responses={
+        200: {"description": "Account is valid for expenses"},
+        403: {"description": "Invalid internal token"},
+        404: {"description": "Account not found or not owned by user"},
+    }
+)
+async def validate_account_for_expenses(
+    account_id: int,
+    user_id: Annotated[int, Query(description="User ID to validate ownership", gt=0)],
+    service: ExpenseService = Depends(get_expense_service_internal),
+    _: None = Depends(verify_internal_token)
+) -> dict:
+    """
+    Internal endpoint to validate that an account can be used for expenses.
+    
+    This endpoint is used by the account service to:
+    - Validate account ownership
+    - Check if account is active and not archived
+    - Ensure account can be used for expense transactions
+    
+    Args:
+        account_id: The ID of the account to validate
+        user_id: The ID of the user who should own the account
+        service: Injected expense service instance
+        
+    Returns:
+        dict: Validation result with account details
+        
+    Raises:
+        HTTPException: 403 if invalid internal token
+        HTTPException: 404 if account not found or not owned by user
+    """
+    try:
+        # Validate account through the account service client
+        account_data = service.account_client.validate_account(account_id, user_id)
+        
+        logger.info(f"Account {account_id} validated successfully for user {user_id}")
+        
+        return {
+            "valid": True,
+            "account_id": account_id,
+            "user_id": user_id,
+            "account": account_data.get("account", {})
+        }
+        
+    except Exception as e:
+        logger.error(f"Account validation failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Account not found or not owned by user"
         )

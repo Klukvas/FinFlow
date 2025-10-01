@@ -1,6 +1,8 @@
 export interface IncomeCreate {
   amount: number;
   category_id?: number | null;
+  account_id?: number | null;
+  currency?: string;
   description?: string | null;
   date?: string | null;
 }
@@ -10,6 +12,8 @@ export interface IncomeOut {
   user_id: number;
   amount: number;
   category_id?: number | null;
+  account_id?: number | null;
+  currency: string;
   description?: string | null;
   date: string;
   created_at: string;
@@ -19,6 +23,8 @@ export interface IncomeOut {
 export interface IncomeUpdate {
   amount?: number | null;
   category_id?: number | null;
+  account_id?: number | null;
+  currency?: string | null;
   description?: string | null;
   date?: string | null;
 }
@@ -42,6 +48,7 @@ export interface IncomeStats {
 export interface CreateIncomeRequest {
   amount: number;
   category_id?: number;
+  account_id?: number;
   description: string;
   date: string;
 }

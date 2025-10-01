@@ -4,6 +4,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/forms/Input';
 import { Label } from '@/components/ui/Label';
+import { MoneyInput } from '@/components/ui/MoneyInput';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -156,34 +157,15 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Payment Amount */}
-          <div className="space-y-2">
-            <Label htmlFor="amount" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
-              Payment Amount *
-            </Label>
-            <div className="relative">
-              <DollarSign className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
-                actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-              }`} />
-              <Input
-                id="amount"
-                type="number"
-                step="0.01"
-                min="0"
-                max={currentBalance}
-                value={formData.amount}
-                onChange={(e) => handleInputChange('amount', parseFloat(e.target.value) || 0)}
-                placeholder="0.00"
-                className={`pl-10 ${
-                  actualTheme === 'dark' 
-                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                } ${errors.amount ? 'border-red-500' : ''}`}
-              />
-            </div>
-            {errors.amount && (
-              <p className="text-sm text-red-500">{errors.amount}</p>
-            )}
-          </div>
+          <MoneyInput
+            label="Payment Amount"
+            value={formData.amount}
+            onChange={(value) => handleInputChange('amount', parseFloat(value) || 0)}
+            placeholder="0.00"
+            required
+            error={errors.amount}
+            className="w-full"
+          />
 
           {/* Payment Date */}
           <div className="space-y-2">
@@ -268,61 +250,23 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="principal_amount" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
-                  Principal Amount
-                </Label>
-                <div className="relative">
-                  <DollarSign className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
-                    actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                  }`} />
-                  <Input
-                    id="principal_amount"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.principal_amount || ''}
-                    onChange={(e) => handleInputChange('principal_amount', e.target.value ? parseFloat(e.target.value) : null)}
-                    placeholder="0.00"
-                    className={`pl-10 ${
-                      actualTheme === 'dark' 
-                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                    } ${errors.principal_amount ? 'border-red-500' : ''}`}
-                  />
-                </div>
-                {errors.principal_amount && (
-                  <p className="text-sm text-red-500">{errors.principal_amount}</p>
-                )}
-              </div>
+              <MoneyInput
+                label="Principal Amount"
+                value={formData.principal_amount || ''}
+                onChange={(value) => handleInputChange('principal_amount', value ? parseFloat(value) : null)}
+                placeholder="0.00"
+                error={errors.principal_amount}
+                className="w-full"
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="interest_amount" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
-                  Interest Amount
-                </Label>
-                <div className="relative">
-                  <DollarSign className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
-                    actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                  }`} />
-                  <Input
-                    id="interest_amount"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.interest_amount || ''}
-                    onChange={(e) => handleInputChange('interest_amount', e.target.value ? parseFloat(e.target.value) : null)}
-                    placeholder="0.00"
-                    className={`pl-10 ${
-                      actualTheme === 'dark' 
-                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                    } ${errors.interest_amount ? 'border-red-500' : ''}`}
-                  />
-                </div>
-                {errors.interest_amount && (
-                  <p className="text-sm text-red-500">{errors.interest_amount}</p>
-                )}
-              </div>
+              <MoneyInput
+                label="Interest Amount"
+                value={formData.interest_amount || ''}
+                onChange={(value) => handleInputChange('interest_amount', value ? parseFloat(value) : null)}
+                placeholder="0.00"
+                error={errors.interest_amount}
+                className="w-full"
+              />
             </div>
           </div>
 

@@ -1,5 +1,7 @@
+import { AccountApiClient } from '@/services/api/accountApiClient';
 import { CategoryApiClient } from '@/services/api/categoryApiClient';
 import { ContactApiClient } from '@/services/api/contactApiClient';
+import { CurrencyApiClient } from '@/services/api/currencyApiClient';
 import { DebtApiClient } from '@/services/api/debtApiClient';
 import { ExpenseApiClient } from '@/services/api/expenseApiClient';
 import { IncomeApiClient } from '@/services/api/incomeApiClient';
@@ -14,8 +16,10 @@ export const useApiClients = () => {
   
   const getToken = () => token;
   
+  const account = useMemo(() => new AccountApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
   const category = useMemo(() => new CategoryApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
   const contact = useMemo(() => new ContactApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
+  const currency = useMemo(() => new CurrencyApiClient(), []);
   const debt = useMemo(() => new DebtApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
   const user = useMemo(() => new UserApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
   const expense = useMemo(() => new ExpenseApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
@@ -24,8 +28,10 @@ export const useApiClients = () => {
   const pdfParser = useMemo(() => new PDFParserApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
   
   return {
+    account,
     category,
     contact,
+    currency,
     debt,
     user,
     expense,

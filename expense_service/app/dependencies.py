@@ -4,6 +4,7 @@ from app.database import SessionLocal
 from app.services.expense import ExpenseService
 from jose import JWTError, jwt
 from app.clients.category_service_client import CategoryServiceClient
+from app.clients.account_service_client import AccountServiceClient
 from app.config import settings
 from app.utils.logger import get_logger, log_security_event
 from typing import Generator
@@ -16,6 +17,10 @@ BEARER_PREFIX = "Bearer "
 def get_category_service_client() -> CategoryServiceClient:
     """Get category service client instance"""
     return CategoryServiceClient()
+
+def get_account_service_client() -> AccountServiceClient:
+    """Get account service client instance"""
+    return AccountServiceClient()
 
 def decode_token(token: str) -> int:
     """Decode JWT token and extract user ID"""
@@ -72,17 +77,19 @@ def get_db() -> Generator[Session, None, None]:
 def get_expense_service(
     db: Session = Depends(get_db),
     user_id: int = Depends(get_current_user_id),
-    category_client: CategoryServiceClient = Depends(get_category_service_client)
+    category_client: CategoryServiceClient = Depends(get_category_service_client),
+    account_client: AccountServiceClient = Depends(get_account_service_client)
 ) -> ExpenseService:
     """Get expense service with all dependencies"""
-    return ExpenseService(db, category_client)
+    return ExpenseService(db, category_client, account_client)
 
 def get_expense_service_internal(
     db: Session = Depends(get_db),
-    category_client: CategoryServiceClient = Depends(get_category_service_client)
+    category_client: CategoryServiceClient = Depends(get_category_service_client),
+    account_client: AccountServiceClient = Depends(get_account_service_client)
 ) -> ExpenseService:
     """Get expense service for internal use without user authentication"""
-    return ExpenseService(db, category_client)
+    return ExpenseService(db, category_client, account_client)
 
 def verify_internal_token(request: Request) -> None:
     """Verify internal service token for inter-service communication"""

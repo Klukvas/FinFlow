@@ -18,6 +18,19 @@ services:
       timeout: 3s
       retries: 10
 
+  redis:
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - "6377:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 10
+
   user_service:
     build:
       context: ./user_service
@@ -28,7 +41,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    
     ports:
       - "8001:8000"
 
@@ -72,8 +84,10 @@ services:
         condition: service_started
       user_service:
         condition: service_started
+      account_service:
+        condition: service_started
     ports:
-      - "8004:8003"
+      - "8004:8000"
 
   recurring_service:
     build:
@@ -138,6 +152,39 @@ services:
     ports:
       - "8008:8000"
 
+  account_service:
+    build:
+      context: ./account_service
+    environment:
+      ENV_FILE: .env.docker
+    env_file:
+      - ./account_service/.env.docker
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      user_service:
+        condition: service_started
+      currency_service:
+        condition: service_started
+    ports:
+      - "8009:8000"
+
+  currency_service:
+    build:
+      context: ./currency_service
+    environment:
+      ENV_FILE: .env.docker
+    env_file:
+      - ./currency_service/.env.docker
+    depends_on:
+      redis:
+        condition: service_healthy
+    ports:
+      - "8010:8000"
+
 volumes:
   postgres_data:
+  redis_data:
   pdf_uploads:

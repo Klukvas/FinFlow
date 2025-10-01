@@ -1,0 +1,75 @@
+### Account Service API Examples
+
+# Variables
+@baseUrl = http://localhost:8009
+@token = your-jwt-token-here
+@internalToken = your-internal-secret-token-here
+
+### Health Check
+GET {{baseUrl}}/health
+
+### Root Endpoint
+GET {{baseUrl}}/
+
+### Create Account
+POST {{baseUrl}}/accounts
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "My Checking Account",
+  "type": "checking",
+  "currency": "USD",
+  "balance": 1000.00,
+  "description": "Primary checking account"
+}
+
+### List Accounts
+GET {{baseUrl}}/accounts
+Authorization: Bearer {{token}}
+
+### List Accounts (including archived)
+GET {{baseUrl}}/accounts?include_archived=true
+Authorization: Bearer {{token}}
+
+### Get Account by ID
+GET {{baseUrl}}/accounts/1
+Authorization: Bearer {{token}}
+
+### Update Account
+PUT {{baseUrl}}/accounts/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Updated Account Name",
+  "description": "Updated description"
+}
+
+### Archive Account
+PATCH {{baseUrl}}/accounts/1/archive
+Authorization: Bearer {{token}}
+
+### Get Account Summary
+GET {{baseUrl}}/accounts/1/summary
+Authorization: Bearer {{token}}
+
+### Get Account Transactions
+GET {{baseUrl}}/accounts/1/transactions
+Authorization: Bearer {{token}}
+
+### Get Account Transactions with Pagination
+GET {{baseUrl}}/accounts/1/transactions?limit=50&offset=0
+Authorization: Bearer {{token}}
+
+### Update Account Balance
+PATCH {{baseUrl}}/accounts/1/balance?balance=1500.00
+Authorization: Bearer {{token}}
+
+### Internal: Validate Account
+GET {{baseUrl}}/internal/accounts/1/validate?user_id=1
+X-Internal-Token: {{internalToken}}
+
+### Internal: Get Account Details
+GET {{baseUrl}}/internal/accounts/1?user_id=1
+X-Internal-Token: {{internalToken}}

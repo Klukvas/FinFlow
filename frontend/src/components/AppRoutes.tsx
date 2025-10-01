@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Category, CategoryDetail, Expense, Income, Profile, Recurring, Goals, PdfParser, Debts, Home, About, Features, Pricing, Contact } from '@/pages';
+import { Account, Category, CategoryDetail, Expense, Income, Profile, Recurring, Goals, PdfParser, Debts, Home, About, Features, Pricing, Contact } from '@/pages';
 import { Layout } from './ui/Layout';
 import { PublicLayout } from './ui/PublicLayout';
 import { ProtectedRoute } from './ProtectedRoute';
@@ -22,6 +22,16 @@ export const AppRoutes: React.FC = () => {
   if (isAuthenticated) {
     return (
       <Routes>
+        <Route 
+          path="/account" 
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Account />
+              </Layout>
+            </ProtectedRoute>
+          } 
+        />
         <Route 
           path="/expense" 
           element={

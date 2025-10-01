@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { recurringApiService, CreateRecurringPaymentRequest } from '@/services/api/recurringApi';
 import { useApiClients } from '@/hooks/useApiClients';
 import { Category } from '@/types/category';
+import { MoneyInput } from '../MoneyInput';
 import { toast } from 'sonner';
 
 interface CreateRecurringPaymentProps {
@@ -203,17 +204,13 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium theme-text-primary mb-2">
-                Сумма *
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
+              <MoneyInput
+                label="Сумма"
                 value={formData.amount}
-                onChange={(e) => setFormData(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
-                className="w-full px-3 py-2 theme-border border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 theme-bg theme-text-primary"
+                onChange={(value) => setFormData(prev => ({ ...prev, amount: parseFloat(value) || 0 }))}
+                placeholder="0.00"
                 required
+                className="w-full"
               />
             </div>
             <div>

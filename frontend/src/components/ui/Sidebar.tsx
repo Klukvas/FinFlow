@@ -11,7 +11,8 @@ import {
   FaDollarSign,
   FaRedo,
   FaBullseye,
-  FaFilePdf
+  FaFilePdf,
+  FaWallet
 } from 'react-icons/fa';
 
 interface SidebarProps {
@@ -43,6 +44,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
   const navigationItems = [
     { path: '/category', icon: FaFolder, label: 'Категории' },
+    { path: '/account', icon: FaWallet, label: 'Аккаунты' },
     { path: '/expense', icon: FaHome, label: 'Расходы' },
     { path: '/income', icon: FaDollarSign, label: 'Доходы' },
     { path: '/debts', icon: FaDollarSign, label: 'Долги' },

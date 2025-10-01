@@ -6,6 +6,7 @@ import {
   Button, 
   Input, 
   Label, 
+  MoneyInput,
   Select, 
   SelectContent, 
   SelectItem, 
@@ -227,40 +228,23 @@ export const DebtForm: React.FC<DebtFormProps> = ({
           {/* Amount and Financial Details */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="initial_amount" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
-                Initial Amount *
-              </Label>
-              <div className="relative">
-                <DollarSign className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
-                  actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                }`} />
-                <Input
-                  id="initial_amount"
-                  type="number"
-                  step="0.01"
-                  value={formData.initial_amount}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    // Use parseFloat but round to 2 decimal places to avoid precision errors
-                    const numValue = value ? Math.round(parseFloat(value) * 100) / 100 : 0;
-                    handleInputChange('initial_amount', numValue);
-                  }}
-                  placeholder="0.00 (positive = they owe me, negative = I owe them)"
-                  className={`pl-10 ${
-                    actualTheme === 'dark' 
-                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                  } ${errors.initial_amount ? 'border-red-500' : ''}`}
-                />
-              </div>
+              <MoneyInput
+                label="Initial Amount"
+                value={formData.initial_amount}
+                onChange={(value) => {
+                  const numValue = value ? Math.round(parseFloat(value) * 100) / 100 : 0;
+                  handleInputChange('initial_amount', numValue);
+                }}
+                placeholder="0.00 (positive = they owe me, negative = I owe them)"
+                required
+                error={errors.initial_amount}
+                className="w-full"
+              />
               <div className={`text-xs ${
                 actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'
               }`}>
                 💡 <strong>Tip:</strong> Positive amount = they owe you, Negative amount = you owe them
               </div>
-              {errors.initial_amount && (
-                <p className="text-sm text-red-500">{errors.initial_amount}</p>
-              )}
             </div>
 
             <div className="space-y-2">

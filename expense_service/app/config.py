@@ -4,6 +4,7 @@ import logging
 
 class Settings(BaseSettings):
     CATEGORY_SERVICE_URL: str
+    ACCOUNT_SERVICE_URL: str
     INTERNAL_SECRET: str
     DATABASE_URL: str
     SECRET_KEY: str

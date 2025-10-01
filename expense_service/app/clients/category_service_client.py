@@ -4,14 +4,14 @@ from starlette import status
 from app.exceptions import CategoryValidationError, ExternalServiceError
 from app.config import settings
 from app.utils.logger import get_logger, log_security_event
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 class CategoryServiceClient(BaseHttpClient):
     def __init__(self):
         super().__init__(base_url=settings.CATEGORY_SERVICE_URL)
         self.logger = get_logger(__name__)
 
-    def validate_category(self, category_id: int, user_id: int) -> Dict[str, Any]:
+    def validate_category(self, category_id: Optional[int], user_id: int) -> Dict[str, Any]:
         """
         Validate that a category exists and belongs to the user.
         
@@ -25,6 +25,10 @@ class CategoryServiceClient(BaseHttpClient):
         Raises:
             HTTPException: If category validation fails
         """
+        # If category_id is None, return empty dict (no validation needed)
+        if category_id is None:
+            return {}
+            
         try:
             response = self.get(
                 f"/internal/categories/{category_id}?user_id={user_id}",

@@ -7,6 +7,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from app.models.expense import Expense
 from app.schemas.expense import ExpenseCreate, ExpenseUpdate
 from app.clients.category_service_client import CategoryServiceClient
+from app.clients.account_service_client import AccountServiceClient
 from app.exceptions import (
     ExpenseNotFoundError,
     ExpenseValidationError,
@@ -19,9 +20,10 @@ from app.utils.logger import get_logger, log_operation, log_security_event
 from app.config import settings
 
 class ExpenseService:
-    def __init__(self, db: Session, category_client: CategoryServiceClient):
+    def __init__(self, db: Session, category_client: CategoryServiceClient, account_client: AccountServiceClient):
         self.db = db
         self.category_client = category_client
+        self.account_client = account_client
         self.logger = get_logger(__name__)
 
     def _validate_expense_ownership(self, expense_id: int, user_id: int) -> Expense:
@@ -71,13 +73,41 @@ class ExpenseService:
         
         return expense_date
 
-    def _validate_category(self, category_id: int, user_id: int) -> dict:
+    def _validate_category(self, category_id: Optional[int], user_id: int) -> dict:
         """Validate category exists and belongs to user"""
         try:
             return self.category_client.validate_category(category_id, user_id)
         except Exception as e:
             self.logger.error(f"Category validation failed: {e}")
             raise
+
+    def _validate_account(self, account_id: int, user_id: int) -> dict:
+        """Validate account exists and belongs to user"""
+        try:
+            return self.account_client.validate_account(account_id, user_id)
+        except Exception as e:
+            self.logger.error(f"Account validation failed: {e}")
+            raise
+
+    def _handle_balance_updates(self, expense: Expense, old_amount: float, old_account_id: int, user_id: int) -> None:
+        """Handle account balance updates when expense amount or account changes"""
+        try:
+            # If account changed or amount changed, we need to update balances
+            if expense.account_id != old_account_id or expense.amount != old_amount:
+                
+                # Restore balance to old account if it had one
+                if old_account_id is not None:
+                    self.account_client.update_account_balance(old_account_id, user_id, old_amount, expense.currency)
+                    self.logger.info(f"Restored {old_amount} {expense.currency} to account {old_account_id}")
+                
+                # Deduct from new account if it has one
+                if expense.account_id is not None:
+                    self.account_client.update_account_balance(expense.account_id, user_id, -expense.amount, expense.currency)
+                    self.logger.info(f"Deducted {expense.amount} {expense.currency} from account {expense.account_id}")
+                    
+        except Exception as e:
+            self.logger.error(f"Failed to handle balance updates: {e}")
+            raise ExpenseValidationError("Failed to update account balances")
 
     def create(self, data: ExpenseCreate, user_id: int) -> Expense:
         """Create a new expense with proper validation and transaction management"""
@@ -91,13 +121,26 @@ class ExpenseService:
             # Validate date
             validated_date = self._validate_date(data.date)
             
-            # Validate category
-            self._validate_category(data.category_id, user_id)
+            # Validate category only if provided and valid
+            self.logger.info(f"Category ID received: {data.category_id} (type: {type(data.category_id)})")
+            if data.category_id is not None and data.category_id > 0:
+                self.logger.info(f"Validating category: {data.category_id}")
+                self._validate_category(data.category_id, user_id)
+            else:
+                self.logger.info("Skipping category validation - category_id is None, 0, or invalid")
+            
+            # Validate account if provided and update balance
+            if data.account_id is not None:
+                self._validate_account(data.account_id, user_id)
+                # Deduct amount from account balance with currency conversion
+                self.account_client.update_account_balance(data.account_id, user_id, -validated_amount, data.currency)
             
             expense = Expense(
                 amount=validated_amount,
                 description=validated_description,
-                category_id=data.category_id,
+                category_id=data.category_id if data.category_id and data.category_id > 0 else None,
+                account_id=data.account_id,
+                currency=data.currency,
                 date=validated_date,
                 user_id=user_id
             )
@@ -105,7 +148,7 @@ class ExpenseService:
             try:
                 with self.db.begin():
                     self.db.add(expense)
-                log_operation(self.logger, "Expense created", user_id, expense.id, f"Amount: {validated_amount}, Category: {data.category_id}, Date: {validated_date}")
+                log_operation(self.logger, "Expense created", user_id, expense.id, f"Amount: {validated_amount}, Category: {data.category_id}, Account: {data.account_id}, Date: {validated_date}")
                 self.db.refresh(expense)
                 return expense
             except Exception as e:
@@ -146,9 +189,12 @@ class ExpenseService:
             # Track changes for logging
             changes = []
             
+            # Store original values for balance calculations
+            old_amount = expense.amount
+            old_account_id = expense.account_id
+            
             # Validate and update amount if provided
             if data.amount is not None:
-                old_amount = expense.amount
                 expense.amount = self._validate_amount(data.amount)
                 changes.append(f"Amount: {old_amount} -> {expense.amount}")
             
@@ -164,12 +210,33 @@ class ExpenseService:
                 expense.date = self._validate_date(data.date)
                 changes.append(f"Date: {old_date} -> {expense.date}")
             
-            # Validate and update category if provided
-            if data.category_id is not None:
+            # Validate and update category if provided and valid
+            if data.category_id is not None and data.category_id > 0:
                 old_category = expense.category_id
                 self._validate_category(data.category_id, user_id)
                 expense.category_id = data.category_id
                 changes.append(f"Category: {old_category} -> {data.category_id}")
+            elif data.category_id is not None and data.category_id == 0:
+                # Set category to None if 0 is provided
+                old_category = expense.category_id
+                expense.category_id = None
+                changes.append(f"Category: {old_category} -> None")
+            
+            # Validate and update account if provided
+            if data.account_id is not None:
+                old_account = expense.account_id
+                self._validate_account(data.account_id, user_id)
+                expense.account_id = data.account_id
+                changes.append(f"Account: {old_account} -> {data.account_id}")
+            
+            # Validate and update currency if provided
+            if data.currency is not None:
+                old_currency = expense.currency
+                expense.currency = data.currency
+                changes.append(f"Currency: {old_currency} -> {data.currency}")
+            
+            # Handle account balance updates
+            self._handle_balance_updates(expense, old_amount, old_account_id, user_id)
             
             self.db.commit()
             self.db.refresh(expense)
@@ -204,7 +271,13 @@ class ExpenseService:
             
             amount = expense.amount
             category_id = expense.category_id
+            account_id = expense.account_id
             expense_date = expense.date
+            
+            # Restore balance to account if expense had one
+            if account_id is not None:
+                self.account_client.update_account_balance(account_id, user_id, amount, expense.currency)
+                self.logger.info(f"Restored {amount} {expense.currency} to account {account_id} after expense deletion")
             
             self.db.delete(expense)
             self.db.commit()
@@ -214,7 +287,7 @@ class ExpenseService:
                 "Expense deleted",
                 user_id,
                 expense_id,
-                f"Amount: {amount}, Category: {category_id}, Date: {expense_date}"
+                f"Amount: {amount}, Category: {category_id}, Account: {account_id}, Date: {expense_date}"
             )
             
             return {"detail": "Expense deleted successfully"}

@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException
-from app.routers import income
+from app.routers import income, internal
 from fastapi.exceptions import RequestValidationError
 from app.exception_handlers import (
     custom_validation_exception_handler,
@@ -52,6 +52,7 @@ app.add_exception_handler(HTTPException, http_exception_handler)
 
 # Include routers
 app.include_router(income.router)
+app.include_router(internal.router)
 
 # Configure CORS
 app.add_middleware(

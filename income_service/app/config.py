@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     # External services
     user_service_url: str = "http://user_service:8000"
     category_service_url: str = "http://category_service:8000"
+    account_service_url: str = "http://account_service:8000"
     internal_secret: str = "my-secret-token"
     
     # CORS

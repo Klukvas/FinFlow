@@ -13,6 +13,7 @@ from app.exceptions import (
     ExternalServiceError
 )
 from app.clients.category_service_client import CategoryServiceClient
+from app.clients.account_service_client import AccountServiceClient
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -20,9 +21,10 @@ logger = get_logger(__name__)
 class IncomeService:
     """Service for managing incomes"""
     
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, account_client: AccountServiceClient = None):
         self.db = db
         self.category_client = CategoryServiceClient()
+        self.account_client = account_client or AccountServiceClient()
     
     async def _validate_category(self, category_id: int, user_id: int) -> dict:
         """Validate category exists and belongs to user"""
@@ -31,6 +33,34 @@ class IncomeService:
         except Exception as e:
             logger.error(f"Category validation failed: {e}")
             raise
+
+    async def _validate_account(self, account_id: int, user_id: int) -> dict:
+        """Validate account exists and belongs to user"""
+        try:
+            return await self.account_client.validate_account(account_id, user_id)
+        except Exception as e:
+            logger.error(f"Account validation failed: {e}")
+            raise
+
+    async def _handle_balance_updates(self, income: Income, old_amount: float, old_account_id: int, user_id: int) -> None:
+        """Handle account balance updates when income amount or account changes"""
+        try:
+            # If account changed or amount changed, we need to update balances
+            if income.account_id != old_account_id or income.amount != old_amount:
+                
+                # Restore balance to old account if it had one (subtract old amount)
+                if old_account_id is not None:
+                    await self.account_client.update_account_balance(old_account_id, user_id, -old_amount, income.currency)
+                    logger.info(f"Restored {old_amount} {income.currency} from account {old_account_id}")
+                
+                # Add to new account if it has one (add new amount)
+                if income.account_id is not None:
+                    await self.account_client.update_account_balance(income.account_id, user_id, income.amount, income.currency)
+                    logger.info(f"Added {income.amount} {income.currency} to account {income.account_id}")
+                    
+        except Exception as e:
+            logger.error(f"Failed to handle balance updates: {e}")
+            raise IncomeValidationError("Failed to update account balances")
     
     async def create(self, income: IncomeCreate, user_id: int) -> IncomeOut:
         """Create a new income"""
@@ -59,6 +89,12 @@ class IncomeService:
             if income.category_id:
                 await self._validate_category(income.category_id, user_id)
             
+            # Validate account if provided and update balance
+            if income.account_id is not None:
+                await self._validate_account(income.account_id, user_id)
+                # Add amount to account balance with currency conversion
+                await self.account_client.update_account_balance(income.account_id, user_id, income.amount, income.currency)
+            
             # Create income
             income_date = datetime.now()
             if income.date:
@@ -71,6 +107,8 @@ class IncomeService:
                 user_id=user_id,
                 amount=round(income.amount, 2),
                 category_id=income.category_id,
+                account_id=income.account_id,
+                currency=income.currency,
                 description=income.description,
                 date=income_date
             )
@@ -108,7 +146,7 @@ class IncomeService:
         
         return [IncomeOut.from_orm(income) for income in incomes]
     
-    def update(self, income_id: int, income_update: IncomeUpdate, user_id: int) -> IncomeOut:
+    async def update(self, income_id: int, income_update: IncomeUpdate, user_id: int) -> IncomeOut:
         """Update income"""
         db_income = self.db.query(Income).filter(
             and_(Income.id == income_id, Income.user_id == user_id)
@@ -118,6 +156,10 @@ class IncomeService:
             raise IncomeNotFoundError(f"Income {income_id} not found")
         
         try:
+            # Store original values for balance calculations
+            old_amount = db_income.amount
+            old_account_id = db_income.account_id
+            
             # Update fields if provided
             if income_update.amount is not None:
                 if income_update.amount <= 0:
@@ -147,6 +189,18 @@ class IncomeService:
                         raise IncomeValidationError("Invalid category ID")
                 db_income.category_id = income_update.category_id
             
+            if income_update.account_id is not None:
+                # Validate account if provided
+                if income_update.account_id > 0:
+                    await self._validate_account(income_update.account_id, user_id)
+                db_income.account_id = income_update.account_id
+            
+            if income_update.currency is not None:
+                db_income.currency = income_update.currency
+            
+            # Handle account balance updates
+            await self._handle_balance_updates(db_income, old_amount, old_account_id, user_id)
+            
             db_income.updated_at = datetime.now()
             self.db.commit()
             self.db.refresh(db_income)
@@ -161,7 +215,7 @@ class IncomeService:
             logger.error(f"Error updating income: {e}")
             raise IncomeValidationError("Failed to update income")
     
-    def delete(self, income_id: int, user_id: int) -> bool:
+    async def delete(self, income_id: int, user_id: int) -> bool:
         """Delete income"""
         db_income = self.db.query(Income).filter(
             and_(Income.id == income_id, Income.user_id == user_id)
@@ -169,6 +223,11 @@ class IncomeService:
         
         if not db_income:
             raise IncomeNotFoundError(f"Income {income_id} not found")
+        
+        # Restore balance to account if income had one (subtract the amount)
+        if db_income.account_id is not None:
+            await self.account_client.update_account_balance(db_income.account_id, user_id, -db_income.amount, db_income.currency)
+            logger.info(f"Restored {db_income.amount} {db_income.currency} from account {db_income.account_id} after income deletion")
         
         self.db.delete(db_income)
         self.db.commit()

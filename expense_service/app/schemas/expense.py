@@ -12,11 +12,24 @@ class ExpenseBase(BaseModel):
         description="Expense amount (must be greater than 0 and less than 999,999.99)",
         examples=[25.50, 100.00, 1500.75]
     )
-    category_id: int = Field(
-        ..., 
-        gt=0,
-        description="Category ID for this expense",
+    category_id: Optional[int] = Field(
+        None,
+        ge=0,
+        description="Optional category ID for this expense (0 means no category)",
         examples=[1, 2, 3]
+    )
+    account_id: Optional[int] = Field(
+        None,
+        gt=0,
+        description="Optional account ID for this expense",
+        examples=[1, 2, 3]
+    )
+    currency: Optional[str] = Field(
+        "USD",
+        max_length=3,
+        min_length=3,
+        description="Currency code for this expense (ISO 4217)",
+        examples=["USD", "EUR", "UAH"]
     )
     description: Optional[str] = Field(
         None,
@@ -39,6 +52,17 @@ class ExpenseBase(BaseModel):
         
         # Round to 2 decimal places
         return float(Decimal(str(v)).quantize(Decimal('0.01')))
+    
+    @field_validator('currency')
+    @classmethod
+    def validate_currency(cls, v: Optional[str]) -> str:
+        """Validate currency code"""
+        if v is None:
+            return "USD"
+        v = v.strip().upper()
+        if not re.match(r'^[A-Z]{3}$', v):
+            raise ValueError('Currency must be a 3-letter ISO code (e.g., USD, EUR, UAH)')
+        return v
     
     @field_validator('description')
     @classmethod
@@ -75,8 +99,19 @@ class ExpenseUpdate(BaseModel):
     )
     category_id: Optional[int] = Field(
         None, 
+        ge=0,
+        description="New category ID (0 means no category)"
+    )
+    account_id: Optional[int] = Field(
+        None,
         gt=0,
-        description="New category ID"
+        description="New account ID"
+    )
+    currency: Optional[str] = Field(
+        None,
+        max_length=3,
+        min_length=3,
+        description="New currency code (ISO 4217)"
     )
     description: Optional[str] = Field(
         None,
@@ -96,6 +131,16 @@ class ExpenseUpdate(BaseModel):
             if v <= 0:
                 raise ValueError('Amount must be greater than 0')
             return float(Decimal(str(v)).quantize(Decimal('0.01')))
+        return v
+    
+    @field_validator('currency')
+    @classmethod
+    def validate_currency(cls, v: Optional[str]) -> Optional[str]:
+        """Validate currency code"""
+        if v is not None:
+            v = v.strip().upper()
+            if not re.match(r'^[A-Z]{3}$', v):
+                raise ValueError('Currency must be a 3-letter ISO code (e.g., USD, EUR, UAH)')
         return v
     
     @field_validator('description')
@@ -131,6 +176,7 @@ class ExpenseResponse(ExpenseBase):
                 "id": 1,
                 "amount": 25.50,
                 "category_id": 1,
+                "account_id": 1,
                 "description": "Lunch at restaurant",
                 "date": "2024-01-15",
                 "user_id": 1
@@ -143,6 +189,7 @@ class ExpenseSummary(BaseModel):
     id: int
     amount: float
     category_id: int
+    account_id: Optional[int]
     description: Optional[str]
     date: datetime_date
 

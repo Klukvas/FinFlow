@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     INTERNAL_SECRET: str
     LOG_LEVEL: str = "INFO"
-    MAX_CATEGORY_DEPTH: int = 10
+    MAX_CATEGORY_DEPTH: int = 2
     CORS_ORIGINS: str = "*"  # In production, specify exact origins
     
     model_config = {

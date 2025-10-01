@@ -46,6 +46,29 @@ class CategoryService:
         if query.first():
             raise CategoryNameConflictError(name, user_id)
 
+    def _get_category_depth(self, category_id: int, user_id: int) -> int:
+        """Get the current depth of a category in the hierarchy"""
+        depth = 0
+        current_category_id = category_id
+        
+        while current_category_id:
+            category = self.db.query(Category).filter(
+                Category.id == current_category_id,
+                Category.user_id == user_id
+            ).first()
+            
+            if not category or not category.parent_id:
+                break
+                
+            current_category_id = category.parent_id
+            depth += 1
+            
+            # Prevent infinite loops
+            if depth > settings.MAX_CATEGORY_DEPTH * 2:
+                break
+                
+        return depth
+
     def _validate_circular_relationship(self, category_id: int, parent_id: int, user_id: int) -> None:
         """Validate that setting parent_id doesn't create circular relationship"""
         if category_id == parent_id:
