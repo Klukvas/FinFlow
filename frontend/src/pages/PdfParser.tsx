@@ -5,7 +5,7 @@ import { ParsedTransaction, TransactionValidation } from '@/services/api/pdfPars
 import { useTheme } from '@/contexts/ThemeContext';
 
 export const PdfParser: React.FC = () => {
-  const { income, expense } = useApiClients();
+  const { income, expense, debt } = useApiClients();
   const { actualTheme } = useTheme();
   const [showUploader, setShowUploader] = useState(false);
   const [showReview, setShowReview] = useState(false);
@@ -68,7 +68,37 @@ export const PdfParser: React.FC = () => {
               console.log('PdfParser: Income created successfully');
               incomeCount++;
             }
+          } else if (transaction.transaction_type === 'debt') {
+            // For debt transactions, create a debt payment
+            if (!transaction.category_id) {
+              console.warn('PdfParser: Skipping debt transaction without category_id');
+              errors.push(`Debt transaction requires a category: ${transaction.description}`);
+            } else {
+              // First, try to find an existing debt with this description or create a default debt
+              // For now, we'll create a debt payment without a specific debt ID
+              // This is a simplified approach - in a real app, you'd want to match or create debts
+              console.log('PdfParser: Debt transactions not yet fully implemented - treating as expense');
+              
+              const expenseData = {
+                amount: transaction.amount,
+                description: `[DEBT] ${transaction.description}`,
+                date: transaction.transaction_date,
+                category_id: transaction.category_id
+              };
+              console.log('PdfParser: Creating debt expense with data:', expenseData);
+              const response = await expense.createExpense(expenseData);
+              console.log('PdfParser: Debt expense creation response:', response);
+              
+              if ('error' in response) {
+                console.error('PdfParser: Debt expense creation failed:', response.error);
+                errors.push(`Debt expense creation failed: ${response.error}`);
+              } else {
+                console.log('PdfParser: Debt expense created successfully');
+                expenseCount++;
+              }
+            }
           } else {
+            // Default to expense for any other transaction type
             const expenseData = {
               amount: transaction.amount,
               description: transaction.description,

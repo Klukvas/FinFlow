@@ -45,6 +45,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     { path: '/category', icon: FaFolder, label: 'Категории' },
     { path: '/expense', icon: FaHome, label: 'Расходы' },
     { path: '/income', icon: FaDollarSign, label: 'Доходы' },
+    { path: '/debts', icon: FaDollarSign, label: 'Долги' },
     { path: '/recurring', icon: FaRedo, label: 'Повторяющиеся' },
     { path: '/goals', icon: FaBullseye, label: 'Цели' },
     { path: '/pdf-parser', icon: FaFilePdf, label: 'PDF Парсер' },

@@ -1,4 +1,6 @@
 import { CategoryApiClient } from '@/services/api/categoryApiClient';
+import { ContactApiClient } from '@/services/api/contactApiClient';
+import { DebtApiClient } from '@/services/api/debtApiClient';
 import { ExpenseApiClient } from '@/services/api/expenseApiClient';
 import { IncomeApiClient } from '@/services/api/incomeApiClient';
 import { UserApiClient } from '@/services/api/userApiClient';
@@ -13,6 +15,8 @@ export const useApiClients = () => {
   const getToken = () => token;
   
   const category = useMemo(() => new CategoryApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
+  const contact = useMemo(() => new ContactApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
+  const debt = useMemo(() => new DebtApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
   const user = useMemo(() => new UserApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
   const expense = useMemo(() => new ExpenseApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
   const income = useMemo(() => new IncomeApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
@@ -21,6 +25,8 @@ export const useApiClients = () => {
   
   return {
     category,
+    contact,
+    debt,
     user,
     expense,
     income,

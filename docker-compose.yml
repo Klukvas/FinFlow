@@ -121,6 +121,23 @@ services:
     volumes:
       - pdf_uploads:/app/uploads
 
+  debt_service:
+    build:
+      context: ./debt_service
+    environment:
+      ENV_FILE: .env.docker
+    env_file:
+      - ./debt_service/.env.docker
+    depends_on:
+      db:
+        condition: service_healthy
+      category_service:
+        condition: service_started
+      user_service:
+        condition: service_started
+    ports:
+      - "8008:8000"
+
 volumes:
   postgres_data:
   pdf_uploads:

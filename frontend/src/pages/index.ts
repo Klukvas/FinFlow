@@ -6,6 +6,7 @@ import { Profile } from './Profile'
 import { Recurring } from './Recurring'
 import { Goals } from './Goals'
 import { PdfParser } from './PdfParser'
+import { Debts } from './Debts'
 import Login from "./auth/Login";
 import Register from "./auth/Register";
 import { Home } from './Home';
@@ -25,6 +26,7 @@ export {
   Profile,
   Goals,
   PdfParser,
+  Debts,
   Home,
   About,
   Features,
