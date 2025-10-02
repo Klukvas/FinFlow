@@ -5,27 +5,32 @@ interface SelectProps {
   value?: string;
   onValueChange?: (value: string) => void;
   defaultValue?: string;
+  'data-testid'?: string;
 }
 
 interface SelectTriggerProps {
   children: React.ReactNode;
   className?: string;
+  'data-testid'?: string;
 }
 
 interface SelectContentProps {
   children: React.ReactNode;
   className?: string;
+  'data-testid'?: string;
 }
 
 interface SelectItemProps {
   children: React.ReactNode;
   value: string;
   className?: string;
+  'data-testid'?: string;
 }
 
 interface SelectValueProps {
   children?: React.ReactNode;
   placeholder?: string;
+  'data-testid'?: string;
 }
 
 const SelectContext = React.createContext<{
@@ -81,7 +86,8 @@ export const Select: React.FC<SelectProps> = ({
 
 export const SelectTrigger: React.FC<SelectTriggerProps> = ({ 
   children, 
-  className = '' 
+  className = '',
+  'data-testid': testId
 }) => {
   const { isOpen, setIsOpen, contentRef } = React.useContext(SelectContext);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -123,14 +129,16 @@ export const SelectTrigger: React.FC<SelectTriggerProps> = ({
         setIsOpen(!isOpen);
         console.log('🔧 SelectTrigger - isOpen set to:', !isOpen);
       }}
-      className={`flex h-10 w-full items-center justify-between rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm ring-offset-white dark:ring-offset-gray-900 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+      className={`flex h-12 w-full items-center justify-between rounded-lg theme-border border theme-bg px-3 py-3 text-base theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition hover:theme-border-hover disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation ${className}`}
+      data-testid={testId || 'select-trigger'}
     >
       {children}
       <svg
-        className={`h-4 w-4 opacity-50 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+        className={`h-5 w-5 theme-text-secondary transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
+        data-testid={testId ? `${testId}-icon` : 'select-trigger-icon'}
       >
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
       </svg>
@@ -140,7 +148,8 @@ export const SelectTrigger: React.FC<SelectTriggerProps> = ({
 
 export const SelectContent: React.FC<SelectContentProps> = ({ 
   children, 
-  className = '' 
+  className = '',
+  'data-testid': testId
 }) => {
   const { isOpen, contentRef } = React.useContext(SelectContext);
 
@@ -151,7 +160,8 @@ export const SelectContent: React.FC<SelectContentProps> = ({
   return (
     <div 
       ref={contentRef}
-      className={`absolute z-50 min-w-[8rem] overflow-hidden rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-md animate-in fade-in-0 zoom-in-95 ${className}`}
+      className={`absolute z-50 min-w-full overflow-hidden rounded-lg theme-border border theme-surface theme-shadow animate-in fade-in-0 zoom-in-95 max-h-60 overflow-y-auto ${className}`}
+      data-testid={testId || 'select-content'}
     >
       <div className="p-1">
         {children}
@@ -163,7 +173,8 @@ export const SelectContent: React.FC<SelectContentProps> = ({
 export const SelectItem: React.FC<SelectItemProps> = ({ 
   children, 
   value, 
-  className = '' 
+  className = '',
+  'data-testid': testId
 }) => {
   const { onValueChange } = React.useContext(SelectContext);
 
@@ -184,7 +195,8 @@ export const SelectItem: React.FC<SelectItemProps> = ({
         e.stopPropagation();
         onValueChange?.(value);
       }}
-      className={`relative flex w-full select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-gray-100 dark:focus:bg-gray-700 focus:text-gray-900 dark:focus:text-gray-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer ${className}`}
+      className={`relative flex w-full select-none items-center rounded-md py-3 px-3 text-base outline-none theme-text-primary hover:theme-surface-hover focus:theme-surface-hover data-[disabled]:pointer-events-none data-[disabled]:opacity-50 cursor-pointer theme-transition touch-manipulation min-h-[44px] ${className}`}
+      data-testid={testId || `select-item-${value}`}
     >
       {children}
     </div>
@@ -193,7 +205,8 @@ export const SelectItem: React.FC<SelectItemProps> = ({
 
 export const SelectValue: React.FC<SelectValueProps> = ({ 
   children, 
-  placeholder = 'Select...' 
+  placeholder = 'Select...',
+  'data-testid': testId
 }) => {
   const { value } = React.useContext(SelectContext);
 
@@ -203,14 +216,20 @@ export const SelectValue: React.FC<SelectValueProps> = ({
 
   if (value && !children) {
     return (
-      <span className="text-gray-900 dark:text-gray-100">
+      <span 
+        className="theme-text-primary"
+        data-testid={testId ? `${testId}-value` : 'select-value'}
+      >
         {value}
       </span>
     );
   }
 
   return (
-    <span className="text-gray-500 dark:text-gray-400">
+    <span 
+      className="theme-text-tertiary"
+      data-testid={testId ? `${testId}-placeholder` : 'select-placeholder'}
+    >
       {placeholder}
     </span>
   );

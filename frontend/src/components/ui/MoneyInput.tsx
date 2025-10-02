@@ -10,6 +10,8 @@ export interface MoneyInputProps
   required?: boolean;
   disabled?: boolean;
   className?: string;
+  currency?: string;
+  'data-testid'?: string;
 }
 
 const MoneyInput = forwardRef<HTMLInputElement, MoneyInputProps>(
@@ -22,6 +24,8 @@ const MoneyInput = forwardRef<HTMLInputElement, MoneyInputProps>(
     required = false,
     disabled = false,
     className,
+    currency = '$',
+    'data-testid': testId,
     ...props 
   }, ref) => {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,16 +63,24 @@ const MoneyInput = forwardRef<HTMLInputElement, MoneyInputProps>(
     };
 
     return (
-      <div className="space-y-1">
+      <div className="space-y-2" data-testid={testId ? `${testId}-container` : 'money-input-container'}>
         {label && (
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label 
+            className="block text-sm font-medium theme-text-primary"
+            data-testid={testId ? `${testId}-label` : 'money-input-label'}
+          >
             {label}
-            {required && <span className="text-red-500 ml-1">*</span>}
+            {required && <span className="text-red-500 ml-1" data-testid={testId ? `${testId}-required` : 'money-input-required'}>*</span>}
           </label>
         )}
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <span className="text-gray-500 dark:text-gray-400 text-sm">$</span>
+            <span 
+              className="theme-text-secondary text-sm font-medium"
+              data-testid={testId ? `${testId}-currency` : 'money-input-currency'}
+            >
+              {currency}
+            </span>
           </div>
           <input
             ref={ref}
@@ -79,16 +91,25 @@ const MoneyInput = forwardRef<HTMLInputElement, MoneyInputProps>(
             onBlur={handleBlur}
             placeholder={placeholder}
             disabled={disabled}
-            className={`block w-full pl-7 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white ${
+            data-testid={testId || 'money-input'}
+            className={`block w-full pl-8 pr-3 py-3 text-base theme-border border rounded-lg shadow-sm theme-bg theme-text-primary placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition ${
               error ? "border-red-500 focus:ring-red-500 focus:border-red-500" : ""
             } ${
-              disabled ? "bg-gray-100 dark:bg-gray-800 cursor-not-allowed" : ""
+              disabled ? "theme-bg-tertiary cursor-not-allowed opacity-50" : "hover:theme-border-hover"
             } ${className || ""}`}
             {...props}
           />
         </div>
         {error && (
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          <p 
+            className="text-sm text-red-600 dark:text-red-400 flex items-center gap-1"
+            data-testid={testId ? `${testId}-error` : 'money-input-error'}
+          >
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+            {error}
+          </p>
         )}
       </div>
     );
