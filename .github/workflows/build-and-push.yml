@@ -122,7 +122,7 @@ jobs:
             # Create .env file with database configuration
             cat > .env << 'ENVEOF'
           REGISTRY=${{ env.REGISTRY }}
-          IMAGE_PREFIX=${{ env.IMAGE_PREFIX }}
+          IMAGE_PREFIX=${{ secrets.DOCKER_USERNAME }}
           DB_HOST=${{ secrets.DB_HOST || '65.21.159.67' }}
           DB_PORT=${{ secrets.DB_PORT || '5432' }}
           DB_NAME=${{ secrets.DB_NAME || 'appdb' }}
@@ -133,7 +133,6 @@ jobs:
             
             # Create docker-compose.yml
             cat > docker-compose.yml << 'COMPOSEEOF'
-          version: '3.8'
 
           services:
             frontend:
