@@ -1,0 +1,17 @@
+{
+  auto_https disable_redirects
+}
+
+:80 {
+  encode zstd gzip
+  log
+
+  handle_path /api/* {
+    reverse_proxy account_service:8000
+  }
+
+  handle /* {
+    reverse_proxy frontend:80
+  }
+}
+

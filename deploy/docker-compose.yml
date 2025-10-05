@@ -1,0 +1,121 @@
+version: '3.9'
+
+services:
+  reverse-proxy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    networks:
+      - internal
+
+  frontend:
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX}/${FRONTEND_IMAGE:-frontend}:latest
+    restart: unless-stopped
+    networks:
+      - internal
+    environment:
+      - VITE_API_BASE=${VITE_API_BASE}
+
+  account_service:
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX}/account_service:latest
+    restart: unless-stopped
+    networks:
+      - internal
+    environment:
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_PORT=${DATABASE_PORT}
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_SSL_MODE=${DATABASE_SSL_MODE:-require}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+
+  category_service:
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX}/category_service:latest
+    restart: unless-stopped
+    networks:
+      - internal
+    environment: &db_env
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_PORT=${DATABASE_PORT}
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_SSL_MODE=${DATABASE_SSL_MODE:-require}
+
+  currency_service:
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX}/currency_service:latest
+    restart: unless-stopped
+    networks:
+      - internal
+    environment: *db_env
+
+  debt_service:
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX}/debt_service:latest
+    restart: unless-stopped
+    networks:
+      - internal
+    environment: *db_env
+
+  expense_service:
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX}/expense_service:latest
+    restart: unless-stopped
+    networks:
+      - internal
+    environment: *db_env
+
+  goals_service:
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX}/goals_service:latest
+    restart: unless-stopped
+    networks:
+      - internal
+    environment: *db_env
+
+  income_service:
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX}/income_service:latest
+    restart: unless-stopped
+    networks:
+      - internal
+    environment: *db_env
+
+  pdf_parser_service:
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX}/pdf_parser_service:latest
+    restart: unless-stopped
+    networks:
+      - internal
+    environment: *db_env
+
+  recurring_service:
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX}/recurring_service:latest
+    restart: unless-stopped
+    networks:
+      - internal
+    environment: *db_env
+
+  user_service:
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX}/user_service:latest
+    restart: unless-stopped
+    networks:
+      - internal
+    environment: *db_env
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  internal:
+    driver: bridge
+

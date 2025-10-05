@@ -1,0 +1,90 @@
+name: Build and Push Images
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'frontend/**'
+      - '*/app/**'
+      - '**/Dockerfile'
+      - '.github/workflows/build-and-push.yml'
+  workflow_dispatch: {}
+
+env:
+  REGISTRY: ${{ secrets.REGISTRY || 'docker.io' }}
+  IMAGE_PREFIX: ${{ secrets.IMAGE_PREFIX || github.repository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Compute tags
+        id: vars
+        run: |
+          SHA=${GITHUB_SHA::7}
+          echo "sha=$SHA" >> $GITHUB_OUTPUT
+          echo "ts=$(date +%Y%m%d%H%M%S)" >> $GITHUB_OUTPUT
+
+      - name: Build matrix metadata
+        id: matrix
+        run: |
+          # List services with Dockerfiles
+          echo "services=[\"frontend\",\"account_service\",\"category_service\",\"currency_service\",\"debt_service\",\"expense_service\",\"goals_service\",\"income_service\",\"pdf_parser_service\",\"recurring_service\",\"user_service\"]" >> $GITHUB_OUTPUT
+
+      - name: Build and push images
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 30
+          max_attempts: 2
+          command: |
+            set -euo pipefail
+            for svc in frontend account_service category_service currency_service debt_service expense_service goals_service income_service pdf_parser_service recurring_service user_service; do
+              context="${svc}"
+              # Derive dockerfile path
+              if [ "$svc" = "frontend" ]; then
+                dockerfile="frontend/Dockerfile"
+              else
+                # prefer Dockerfile, fallback to dockerfile
+                if [ -f "$svc/Dockerfile" ]; then dockerfile="$svc/Dockerfile"; else dockerfile="$svc/dockerfile"; fi
+              fi
+
+              if [ ! -f "$dockerfile" ]; then
+                echo "Skip $svc (no Dockerfile)"
+                continue
+              fi
+
+              image="${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/$svc"
+              tags="\
+                --tag $image:latest \
+                --tag $image:${{ steps.vars.outputs.sha }} \
+                --tag $image:${{ steps.vars.outputs.ts }} \
+              "
+
+              echo "Building $svc using $dockerfile -> $image"
+              docker buildx build \
+                --platform linux/amd64 \
+                -f "$dockerfile" "$context" \
+                --push $tags
+            done
+
