@@ -125,4 +125,3 @@ jobs:
           echo "Pruning old images..."
           docker image prune -f || true
 EOS
-
