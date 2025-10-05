@@ -72,7 +72,7 @@ export const CategoryDetail: React.FC = () => {
 
     try {
       const response = await category.deleteCategory(categoryData.id);
-      if ('error' in response) {
+      if (response && 'error' in response) {
         toast.error(response.error);
       } else {
         toast.success('Категория успешно удалена');

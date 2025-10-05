@@ -9,6 +9,7 @@ interface EditButtonProps {
   size?: 'sm' | 'md';
   className?: string;
   title?: string;
+  dataTestId?: string;
 }
 
 export const EditButton: React.FC<EditButtonProps> = ({
@@ -18,7 +19,8 @@ export const EditButton: React.FC<EditButtonProps> = ({
   variant = 'icon',
   size = 'md',
   className = '',
-  title = 'Редактировать'
+  title = 'Редактировать',
+  dataTestId = 'edit-button'
 }) => {
   const baseClasses = 'inline-flex items-center font-medium rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
   
@@ -40,6 +42,7 @@ export const EditButton: React.FC<EditButtonProps> = ({
       disabled={disabled || loading}
       className={classes}
       title={title}
+      data-testid={dataTestId}
     >
       {loading ? (
         <>

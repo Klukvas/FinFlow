@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { CategoryList, CreateCategory, EditCategory, CategoryStatistics } from '../components';
 import { Modal } from '../components/ui/Modal';
 import { Button } from '../components/ui/Button';
@@ -7,6 +8,7 @@ import { FaPlus } from 'react-icons/fa';
 import type { Category as CategoryType } from '@/types';
 
 export const Category = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [refreshKey, setRefreshKey] = useState(0);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -55,23 +57,24 @@ export const Category = () => {
                     </svg>
                   </div>
                   <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold theme-text-primary leading-tight">
-                    Управление категориями
+                    {t('categoryPage.title')}
                   </h1>
                 </div>
                 <p className="theme-text-secondary text-xs sm:text-sm md:text-base max-w-2xl leading-relaxed">
-                  Создавайте и управляйте категориями расходов и доходов для лучшего контроля над финансами
+                  {t('categoryPage.subtitle')}
                 </p>
               </div>
               
               <div className="flex-shrink-0">
                 <Button
+                  data-testid='create-category-button'
                   onClick={() => setIsCreateModalOpen(true)}
                   className="group relative bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-4 sm:px-6 py-3 sm:py-3 rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-center min-h-[44px] sm:min-h-[48px] text-sm sm:text-base"
                 >
                   <div className="w-4 h-4 sm:w-5 sm:h-5 group-hover:rotate-90 transition-transform duration-200">
                     <FaPlus className="w-full h-full" />
                   </div>
-                  <span>Создать категорию</span>
+                  <span>{t('categoryPage.createButton')}</span>
                 </Button>
               </div>
             </div>
@@ -90,8 +93,9 @@ export const Category = () => {
         <Modal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
-          title="Создать новую категорию"
+          title={t('categoryPage.createModalTitle')}
           size="md"
+          data-testid='category-modal'
         >
           <CreateCategory onCategoryCreated={handleCategoryCreated} />
         </Modal>
@@ -101,8 +105,9 @@ export const Category = () => {
           <Modal
             isOpen={isEditModalOpen}
             onClose={handleCancelEdit}
-            title="Редактировать категорию"
+            title={t('categoryPage.editModalTitle')}
             size="md"
+            data-testid='category-modal'
           >
             <EditCategory
               category={editingCategory}

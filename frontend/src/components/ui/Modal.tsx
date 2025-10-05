@@ -11,7 +11,7 @@ interface ModalProps {
   'data-testid'?: string;
 }
 
-export const Modal: React.FC<ModalProps> = ({
+export const Modal = React.memo<ModalProps>(({
   isOpen,
   onClose,
   title,
@@ -94,7 +94,7 @@ export const Modal: React.FC<ModalProps> = ({
                 onClick={onClose}
                 className="rounded-md p-2 theme-text-tertiary hover:theme-surface-hover hover:theme-text-primary theme-transition touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
                 aria-label="Закрыть"
-                data-testid={testId ? `${testId}-close-button` : 'modal-close-button'}
+                data-testid='modal-close-button'
               >
                 <FaTimes className="w-5 h-5" />
               </button>
@@ -112,4 +112,4 @@ export const Modal: React.FC<ModalProps> = ({
       </div>
     </div>
   );
-};
+});

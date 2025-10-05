@@ -1,12 +1,14 @@
 import { EmailInput, PasswordInput } from '../../components';
 import { Link, useNavigate } from 'react-router-dom';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAuthForm } from '../../hooks';
 import { LoginRequest } from '../../services/api/userApiClient';
 import { config } from '@/config/env';
 
 export default function Login() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { login } = useAuth();
   
@@ -24,25 +26,22 @@ export default function Login() {
     } as LoginRequest,
     onSubmit: async (data: LoginRequest) => {
       if (config.debug) {
-        console.log('Attempting login with:', data);
       }
       
       const result = await login(data.email, data.password);
       
       if (config.debug) {
-        console.log('Login result:', result);
       }
       
       if (result.success) {
         if (config.debug) {
-          console.log('Login successful, navigating to category page');
         }
         navigate('/category', { replace: true });
       } else {
         if (config.debug) {
           console.error('Login error:', result.error);
         }
-        setError(result.error || 'Ошибка при входе в систему');
+        setError(result.error || t('authPage.login.error'));
       }
     },
   });
@@ -53,10 +52,10 @@ export default function Login() {
         <div className="theme-surface theme-border border rounded-lg theme-shadow p-6 md:p-8 theme-transition">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold theme-text-primary mb-2">
-              Вход в систему
+              {t('authPage.login.title')}
             </h2>
             <p className="theme-text-secondary">
-              Войдите в свой аккаунт для продолжения
+              {t('authPage.login.subtitle')}
             </p>
           </div>
 
@@ -73,7 +72,7 @@ export default function Login() {
             />
             
             {error && error !== "Введите корректный email." && (
-              <div className="theme-error-light theme-border border rounded-lg p-4">
+              <div className="theme-error-light theme-border border rounded-lg p-4" data-testid="login-error">
                 <p className="theme-error text-sm">{error}</p>
               </div>
             )}
@@ -81,20 +80,21 @@ export default function Login() {
             <button
               type="submit"
               disabled={isLoading}
+              data-testid="submit-login-button"
               className="w-full theme-accent-bg hover:theme-accent-hover theme-text-inverse font-semibold py-3 px-4 rounded-lg theme-transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Вход...' : 'Войти'}
+              {isLoading ? t('authPage.login.loading') : t('authPage.login.submit')}
             </button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="theme-text-secondary">
-              Нет аккаунта?{' '}
+              {t('authPage.login.noAccount')}{' '}
               <Link 
                 to="/register" 
                 className="theme-accent hover:theme-accent-hover font-medium theme-transition"
               >
-                Зарегистрироваться
+                {t('authPage.login.registerLink')}
               </Link>
             </p>
           </div>

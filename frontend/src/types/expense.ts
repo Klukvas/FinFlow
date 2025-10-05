@@ -28,14 +28,11 @@ export interface ExpenseCreate {
     date?: string | null;
   }
   
-  export interface ErrorResponse {
-    error: string;
-  }
   
   export interface CreateExpenseRequest {
     amount: number;
-    category_id: number;
-    account_id?: number;
+    category_id?: number | undefined;
+    account_id?: number | undefined;
     currency?: string;
     description: string;
     date: string;

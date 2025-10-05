@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal } from './Modal';
 import { EmailInput, PasswordInput } from '../';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,6 +19,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
   onClose, 
   onSwitchToLogin 
 }) => {
+  const { t } = useTranslation();
   const { register } = useAuth();
   
   const {
@@ -35,25 +37,22 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
     } as RegisterRequest,
     onSubmit: async (data: RegisterRequest) => {
       if (config.debug) {
-        console.log('Attempting registration with:', data);
       }
       
       const result = await register(data.email, data.password, data.username);
       
       if (config.debug) {
-        console.log('Registration result:', result);
       }
       
       if (result.success) {
         if (config.debug) {
-          console.log('Registration successful, closing modal');
         }
         onClose();
       } else {
         if (config.debug) {
           console.error('Registration error:', result.error);
         }
-        setError(result.error || 'Ошибка при регистрации');
+        setError(result.error || t('auth.registerError'));
       }
     },
   });
@@ -67,18 +66,19 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
     <Modal 
       isOpen={isOpen} 
       onClose={handleClose}
-      title="Регистрация"
+      title={t('auth.registerTitle')}
       size="md"
+      data-testid="register-modal"
     >
       <div className="space-y-6">
         <p className="theme-text-secondary">
-          Создайте новый аккаунт для начала работы
+          {t('auth.registerTitle')}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <label className="block text-sm font-medium theme-text-primary">
-              Имя пользователя <span className="theme-error">*</span>
+              {t('auth.username')} <span className="theme-error">*</span>
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -87,7 +87,8 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
               <input
                 type="text"
                 name="username"
-                placeholder="Введите имя пользователя"
+                data-testid="username-input"
+                placeholder={t('auth.username')}
                 value={formData.username}
                 onChange={handleChange}
                 className="w-full pl-10 pr-3 py-2 theme-border border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition theme-bg theme-text-primary"
@@ -97,12 +98,14 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
           </div>
 
           <EmailInput 
+            data-testid="email-input"
             value={formData.email} 
             onChange={handleChange} 
             error={error === "Введите корректный email." ? error : undefined} 
           />
           
           <PasswordInput 
+            data-testid="password-input"
             value={formData.password} 
             onChange={handleChange} 
           />
@@ -116,9 +119,10 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
           <button
             type="submit"
             disabled={isLoading}
+            data-testid="submit-register-button"
             className="w-full theme-accent-bg hover:theme-accent-hover theme-text-inverse font-semibold py-3 px-4 rounded-lg theme-transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'Регистрация...' : 'Зарегистрироваться'}
+            {isLoading ? t('common.loading') : t('auth.registerButton')}
           </button>
         </form>
 
@@ -129,7 +133,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
               onClick={onSwitchToLogin}
               className="theme-accent hover:theme-accent-hover font-medium theme-transition"
             >
-              Войти
+              {t('navigation.login')}
             </button>
           </p>
         </div>

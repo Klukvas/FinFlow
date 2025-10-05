@@ -123,7 +123,7 @@ export interface GoalFormData {
   priority: GoalPriority;
   target_amount: string;
   currency: string;
-  target_date: string;
+  target_date: string | undefined;
   is_milestone_based: boolean;
 }
 

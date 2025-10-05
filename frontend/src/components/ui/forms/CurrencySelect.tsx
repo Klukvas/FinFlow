@@ -18,9 +18,7 @@ export const CurrencySelect: React.FC<CurrencySelectProps> = ({
   placeholder = 'Выберите валюту',
   showFlags = true
 }) => {
-  console.log('CurrencySelect: Rendering...');
   const { currencies, isLoading, error } = useCurrency();
-  console.log('CurrencySelect: currencies =', currencies, 'isLoading =', isLoading, 'error =', error);
 
   const defaultClassName = "w-full px-3 py-2 theme-border border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition theme-bg theme-text-primary disabled:opacity-50";
   const combinedClassName = `${defaultClassName} ${className}`;

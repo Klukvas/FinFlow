@@ -1,77 +1,28 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { FaCheck, FaCrown, FaRocket } from 'react-icons/fa';
 import { Button } from '@/components/ui/Button';
 
 export const Pricing: React.FC = () => {
-  const plans = [
-    {
-      name: 'Базовый',
-      price: '0',
-      period: 'навсегда',
-      description: 'Идеально для начала управления личными финансами',
-      icon: null,
-      features: [
-        'До 5 категорий расходов',
-        'Базовые отчеты',
-        'Мобильная версия',
-        'Поддержка по email',
-        'Синхронизация данных'
-      ],
-      limitations: [
-        'Ограниченная аналитика',
-        'Нет экспорта данных'
-      ],
-      popular: false
-    },
-    {
-      name: 'Профессиональный',
-      price: '299',
-      period: 'в месяц',
-      description: 'Для тех, кто серьезно относится к управлению финансами',
-      icon: FaRocket,
-      features: [
-        'Неограниченные категории',
-        'Расширенная аналитика',
-        'Экспорт в Excel/PDF',
-        'Повторяющиеся платежи',
-        'Приоритетная поддержка',
-        'Семейный доступ (до 4 человек)',
-        'Автоматическая категоризация',
-        'Напоминания о платежах'
-      ],
-      limitations: [],
-      popular: true
-    },
-    {
-      name: 'Корпоративный',
-      price: '999',
-      period: 'в месяц',
-      description: 'Для команд и малого бизнеса',
-      icon: FaCrown,
-      features: [
-        'Все возможности Профессионального',
-        'Неограниченные пользователи',
-        'API доступ',
-        'Интеграции с банками',
-        'Персональный менеджер',
-        'Кастомные отчеты',
-        'Белый лейбл',
-        'SLA 99.9%'
-      ],
-      limitations: [],
-      popular: false
-    }
-  ];
+  const { t } = useTranslation();
+  const plans = t('pricingPage.plans', { returnObjects: true }) as Array<{
+    name: string;
+    price: string;
+    period: string;
+    description: string;
+    features: string[];
+    limitations: string[];
+  }>;
 
   return (
     <div className="py-20 px-6">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
           <h1 className="text-4xl font-bold theme-text-primary mb-6">
-            Выберите подходящий план
+            {t('pricingPage.title')}
           </h1>
           <p className="text-xl theme-text-secondary max-w-3xl mx-auto">
-            Начните бесплатно и переходите на платные планы по мере роста ваших потребностей
+            {t('pricingPage.subtitle')}
           </p>
         </div>
 
@@ -83,10 +34,10 @@ export const Pricing: React.FC = () => {
                 plan.popular ? 'ring-2 ring-blue-500 scale-105' : ''
               }`}
             >
-              {plan.popular && (
+              {plan.name === t('pricingPage.plans.1.name') && (
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                   <span className="theme-accent-bg theme-text-inverse px-4 py-1 rounded-full text-sm font-medium">
-                    Популярный
+                    {t('pricingPage.popular')}
                   </span>
                 </div>
               )}
@@ -133,11 +84,11 @@ export const Pricing: React.FC = () => {
               </div>
 
               <Button
-                variant={plan.popular ? 'primary' : 'outline'}
+                variant={plan.name === t('pricingPage.plans.1.name') ? 'primary' : 'outline'}
                 fullWidth
                 size="lg"
               >
-                {plan.price === '0' ? 'Начать бесплатно' : 'Выбрать план'}
+                {plan.price === '0' ? t('pricingPage.ctaFree') : t('pricingPage.ctaChoose')}
               </Button>
             </div>
           ))}
@@ -145,13 +96,13 @@ export const Pricing: React.FC = () => {
 
         <div className="mt-16 text-center">
           <h2 className="text-2xl font-bold theme-text-primary mb-4">
-            Есть вопросы о тарифах?
+            {t('pricingPage.faqTitle')}
           </h2>
           <p className="theme-text-secondary mb-6">
-            Свяжитесь с нами, и мы поможем выбрать подходящий план
+            {t('pricingPage.faqSubtitle')}
           </p>
           <Button variant="outline" size="lg">
-            Связаться с нами
+            {t('pricingPage.faqCta')}
           </Button>
         </div>
       </div>

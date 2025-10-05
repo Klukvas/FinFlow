@@ -1,5 +1,3 @@
-import { PasswordInput } from "./inputs/PasswordInput";
-import { EmailInput } from "./inputs/EmailInput";
 import { DeleteButton } from "./DeleteButton";
 import { EditButton } from "./EditButton";
 import { Button } from "./Button";
@@ -11,6 +9,9 @@ import { Label } from "./Label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./Select";
 import { Textarea } from "./Textarea";
 import { DropdownMenu, DropdownMenuItem, DropdownMenuSeparator } from "./DropdownMenu";
+import { LoadingSpinner } from "./LoadingSpinner";
+import { LoadingState } from "./LoadingState";
+import { Modal } from "./Modal";
 
 export { 
   DeleteButton, 
@@ -32,5 +33,8 @@ export {
   Textarea,
   DropdownMenu,
   DropdownMenuItem,
-  DropdownMenuSeparator
+  DropdownMenuSeparator,
+  LoadingSpinner,
+  LoadingState,
+  Modal
 };

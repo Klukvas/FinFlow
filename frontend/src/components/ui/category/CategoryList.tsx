@@ -211,7 +211,8 @@ export const CategoryList: React.FC<CategoryListProps> = ({ onEditCategory, onCa
                   <tbody className="theme-surface divide-y theme-border">
                     {flattenedCategories.map((category) => (
                       <tr 
-                        key={category.id} 
+                        key={category.id}
+                        data-testid={`table-category-${category.name.toLowerCase().replace(/\s+/g, '-')}`}
                         className="hover:theme-surface-hover transition-colors duration-150 cursor-pointer group"
                         onClick={() => handleCategoryClick(category)}
                       >
@@ -222,13 +223,13 @@ export const CategoryList: React.FC<CategoryListProps> = ({ onEditCategory, onCa
                                 ? 'bg-green-500' 
                                 : 'bg-red-500'
                             }`}></div>
-                            <div className="font-medium theme-text-primary">
+                            <div data-testid='category-name' className="font-medium theme-text-primary">
                               {category.name}
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`inline-flex px-3 py-1 text-xs font-medium rounded-full ${
+                          <span data-testid='category-type' className={`inline-flex px-3 py-1 text-xs font-medium rounded-full ${
                             category.type === 'INCOME' 
                               ? 'theme-success-light theme-success' 
                               : 'theme-error-light theme-error'
@@ -237,28 +238,30 @@ export const CategoryList: React.FC<CategoryListProps> = ({ onEditCategory, onCa
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm theme-text-secondary">
+                          <div data-testid='category-parent-name' className="text-sm theme-text-secondary">
                             {category.parentName || (
                               <span className="theme-text-tertiary italic">Корневая категория</span>
                             )}
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm font-mono theme-text-secondary">
+                          <div data-testid='category-id' className="text-sm font-mono theme-text-secondary">
                             #{category.id}
                           </div>
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div 
-                            className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                            className="flex items-center justify-end gap-2 transition-opacity duration-150"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <EditButton
+                              dataTestId='category-edit-button'
                               onEdit={() => handleEdit(category)}
                               variant="icon"
                               size="sm"
                             />
                             <DeleteButton
+                              data-testid='category-delete-button'
                               onDelete={() => handleDelete(category.id)}
                               disabled={deletingId === category.id}
                               loading={deletingId === category.id}

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   FaHome,
-  FaChartBar,
   FaFolder,
   FaSignOutAlt,
   FaTimes,
@@ -24,11 +24,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const { logout, user, isLoading } = useAuth();
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const checkMobile = () => {
       const mobile = window.innerWidth < 1024;
-      console.log('Sidebar - window.innerWidth:', window.innerWidth, 'isMobile:', mobile);
       setIsMobile(mobile);
     };
     
@@ -43,21 +43,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   };
 
   const navigationItems = [
-    { path: '/category', icon: FaFolder, label: 'Категории' },
-    { path: '/account', icon: FaWallet, label: 'Аккаунты' },
-    { path: '/expense', icon: FaHome, label: 'Расходы' },
-    { path: '/income', icon: FaDollarSign, label: 'Доходы' },
-    { path: '/debts', icon: FaDollarSign, label: 'Долги' },
-    { path: '/recurring', icon: FaRedo, label: 'Повторяющиеся' },
-    { path: '/goals', icon: FaBullseye, label: 'Цели' },
-    { path: '/pdf-parser', icon: FaFilePdf, label: 'PDF Парсер' },
+    { path: '/category', icon: FaFolder, label: t('navigation.categories') },
+    { path: '/account', icon: FaWallet, label: t('navigation.accounts') },
+    { path: '/expense', icon: FaHome, label: t('navigation.expenses') },
+    { path: '/income', icon: FaDollarSign, label: t('navigation.income') },
+    { path: '/debts', icon: FaDollarSign, label: t('navigation.debts') },
+    { path: '/recurring', icon: FaRedo, label: t('navigation.recurring') },
+    { path: '/goals', icon: FaBullseye, label: t('navigation.goals') },
+    { path: '/pdf-parser', icon: FaFilePdf, label: t('navigation.pdfParser') },
   ];
 
   const sidebarContent = (
-    <div className="flex flex-col h-full theme-surface theme-shadow theme-transition">
+    <div data-testid="sidebar" className="flex flex-col h-full theme-surface theme-shadow theme-transition">
       {/* Header */}
       <div className="flex items-center justify-between p-4 theme-border border-b">
-        <h1 className="text-lg font-bold theme-text-primary">Финансовый учет</h1>
+        <h1 className="text-lg font-bold theme-text-primary">{t('header.appTitle')}</h1>
         {isMobile && (
           <button
             onClick={onClose}
@@ -78,6 +78,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             <Link
               key={item.path}
               to={item.path}
+              data-testid={`sidebar-${item.path.split('/')[1]}-link`}
               onClick={isMobile ? onClose : undefined}
               className={`flex items-center px-4 py-3 rounded-lg theme-transition ${
                 isActive
@@ -93,8 +94,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       </nav>
 
       {/* User Section */}
-      <div className="p-4 theme-border border-t">
+      <div className="p-4 theme-border border-t" data-testid="user-profile-button-sidebar">
         <Link
+          data-testid="sidebar-profile-link"
           to="/profile"
           onClick={isMobile ? onClose : undefined}
           className="flex items-center mb-4 hover:theme-surface-hover rounded-lg p-2 -m-2 theme-transition group cursor-pointer"
@@ -104,21 +106,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             <FaUser className="w-4 h-4 theme-accent" />
           </div>
           <div className="ml-3">
-            <p className="text-sm font-medium theme-text-primary group-hover:theme-text-secondary">
-              {isLoading ? 'Загрузка...' : user?.username || 'Пользователь'}
+            <p className="text-sm font-medium theme-text-primary group-hover:theme-text-secondary" data-testid="user-name">
+              {isLoading ? t('common.loading') : user?.username || t('header.user')}
             </p>
-            <p className="text-xs theme-text-tertiary">
-              {user?.email || 'Аккаунт'}
+            <p className="text-xs theme-text-tertiary" data-testid="user-email">
+              {user?.email || t('navigation.profile')}
             </p>
           </div>
         </Link>
         
         <button
+          data-testid="logout-button"
           onClick={handleLogout}
           className="w-full flex items-center px-4 py-2 text-sm theme-error hover:theme-error-light rounded-lg theme-transition"
         >
           <FaSignOutAlt className="w-4 h-4 mr-3" />
-          Выйти
+          {t('navigation.logout')}
         </button>
       </div>
     </div>

@@ -72,14 +72,11 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({ onTransactionsParsed, 
 
       const response = await pdfParser.parsePDF(file, bankType);
       
-      console.log('Upload response:', response);
       
       if ('error' in response) {
         console.error('Upload error:', response.error);
         setError(response.error);
       } else {
-        console.log('Parsing successful, transactions:', response.transactions);
-        console.log('Calling onTransactionsParsed with', response.transactions.length, 'transactions');
         onTransactionsParsed(response.transactions);
         onClose();
       }

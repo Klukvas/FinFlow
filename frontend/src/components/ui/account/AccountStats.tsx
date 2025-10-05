@@ -9,7 +9,6 @@ interface AccountStatsProps {
 
 export const AccountStats: React.FC<AccountStatsProps> = ({ summaries }) => {
   const totalBalance = summaries.reduce((sum, account) => sum + account.balance, 0);
-  const totalTransactions = summaries.reduce((sum, account) => sum + account.transaction_count, 0);
   const activeAccounts = summaries.filter(account => account.balance > 0).length;
 
   const formatCurrency = (amount: number, currency: string = 'RUB') => {

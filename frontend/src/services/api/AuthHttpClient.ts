@@ -27,8 +27,8 @@ export class AuthHttpClient {
     const url = `${this.baseUrl}${endpoint}`;
     const token = this.getToken();
 
-    const headers: HeadersInit = {
-      ...options.headers,
+    const headers: Record<string, string> = {
+      ...(options.headers as Record<string, string>),
     };
 
     // Only set Content-Type for JSON data, not for FormData
@@ -63,6 +63,12 @@ export class AuthHttpClient {
               headers,
             });
           }
+        } else {
+          // If refresh failed, throw a user-friendly error
+          throw {
+            error: 'Сессия истекла. Пожалуйста, войдите в систему заново.',
+            status: 401
+          };
         }
       }
 
@@ -96,21 +102,21 @@ export class AuthHttpClient {
   async post<T>(endpoint: string, data?: any): Promise<T | ApiError> {
     return this.makeRequest<T>(endpoint, {
       method: 'POST',
-      body: data ? (data instanceof FormData ? data : JSON.stringify(data)) : undefined,
+      body: data ? (data instanceof FormData ? data : JSON.stringify(data)) : null,
     });
   }
 
   async put<T>(endpoint: string, data?: any): Promise<T | ApiError> {
     return this.makeRequest<T>(endpoint, {
       method: 'PUT',
-      body: data ? JSON.stringify(data) : undefined,
+      body: data ? JSON.stringify(data) : null,
     });
   }
 
   async patch<T>(endpoint: string, data?: any): Promise<T | ApiError> {
     return this.makeRequest<T>(endpoint, {
       method: 'PATCH',
-      body: data ? JSON.stringify(data) : undefined,
+      body: data ? JSON.stringify(data) : null,
     });
   }
 

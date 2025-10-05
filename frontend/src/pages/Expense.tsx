@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CreateExpense } from '../components/ui/expense/createExpense';
 import { ExpenseList } from '../components/ui/expense/expenseList';
 import { ExpenseDashboard } from '../components/ui/expense/ExpenseDashboard';
@@ -8,6 +9,7 @@ import { Tabs } from '../components/ui/Tabs';
 import { FaPlus, FaTable, FaChartBar } from 'react-icons/fa';
 
 export const Expense = () => {
+  const { t } = useTranslation();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('table');
@@ -15,12 +17,12 @@ export const Expense = () => {
   const tabs = [
     {
       id: 'table',
-      label: 'Таблица расходов',
+      label: t('expensePage.tabs.table'),
       icon: <FaTable className="w-4 h-4" />
     },
     {
       id: 'dashboard',
-      label: 'Аналитика',
+      label: t('expensePage.tabs.dashboard'),
       icon: <FaChartBar className="w-4 h-4" />
     }
   ];
@@ -46,11 +48,11 @@ export const Expense = () => {
                     </svg>
                   </div>
                   <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold theme-text-primary leading-tight">
-                    Управление расходами
+                    {t('expensePage.title')}
                   </h1>
                 </div>
                 <p className="theme-text-secondary text-xs sm:text-sm md:text-base max-w-2xl leading-relaxed">
-                  Добавляйте и отслеживайте ваши расходы для лучшего контроля над бюджетом
+                  {t('expensePage.subtitle')}
                 </p>
               </div>
               
@@ -62,7 +64,7 @@ export const Expense = () => {
                   <div className="w-4 h-4 sm:w-5 sm:h-5 group-hover:rotate-90 transition-transform duration-200">
                     <FaPlus className="w-full h-full" />
                   </div>
-                  <span>Добавить расход</span>
+                  <span>{t('expensePage.addButton')}</span>
                 </Button>
               </div>
             </div>
@@ -96,7 +98,7 @@ export const Expense = () => {
         <Modal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
-          title="Добавить новый расход"
+          title={t('expensePage.createModalTitle')}
           size="lg"
         >
           <CreateExpense onExpenseCreated={handleExpenseCreated} />

@@ -39,7 +39,7 @@ export class CurrencyHttpClient {
   async post<T>(endpoint: string, data?: any): Promise<T> {
     return this.makeRequest<T>(endpoint, {
       method: 'POST',
-      body: data ? JSON.stringify(data) : undefined,
+      body: data ? JSON.stringify(data) : null,
     });
   }
 }

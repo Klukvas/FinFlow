@@ -1,34 +1,36 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FaGithub, FaLinkedin, FaTwitter, FaEnvelope } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
 
 export const PublicFooter: React.FC = () => {
+  const { t } = useTranslation();
   const currentYear = new Date().getFullYear();
 
   const footerLinks = {
     product: [
-      { label: 'Возможности', href: '/features' },
-      { label: 'Тарифы', href: '/pricing' },
-      { label: 'API', href: '/api' },
-      { label: 'Интеграции', href: '/integrations' },
+      { label: t('footer.links.product.features'), href: '/features' },
+      { label: t('footer.links.product.pricing'), href: '/pricing' },
+      { label: t('footer.links.product.api'), href: '/api' },
+      { label: t('footer.links.product.integrations'), href: '/integrations' },
     ],
     company: [
-      { label: 'О нас', href: '/about' },
-      { label: 'Блог', href: '/blog' },
-      { label: 'Карьера', href: '/careers' },
-      { label: 'Контакты', href: '/contact' },
+      { label: t('footer.links.company.about'), href: '/about' },
+      { label: t('footer.links.company.blog'), href: '/blog' },
+      { label: t('footer.links.company.careers'), href: '/careers' },
+      { label: t('footer.links.company.contact'), href: '/contact' },
     ],
     support: [
-      { label: 'Помощь', href: '/help' },
-      { label: 'Документация', href: '/docs' },
-      { label: 'Статус', href: '/status' },
-      { label: 'Сообщество', href: '/community' },
+      { label: t('footer.links.support.help'), href: '/help' },
+      { label: t('footer.links.support.docs'), href: '/docs' },
+      { label: t('footer.links.support.status'), href: '/status' },
+      { label: t('footer.links.support.community'), href: '/community' },
     ],
     legal: [
-      { label: 'Политика конфиденциальности', href: '/privacy' },
-      { label: 'Условия использования', href: '/terms' },
-      { label: 'Cookie', href: '/cookies' },
-      { label: 'GDPR', href: '/gdpr' },
+      { label: t('footer.links.legal.privacy'), href: '/privacy' },
+      { label: t('footer.links.legal.terms'), href: '/terms' },
+      { label: t('footer.links.legal.cookies'), href: '/cookies' },
+      { label: t('footer.links.legal.gdpr'), href: '/gdpr' },
     ],
   };
 
@@ -46,11 +48,10 @@ export const PublicFooter: React.FC = () => {
           {/* Brand Section */}
           <div className="lg:col-span-1">
             <h3 className="text-lg font-bold theme-text-primary mb-4">
-              Финансовый учет
+              {t('footer.brand.title')}
             </h3>
             <p className="theme-text-secondary text-sm mb-4">
-              Простое и эффективное управление личными финансами. 
-              Отслеживайте доходы, расходы и планируйте бюджет.
+              {t('footer.brand.description')}
             </p>
             <div className="flex space-x-4">
               {socialLinks.map((social) => {
@@ -73,7 +74,7 @@ export const PublicFooter: React.FC = () => {
 
           {/* Product Links */}
           <div>
-            <h4 className="font-semibold theme-text-primary mb-4">Продукт</h4>
+            <h4 className="font-semibold theme-text-primary mb-4">{t('footer.sections.product')}</h4>
             <ul className="space-y-2">
               {footerLinks.product.map((link) => (
                 <li key={link.label}>
@@ -90,7 +91,7 @@ export const PublicFooter: React.FC = () => {
 
           {/* Company Links */}
           <div>
-            <h4 className="font-semibold theme-text-primary mb-4">Компания</h4>
+            <h4 className="font-semibold theme-text-primary mb-4">{t('footer.sections.company')}</h4>
             <ul className="space-y-2">
               {footerLinks.company.map((link) => (
                 <li key={link.label}>
@@ -107,7 +108,7 @@ export const PublicFooter: React.FC = () => {
 
           {/* Support Links */}
           <div>
-            <h4 className="font-semibold theme-text-primary mb-4">Поддержка</h4>
+            <h4 className="font-semibold theme-text-primary mb-4">{t('footer.sections.support')}</h4>
             <ul className="space-y-2">
               {footerLinks.support.map((link) => (
                 <li key={link.label}>
@@ -124,7 +125,7 @@ export const PublicFooter: React.FC = () => {
 
           {/* Legal Links */}
           <div>
-            <h4 className="font-semibold theme-text-primary mb-4">Правовая информация</h4>
+            <h4 className="font-semibold theme-text-primary mb-4">{t('footer.sections.legal')}</h4>
             <ul className="space-y-2">
               {footerLinks.legal.map((link) => (
                 <li key={link.label}>
@@ -144,11 +145,11 @@ export const PublicFooter: React.FC = () => {
         <div className="mt-8 pt-8 theme-border border-t">
           <div className="flex flex-col lg:flex-row justify-between items-center">
             <p className="theme-text-tertiary text-sm">
-              &copy; {currentYear} Финансовый учет. Все права защищены.
+              {t('footer.bottom.copyright', { year: currentYear })}
             </p>
             <div className="mt-4 lg:mt-0">
               <p className="theme-text-tertiary text-sm">
-                Сделано с ❤️ для управления финансами
+                {t('footer.bottom.madeWith')}
               </p>
             </div>
           </div>

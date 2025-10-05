@@ -1,3 +1,5 @@
-import { validateEmail } from './validateEmail'
+import { validateEmail } from './validateEmail';
+import { ErrorHandler } from './errorHandler';
+import { FormErrorHandler } from './formErrorHandler';
 
-export { validateEmail }
+export { validateEmail, ErrorHandler, FormErrorHandler };

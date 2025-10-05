@@ -52,7 +52,6 @@ export const DebtForm: React.FC<DebtFormProps> = ({
   const { actualTheme } = useTheme();
   
   // Debug: log contacts data
-  console.log('🔧 DebtForm - contacts:', contacts);
   
   const [formData, setFormData] = useState<DebtCreate>({
     name: initialData.name || '',
@@ -68,7 +67,6 @@ export const DebtForm: React.FC<DebtFormProps> = ({
   });
 
   // Debug: log formData after initialization
-  console.log('🔧 DebtForm - formData.contact_id:', formData.contact_id);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -112,13 +110,11 @@ export const DebtForm: React.FC<DebtFormProps> = ({
         minimum_payment: formData.minimum_payment || null,
         due_date: formData.due_date || null,
       };
-      console.log('🔧 DebtForm - Submitting cleaned form data:', cleanedFormData);
       onSubmit(cleanedFormData);
     }
   };
 
   const handleInputChange = (field: keyof DebtCreate, value: any) => {
-    console.log(`🔧 DebtForm - handleInputChange: ${field} = ${value}`);
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field]) {
@@ -428,7 +424,6 @@ export const DebtForm: React.FC<DebtFormProps> = ({
                   <Select
                     value={formData.contact_id?.toString() || ''}
                     onValueChange={(value: string) => {
-                      console.log('🔧 DebtForm - Select onValueChange called with:', value);
                       handleInputChange('contact_id', value ? parseInt(value) : null);
                     }}
                   >

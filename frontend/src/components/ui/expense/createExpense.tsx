@@ -17,7 +17,7 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
         category_id: 0,
         description: '',
         date: new Date().toISOString().split('T')[0] as string,
-        account_id: null,
+        account_id: undefined,
         currency: 'USD',
     });
     const [categories, setCategories] = useState<Category[]>([]);
@@ -75,7 +75,7 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
         const { name, value } = e.target;
         const parsedValue =
             name === 'category_id' ? (value === '' ? 0 : parseInt(value, 10)) :
-            name === 'account_id' ? (value === '' ? null : parseInt(value, 10)) :
+            name === 'account_id' ? (value === '' ? undefined : parseInt(value, 10)) :
             value;
 
         setFormData(prev => ({
@@ -109,7 +109,7 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
             
             // Убираем category_id если категория не выбрана (значение 0 или пустая строка)
             if (!expenseData.category_id || expenseData.category_id === 0) {
-                delete expenseData.category_id;
+                expenseData.category_id = undefined;
             }
             
             const response = await expense.createExpense(expenseData);
@@ -121,7 +121,7 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                     category_id: 0,
                     description: '',
                     date: new Date().toISOString().split('T')[0] as string,
-                    account_id: null,
+                    account_id: undefined,
                     currency: 'USD',
                 });
                 onExpenseCreated();

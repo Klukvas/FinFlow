@@ -60,7 +60,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
         
         if (config.debug) {
-          console.log('Token refreshed successfully');
+          // Token refreshed successfully
         }
         
         return true;
@@ -97,14 +97,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(false);
   }, []);
 
-  // Fetch user profile when token changes
-  useEffect(() => {
-    if (token) {
-      fetchUserProfile();
-    } else {
-      setUser(null);
+  const logout = useCallback(() => {
+    setUser(null);
+    setToken(null);
+    setRefreshToken(null);
+    
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    
+    if (config.debug) {
+      // Logged out successfully
     }
-  }, [token]);
+  }, []);
 
   const fetchUserProfile = useCallback(async () => {
     if (!token) return;
@@ -129,7 +133,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error('Error fetching user profile:', error);
       logout();
     }
-  }, [token, refreshToken, userApi]);
+  }, [token, refreshToken, userApi, refreshAccessToken, logout]);
+
+  // Fetch user profile when token changes
+  useEffect(() => {
+    if (token) {
+      fetchUserProfile();
+    } else {
+      setUser(null);
+    }
+  }, [token, fetchUserProfile]);
 
   const login = useCallback(async (email: string, password: string) => {
     try {
@@ -148,7 +161,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.setItem('refresh_token', refresh_token);
       
       if (config.debug) {
-        console.log('Login successful');
+        // Login successful
       }
       
       return { success: true };
@@ -175,7 +188,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.setItem('refresh_token', refresh_token);
       
       if (config.debug) {
-        console.log('Registration successful');
+        // Registration successful
       }
       
       return { success: true };
@@ -184,19 +197,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return { success: false, error: 'Ошибка при регистрации' };
     }
   }, [userApi]);
-
-  const logout = useCallback(() => {
-    setUser(null);
-    setToken(null);
-    setRefreshToken(null);
-    
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    
-    if (config.debug) {
-      console.log('Logged out successfully');
-    }
-  }, []);
 
   // Set up automatic token refresh
   useEffect(() => {

@@ -23,7 +23,7 @@ export const GoalForm: React.FC<GoalFormProps> = ({
     priority: 'MEDIUM',
     target_amount: '',
     currency: 'USD',
-    target_date: '',
+    target_date: undefined,
     is_milestone_based: false
   });
 
@@ -38,7 +38,7 @@ export const GoalForm: React.FC<GoalFormProps> = ({
         priority: goal.priority,
         target_amount: goal.target_amount.toString(),
         currency: goal.currency || 'USD',
-        target_date: goal.target_date ? new Date(goal.target_date).toISOString().split('T')[0] : '' as string,
+        target_date: goal.target_date ? new Date(goal.target_date).toISOString().split('T')[0] : undefined,
         is_milestone_based: goal.is_milestone_based
       });
     }

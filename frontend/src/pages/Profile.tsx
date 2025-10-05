@@ -67,7 +67,6 @@ export const Profile = () => {
       }
 
       if (config.debug) {
-        console.log('Updating profile with:', updateData);
       }
 
       const response = await userApi.updateProfile(updateData);

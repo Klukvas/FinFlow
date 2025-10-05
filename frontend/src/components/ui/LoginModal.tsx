@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal } from './Modal';
 import { EmailInput, PasswordInput } from '../';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,6 +18,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   onClose, 
   onSwitchToRegister 
 }) => {
+  const { t } = useTranslation();
   const { login } = useAuth();
   
   const {
@@ -33,25 +35,22 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     } as LoginRequest,
     onSubmit: async (data: LoginRequest) => {
       if (config.debug) {
-        console.log('Attempting login with:', data);
       }
       
       const result = await login(data.email, data.password);
       
       if (config.debug) {
-        console.log('Login result:', result);
       }
       
       if (result.success) {
         if (config.debug) {
-          console.log('Login successful, closing modal');
         }
         onClose();
       } else {
         if (config.debug) {
           console.error('Login error:', result.error);
         }
-        setError(result.error || 'Ошибка при входе в систему');
+        setError(result.error || t('auth.loginError'));
       }
     },
   });
@@ -65,12 +64,13 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     <Modal 
       isOpen={isOpen} 
       onClose={handleClose}
-      title="Вход в систему"
+      title={t('auth.loginTitle')}
       size="md"
+      data-testid="login-modal"
     >
       <div className="space-y-6">
         <p className="theme-text-secondary">
-          Войдите в свой аккаунт для продолжения
+          {t('auth.loginTitle')}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -86,7 +86,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           />
           
           {error && error !== "Введите корректный email." && (
-            <div className="theme-error-light theme-border border rounded-lg p-4">
+            <div className="theme-error-light theme-border border rounded-lg p-4" data-testid="login-error">
               <p className="theme-error text-sm">{error}</p>
             </div>
           )}
@@ -94,9 +94,10 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           <button
             type="submit"
             disabled={isLoading}
+            data-testid="submit-login-button"
             className="w-full theme-accent-bg hover:theme-accent-hover theme-text-inverse font-semibold py-3 px-4 rounded-lg theme-transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'Вход...' : 'Войти'}
+            {isLoading ? t('common.loading') : t('auth.loginButton')}
           </button>
         </form>
 
@@ -104,10 +105,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           <p className="theme-text-secondary">
             Нет аккаунта?{' '}
             <button
+              data-testid="switch-to-register"
               onClick={onSwitchToRegister}
               className="theme-accent hover:theme-accent-hover font-medium theme-transition"
             >
-              Зарегистрироваться
+              {t('navigation.register')}
             </button>
           </p>
         </div>

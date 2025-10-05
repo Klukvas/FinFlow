@@ -27,12 +27,9 @@ export const PdfParser: React.FC = () => {
       setError(null);
       setSuccess(null);
 
-      console.log('PdfParser: handleTransactionsValidated called with', validatedTransactions.length, 'transactions');
-      console.log('PdfParser: All transactions:', validatedTransactions);
 
       const validTransactions = validatedTransactions.filter(txn => txn.is_valid);
       
-      console.log('PdfParser: Valid transactions:', validTransactions.length, validTransactions);
       
       if (validTransactions.length === 0) {
         setError('No valid transactions to create');
@@ -43,12 +40,10 @@ export const PdfParser: React.FC = () => {
       let expenseCount = 0;
       const errors: string[] = [];
 
-      console.log('PdfParser: Starting to create', validTransactions.length, 'transactions');
 
       // Create transactions in parallel
       const createPromises = validTransactions.map(async (transaction, index) => {
         try {
-          console.log(`PdfParser: Creating transaction ${index + 1}/${validTransactions.length}:`, transaction);
           
           if (transaction.transaction_type === 'income') {
             const incomeData = {
@@ -57,18 +52,15 @@ export const PdfParser: React.FC = () => {
               date: transaction.transaction_date,
               ...(transaction.category_id && { category_id: transaction.category_id })
             };
-            console.log('PdfParser: Creating income with data:', incomeData);
             const response = await income.createIncome(incomeData);
-            console.log('PdfParser: Income creation response:', response);
             
             if ('error' in response) {
               console.error('PdfParser: Income creation failed:', response.error);
               errors.push(`Income creation failed: ${response.error}`);
             } else {
-              console.log('PdfParser: Income created successfully');
               incomeCount++;
             }
-          } else if (transaction.transaction_type === 'debt') {
+          } else if (transaction.transaction_type === 'expense' && transaction.description?.toLowerCase().includes('debt')) {
             // For debt transactions, create a debt payment
             if (!transaction.category_id) {
               console.warn('PdfParser: Skipping debt transaction without category_id');
@@ -77,7 +69,6 @@ export const PdfParser: React.FC = () => {
               // First, try to find an existing debt with this description or create a default debt
               // For now, we'll create a debt payment without a specific debt ID
               // This is a simplified approach - in a real app, you'd want to match or create debts
-              console.log('PdfParser: Debt transactions not yet fully implemented - treating as expense');
               
               const expenseData = {
                 amount: transaction.amount,
@@ -85,15 +76,12 @@ export const PdfParser: React.FC = () => {
                 date: transaction.transaction_date,
                 category_id: transaction.category_id
               };
-              console.log('PdfParser: Creating debt expense with data:', expenseData);
               const response = await expense.createExpense(expenseData);
-              console.log('PdfParser: Debt expense creation response:', response);
               
               if ('error' in response) {
                 console.error('PdfParser: Debt expense creation failed:', response.error);
                 errors.push(`Debt expense creation failed: ${response.error}`);
               } else {
-                console.log('PdfParser: Debt expense created successfully');
                 expenseCount++;
               }
             }
@@ -105,15 +93,12 @@ export const PdfParser: React.FC = () => {
               date: transaction.transaction_date,
               ...(transaction.category_id && { category_id: transaction.category_id })
             };
-            console.log('PdfParser: Creating expense with data:', expenseData);
             const response = await expense.createExpense(expenseData);
-            console.log('PdfParser: Expense creation response:', response);
             
             if ('error' in response) {
               console.error('PdfParser: Expense creation failed:', response.error);
               errors.push(`Expense creation failed: ${response.error}`);
             } else {
-              console.log('PdfParser: Expense created successfully');
               expenseCount++;
             }
           }
@@ -123,14 +108,7 @@ export const PdfParser: React.FC = () => {
         }
       });
 
-      console.log('PdfParser: Waiting for all promises to complete...');
       await Promise.all(createPromises);
-
-      console.log('PdfParser: All promises completed. Results:', {
-        incomeCount,
-        expenseCount,
-        errors: errors.length
-      });
 
       if (errors.length > 0) {
         console.error('PdfParser: Errors occurred:', errors);

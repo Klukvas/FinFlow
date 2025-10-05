@@ -69,7 +69,6 @@ export const Debts: React.FC = () => {
       }
       if (!('error' in contactsResult)) {
         setContacts(contactsResult);
-        console.log('Contacts loaded:', contactsResult);
       } else {
         console.error('Error loading contacts:', contactsResult);
       }

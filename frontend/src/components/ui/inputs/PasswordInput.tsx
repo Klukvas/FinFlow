@@ -23,7 +23,7 @@ export const PasswordInput: React.FC<PasswordInputProps> = ({
   return (
     <FormField
       label={label}
-      error={error}
+      error={error || undefined}
       required={required}
       className="mb-4"
     >
@@ -37,10 +37,12 @@ export const PasswordInput: React.FC<PasswordInputProps> = ({
           error={!!error}
           icon={<FaLock className="w-4 h-4 text-gray-400" />}
           required={required}
+          data-testid="password-input"
         />
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
+          data-testid="password-toggle"
           className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
         >
           {showPassword ? (

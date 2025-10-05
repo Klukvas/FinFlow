@@ -30,7 +30,6 @@ export const ContactCard: React.FC<ContactCardProps> = ({
   debtsCount = 0,
   totalDebtAmount = 0,
   onEdit,
-  onDelete,
   onViewDebts
 }) => {
   const { actualTheme } = useTheme();
@@ -214,7 +213,7 @@ export const ContactCard: React.FC<ContactCardProps> = ({
           {debtsCount > 0 && (
             <Button
               size="sm"
-              variant="default"
+              variant="secondary"
               onClick={() => onViewDebts?.(contact.id)}
               className="flex-1 min-w-[120px]"
             >

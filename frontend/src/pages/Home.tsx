@@ -1,165 +1,160 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { FaChartBar, FaShieldAlt, FaMobile, FaClock, FaUsers, FaCog } from 'react-icons/fa';
+import { FaDollarSign, FaChartPie, FaArrowUp } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { useModal } from '@/contexts/ModalContext';
+import { BackgroundCanvas } from '@/components/ui/BackgroundCanvas';
 
 export const Home: React.FC = () => {
+  const { t } = useTranslation();
   const { openLoginModal, openRegisterModal } = useModal();
-  
-  const features = [
-    {
-      icon: FaChartBar,
-      title: 'Аналитика и отчеты',
-      description: 'Детальная аналитика ваших финансов с красивыми графиками и диаграммами'
-    },
-    {
-      icon: FaShieldAlt,
-      title: 'Безопасность',
-      description: 'Ваши данные защищены современными методами шифрования'
-    },
-    {
-      icon: FaMobile,
-      title: 'Мобильная версия',
-      description: 'Управляйте финансами с любого устройства, где бы вы ни находились'
-    },
-    {
-      icon: FaClock,
-      title: 'Автоматизация',
-      description: 'Настройте повторяющиеся платежи и получайте уведомления'
-    },
-    {
-      icon: FaUsers,
-      title: 'Семейный учет',
-      description: 'Ведите совместный учет с членами семьи'
-    },
-    {
-      icon: FaCog,
-      title: 'Настройки',
-      description: 'Персонализируйте приложение под свои потребности'
-    }
-  ];
-
-  const stats = [
-    { number: '10,000+', label: 'Активных пользователей' },
-    { number: '50М$+', label: 'Управляемых средств' },
-  ];
 
   return (
-    <div className="theme-bg theme-transition">
+    <div className="gradient-nebula min-h-screen relative">
+      {/* Animated Background Layers */}
+      <BackgroundCanvas />
+      
+      {/* Light Trails */}
+      <div className="light-trail" style={{ top: '20%', width: '100vw' }} />
+      <div className="light-trail" style={{ top: '60%', width: '100vw' }} />
+      <div className="light-trail" style={{ top: '40%', width: '100vw' }} />
+      
+      {/* Content Layer */}
+      <div className="relative z-30">
       {/* Hero Section */}
-      <section className="relative py-20 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center">
-            <h1 className="text-4xl lg:text-6xl font-bold theme-text-primary mb-6">
-              Управляйте финансами
-              <span className="block theme-accent">просто и эффективно</span>
-            </h1>
-            <p className="text-xl theme-text-secondary mb-8 max-w-3xl mx-auto">
-              Современное приложение для учета доходов и расходов. 
-              Отслеживайте бюджет, планируйте покупки и достигайте финансовых целей.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
-                size="lg" 
-                className="w-full sm:w-auto"
-                onClick={openRegisterModal}
-              >
-                Начать бесплатно
-              </Button>
-              <Button 
-                variant="outline" 
-                size="lg" 
-                className="w-full sm:w-auto"
-                onClick={openLoginModal}
-              >
-                Войти в систему
-              </Button>
-            </div>
-          </div>
+      <section className="relative py-32 px-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <h1 className="text-5xl lg:text-7xl font-bold theme-text-primary mb-8 geometric-text">
+            {t('homepage.hero.title')}
+          </h1>
+          <p className="text-xl lg:text-2xl theme-text-secondary mb-12 max-w-2xl mx-auto leading-relaxed">
+            {t('homepage.hero.subtitle')}
+          </p>
+          <Button 
+            size="lg" 
+            className="futuristic-button px-12 py-4 text-lg neon-glow-hover"
+            onClick={openRegisterModal}
+          >
+            {t('homepage.hero.cta')}
+          </Button>
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-16 theme-bg-secondary">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="text-3xl lg:text-4xl font-bold theme-accent mb-2">
-                  {stat.number}
-                </div>
-                <div className="theme-text-secondary">
-                  {stat.label}
-                </div>
+      {/* Trust Bar */}
+      <section className="px-6 pb-12">
+        <div className="max-w-6xl mx-auto shimmer gold-gradient-edge rounded-xl py-6">
+          <p className="text-center theme-text-secondary mb-6">
+            {t('homepage.trustBar.text')} <span className="gold-text font-semibold">{t('homepage.trustBar.users')}</span> {t('homepage.trustBar.and')}
+          </p>
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-6 items-center justify-items-center px-4">
+            {['BankOne','SafePay','LedgerX','BlockMint','AuditPro','Vaultly'].map((name) => (
+              <div key={name} className="w-28 h-10 flex items-center justify-center logo-muted rounded">
+                <span className="text-sm theme-text-primary opacity-80">{name}</span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Key Metrics Cards */}
       <section className="py-20 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold theme-text-primary mb-4">
-              Почему выбирают нас
-            </h2>
-            <p className="text-xl theme-text-secondary max-w-2xl mx-auto">
-              Все необходимые инструменты для управления личными финансами в одном месте
-            </p>
-          </div>
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Expenses Card */}
+            <div className="futuristic-card p-8 text-center gold-glow gold-border border">
+              <div className="flex items-center justify-center mb-4 icon-draw">
+                <FaDollarSign className="text-3xl gold-text" />
+              </div>
+              <div className="text-3xl font-bold theme-text-primary mb-2">{t('homepage.metrics.expenses.amount')}</div>
+              <div className="text-sm theme-text-secondary">{t('homepage.metrics.expenses.period')}</div>
+              <div className="text-xs theme-text-tertiary mt-2">{t('homepage.metrics.expenses.label')}</div>
+            </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {features.map((feature, index) => {
-              const Icon = feature.icon;
-              return (
-                <div
-                  key={index}
-                  className="theme-surface theme-border border rounded-lg p-6 theme-shadow hover:theme-shadow-hover theme-transition"
-                >
-                  <div className="theme-accent-bg w-12 h-12 rounded-lg flex items-center justify-center mb-4">
-                    <Icon className="w-6 h-6 theme-text-inverse" />
-                  </div>
-                  <h3 className="text-xl font-semibold theme-text-primary mb-3">
-                    {feature.title}
-                  </h3>
-                  <p className="theme-text-secondary">
-                    {feature.description}
-                  </p>
+            {/* Budget Overview Card with Circular Progress */}
+            <div className="futuristic-card p-8 text-center gold-glow gold-border border">
+              <div className="flex items-center justify-center mb-4">
+                <div className="circular-progress">
+                  <div className="circular-progress-text">{t('homepage.metrics.budget.percentage')}</div>
                 </div>
-              );
-            })}
+              </div>
+              <div className="text-lg font-semibold theme-text-primary mb-1">{t('homepage.metrics.budget.amount')}</div>
+              <div className="text-sm theme-text-secondary">{t('homepage.metrics.budget.label')}</div>
+            </div>
+
+            {/* Income Card */}
+            <div className="futuristic-card p-8 text-center gold-glow gold-border border">
+              <div className="flex items-center justify-center mb-4 icon-draw">
+                <FaArrowUp className="text-3xl gold-text" />
+              </div>
+              <div className="text-3xl font-bold theme-text-primary mb-2">{t('homepage.metrics.income.amount')}</div>
+              <div className="text-sm theme-text-secondary">{t('homepage.metrics.income.period')}</div>
+              <div className="text-xs theme-text-tertiary mt-2">{t('homepage.metrics.income.label')}</div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 theme-accent-bg">
-        <div className="max-w-4xl mx-auto text-center px-6">
-          <h2 className="text-3xl lg:text-4xl font-bold theme-text-inverse mb-6">
-            Готовы начать управлять финансами?
-          </h2>
-          <p className="text-xl theme-text-inverse opacity-90 mb-8">
-            Присоединяйтесь к тысячам пользователей, которые уже контролируют свои деньги
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              size="lg" 
-              variant="secondary" 
-              className="w-full sm:w-auto"
-              onClick={openRegisterModal}
-            >
-              Создать аккаунт
-            </Button>
-            <Link to="/features">
-              <Button variant="outline" size="lg" className="w-full sm:w-auto theme-text-inverse border-white hover:bg-white hover:theme-text-primary">
-                Узнать больше
-              </Button>
-            </Link>
+      {/* Core Benefits */}
+      <section className="py-12 px-6">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="futuristic-card gold-border border p-8 text-center gold-glow-hover">
+            <div className="mb-4 icon-draw">
+              <FaChartPie className="text-3xl gold-text" />
+            </div>
+            <h3 className="text-xl font-semibold theme-text-primary mb-2 fade-up">{t('homepage.benefits.clarity.title')}</h3>
+            <p className="theme-text-secondary fade-up delay-100">{t('homepage.benefits.clarity.subtitle')}</p>
+            <p className="theme-text-tertiary fade-up delay-200">{t('homepage.benefits.clarity.description')}</p>
+          </div>
+          <div className="futuristic-card gold-border border p-8 text-center gold-glow-hover">
+            <div className="mb-4 icon-draw">
+              <span className="text-3xl gold-text">⫶≡</span>
+            </div>
+            <h3 className="text-xl font-semibold theme-text-primary mb-2 fade-up">{t('homepage.benefits.control.title')}</h3>
+            <p className="theme-text-secondary fade-up delay-100">{t('homepage.benefits.control.subtitle')}</p>
+            <p className="theme-text-tertiary fade-up delay-200">{t('homepage.benefits.control.description')}</p>
+          </div>
+          <div className="futuristic-card gold-border border p-8 text-center gold-glow-hover">
+            <div className="mb-4 icon-draw">
+              <span className="text-3xl gold-text">⚡</span>
+            </div>
+            <h3 className="text-xl font-semibold theme-text-primary mb-2 fade-up">{t('homepage.benefits.automation.title')}</h3>
+            <p className="theme-text-secondary fade-up delay-100">{t('homepage.benefits.automation.subtitle')}</p>
+            <p className="theme-text-tertiary fade-up delay-200">{t('homepage.benefits.automation.description')}</p>
           </div>
         </div>
       </section>
+
+      {/* Testimonials */}
+      <section className="py-16 px-6">
+        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="testimonial-card p-8">
+            <div className="text-4xl quote-accent mb-4">"</div>
+            <p className="theme-text-primary text-lg mb-4">{t('homepage.testimonials.elena.quote')}</p>
+            <div className="flex items-center gap-3 theme-text-secondary">
+              <div className="w-8 h-8 rounded-full navy-bg logo-muted" />
+              <span>{t('homepage.testimonials.elena.author')}</span>
+            </div>
+          </div>
+          <div className="testimonial-card p-8">
+            <div className="text-4xl quote-accent mb-4">"</div>
+            <p className="theme-text-primary text-lg mb-4">{t('homepage.testimonials.tomas.quote')}</p>
+            <div className="flex items-center gap-3 theme-text-secondary">
+              <div className="w-8 h-8 rounded-full navy-bg logo-muted" />
+              <span>{t('homepage.testimonials.tomas.author')}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer Note */}
+      <section className="py-16 px-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <p className="text-lg theme-text-tertiary leading-relaxed">
+            {t('homepage.footer.text')}
+          </p>
+        </div>
+      </section>
+      </div>
     </div>
   );
 };

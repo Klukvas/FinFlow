@@ -28,7 +28,6 @@ const paymentMethods: { value: PaymentMethod; label: string; icon: React.ReactNo
 ];
 
 export const PaymentForm: React.FC<PaymentFormProps> = ({
-  debtId,
   currentBalance,
   onSubmit,
   onCancel,
@@ -42,7 +41,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     interest_amount: null,
     payment_date: new Date().toISOString().split('T')[0],
     description: '',
-    payment_method: null
+    payment_method: 'CASH'
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -67,7 +66,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     }
 
     if (formData.principal_amount !== null && formData.interest_amount !== null) {
-      const total = formData.principal_amount + formData.interest_amount;
+      const total = (formData.principal_amount || 0) + (formData.interest_amount || 0);
       if (Math.abs(total - formData.amount) > 0.01) {
         newErrors.interest_amount = 'Principal + Interest must equal total payment amount';
       }

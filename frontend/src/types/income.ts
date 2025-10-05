@@ -4,7 +4,7 @@ export interface IncomeCreate {
   account_id?: number | null;
   currency?: string;
   description?: string | null;
-  date?: string | null;
+  date?: string | null | undefined;
 }
 
 export interface IncomeOut {

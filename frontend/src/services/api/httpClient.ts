@@ -43,7 +43,6 @@ export class HttpClient {
     }
 
     if (config.debug) {
-      console.log(`[${method}] ${url}`, { headers, data });
     }
 
     const controller = new AbortController();
@@ -53,14 +52,13 @@ export class HttpClient {
       const response = await fetch(url, {
         method,
         headers,
-        body: data ? JSON.stringify(data) : undefined,
+        body: data ? JSON.stringify(data) : null,
         signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
 
       if (config.debug) {
-        console.log(`Response status: ${response.status}`);
       }
 
       if (!response.ok) {
@@ -83,7 +81,21 @@ export class HttpClient {
   private async parseErrorResponse(response: Response): Promise<ApiError> {
     try {
       const text = await response.text();
-      const errorData = text ? JSON.parse(text) : { error: `HTTP error ${response.status}` };
+      let errorData: any = {};
+      
+      if (text) {
+        try {
+          errorData = JSON.parse(text);
+        } catch (parseError) {
+          // If JSON parsing fails, use the raw text
+          errorData = { error: text };
+        }
+      }
+      
+      // If no error message in response, use a generic one based on status
+      if (!errorData.error && !errorData.message) {
+        errorData.error = this.getGenericErrorMessage(response.status);
+      }
       
       if (config.debug) {
         console.error('Error response:', errorData);
@@ -96,10 +108,28 @@ export class HttpClient {
     } catch (e) {
       console.error('Error parsing error response:', e);
       return { 
-        error: `HTTP error ${response.status}`,
+        error: this.getGenericErrorMessage(response.status),
         status: response.status,
       };
     }
+  }
+
+  private getGenericErrorMessage(status: number): string {
+    const statusMessages: Record<number, string> = {
+      400: 'Неверные данные. Проверьте введенную информацию.',
+      401: 'Сессия истекла. Пожалуйста, войдите в систему заново.',
+      403: 'У вас нет прав для выполнения этого действия.',
+      404: 'Запрашиваемый ресурс не найден.',
+      409: 'Конфликт данных. Возможно, запись уже существует.',
+      422: 'Ошибка валидации данных. Проверьте введенную информацию.',
+      429: 'Слишком много запросов. Попробуйте позже.',
+      500: 'Внутренняя ошибка сервера. Попробуйте позже.',
+      502: 'Сервер временно недоступен. Попробуйте позже.',
+      503: 'Сервис временно недоступен. Попробуйте позже.',
+      504: 'Время ожидания истекло. Попробуйте позже.',
+    };
+
+    return statusMessages[status] || `Ошибка сервера (${status})`;
   }
 
   private async parseSuccessResponse<T>(response: Response): Promise<T> {
@@ -111,7 +141,6 @@ export class HttpClient {
       }
       
       if (config.debug) {
-        console.log('Success response:', text);
       }
       
       return JSON.parse(text);

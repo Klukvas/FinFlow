@@ -15,10 +15,10 @@ export const TopExpensesChart: React.FC<TopExpensesChartProps> = ({ expenses, ca
     for (const exp of expenses) {
       const category = categories.find(cat => cat.id === exp.category_id);
       if (category?.name) {
-        if (results[category!.name]) {
-          results[category!.name] += exp.amount;
+        if (results[category.name]) {
+          results[category.name] += exp.amount;
         } else {
-          results[category!.name] = exp.amount;
+          results[category.name] = exp.amount;
         }
       }
     }

@@ -1,46 +1,42 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export const About: React.FC = () => {
+  const { t } = useTranslation();
+
   return (
     <div className="py-20 px-6">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-4xl font-bold theme-text-primary mb-8 text-center">
-          О нас
+          {t('aboutPage.title')}
         </h1>
         
         <div className="prose prose-lg max-w-none theme-text-primary">
           <p className="text-xl theme-text-secondary mb-6">
-            Мы создали Финансовый учет, чтобы помочь людям лучше управлять своими деньгами 
-            и достигать финансовых целей.
+            {t('aboutPage.intro')}
           </p>
           
           <h2 className="text-2xl font-semibold theme-text-primary mb-4">
-            Наша миссия
+            {t('aboutPage.mission.title')}
           </h2>
           <p className="theme-text-secondary mb-6">
-            Сделать управление личными финансами простым, понятным и доступным для каждого. 
-            Мы верим, что каждый человек заслуживает иметь полный контроль над своими деньгами 
-            и возможность планировать свое финансовое будущее.
+            {t('aboutPage.mission.description')}
           </p>
           
           <h2 className="text-2xl font-semibold theme-text-primary mb-4">
-            Что мы предлагаем
+            {t('aboutPage.offerings.title')}
           </h2>
           <ul className="theme-text-secondary mb-6 space-y-2">
-            <li>• Простой и интуитивный интерфейс</li>
-            <li>• Полный контроль над доходами и расходами</li>
-            <li>• Детальная аналитика и отчеты</li>
-            <li>• Безопасное хранение данных</li>
-            <li>• Поддержка на всех устройствах</li>
+            {t('aboutPage.offerings.items', { returnObjects: true }).map((item: string, index: number) => (
+              <li key={index}>• {item}</li>
+            ))}
           </ul>
           
           <h2 className="text-2xl font-semibold theme-text-primary mb-4">
-            Наша команда
+            {t('aboutPage.team.title')}
           </h2>
           <p className="theme-text-secondary">
-            Мы — команда разработчиков и финансовых экспертов, которые понимают важность 
-            правильного управления деньгами. Наш опыт и знания помогают создавать продукты, 
-            которые действительно решают проблемы пользователей.
+            {t('aboutPage.team.description')}
           </p>
         </div>
       </div>

@@ -5,7 +5,7 @@ export interface MoneyInputProps
   value?: string | number;
   onChange?: (value: string) => void;
   placeholder?: string;
-  error?: string;
+  error?: string | undefined;
   label?: string;
   required?: boolean;
   disabled?: boolean;

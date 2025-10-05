@@ -17,7 +17,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const checkMobile = () => {
       const width = window.innerWidth;
       const mobile = width < 1024;
-      console.log('Layout - window.innerWidth:', width, 'isMobile:', mobile, 'should show sidebar:', mobile);
       setIsMobile(mobile);
       if (!mobile) {
         setSidebarOpen(true); // Show sidebar on desktop by default
@@ -61,7 +60,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     setSidebarOpen(false);
   };
 
-  console.log('Layout render - isMobile:', isMobile, 'sidebarOpen:', sidebarOpen);
   
   return (
     <div className="min-h-screen theme-bg theme-transition">

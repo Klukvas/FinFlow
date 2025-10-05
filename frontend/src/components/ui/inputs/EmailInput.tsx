@@ -6,7 +6,7 @@ import { Input } from "../forms/Input";
 interface EmailInputProps {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  error?: string;
+  error?: string | undefined;
   label?: string;
   required?: boolean;
 }
@@ -34,6 +34,7 @@ export const EmailInput: React.FC<EmailInputProps> = ({
         error={!!error}
         icon={<FaEnvelope className="w-4 h-4 text-gray-400" />}
         required={required}
+        data-testid="email-input"
       />
     </FormField>
   );

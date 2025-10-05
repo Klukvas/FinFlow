@@ -106,7 +106,6 @@ export const Recurring: React.FC = () => {
 
   const handleEdit = (payment: RecurringPayment) => {
     // TODO: Implement edit functionality
-    console.log('Edit payment:', payment);
   };
 
   const filteredPayments = payments.filter(payment => {

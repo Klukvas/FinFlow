@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Category } from '@/types';
 import { useApiClients } from '@/hooks';
 
 interface CategoryStatisticsProps {

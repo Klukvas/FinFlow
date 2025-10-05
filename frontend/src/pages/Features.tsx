@@ -1,55 +1,24 @@
 import React from 'react';
-import { FaChartBar, FaShieldAlt, FaMobile, FaClock, FaUsers, FaCog, FaBell, FaFileExport, FaSync, FaLock } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
+import { FaChartBar, FaShieldAlt, FaMobile, FaClock, FaUsers, FaCog } from 'react-icons/fa';
 
 export const Features: React.FC = () => {
-  const features = [
-    {
-      icon: FaChartBar,
-      title: 'Аналитика и отчеты',
-      description: 'Получайте детальную аналитику ваших финансов с красивыми графиками и диаграммами. Отслеживайте тренды и выявляйте закономерности в ваших тратах.',
-      details: ['Графики доходов и расходов', 'Категоризация трат', 'Сравнение периодов', 'Экспорт отчетов']
-    },
-    {
-      icon: FaShieldAlt,
-      title: 'Безопасность данных',
-      description: 'Ваши финансовые данные защищены современными методами шифрования. Мы используем банковские стандарты безопасности.',
-      details: ['256-bit SSL шифрование', 'Двухфакторная аутентификация', 'Регулярные резервные копии', 'Соответствие GDPR']
-    },
-    {
-      icon: FaMobile,
-      title: 'Мобильная версия',
-      description: 'Управляйте финансами с любого устройства. Синхронизация данных происходит в реальном времени.',
-      details: ['Адаптивный дизайн', 'Офлайн режим', 'Push-уведомления', 'Быстрый доступ']
-    },
-    {
-      icon: FaClock,
-      title: 'Автоматизация',
-      description: 'Настройте повторяющиеся платежи, получайте напоминания и автоматически категоризируйте транзакции.',
-      details: ['Повторяющиеся платежи', 'Умные напоминания', 'Автокатегоризация', 'Шаблоны операций']
-    },
-    {
-      icon: FaUsers,
-      title: 'Семейный учет',
-      description: 'Ведите совместный учет с членами семьи. Устанавливайте лимиты и контролируйте общий бюджет.',
-      details: ['Общие счета', 'Семейные категории', 'Лимиты трат', 'Роли пользователей']
-    },
-    {
-      icon: FaCog,
-      title: 'Настройки',
-      description: 'Персонализируйте приложение под свои потребности. Создавайте собственные категории и настраивайте интерфейс.',
-      details: ['Пользовательские категории', 'Настройка интерфейса', 'Импорт данных', 'API интеграции']
-    }
-  ];
+  const { t } = useTranslation();
+  const features = t('featuresPage.items', { returnObjects: true }) as Array<{
+    title: string;
+    description: string;
+    details: string[];
+  }>;
 
   return (
     <div className="py-20 px-6">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
           <h1 className="text-4xl font-bold theme-text-primary mb-6">
-            Возможности приложения
+            {t('featuresPage.title')}
           </h1>
           <p className="text-xl theme-text-secondary max-w-3xl mx-auto">
-            Все необходимые инструменты для эффективного управления личными финансами
+            {t('featuresPage.subtitle')}
           </p>
         </div>
 

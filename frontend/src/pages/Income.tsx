@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CreateIncome } from '../components/ui/income/CreateIncome';
 import { Modal } from '../components/ui/Modal';
 import { Button } from '../components/ui/Button';
@@ -6,6 +7,7 @@ import { FaPlus } from 'react-icons/fa';
 import { IncomeList } from '@/components';
 
 export const Income = () => {
+  const { t } = useTranslation();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
@@ -30,11 +32,11 @@ export const Income = () => {
                     </svg>
                   </div>
                   <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold theme-text-primary leading-tight">
-                    Управление доходами
+                    {t('incomePage.title')}
                   </h1>
                 </div>
                 <p className="theme-text-secondary text-xs sm:text-sm md:text-base max-w-2xl leading-relaxed">
-                  Добавляйте и отслеживайте ваши доходы для лучшего контроля над финансовым ростом
+                  {t('incomePage.subtitle')}
                 </p>
               </div>
               
@@ -46,7 +48,7 @@ export const Income = () => {
                   <div className="w-4 h-4 sm:w-5 sm:h-5 group-hover:rotate-90 transition-transform duration-200">
                     <FaPlus className="w-full h-full" />
                   </div>
-                  <span>Добавить доход</span>
+                  <span>{t('incomePage.addButton')}</span>
                 </Button>
               </div>
             </div>
@@ -62,7 +64,7 @@ export const Income = () => {
         <Modal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
-          title="Добавить новый доход"
+          title={t('incomePage.createModalTitle')}
           size="lg"
         >
           <CreateIncome onIncomeCreated={handleIncomeCreated} />

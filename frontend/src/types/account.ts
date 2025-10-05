@@ -56,6 +56,3 @@ export interface CreateAccountRequest {
   balance: number;
 }
 
-export interface ErrorResponse {
-  error: string;
-}

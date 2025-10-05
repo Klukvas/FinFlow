@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AccountResponse, AccountSummary } from '@/types';
 import { useApiClients } from '@/hooks/useApiClients';
 import { Card } from '@/components/ui/Card';
@@ -11,6 +12,7 @@ import { AccountStats } from '@/components/ui/account/AccountStats';
 import { FaPlus, FaWallet, FaDollarSign, FaChartLine } from 'react-icons/fa';
 
 export const Account: React.FC = () => {
+  const { t } = useTranslation();
   const { account: accountApiClient } = useApiClients();
   const [accounts, setAccounts] = useState<AccountResponse[]>([]);
   const [summaries, setSummaries] = useState<AccountSummary[]>([]);
@@ -21,7 +23,6 @@ export const Account: React.FC = () => {
 
   // Debug: Log when editingAccount changes
   React.useEffect(() => {
-    console.log('editingAccount changed:', editingAccount);
   }, [editingAccount]);
 
   const loadAccounts = async () => {
@@ -37,7 +38,7 @@ export const Account: React.FC = () => {
       if ('error' in accountsResult) {
         const errorMessage = typeof accountsResult.error === 'string' 
           ? accountsResult.error 
-          : 'Ошибка при загрузке аккаунтов';
+          : t('accountPage.errors.loadAccounts');
         setError(errorMessage);
         return;
       }
@@ -45,7 +46,7 @@ export const Account: React.FC = () => {
       if ('error' in summariesResult) {
         const errorMessage = typeof summariesResult.error === 'string' 
           ? summariesResult.error 
-          : 'Ошибка при загрузке сводок аккаунтов';
+          : t('accountPage.errors.loadSummaries');
         setError(errorMessage);
         return;
       }
@@ -53,7 +54,7 @@ export const Account: React.FC = () => {
       setAccounts(accountsResult);
       setSummaries(summariesResult);
     } catch (err) {
-      setError('Ошибка при загрузке аккаунтов');
+      setError(t('accountPage.errors.loadAccounts'));
       console.error('Error loading accounts:', err);
     } finally {
       setLoading(false);
@@ -71,7 +72,7 @@ export const Account: React.FC = () => {
       if ('error' in result) {
         const errorMessage = typeof result.error === 'string' 
           ? result.error 
-          : 'Ошибка при операции с аккаунтом';
+          : t('accountPage.errors.operationError');
         setError(errorMessage);
         return;
       }
@@ -79,7 +80,7 @@ export const Account: React.FC = () => {
       setShowCreateModal(false);
       await loadAccounts();
     } catch (err) {
-      setError('Ошибка при создании аккаунта');
+      setError(t('accountPage.errors.createAccount'));
       console.error('Error creating account:', err);
     }
   };
@@ -91,7 +92,7 @@ export const Account: React.FC = () => {
       if ('error' in result) {
         const errorMessage = typeof result.error === 'string' 
           ? result.error 
-          : 'Ошибка при операции с аккаунтом';
+          : t('accountPage.errors.operationError');
         setError(errorMessage);
         return;
       }
@@ -99,7 +100,7 @@ export const Account: React.FC = () => {
       setEditingAccount(null);
       await loadAccounts();
     } catch (err) {
-      setError('Ошибка при обновлении аккаунта');
+      setError(t('accountPage.errors.updateAccount'));
       console.error('Error updating account:', err);
     }
   };
@@ -111,14 +112,14 @@ export const Account: React.FC = () => {
       if ('error' in result) {
         const errorMessage = typeof result.error === 'string' 
           ? result.error 
-          : 'Ошибка при операции с аккаунтом';
+          : t('accountPage.errors.operationError');
         setError(errorMessage);
         return;
       }
 
       await loadAccounts();
     } catch (err) {
-      setError('Ошибка при архивировании аккаунта');
+      setError(t('accountPage.errors.archiveAccount'));
       console.error('Error archiving account:', err);
     }
   };
@@ -139,9 +140,9 @@ export const Account: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold theme-text-primary">Аккаунты</h1>
+          <h1 className="text-2xl font-bold theme-text-primary">{t('accountPage.title')}</h1>
           <p className="text-sm theme-text-secondary mt-1">
-            Управляйте своими финансовыми аккаунтами
+            {t('accountPage.subtitle')}
           </p>
         </div>
         <Button
@@ -149,7 +150,7 @@ export const Account: React.FC = () => {
           className="flex items-center gap-2"
         >
           <FaPlus className="w-4 h-4" />
-          Создать аккаунт
+          {t('accountPage.createButton')}
         </Button>
       </div>
 
@@ -168,7 +169,7 @@ export const Account: React.FC = () => {
               <FaWallet className="w-6 h-6 text-blue-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium theme-text-secondary">Всего аккаунтов</p>
+              <p className="text-sm font-medium theme-text-secondary">{t('accountPage.stats.totalAccounts')}</p>
               <p className="text-2xl font-bold theme-text-primary">{activeAccounts.length}</p>
             </div>
           </div>
@@ -180,7 +181,7 @@ export const Account: React.FC = () => {
               <FaDollarSign className="w-6 h-6 text-green-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium theme-text-secondary">Общий баланс</p>
+              <p className="text-sm font-medium theme-text-secondary">{t('accountPage.stats.totalBalance')}</p>
               <p className="text-2xl font-bold theme-text-primary">
                 {totalBalance.toLocaleString('ru-RU', {
                   style: 'currency',
@@ -197,7 +198,7 @@ export const Account: React.FC = () => {
               <FaChartLine className="w-6 h-6 text-purple-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium theme-text-secondary">Активных</p>
+              <p className="text-sm font-medium theme-text-secondary">{t('accountPage.stats.active')}</p>
               <p className="text-2xl font-bold theme-text-primary">
                 {summaries.filter(s => s.balance > 0).length}
               </p>
@@ -208,19 +209,19 @@ export const Account: React.FC = () => {
 
       {/* Accounts List */}
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold theme-text-primary">Мои аккаунты</h2>
+        <h2 className="text-lg font-semibold theme-text-primary">{t('accountPage.myAccounts')}</h2>
         
         {activeAccounts.length === 0 ? (
           <Card className="p-8 text-center">
             <FaWallet className="w-12 h-12 theme-text-tertiary mx-auto mb-4" />
             <h3 className="text-lg font-medium theme-text-primary mb-2">
-              У вас пока нет аккаунтов
+              {t('accountPage.emptyState.title')}
             </h3>
             <p className="text-sm theme-text-secondary mb-4">
-              Создайте свой первый аккаунт для отслеживания финансов
+              {t('accountPage.emptyState.subtitle')}
             </p>
             <Button onClick={() => setShowCreateModal(true)}>
-              Создать аккаунт
+              {t('accountPage.emptyState.button')}
             </Button>
           </Card>
         ) : (
@@ -250,7 +251,6 @@ export const Account: React.FC = () => {
         <EditAccountModal
           account={editingAccount}
           onClose={() => {
-            console.log('Closing edit modal');
             setEditingAccount(null);
           }}
           onSubmit={handleUpdateAccount}

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ThemeToggle } from './ThemeToggle';
+import { LanguageSelector } from './LanguageSelector';
 import { AuthModals } from './AuthModals';
 import { useModal } from '@/contexts/ModalContext';
 import {
@@ -15,6 +17,7 @@ import {
 
 export const PublicHeader: React.FC = () => {
   const location = useLocation();
+  const { t } = useTranslation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { openLoginModal, openRegisterModal } = useModal();
 
@@ -24,9 +27,9 @@ export const PublicHeader: React.FC = () => {
   }, [location.pathname]);
 
   const navigationItems = [
-    { path: '/', icon: FaHome, label: 'Как это работает' },
-    { path: '/features', icon: FaFolder, label: 'Что вы получаете' },
-    { path: '/pricing', icon: FaDollarSign, label: 'Цены' },
+    { path: '/', icon: FaHome, label: t('publicNav.howItWorks') },
+    { path: '/features', icon: FaFolder, label: t('publicNav.features') },
+    { path: '/pricing', icon: FaDollarSign, label: t('publicNav.pricing') },
   ];
 
   const toggleMobileMenu = () => {
@@ -40,25 +43,28 @@ export const PublicHeader: React.FC = () => {
   return (
     <>
             {/* Mobile Header */}
-            <header className="theme-surface theme-border border-b theme-shadow theme-transition lg:hidden">
+            <header className="theme-surface theme-border border-b theme-shadow theme-transition lg:hidden" data-testid="mobile-header">
         <div className="px-4 py-3">
           <div className="flex items-center justify-between">
             <button
               onClick={toggleMobileMenu}
+              data-testid="mobile-menu-toggle"
               className="p-2 rounded-md hover:theme-surface-hover theme-transition"
-              aria-label="Открыть меню"
+              aria-label={t('common.openMenu')}
             >
               <FaBars className="w-5 h-5 theme-text-primary" />
             </button>
             
-            <h1 className="text-lg font-bold theme-text-primary">Финансовый учет</h1>
+            <h1 className="text-lg font-bold theme-text-primary" data-testid="app-title">{t('header.appTitle')}</h1>
             
             <div className="flex items-center space-x-2">
+              <LanguageSelector />
               <ThemeToggle />
               <button
                 onClick={openLoginModal}
+                data-testid="login-modal-trigger-mobile"
                 className="p-2 theme-text-primary hover:theme-surface-hover rounded-lg theme-transition"
-                title="Войти в систему"
+                title={t('navigation.login')}
               >
                 <FaSignInAlt className="w-4 h-4" />
               </button>
@@ -68,15 +74,15 @@ export const PublicHeader: React.FC = () => {
       </header>
 
             {/* Desktop Header */}
-            <header className="theme-surface theme-border border-b theme-shadow theme-transition hidden lg:block">
+            <header className="theme-surface theme-border border-b theme-shadow theme-transition hidden lg:block" data-testid="desktop-header">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             {/* Logo and Page Title */}
             <div className="flex items-center space-x-6">
-              <h1 className="text-2xl font-bold theme-text-primary">Финансовый учет</h1>
+              <h1 className="text-2xl font-bold theme-text-primary" data-testid="app-title">{t('header.appTitle')}</h1>
               
               {/* Navigation Tabs */}
-              <nav className="flex space-x-1">
+              <nav className="flex space-x-1" data-testid="desktop-navigation">
                 {navigationItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = location.pathname === item.path;
@@ -85,6 +91,7 @@ export const PublicHeader: React.FC = () => {
                     <Link
                       key={item.path}
                       to={item.path}
+                      data-testid={`header-${item.path.split('/')[1]}-link`}
                       className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium theme-transition ${
                         isActive
                           ? 'theme-accent-light theme-accent'
@@ -100,25 +107,28 @@ export const PublicHeader: React.FC = () => {
             </div>
 
             {/* Auth Buttons and Theme Toggle */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4" data-testid="header-actions">
+              <LanguageSelector />
               <ThemeToggle />
               
               <button
                 onClick={openLoginModal}
+                data-testid="login-modal-trigger"
                 className="flex items-center px-4 py-2 text-sm theme-text-primary hover:theme-surface-hover rounded-lg theme-transition"
-                title="Войти в систему"
+                title={t('navigation.login')}
               >
                 <FaSignInAlt className="w-4 h-4 mr-2" />
-                Войти
+                {t('navigation.login')}
               </button>
               
               <button
                 onClick={openRegisterModal}
+                data-testid="register-modal-trigger"
                 className="flex items-center px-4 py-2 text-sm theme-accent-bg theme-text-inverse hover:theme-accent-hover rounded-lg theme-transition"
-                title="Зарегистрироваться"
+                title={t('navigation.register')}
               >
                 <FaUserPlus className="w-4 h-4 mr-2" />
-                Регистрация
+                {t('navigation.register')}
               </button>
             </div>
           </div>
@@ -129,23 +139,25 @@ export const PublicHeader: React.FC = () => {
       {mobileMenuOpen && (
         <div
           className="mobile-overlay"
+          data-testid="mobile-menu-overlay"
           onClick={closeMobileMenu}
         />
       )}
       
       {/* Mobile Menu */}
-      <div className={`mobile-menu theme-surface theme-shadow ${mobileMenuOpen ? 'open' : ''}`}>
+      <div className={`mobile-menu theme-surface theme-shadow ${mobileMenuOpen ? 'open' : ''}`} data-testid="mobile-menu">
         <div className="flex items-center justify-between p-4 theme-border border-b">
-          <h2 className="text-lg font-bold theme-text-primary">Меню</h2>
+          <h2 className="text-lg font-bold theme-text-primary">{t('common.menu')}</h2>
           <button
             onClick={closeMobileMenu}
+            data-testid="mobile-menu-close"
             className="p-2 rounded-md hover:theme-surface-hover theme-transition"
           >
             <FaTimes className="w-5 h-5 theme-text-primary" />
           </button>
         </div>
         
-        <nav className="p-4 space-y-2">
+        <nav className="p-4 space-y-2" data-testid="mobile-navigation">
           {navigationItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
@@ -155,6 +167,7 @@ export const PublicHeader: React.FC = () => {
                 key={item.path}
                 to={item.path}
                 onClick={closeMobileMenu}
+                data-testid={`mobile-${item.path.split('/')[1]}-link`}
                 className={`flex items-center px-4 py-3 rounded-lg theme-transition ${
                   isActive
                     ? 'theme-accent-light theme-accent font-medium'
@@ -168,9 +181,10 @@ export const PublicHeader: React.FC = () => {
           })}
         </nav>
         
-        <div className="p-4 theme-border border-t space-y-2">
-          {/* Theme Toggle */}
-          <div className="flex items-center justify-center px-4 py-3">
+        <div className="p-4 theme-border border-t space-y-2" data-testid="mobile-auth-section">
+          {/* Language Selector and Theme Toggle */}
+          <div className="flex items-center justify-center space-x-4 px-4 py-3">
+            <LanguageSelector />
             <ThemeToggle />
           </div>
           
@@ -179,20 +193,22 @@ export const PublicHeader: React.FC = () => {
               openLoginModal();
               closeMobileMenu();
             }}
+            data-testid="mobile-login-button"
             className="w-full flex items-center justify-center px-4 py-3 text-sm theme-text-primary hover:theme-surface-hover rounded-lg theme-transition theme-border border"
           >
             <FaSignInAlt className="w-4 h-4 mr-2" />
-            Войти
+            {t('navigation.login')}
           </button>
           <button
             onClick={() => {
               openRegisterModal();
               closeMobileMenu();
             }}
+            data-testid="mobile-register-button"
             className="w-full flex items-center justify-center px-4 py-3 text-sm theme-accent-bg theme-text-inverse hover:theme-accent-hover rounded-lg theme-transition"
           >
             <FaUserPlus className="w-4 h-4 mr-2" />
-            Регистрация
+            {t('navigation.register')}
           </button>
         </div>
       </div>

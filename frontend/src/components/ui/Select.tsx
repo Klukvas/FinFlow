@@ -38,7 +38,7 @@ const SelectContext = React.createContext<{
   onValueChange?: (value: string) => void;
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
-  contentRef?: React.RefObject<HTMLDivElement>;
+  contentRef?: React.RefObject<HTMLDivElement> | undefined;
 }>({
   isOpen: false,
   setIsOpen: () => {},
@@ -53,7 +53,7 @@ export const Select: React.FC<SelectProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedValue, setSelectedValue] = useState(value || defaultValue || '');
-  const contentRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
 
   // Sync internal state with external value prop
   useEffect(() => {
@@ -63,9 +63,6 @@ export const Select: React.FC<SelectProps> = ({
   }, [value]);
 
   const handleValueChange = (newValue: string) => {
-    console.log('🔧 Select - handleValueChange called with:', newValue);
-    console.log('🔧 Select - current selectedValue:', selectedValue);
-    console.log('🔧 Select - onValueChange function:', onValueChange);
     setSelectedValue(newValue);
     onValueChange?.(newValue);
     setIsOpen(false);
@@ -94,28 +91,19 @@ export const SelectTrigger: React.FC<SelectTriggerProps> = ({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      console.log('🔧 SelectTrigger - handleClickOutside called');
-      console.log('🔧 SelectTrigger - event.target:', event.target);
-      console.log('🔧 SelectTrigger - triggerRef.current:', triggerRef.current);
-      
       const isClickInsideTrigger = triggerRef.current && triggerRef.current.contains(event.target as Node);
       const isClickInsideContent = contentRef?.current && contentRef.current.contains(event.target as Node);
       
       if (!isClickInsideTrigger && !isClickInsideContent) {
-        console.log('🔧 SelectTrigger - Click outside detected, closing dropdown');
         setIsOpen(false);
-      } else {
-        console.log('🔧 SelectTrigger - Click inside, keeping dropdown open');
       }
     };
 
     if (isOpen) {
-      console.log('🔧 SelectTrigger - Adding click outside listener');
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
-      console.log('🔧 SelectTrigger - Removing click outside listener');
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isOpen, setIsOpen]);
@@ -125,9 +113,7 @@ export const SelectTrigger: React.FC<SelectTriggerProps> = ({
       ref={triggerRef}
       type="button"
       onClick={() => {
-        console.log('🔧 SelectTrigger - onClick, current isOpen:', isOpen);
         setIsOpen(!isOpen);
-        console.log('🔧 SelectTrigger - isOpen set to:', !isOpen);
       }}
       className={`flex h-12 w-full items-center justify-between rounded-lg theme-border border theme-bg px-3 py-3 text-base theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition hover:theme-border-hover disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation ${className}`}
       data-testid={testId || 'select-trigger'}
@@ -153,7 +139,6 @@ export const SelectContent: React.FC<SelectContentProps> = ({
 }) => {
   const { isOpen, contentRef } = React.useContext(SelectContext);
 
-  console.log('🔧 SelectContent - isOpen:', isOpen);
 
   if (!isOpen) return null;
 
@@ -178,19 +163,12 @@ export const SelectItem: React.FC<SelectItemProps> = ({
 }) => {
   const { onValueChange } = React.useContext(SelectContext);
 
-  console.log('🔧 SelectItem - Component rendered with value:', value);
-  console.log('🔧 SelectItem - onValueChange function:', onValueChange);
-
   return (
     <div
       onMouseDown={(e) => {
-        console.log('🔧 SelectItem - onMouseDown called with value:', value);
         e.preventDefault();
       }}
       onClick={(e) => {
-        console.log('🔧 SelectItem - onClick called with value:', value);
-        console.log('🔧 SelectItem - event:', e);
-        console.log('🔧 SelectItem - onValueChange function:', onValueChange);
         e.preventDefault();
         e.stopPropagation();
         onValueChange?.(value);

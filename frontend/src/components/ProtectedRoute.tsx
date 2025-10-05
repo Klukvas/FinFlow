@@ -19,12 +19,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   }
 
   if (config.debug) {
-    console.log('ProtectedRoute: isAuthenticated =', isAuthenticated);
   }
 
   if (!isAuthenticated) {
     if (config.debug) {
-      console.log('ProtectedRoute: redirecting to /login');
     }
     return <Navigate to="/login" replace />;
   }

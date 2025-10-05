@@ -78,15 +78,12 @@ export const TransactionReview: React.FC<TransactionReviewProps> = ({
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
 
   const handleSubmit = async () => {
-    console.log('TransactionReview: handleSubmit called');
-    console.log('TransactionReview: All validated transactions:', validatedTransactions);
     
     // Validate required fields
     const invalidTransactions = validatedTransactions.filter(txn => 
       txn.is_valid && (!txn.amount || !txn.transaction_date || !txn.description)
     );
 
-    console.log('TransactionReview: Invalid transactions (missing required fields):', invalidTransactions.length);
 
     if (invalidTransactions.length > 0) {
       setError(`Please fill in all required fields for ${invalidTransactions.length} transaction(s)`);
@@ -97,8 +94,6 @@ export const TransactionReview: React.FC<TransactionReviewProps> = ({
     const validTransactions = validatedTransactions.filter(txn => txn.is_valid);
     const transactionsWithoutCategory = validTransactions.filter(txn => !txn.category_id);
 
-    console.log('TransactionReview: Valid transactions to submit:', validTransactions.length, validTransactions);
-    console.log('TransactionReview: Transactions without category:', transactionsWithoutCategory.length);
 
     if (transactionsWithoutCategory.length > 0) {
       setError(`Please select a category for ${transactionsWithoutCategory.length} transaction(s)`);

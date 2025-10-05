@@ -1,14 +1,13 @@
 import React from 'react';
 import { AccountResponse, AccountSummary } from '@/types';
 import { Card } from '../Card';
-import { Button } from '../Button';
 import { EditButton } from '../EditButton';
 import { DeleteButton } from '../DeleteButton';
 import { FaWallet, FaDollarSign, FaChartLine } from 'react-icons/fa';
 
 interface AccountCardProps {
   account: AccountResponse;
-  summary?: AccountSummary;
+  summary?: AccountSummary | undefined;
   onEdit: (account: AccountResponse) => void;
   onArchive: (id: number) => void;
 }
@@ -67,7 +66,6 @@ export const AccountCard: React.FC<AccountCardProps> = ({
         
         <div className="flex items-center gap-2">
           <EditButton onEdit={() => {
-            console.log('Edit button clicked for account:', account);
             onEdit(account);
           }} />
           <DeleteButton 

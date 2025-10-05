@@ -1,19 +1,19 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useApiClients } from '@/hooks/useApiClients';
 import { Category, IncomeCreate, AccountResponse } from '@/types';
 import { Button } from '@/components/ui/Button';
-import { FormField } from '@/components/ui/forms/FormField';
-import { Input } from '@/components/ui/forms/Input';
 import { MoneyInput } from '@/components/ui/MoneyInput';
 import { CurrencySelect } from '@/components/ui/forms/CurrencySelect';
-import { FaDollarSign, FaCalendarAlt, FaFileAlt, FaFolder } from 'react-icons/fa';
-import { config } from '@/config/env';
+import { FormErrorHandler } from '@/utils/formErrorHandler';
+// removed unused icon and config imports
 
 interface CreateIncomeProps {
   onIncomeCreated: () => void;
 }
 
 export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) => {
+  const { t } = useTranslation();
   const { income, category, account } = useApiClients();
   const [formData, setFormData] = useState<IncomeCreate>({
     amount: 0,
@@ -26,6 +26,7 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) =
   const [categories, setCategories] = useState<Category[]>([]);
   const [accounts, setAccounts] = useState<AccountResponse[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [_, setFieldErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -80,29 +81,20 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) =
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    FormErrorHandler.clearFieldErrors(setFieldErrors);
     setIsLoading(true);
 
     try {
       if (formData.amount <= 0) {
-        setError('Сумма должна быть больше 0');
+        setError(t('income.form.amountMustBePositive'));
         return;
-      }
-
-      if (config.debug) {
-        console.log('Creating income with data:', formData);
       }
 
       const response = await income.createIncome(formData);
 
       if ('error' in response) {
-        setError(response.error);
-        if (config.debug) {
-          console.error('Income creation error:', response.error);
-        }
+        throw response;
       } else {
-        if (config.debug) {
-          console.log('Income created successfully:', response);
-        }
         onIncomeCreated();
         setFormData({
           amount: 0,
@@ -114,8 +106,7 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) =
         });
       }
     } catch (err) {
-      console.error('Failed to create income:', err);
-      setError('Ошибка при создании дохода');
+      FormErrorHandler.handleFormError(err, t('income.form.createError'), setFieldErrors);
     } finally {
       setIsLoading(false);
     }
@@ -124,21 +115,21 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) =
   return (
     <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
       <div className="space-y-4 sm:space-y-6">
-        {/* Сумма */}
+        {/* Amount */}
         <MoneyInput
-          label="Сумма"
+          label={t('income.form.amount')}
           value={formData.amount || ''}
           onChange={handleAmountChange}
-          placeholder="Введите сумму дохода"
+          placeholder={t('income.form.amountPlaceholder')}
           required
-          error={formData.amount <= 0 ? 'Сумма должна быть больше 0' : undefined}
+          error={formData.amount <= 0 ? t('income.form.amountMustBePositive') : undefined}
           className="w-full"
         />
 
-        {/* Валюта */}
+        {/* Currency */}
         <div className="space-y-2">
           <label className="block text-sm font-semibold theme-text-primary" htmlFor="currency">
-            Валюта
+            {t('income.form.currency')}
           </label>
           <CurrencySelect
             value={formData.currency || 'USD'}
@@ -148,11 +139,11 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) =
           />
         </div>
 
-        {/* Категория */}
+        {/* Category */}
         <div className="space-y-2">
           <label className="block text-sm font-semibold theme-text-primary" htmlFor="category_id">
-            Категория
-            <span className="theme-text-tertiary font-normal ml-1">(необязательно)</span>
+            {t('income.form.category')}
+            <span className="theme-text-tertiary font-normal ml-1">{t('income.form.optional')}</span>
           </label>
           <select
             id="category_id"
@@ -161,7 +152,7 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) =
             onChange={handleInputChange}
             className="w-full px-3 sm:px-4 py-3 theme-surface theme-border border rounded-lg sm:rounded-xl theme-text-primary focus:ring-2 focus:ring-green-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px]"
           >
-            <option value="">Выберите категорию (необязательно)</option>
+            <option value="">{t('income.form.selectCategoryOptional')}</option>
             {categories.map((cat) => (
               <option key={cat.id} value={cat.id}>
                 {cat.name}
@@ -170,11 +161,11 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) =
           </select>
         </div>
 
-        {/* Аккаунт */}
+        {/* Account */}
         <div className="space-y-2">
           <label className="block text-sm font-semibold theme-text-primary" htmlFor="account_id">
-            Аккаунт
-            <span className="theme-text-tertiary font-normal ml-1">(необязательно)</span>
+            {t('income.form.account')}
+            <span className="theme-text-tertiary font-normal ml-1">{t('income.form.optional')}</span>
           </label>
           <select
             id="account_id"
@@ -183,7 +174,7 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) =
             onChange={handleInputChange}
             className="w-full px-3 sm:px-4 py-3 theme-surface theme-border border rounded-lg sm:rounded-xl theme-text-primary focus:ring-2 focus:ring-green-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px]"
           >
-            <option value="">Без аккаунта</option>
+            <option value="">{t('income.form.noAccount')}</option>
             {accounts.map((account) => (
               <option key={account.id} value={account.id}>
                 {account.name} ({account.currency})
@@ -192,28 +183,28 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) =
           </select>
         </div>
 
-        {/* Описание */}
+        {/* Description */}
         <div className="space-y-2">
           <label className="block text-sm font-semibold theme-text-primary" htmlFor="description">
-            Описание
-            <span className="theme-text-tertiary font-normal ml-1">(необязательно)</span>
+            {t('income.form.description')}
+            <span className="theme-text-tertiary font-normal ml-1">{t('income.form.optional')}</span>
           </label>
           <textarea
             id="description"
             name="description"
             value={formData.description || ''}
             onChange={handleInputChange}
-            placeholder="Описание дохода (необязательно)"
+            placeholder={t('income.form.descriptionPlaceholder')}
             className="w-full px-3 sm:px-4 py-3 theme-surface theme-border border rounded-lg sm:rounded-xl theme-text-primary placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg resize-none text-sm sm:text-base min-h-[88px]"
             rows={3}
             maxLength={500}
           />
         </div>
 
-        {/* Дата */}
+        {/* Date */}
         <div className="space-y-2">
           <label className="block text-sm font-semibold theme-text-primary" htmlFor="date">
-            Дата
+            {t('income.form.date')}
             <span className="text-red-500 ml-1">*</span>
           </label>
           <input
@@ -252,14 +243,14 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) =
               <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-2 border-white/30"></div>
               <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-2 border-white border-t-transparent absolute top-0 left-0"></div>
             </div>
-            Создание...
+            {t('income.form.creating')}
           </>
         ) : (
           <>
             <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
-            Создать доход
+            {t('income.form.createIncome')}
           </>
         )}
       </Button>

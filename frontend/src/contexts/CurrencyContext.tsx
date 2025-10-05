@@ -19,7 +19,6 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  console.log('CurrencyProvider: Initializing...');
 
   const fetchCurrencies = async () => {
     setIsLoading(true);
@@ -76,7 +75,6 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
 
 export const useCurrency = (): CurrencyContextType => {
   const context = useContext(CurrencyContext);
-  console.log('useCurrency: context =', context);
   if (context === undefined) {
     console.error('useCurrency: context is undefined, CurrencyProvider not found');
     throw new Error('useCurrency must be used within a CurrencyProvider');

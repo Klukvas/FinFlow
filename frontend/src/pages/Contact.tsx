@@ -1,32 +1,35 @@
 import React from 'react';
 import { FaEnvelope, FaPhone, FaMapMarkerAlt, FaClock } from 'react-icons/fa';
 import { Button } from '@/components/ui/Button';
+import { useTranslation } from 'react-i18next';
 
 export const Contact: React.FC = () => {
+  const { t } = useTranslation();
+
   const contactInfo = [
     {
       icon: FaEnvelope,
-      title: 'Email',
+      title: t('contactPage.contactInfo.email.title'),
       value: 'support@financial-app.com',
-      description: 'Пишите нам в любое время'
+      description: t('contactPage.contactInfo.email.description')
     },
     {
       icon: FaPhone,
-      title: 'Телефон',
+      title: t('contactPage.contactInfo.phone.title'),
       value: '+7 (800) 123-45-67',
-      description: 'Пн-Пт с 9:00 до 18:00'
+      description: t('contactPage.contactInfo.phone.description')
     },
     {
       icon: FaMapMarkerAlt,
-      title: 'Адрес',
+      title: t('contactPage.contactInfo.address.title'),
       value: 'Москва, ул. Примерная, 123',
-      description: 'Офис в центре города'
+      description: t('contactPage.contactInfo.address.description')
     },
     {
       icon: FaClock,
-      title: 'Время работы',
+      title: t('contactPage.contactInfo.hours.title'),
       value: '24/7',
-      description: 'Поддержка круглосуточно'
+      description: t('contactPage.contactInfo.hours.description')
     }
   ];
 
@@ -35,10 +38,10 @@ export const Contact: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
           <h1 className="text-4xl font-bold theme-text-primary mb-6">
-            Свяжитесь с нами
+            {t('contactPage.title')}
           </h1>
           <p className="text-xl theme-text-secondary max-w-3xl mx-auto">
-            У вас есть вопросы? Мы всегда готовы помочь и ответить на любые вопросы
+            {t('contactPage.subtitle')}
           </p>
         </div>
 
@@ -46,7 +49,7 @@ export const Contact: React.FC = () => {
           {/* Contact Information */}
           <div>
             <h2 className="text-2xl font-bold theme-text-primary mb-8">
-              Контактная информация
+              {t('contactPage.contactInfo.title')}
             </h2>
             
             <div className="space-y-6">
@@ -75,33 +78,19 @@ export const Contact: React.FC = () => {
 
             <div className="mt-8 theme-surface theme-border border rounded-lg p-6">
               <h3 className="text-lg font-semibold theme-text-primary mb-4">
-                Часто задаваемые вопросы
+                {t('contactPage.faq.title')}
               </h3>
               <div className="space-y-3">
-                <div>
-                  <p className="theme-text-primary font-medium mb-1">
-                    Как начать пользоваться приложением?
-                  </p>
-                  <p className="theme-text-secondary text-sm">
-                    Просто зарегистрируйтесь и начните добавлять свои доходы и расходы
-                  </p>
-                </div>
-                <div>
-                  <p className="theme-text-primary font-medium mb-1">
-                    Безопасны ли мои данные?
-                  </p>
-                  <p className="theme-text-secondary text-sm">
-                    Да, мы используем банковские стандарты шифрования для защиты ваших данных
-                  </p>
-                </div>
-                <div>
-                  <p className="theme-text-primary font-medium mb-1">
-                    Можно ли экспортировать данные?
-                  </p>
-                  <p className="theme-text-secondary text-sm">
-                    Да, в платных планах доступен экспорт в Excel и PDF форматах
-                  </p>
-                </div>
+                {t('contactPage.faq.questions', { returnObjects: true }).map((faq: any, index: number) => (
+                  <div key={index}>
+                    <p className="theme-text-primary font-medium mb-1">
+                      {faq.question}
+                    </p>
+                    <p className="theme-text-secondary text-sm">
+                      {faq.answer}
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -109,57 +98,57 @@ export const Contact: React.FC = () => {
           {/* Contact Form */}
           <div>
             <h2 className="text-2xl font-bold theme-text-primary mb-8">
-              Напишите нам
+              {t('contactPage.form.title')}
             </h2>
             
             <form className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium theme-text-primary mb-2">
-                    Имя
+                    {t('contactPage.form.name')}
                   </label>
                   <input
                     type="text"
                     className="w-full px-3 py-2 theme-border border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 theme-bg theme-text-primary"
-                    placeholder="Ваше имя"
+                    placeholder={t('contactPage.form.namePlaceholder')}
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium theme-text-primary mb-2">
-                    Email
+                    {t('contactPage.form.email')}
                   </label>
                   <input
                     type="email"
                     className="w-full px-3 py-2 theme-border border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 theme-bg theme-text-primary"
-                    placeholder="your@email.com"
+                    placeholder={t('contactPage.form.emailPlaceholder')}
                   />
                 </div>
               </div>
               
               <div>
                 <label className="block text-sm font-medium theme-text-primary mb-2">
-                  Тема
+                  {t('contactPage.form.subject')}
                 </label>
                 <input
                   type="text"
                   className="w-full px-3 py-2 theme-border border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 theme-bg theme-text-primary"
-                  placeholder="Тема сообщения"
+                  placeholder={t('contactPage.form.subjectPlaceholder')}
                 />
               </div>
               
               <div>
                 <label className="block text-sm font-medium theme-text-primary mb-2">
-                  Сообщение
+                  {t('contactPage.form.message')}
                 </label>
                 <textarea
                   rows={6}
                   className="w-full px-3 py-2 theme-border border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 theme-bg theme-text-primary resize-none"
-                  placeholder="Ваше сообщение..."
+                  placeholder={t('contactPage.form.messagePlaceholder')}
                 ></textarea>
               </div>
               
               <Button type="submit" size="lg" fullWidth>
-                Отправить сообщение
+                {t('contactPage.form.submit')}
               </Button>
             </form>
           </div>
