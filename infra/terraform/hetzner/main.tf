@@ -2,9 +2,8 @@ provider "hcloud" {
   token = var.hcloud_token
 }
 
-resource "hcloud_ssh_key" "gha_deploy" {
-  name       = "gha-deploy-new"
-  public_key = file("~/.ssh/gha-deploy.pub")
+data "hcloud_ssh_key" "existing" {
+  name = "gha-deploy"
 }
 
 resource "hcloud_network" "private" {
@@ -83,7 +82,7 @@ resource "hcloud_server" "docker_host" {
   image       = var.server_image
   server_type = var.server_type
   location    = var.location
-  ssh_keys    = [hcloud_ssh_key.gha_deploy.id]
+  ssh_keys    = [data.hcloud_ssh_key.existing.id]
   user_data   = local.cloud_init
 
   network {
@@ -102,7 +101,7 @@ resource "hcloud_server" "postgres" {
   image       = "ubuntu-22.04"
   server_type = "cx22"
   location    = var.location
-  ssh_keys    = [hcloud_ssh_key.gha_deploy.id]
+  ssh_keys    = [data.hcloud_ssh_key.existing.id]
 
   network {
     network_id = hcloud_network.private.id
@@ -138,7 +137,7 @@ resource "hcloud_server" "postgres_with_init" {
   image       = "ubuntu-22.04"
   server_type = "cx22"
   location    = var.location
-  ssh_keys    = [hcloud_ssh_key.gha_deploy.id]
+  ssh_keys    = [data.hcloud_ssh_key.existing.id]
   user_data   = local.postgres_init
 
   network {
