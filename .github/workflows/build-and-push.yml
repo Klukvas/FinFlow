@@ -113,15 +113,15 @@ jobs:
 
           # Remote script: pull latest images and recreate containers via compose
           ssh -o StrictHostKeyChecking=no "$USER@$HOST" bash -s <<'EOS'
-          set -euo pipefail
-          cd ~/app || mkdir -p ~/app && cd ~/app
+            set -euo pipefail
+            cd ~/app || mkdir -p ~/app && cd ~/app
 
-          # Expect a docker-compose.yml in this directory configured to use images like REGISTRY/IMAGE_PREFIX/<svc>:latest
-          echo "Pulling latest images..."
-          docker compose pull
-          echo "Recreating services: $SERVICES"
-          docker compose up -d $SERVICES
+            # Expect a docker-compose.yml in this directory configured to use images like REGISTRY/IMAGE_PREFIX/<svc>:latest
+            echo "Pulling latest images..."
+            docker compose pull
+            echo "Recreating services: $SERVICES"
+            docker compose up -d $SERVICES
 
-          echo "Pruning old images..."
-          docker image prune -f || true
-EOS
+            echo "Pruning old images..."
+            docker image prune -f || true
+          EOS
