@@ -111,12 +111,114 @@ jobs:
             SERVICES="frontend account_service category_service currency_service debt_service expense_service goals_service income_service pdf_parser_service recurring_service user_service"
           fi
 
-          # Remote script: pull latest images and recreate containers via compose
+          # Remote script: setup directory and copy files, then pull latest images and recreate containers via compose
           ssh -o StrictHostKeyChecking=no "$USER@$HOST" bash -s <<'EOS'
             set -euo pipefail
-            cd ~/app || mkdir -p ~/app && cd ~/app
+            
+            # Create app directory
+            mkdir -p ~/app
+            cd ~/app
+            
+            # Create .env file with database configuration
+            cat > .env << 'ENVEOF'
+          REGISTRY=${{ env.REGISTRY }}
+          IMAGE_PREFIX=${{ env.IMAGE_PREFIX }}
+          DB_HOST=${{ secrets.DB_HOST || '65.21.159.67' }}
+          DB_PORT=${{ secrets.DB_PORT || '5432' }}
+          DB_NAME=${{ secrets.DB_NAME || 'appdb' }}
+          DB_USER=${{ secrets.DB_USER || 'appuser' }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD || '7vkP:5Y)H&B%W&WDlG{sb[!Sp0W:5)0&' }}
+          NODE_ENV=production
+          ENVEOF
+            
+            # Create docker-compose.yml
+            cat > docker-compose.yml << 'COMPOSEEOF'
+          version: '3.8'
 
-            # Expect a docker-compose.yml in this directory configured to use images like REGISTRY/IMAGE_PREFIX/<svc>:latest
+          services:
+            frontend:
+              image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/frontend:latest
+              ports:
+                - "80:80"
+              environment:
+                - NODE_ENV=production
+              restart: unless-stopped
+
+            account_service:
+              image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/account_service:latest
+              environment:
+                - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+                - REDIS_URL=redis://redis:6379/0
+              depends_on:
+                - redis
+              restart: unless-stopped
+
+            category_service:
+              image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/category_service:latest
+              environment:
+                - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+              restart: unless-stopped
+
+            currency_service:
+              image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/currency_service:latest
+              restart: unless-stopped
+
+            debt_service:
+              image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/debt_service:latest
+              environment:
+                - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+              restart: unless-stopped
+
+            expense_service:
+              image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/expense_service:latest
+              environment:
+                - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+                - REDIS_URL=redis://redis:6379/0
+              depends_on:
+                - redis
+              restart: unless-stopped
+
+            goals_service:
+              image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/goals_service:latest
+              environment:
+                - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+              restart: unless-stopped
+
+            income_service:
+              image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/income_service:latest
+              environment:
+                - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+                - REDIS_URL=redis://redis:6379/0
+              depends_on:
+                - redis
+              restart: unless-stopped
+
+            pdf_parser_service:
+              image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/pdf_parser_service:latest
+              restart: unless-stopped
+
+            recurring_service:
+              image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/recurring_service:latest
+              environment:
+                - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+              restart: unless-stopped
+
+            user_service:
+              image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/user_service:latest
+              environment:
+                - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+              restart: unless-stopped
+
+            redis:
+              image: redis:7-alpine
+              restart: unless-stopped
+              volumes:
+                - redis_data:/data
+
+          volumes:
+            redis_data:
+          COMPOSEEOF
+
             echo "Pulling latest images..."
             docker compose pull
             echo "Recreating services: $SERVICES"
