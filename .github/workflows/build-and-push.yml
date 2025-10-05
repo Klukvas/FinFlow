@@ -74,7 +74,7 @@ jobs:
                 continue
               fi
 
-              image="${{ env.REGISTRY }}/$(echo '${{ env.IMAGE_PREFIX }}' | tr '[:upper:]' '[:lower:]')/$svc"
+              image="${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/$svc"
               tags="\
                 --tag $image:latest \
                 --tag $image:${{ steps.vars.outputs.sha }} \
