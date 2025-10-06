@@ -1,5 +1,5 @@
 # Используем официальный образ Python
-FROM python:3.11-slim
+FROM python:3.13-slim
 
 # Устанавливаем Poetry и postgresql-client для pg_isready
 RUN pip install --upgrade pip && pip install poetry \
