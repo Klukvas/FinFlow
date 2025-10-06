@@ -460,6 +460,7 @@ models/
 # Large data files
 *.csv
 *.json
+!**/package.json
 data/
 datasets/
 
