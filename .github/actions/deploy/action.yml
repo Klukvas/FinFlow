@@ -35,7 +35,7 @@ inputs:
     required: true
   services:
     description: Space-separated services to deploy
-    required: false
+    required: true
     default: "frontend account_service category_service currency_service debt_service expense_service goals_service income_service pdf_parser_service recurring_service user_service"
 runs:
   using: composite
