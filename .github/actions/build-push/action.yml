@@ -80,6 +80,8 @@ runs:
             --tag $image:${{ steps.vars.outputs.ts }} \
           "
 
+          echo "Context listing for $svc:"
+          ls -la "$context_path" || true
           echo "Building $svc using $dockerfile_path with context $context_path -> $image"
           docker buildx build \
             --platform "${{ inputs.platform }}" \
