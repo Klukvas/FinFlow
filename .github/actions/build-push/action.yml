@@ -72,10 +72,11 @@ runs:
             --tag $image:${{ steps.vars.outputs.ts }} \
           "
 
-          echo "Building $svc using $df in context $context -> $image"
+          dockerfile_path="$context/$df"
+          echo "Building $svc using $dockerfile_path with context $context -> $image"
           docker buildx build \
             --platform "${{ inputs.platform }}" \
-            -f "$df" "$context" \
+            -f "$dockerfile_path" "$context" \
             --push $tags
         done
 
