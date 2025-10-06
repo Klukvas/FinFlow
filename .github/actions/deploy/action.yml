@@ -79,27 +79,27 @@ runs:
           set -euo pipefail
           mkdir -p ~/app
           cd ~/app
-          cat > .env << ENVEOF
-REGISTRY=${REGISTRY}
-IMAGE_PREFIX=${IMAGE_PREFIX}
-DB_HOST=${DB_HOST}
-DB_PORT=${DB_PORT}
-DB_NAME=${DB_NAME}
-DB_USER=${DB_USER}
-DB_PASSWORD=${DB_PASSWORD}
-NODE_ENV=production
-ENVEOF
+          cat > .env <<- "ENVEOF"
+	REGISTRY=${REGISTRY}
+	IMAGE_PREFIX=${IMAGE_PREFIX}
+	DB_HOST=${DB_HOST}
+	DB_PORT=${DB_PORT}
+	DB_NAME=${DB_NAME}
+	DB_USER=${DB_USER}
+	DB_PASSWORD=${DB_PASSWORD}
+	NODE_ENV=production
+	ENVEOF
 
-          cat > docker-compose.yml << COMPOSEEOF
+          cat > docker-compose.yml <<- "COMPOSEEOF"
 
-services:
-  frontend:
-    image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/frontend:latest
-    ports:
-      - "80:80"
-    environment:
-      - NODE_ENV=production
-    restart: unless-stopped
+\tservices:
+\t  frontend:
+\t    image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/frontend:latest
+\t    ports:
+\t      - "80:80"
+\t    environment:
+\t      - NODE_ENV=production
+\t    restart: unless-stopped
 
           account_service:
             image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/account_service:latest
@@ -172,9 +172,9 @@ services:
             volumes:
               - redis_data:/data
 
-volumes:
-  redis_data:
-COMPOSEEOF
+\tvolumes:
+\t  redis_data:
+\tCOMPOSEEOF
 
           echo "Pulling latest images..."
           docker compose pull
