@@ -77,7 +77,11 @@ jobs:
         working-directory: ${{ matrix.service }}
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          if [ -f "requirements.txt" ]; then
+            pip install -r requirements.txt
+          elif [ -f "req.txt" ]; then
+            pip install -r req.txt
+          fi
           pip install pytest pytest-cov pytest-asyncio httpx
 
       - name: Run tests

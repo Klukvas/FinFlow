@@ -294,7 +294,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest pytest-cov pytest-asyncio
+          pip install pytest pytest-cov pytest-asyncio httpx
           if [ -d "app/tests" ]; then
             pytest app/tests -v --cov=app --cov-report=xml
           fi
@@ -399,15 +399,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
-          cache-dependency-path: expense_service/requirements.txt
 
       - name: Install dependencies & test
         working-directory: expense_service
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest pytest-cov pytest-asyncio
+          pip install -r req.txt
+          pip install pytest pytest-cov pytest-asyncio httpx
           if [ -d "app/tests" ]; then
             pytest app/tests -v --cov=app --cov-report=xml
           fi
