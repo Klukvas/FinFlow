@@ -2,7 +2,9 @@ version: '3.8'
 
 services:
   frontend:
-    image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/frontend:latest
+    build:
+      context: ../frontend
+    image: accounting_app/frontend:local
     ports:
       - "80:80"
     environment:
@@ -19,13 +21,17 @@ services:
     restart: unless-stopped
 
   category_service:
-    image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/category_service:latest
+    build:
+      context: ../category_service
+    image: accounting_app/category_service:local
     environment:
       - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
     restart: unless-stopped
 
   currency_service:
-    image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/currency_service:latest
+    build:
+      context: ../currency_service
+    image: accounting_app/currency_service:local
     restart: unless-stopped
 
   debt_service:
@@ -35,7 +41,9 @@ services:
     restart: unless-stopped
 
   expense_service:
-    image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/expense_service:latest
+    build:
+      context: ../expense_service
+    image: accounting_app/expense_service:local
     environment:
       - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
       - REDIS_URL=redis://redis:6379/0
@@ -44,7 +52,9 @@ services:
     restart: unless-stopped
 
   goals_service:
-    image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/goals_service:latest
+    build:
+      context: ../goals_service
+    image: accounting_app/goals_service:local
     environment:
       - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
     restart: unless-stopped

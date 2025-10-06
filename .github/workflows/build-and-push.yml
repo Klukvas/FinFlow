@@ -32,197 +32,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
+      - name: Build and push images
+        uses: ./.github/actions/build-push
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          docker-username: ${{ secrets.DOCKER_USERNAME }}
+          docker-password: ${{ secrets.DOCKER_PASSWORD }}
+          services: frontend account_service category_service currency_service debt_service expense_service goals_service income_service pdf_parser_service recurring_service user_service
 
-      - name: Compute tags
-        id: vars
-        run: |
-          SHA=${GITHUB_SHA::7}
-          echo "sha=$SHA" >> $GITHUB_OUTPUT
-          echo "ts=$(date +%Y%m%d%H%M%S)" >> $GITHUB_OUTPUT
-
-      - name: Build and push images
-        uses: nick-fields/retry@v3
+      - name: Deploy
+        uses: ./.github/actions/deploy
         with:
-          timeout_minutes: 30
-          max_attempts: 2
-          command: |
-            set -euo pipefail
-            for svc in frontend account_service category_service currency_service debt_service expense_service goals_service income_service pdf_parser_service recurring_service user_service; do
-              context="${svc}"
-              # Derive dockerfile path
-              if [ "$svc" = "frontend" ]; then
-                dockerfile="frontend/Dockerfile"
-              else
-                # prefer Dockerfile, fallback to dockerfile
-                if [ -f "$svc/Dockerfile" ]; then dockerfile="$svc/Dockerfile"; else dockerfile="$svc/dockerfile"; fi
-              fi
-
-              if [ ! -f "$dockerfile" ]; then
-                echo "Skip $svc (no Dockerfile)"
-                continue
-              fi
-
-              image="${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/$svc"
-              tags="\
-                --tag $image:latest \
-                --tag $image:${{ steps.vars.outputs.sha }} \
-                --tag $image:${{ steps.vars.outputs.ts }} \
-              "
-
-              echo "Building $svc using $dockerfile -> $image"
-              docker buildx build \
-                --platform linux/amd64 \
-                -f "$dockerfile" "$context" \
-                --push $tags
-            done
-
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
+          host: ${{ secrets.HZ_HOST }}
+          user: ${{ secrets.HZ_USER || 'root' }}
           ssh-private-key: ${{ secrets.HZ_SSH_KEY }}
-
-      - name: Add host key
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.HZ_HOST }} >> ~/.ssh/known_hosts
-
-      - name: Deploy to Hetzner
-        env:
-          SERVICES: ${{ github.event.inputs.services }}
-        run: |
-          set -euo pipefail
-          HOST=${{ secrets.HZ_HOST }}
-          USER=${{ secrets.HZ_USER || 'root' }}
-
-          # default set of services if not provided
-          if [ -z "${SERVICES:-}" ]; then
-            SERVICES="frontend account_service category_service currency_service debt_service expense_service goals_service income_service pdf_parser_service recurring_service user_service"
-          fi
-
-          # Remote script: setup directory and copy files, then pull latest images and recreate containers via compose
-          ssh -o StrictHostKeyChecking=no "$USER@$HOST" bash -s <<'EOS'
-            set -euo pipefail
-            
-            # Create app directory
-            mkdir -p ~/app
-            cd ~/app
-            
-            # Create .env file with database configuration
-            cat > .env << 'ENVEOF'
-          REGISTRY=${{ env.REGISTRY }}
-          IMAGE_PREFIX=${{ secrets.DOCKER_USERNAME }}
-          DB_HOST=${{ secrets.DB_HOST || '65.21.159.67' }}
-          DB_PORT=${{ secrets.DB_PORT || '5432' }}
-          DB_NAME=${{ secrets.DB_NAME || 'appdb' }}
-          DB_USER=${{ secrets.DB_USER || 'appuser' }}
-          DB_PASSWORD=${{ secrets.DB_PASSWORD || '7vkP:5Y)H&B%W&WDlG{sb[!Sp0W:5)0&' }}
-          NODE_ENV=production
-          ENVEOF
-            
-            # Create docker-compose.yml
-            cat > docker-compose.yml << 'COMPOSEEOF'
-
-          services:
-            frontend:
-              image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/frontend:latest
-              ports:
-                - "80:80"
-              environment:
-                - NODE_ENV=production
-              restart: unless-stopped
-
-            account_service:
-              image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/account_service:latest
-              environment:
-                - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
-                - REDIS_URL=redis://redis:6379/0
-              depends_on:
-                - redis
-              restart: unless-stopped
-
-            category_service:
-              image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/category_service:latest
-              environment:
-                - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
-              restart: unless-stopped
-
-            currency_service:
-              image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/currency_service:latest
-              restart: unless-stopped
-
-            debt_service:
-              image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/debt_service:latest
-              environment:
-                - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
-              restart: unless-stopped
-
-            expense_service:
-              image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/expense_service:latest
-              environment:
-                - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
-                - REDIS_URL=redis://redis:6379/0
-              depends_on:
-                - redis
-              restart: unless-stopped
-
-            goals_service:
-              image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/goals_service:latest
-              environment:
-                - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
-              restart: unless-stopped
-
-            income_service:
-              image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/income_service:latest
-              environment:
-                - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
-                - REDIS_URL=redis://redis:6379/0
-              depends_on:
-                - redis
-              restart: unless-stopped
-
-            pdf_parser_service:
-              image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/pdf_parser_service:latest
-              restart: unless-stopped
-
-            recurring_service:
-              image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/recurring_service:latest
-              environment:
-                - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
-              restart: unless-stopped
-
-            user_service:
-              image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/user_service:latest
-              environment:
-                - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
-              restart: unless-stopped
-
-            redis:
-              image: redis:7-alpine
-              restart: unless-stopped
-              volumes:
-                - redis_data:/data
-
-          volumes:
-            redis_data:
-          COMPOSEEOF
-
-            echo "Pulling latest images..."
-            docker compose pull
-            echo "Recreating services: $SERVICES"
-            docker compose up -d $SERVICES
-
-            echo "Pruning old images..."
-            docker image prune -f || true
-          EOS
+          registry: ${{ env.REGISTRY }}
+          image-prefix: ${{ secrets.DOCKER_USERNAME }}
+          db-host: ${{ secrets.DB_HOST || '65.21.159.67' }}
+          db-port: ${{ secrets.DB_PORT || '5432' }}
+          db-name: ${{ secrets.DB_NAME || 'appdb' }}
+          db-user: ${{ secrets.DB_USER || 'appuser' }}
+          db-password: ${{ secrets.DB_PASSWORD || '7vkP:5Y)H&B%W&WDlG{sb[!Sp0W:5)0&' }}
+          services: ${{ github.event.inputs.services }}
