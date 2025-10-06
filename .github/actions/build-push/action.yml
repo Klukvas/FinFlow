@@ -73,6 +73,12 @@ runs:
           context_path="./$context"
           dockerfile_path="$context_path/$df"
 
+          # Override for frontend if a custom Dockerfile path is provided
+          if [ "$svc" = "frontend" ] && [ -n "${{ inputs.frontend-dockerfile }}" ] && [ -f "${{ inputs.frontend-dockerfile }}" ]; then
+            dockerfile_path="${{ inputs.frontend-dockerfile }}"
+            context_path="$(dirname "${{ inputs.frontend-dockerfile }}")"
+          fi
+
           image="${{ inputs.registry }}/${{ inputs.docker-username }}/$svc"
           tags=" \
             --tag $image:latest \
@@ -85,7 +91,9 @@ runs:
           echo "Building $svc using $dockerfile_path with context $context_path -> $image"
           docker buildx build \
             --platform "${{ inputs.platform }}" \
-            -f "$dockerfile_path" "$context_path" \
-            --push $tags
+            -f "$dockerfile_path" \
+            $tags \
+            --push \
+            "$context_path"
         done
 

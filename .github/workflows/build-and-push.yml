@@ -17,9 +17,13 @@ on:
         required: false
         default: "frontend account_service category_service expense_service income_service user_service"
 
+concurrency:
+  group: build-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   REGISTRY: ${{ secrets.REGISTRY || 'docker.io' }}
-  IMAGE_PREFIX: ${{ secrets.IMAGE_PREFIX || github.repository }}
+  IMAGE_PREFIX: ${{ secrets.IMAGE_PREFIX || secrets.DOCKER_USERNAME || github.repository_owner }}
 
 jobs:
   build-and-deploy:
@@ -39,7 +43,7 @@ jobs:
           registry: ${{ env.REGISTRY }}
           docker-username: ${{ secrets.DOCKER_USERNAME }}
           docker-password: ${{ secrets.DOCKER_PASSWORD }}
-          services: frontend account_service category_service currency_service debt_service expense_service goals_service income_service pdf_parser_service recurring_service user_service
+          services: ${{ github.event.inputs.services || 'frontend account_service category_service currency_service debt_service expense_service goals_service income_service pdf_parser_service recurring_service user_service' }}
 
       - name: Deploy
         uses: ./.github/actions/deploy
