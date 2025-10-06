@@ -8,6 +8,7 @@ on:
       - '*/app/**'
       - '**/Dockerfile'
       - '.github/workflows/build-and-push.yml'
+      - '.github/actions/**'
       - 'deploy/**'
   workflow_dispatch:
     inputs:
