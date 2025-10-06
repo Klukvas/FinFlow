@@ -48,11 +48,15 @@ runs:
 
     - name: Build and push images
       shell: bash
+      working-directory: ${{ github.workspace }}
       run: |
         set -euo pipefail
         echo "Starting build process for services: ${{ inputs.services }}"
         echo "Registry: ${{ inputs.registry }}"
         echo "Username: ${{ inputs.docker-username }}"
+        echo "Workspace: $(pwd)"
+        echo "Repo root contents:"
+        ls -la || true
         for svc in ${{ inputs.services }}; do
           context="$svc"
           # Determine dockerfile name relative to context
