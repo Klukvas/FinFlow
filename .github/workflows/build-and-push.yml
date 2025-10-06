@@ -53,4 +53,4 @@ jobs:
           db-name: ${{ secrets.DB_NAME || 'appdb' }}
           db-user: ${{ secrets.DB_USER || 'appuser' }}
           db-password: ${{ secrets.DB_PASSWORD || '7vkP:5Y)H&B%W&WDlG{sb[!Sp0W:5)0&' }}
-          services: ${{ github.event.inputs.services }}
+          services: ${{ github.event.inputs.services || 'frontend account_service category_service currency_service debt_service expense_service goals_service income_service pdf_parser_service recurring_service user_service' }}
