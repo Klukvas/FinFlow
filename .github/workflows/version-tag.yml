@@ -1,0 +1,127 @@
+name: Version and Tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+        default: patch
+      custom_version:
+        description: 'Custom version (optional, overrides version_type)'
+        required: false
+        type: string
+
+jobs:
+  create-tag:
+    name: Create Version Tag
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Get latest tag
+        id: latest_tag
+        run: |
+          TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "Latest tag: $TAG"
+
+      - name: Calculate next version
+        id: next_version
+        run: |
+          if [ -n "${{ inputs.custom_version }}" ]; then
+            NEXT="v${{ inputs.custom_version }}"
+          else
+            LATEST="${{ steps.latest_tag.outputs.tag }}"
+            VERSION=${LATEST#v}
+            IFS='.' read -ra PARTS <<< "$VERSION"
+            MAJOR=${PARTS[0]}
+            MINOR=${PARTS[1]}
+            PATCH=${PARTS[2]}
+            
+            case "${{ inputs.version_type }}" in
+              major)
+                MAJOR=$((MAJOR + 1))
+                MINOR=0
+                PATCH=0
+                ;;
+              minor)
+                MINOR=$((MINOR + 1))
+                PATCH=0
+                ;;
+              patch)
+                PATCH=$((PATCH + 1))
+                ;;
+            esac
+            
+            NEXT="v$MAJOR.$MINOR.$PATCH"
+          fi
+          
+          echo "version=$NEXT" >> $GITHUB_OUTPUT
+          echo "Next version: $NEXT"
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          LATEST_TAG="${{ steps.latest_tag.outputs.tag }}"
+          
+          {
+            echo "changelog<<EOF"
+            echo "## Changes since $LATEST_TAG"
+            echo ""
+            git log $LATEST_TAG..HEAD --pretty=format:"- %s (%h)" --no-merges | head -50
+            echo ""
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
+      - name: Create and push tag
+        run: |
+          TAG="${{ steps.next_version.outputs.version }}"
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
+          echo "✅ Created and pushed tag: $TAG"
+
+      - name: Create GitHub Release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tag = "${{ steps.next_version.outputs.version }}";
+            const changelog = `${{ steps.changelog.outputs.changelog }}`;
+            
+            await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: tag,
+              name: `Release ${tag}`,
+              body: changelog,
+              draft: false,
+              prerelease: false,
+              generate_release_notes: true
+            });
+            
+            console.log(`Created release ${tag}`);
+
+      - name: Summary
+        run: |
+          echo "## Version Tag Created" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ steps.next_version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Type**: ${{ inputs.version_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Previous**: ${{ steps.latest_tag.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+

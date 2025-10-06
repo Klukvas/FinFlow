@@ -69,9 +69,12 @@ runs:
         SERVICES: ${{ inputs.services }}
       run: |
         set -euo pipefail
-        echo "Starting deployment process"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "🚀 Starting deployment process"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         echo "Host: $HOST"
         echo "User: $USER"
+        echo "Registry: $REGISTRY"
         echo "Services: ${SERVICES:-<empty>}"
 
         # Use default services if empty
@@ -79,6 +82,10 @@ runs:
           SERVICES="frontend account_service category_service currency_service debt_service expense_service goals_service income_service pdf_parser_service recurring_service user_service"
           echo "Using default services: $SERVICES"
         fi
+
+        echo ""
+        echo "📦 Services to deploy: $SERVICES"
+        echo ""
 
         ssh -o StrictHostKeyChecking=no "$USER@$HOST" bash -s <<-EOS
 	set -euo pipefail
@@ -181,10 +188,37 @@ runs:
 	  redis_data:
 	COMPOSEEOF
 
-	echo "Pulling latest images..."
-	docker compose pull
-	echo "Recreating services: ${SERVICES}"
-	docker compose up -d ${SERVICES}
-	echo "Pruning old images..."
+	echo ""
+	echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	echo "📥 Pulling latest images..."
+	echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	if docker compose pull ${SERVICES}; then
+	  echo "✅ Images pulled successfully"
+	else
+	  echo "⚠️ Some images failed to pull"
+	fi
+	
+	echo ""
+	echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	echo "🔄 Recreating services: ${SERVICES}"
+	echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	if docker compose up -d ${SERVICES}; then
+	  echo "✅ Services started successfully"
+	else
+	  echo "❌ Failed to start some services"
+	  exit 1
+	fi
+	
+	echo ""
+	echo "🧹 Cleaning up old images..."
 	docker image prune -f || true
+	
+	echo ""
+	echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	echo "📊 Deployment Status"
+	echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	docker compose ps
+	
+	echo ""
+	echo "✅ Deployment completed successfully!"
 	EOS

@@ -1,0 +1,230 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'frontend/**'
+      - '*/app/**'
+      - '**/Dockerfile'
+      - '**/requirements.txt'
+      - '**/pyproject.toml'
+      - '**/package.json'
+      - '.github/workflows/**'
+      - '.github/actions/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        type: choice
+        options:
+          - production
+          - staging
+        default: staging
+      services:
+        description: 'Space-separated services to deploy (leave empty for all)'
+        required: false
+        type: string
+
+concurrency:
+  group: ci-cd-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ${{ secrets.REGISTRY || 'docker.io' }}
+  IMAGE_PREFIX: ${{ secrets.IMAGE_PREFIX || secrets.DOCKER_USERNAME || github.repository_owner }}
+
+jobs:
+  detect-changes:
+    name: Detect Changed Services
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.changes.outputs.frontend }}
+      backend: ${{ steps.changes.outputs.backend }}
+      services: ${{ steps.detect.outputs.services }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changes
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            frontend:
+              - 'frontend/**'
+            backend:
+              - '*/app/**'
+              - '**/requirements.txt'
+              - '**/pyproject.toml'
+
+      - name: Detect specific services
+        id: detect
+        run: |
+          CHANGED_SERVICES=""
+          
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]] && [[ -n "${{ inputs.services }}" ]]; then
+            CHANGED_SERVICES="${{ inputs.services }}"
+          else
+            # Check each service for changes
+            for svc in account_service category_service currency_service debt_service expense_service goals_service income_service pdf_parser_service recurring_service user_service; do
+              if git diff --name-only HEAD^..HEAD | grep -q "^$svc/"; then
+                CHANGED_SERVICES="$CHANGED_SERVICES $svc"
+              fi
+            done
+            
+            if [[ "${{ steps.changes.outputs.frontend }}" == "true" ]]; then
+              CHANGED_SERVICES="frontend $CHANGED_SERVICES"
+            fi
+          fi
+          
+          # If no specific services changed, deploy all
+          if [[ -z "$CHANGED_SERVICES" ]]; then
+            CHANGED_SERVICES="frontend account_service category_service currency_service debt_service expense_service goals_service income_service pdf_parser_service recurring_service user_service"
+          fi
+          
+          echo "services=$CHANGED_SERVICES" >> $GITHUB_OUTPUT
+          echo "Detected services to build/deploy: $CHANGED_SERVICES"
+
+  build-frontend:
+    name: Build Frontend
+    needs: detect-changes
+    if: contains(needs.detect-changes.outputs.services, 'frontend')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+          cache-dependency-path: frontend/yarn.lock
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: yarn install --frozen-lockfile
+
+      - name: Lint
+        working-directory: frontend
+        run: yarn lint
+
+      - name: Type check
+        working-directory: frontend
+        run: yarn tsc --noEmit
+
+      - name: Build
+        working-directory: frontend
+        run: yarn build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          retention-days: 1
+
+  test-backend-services:
+    name: Test Backend Services
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - category_service
+          - expense_service
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: ${{ matrix.service }}/requirements.txt
+
+      - name: Install dependencies
+        working-directory: ${{ matrix.service }}
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov pytest-asyncio
+
+      - name: Run tests
+        working-directory: ${{ matrix.service }}
+        run: |
+          if [ -d "app/tests" ]; then
+            pytest app/tests -v --cov=app --cov-report=xml --cov-report=term
+          else
+            echo "No tests found for ${{ matrix.service }}"
+          fi
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          files: ${{ matrix.service }}/coverage.xml
+          flags: ${{ matrix.service }}
+          name: ${{ matrix.service }}
+        continue-on-error: true
+
+  build-and-push:
+    name: Build and Push Images
+    needs: [detect-changes, build-frontend, test-backend-services]
+    if: |
+      always() &&
+      (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped') &&
+      (needs.test-backend-services.result == 'success' || needs.test-backend-services.result == 'skipped')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build and push
+        uses: ./.github/actions/build-push
+        with:
+          registry: ${{ env.REGISTRY }}
+          docker-username: ${{ secrets.DOCKER_USERNAME }}
+          docker-password: ${{ secrets.DOCKER_PASSWORD }}
+          services: ${{ needs.detect-changes.outputs.services }}
+          platform: linux/amd64
+
+  deploy:
+    name: Deploy to ${{ github.event.inputs.environment || 'production' }}
+    needs: [detect-changes, build-and-push]
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event.inputs.environment || 'production' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy
+        uses: ./.github/actions/deploy
+        with:
+          host: ${{ secrets.HZ_HOST }}
+          user: ${{ secrets.HZ_USER || 'root' }}
+          ssh-private-key: ${{ secrets.HZ_SSH_KEY }}
+          registry: ${{ env.REGISTRY }}
+          image-prefix: ${{ env.IMAGE_PREFIX }}
+          db-host: ${{ secrets.DB_HOST }}
+          db-port: ${{ secrets.DB_PORT || '5432' }}
+          db-name: ${{ secrets.DB_NAME }}
+          db-user: ${{ secrets.DB_USER }}
+          db-password: ${{ secrets.DB_PASSWORD }}
+          services: ${{ needs.detect-changes.outputs.services }}
+
+      - name: Notify deployment
+        if: always()
+        run: |
+          echo "Deployment completed with status: ${{ job.status }}"
+          echo "Services deployed: ${{ needs.detect-changes.outputs.services }}"
+
