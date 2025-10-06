@@ -47,36 +47,36 @@ runs:
         echo "ts=$(date +%Y%m%d%H%M%S)" >> "$GITHUB_OUTPUT"
 
     - name: Build and push images
-      uses: nick-fields/retry@v3
-      with:
-        timeout_minutes: 30
-        max_attempts: 2
-        command: |
-          set -euo pipefail
-          for svc in ${{ inputs.services }}; do
-            context="$svc"
-            if [ "$svc" = "frontend" ]; then
-              dockerfile="${{ inputs.frontend-dockerfile }}"
-            else
-              if [ -f "$svc/Dockerfile" ]; then dockerfile="$svc/Dockerfile"; else dockerfile="$svc/dockerfile"; fi
-            fi
+      shell: bash
+      run: |
+        set -euo pipefail
+        echo "Starting build process for services: ${{ inputs.services }}"
+        echo "Registry: ${{ inputs.registry }}"
+        echo "Username: ${{ inputs.docker-username }}"
+        for svc in ${{ inputs.services }}; do
+          context="$svc"
+          if [ "$svc" = "frontend" ]; then
+            dockerfile="${{ inputs.frontend-dockerfile }}"
+          else
+            if [ -f "$svc/Dockerfile" ]; then dockerfile="$svc/Dockerfile"; else dockerfile="$svc/dockerfile"; fi
+          fi
 
-            if [ ! -f "$dockerfile" ]; then
-              echo "Skip $svc (no Dockerfile)"
-              continue
-            fi
+          if [ ! -f "$dockerfile" ]; then
+            echo "Skip $svc (no Dockerfile)"
+            continue
+          fi
 
-            image="${{ inputs.registry }}/${{ inputs.docker-username }}/$svc"
-            tags=" \
-              --tag $image:latest \
-              --tag $image:${{ steps.vars.outputs.sha }} \
-              --tag $image:${{ steps.vars.outputs.ts }} \
-            "
+          image="${{ inputs.registry }}/${{ inputs.docker-username }}/$svc"
+          tags=" \
+            --tag $image:latest \
+            --tag $image:${{ steps.vars.outputs.sha }} \
+            --tag $image:${{ steps.vars.outputs.ts }} \
+          "
 
-            echo "Building $svc using $dockerfile -> $image"
-            docker buildx build \
-              --platform "${{ inputs.platform }}" \
-              -f "$dockerfile" "$context" \
-              --push $tags
-          done
+          echo "Building $svc using $dockerfile -> $image"
+          docker buildx build \
+            --platform "${{ inputs.platform }}" \
+            -f "$dockerfile" "$context" \
+            --push $tags
+        done
 

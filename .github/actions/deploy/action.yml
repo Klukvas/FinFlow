@@ -66,6 +66,15 @@ runs:
         SERVICES: ${{ inputs.services }}
       run: |
         set -euo pipefail
+        echo "Starting deployment process"
+        echo "Host: $HOST"
+        echo "User: $USER"
+        echo "Services: $SERVICES"
+        # Use default services if empty
+        if [ -z "${SERVICES:-}" ]; then
+          SERVICES="frontend account_service category_service currency_service debt_service expense_service goals_service income_service pdf_parser_service recurring_service user_service"
+          echo "Using default services: $SERVICES"
+        fi
         ssh -o StrictHostKeyChecking=no "$USER@$HOST" bash -s <<'EOS'
           set -euo pipefail
           mkdir -p ~/app
