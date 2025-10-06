@@ -40,59 +40,156 @@ jobs:
     name: Detect Changed Services
     runs-on: ubuntu-latest
     outputs:
-      frontend: ${{ steps.changes.outputs.frontend }}
-      backend: ${{ steps.changes.outputs.backend }}
-      services: ${{ steps.detect.outputs.services }}
+      frontend: ${{ steps.detect.outputs.frontend }}
+      account_service: ${{ steps.detect.outputs.account_service }}
+      category_service: ${{ steps.detect.outputs.category_service }}
+      currency_service: ${{ steps.detect.outputs.currency_service }}
+      debt_service: ${{ steps.detect.outputs.debt_service }}
+      expense_service: ${{ steps.detect.outputs.expense_service }}
+      goals_service: ${{ steps.detect.outputs.goals_service }}
+      income_service: ${{ steps.detect.outputs.income_service }}
+      pdf_parser_service: ${{ steps.detect.outputs.pdf_parser_service }}
+      recurring_service: ${{ steps.detect.outputs.recurring_service }}
+      user_service: ${{ steps.detect.outputs.user_service }}
+      services_list: ${{ steps.detect.outputs.services_list }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Detect changes
-        id: changes
-        uses: dorny/paths-filter@v3
-        with:
-          filters: |
-            frontend:
-              - 'frontend/**'
-            backend:
-              - '*/app/**'
-              - '**/requirements.txt'
-              - '**/pyproject.toml'
-
       - name: Detect specific services
         id: detect
         run: |
-          CHANGED_SERVICES=""
+          # Initialize all services as false
+          FRONTEND="false"
+          ACCOUNT_SERVICE="false"
+          CATEGORY_SERVICE="false"
+          CURRENCY_SERVICE="false"
+          DEBT_SERVICE="false"
+          EXPENSE_SERVICE="false"
+          GOALS_SERVICE="false"
+          INCOME_SERVICE="false"
+          PDF_PARSER_SERVICE="false"
+          RECURRING_SERVICE="false"
+          USER_SERVICE="false"
           
+          # If manual dispatch with specific services
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]] && [[ -n "${{ inputs.services }}" ]]; then
-            CHANGED_SERVICES="${{ inputs.services }}"
-          else
-            # Check each service for changes
-            for svc in account_service category_service currency_service debt_service expense_service goals_service income_service pdf_parser_service recurring_service user_service; do
-              if git diff --name-only HEAD^..HEAD | grep -q "^$svc/"; then
-                CHANGED_SERVICES="$CHANGED_SERVICES $svc"
-              fi
+            SERVICES="${{ inputs.services }}"
+            for svc in $SERVICES; do
+              case $svc in
+                frontend) FRONTEND="true" ;;
+                account_service) ACCOUNT_SERVICE="true" ;;
+                category_service) CATEGORY_SERVICE="true" ;;
+                currency_service) CURRENCY_SERVICE="true" ;;
+                debt_service) DEBT_SERVICE="true" ;;
+                expense_service) EXPENSE_SERVICE="true" ;;
+                goals_service) GOALS_SERVICE="true" ;;
+                income_service) INCOME_SERVICE="true" ;;
+                pdf_parser_service) PDF_PARSER_SERVICE="true" ;;
+                recurring_service) RECURRING_SERVICE="true" ;;
+                user_service) USER_SERVICE="true" ;;
+              esac
             done
+          else
+            # Auto-detect changes
+            if git diff --name-only HEAD^..HEAD | grep -q "^frontend/"; then
+              FRONTEND="true"
+            fi
+            if git diff --name-only HEAD^..HEAD | grep -q "^account_service/"; then
+              ACCOUNT_SERVICE="true"
+            fi
+            if git diff --name-only HEAD^..HEAD | grep -q "^category_service/"; then
+              CATEGORY_SERVICE="true"
+            fi
+            if git diff --name-only HEAD^..HEAD | grep -q "^currency_service/"; then
+              CURRENCY_SERVICE="true"
+            fi
+            if git diff --name-only HEAD^..HEAD | grep -q "^debt_service/"; then
+              DEBT_SERVICE="true"
+            fi
+            if git diff --name-only HEAD^..HEAD | grep -q "^expense_service/"; then
+              EXPENSE_SERVICE="true"
+            fi
+            if git diff --name-only HEAD^..HEAD | grep -q "^goals_service/"; then
+              GOALS_SERVICE="true"
+            fi
+            if git diff --name-only HEAD^..HEAD | grep -q "^income_service/"; then
+              INCOME_SERVICE="true"
+            fi
+            if git diff --name-only HEAD^..HEAD | grep -q "^pdf_parser_service/"; then
+              PDF_PARSER_SERVICE="true"
+            fi
+            if git diff --name-only HEAD^..HEAD | grep -q "^recurring_service/"; then
+              RECURRING_SERVICE="true"
+            fi
+            if git diff --name-only HEAD^..HEAD | grep -q "^user_service/"; then
+              USER_SERVICE="true"
+            fi
             
-            if [[ "${{ steps.changes.outputs.frontend }}" == "true" ]]; then
-              CHANGED_SERVICES="frontend $CHANGED_SERVICES"
+            # If nothing changed, build all
+            if [[ "$FRONTEND" == "false" ]] && \
+               [[ "$ACCOUNT_SERVICE" == "false" ]] && \
+               [[ "$CATEGORY_SERVICE" == "false" ]] && \
+               [[ "$CURRENCY_SERVICE" == "false" ]] && \
+               [[ "$DEBT_SERVICE" == "false" ]] && \
+               [[ "$EXPENSE_SERVICE" == "false" ]] && \
+               [[ "$GOALS_SERVICE" == "false" ]] && \
+               [[ "$INCOME_SERVICE" == "false" ]] && \
+               [[ "$PDF_PARSER_SERVICE" == "false" ]] && \
+               [[ "$RECURRING_SERVICE" == "false" ]] && \
+               [[ "$USER_SERVICE" == "false" ]]; then
+              echo "No changes detected, building all services"
+              FRONTEND="true"
+              ACCOUNT_SERVICE="true"
+              CATEGORY_SERVICE="true"
+              CURRENCY_SERVICE="true"
+              DEBT_SERVICE="true"
+              EXPENSE_SERVICE="true"
+              GOALS_SERVICE="true"
+              INCOME_SERVICE="true"
+              PDF_PARSER_SERVICE="true"
+              RECURRING_SERVICE="true"
+              USER_SERVICE="true"
             fi
           fi
           
-          # If no specific services changed, deploy all
-          if [[ -z "$CHANGED_SERVICES" ]]; then
-            CHANGED_SERVICES="frontend account_service category_service currency_service debt_service expense_service goals_service income_service pdf_parser_service recurring_service user_service"
-          fi
+          # Output individual services
+          echo "frontend=$FRONTEND" >> $GITHUB_OUTPUT
+          echo "account_service=$ACCOUNT_SERVICE" >> $GITHUB_OUTPUT
+          echo "category_service=$CATEGORY_SERVICE" >> $GITHUB_OUTPUT
+          echo "currency_service=$CURRENCY_SERVICE" >> $GITHUB_OUTPUT
+          echo "debt_service=$DEBT_SERVICE" >> $GITHUB_OUTPUT
+          echo "expense_service=$EXPENSE_SERVICE" >> $GITHUB_OUTPUT
+          echo "goals_service=$GOALS_SERVICE" >> $GITHUB_OUTPUT
+          echo "income_service=$INCOME_SERVICE" >> $GITHUB_OUTPUT
+          echo "pdf_parser_service=$PDF_PARSER_SERVICE" >> $GITHUB_OUTPUT
+          echo "recurring_service=$RECURRING_SERVICE" >> $GITHUB_OUTPUT
+          echo "user_service=$USER_SERVICE" >> $GITHUB_OUTPUT
           
-          echo "services=$CHANGED_SERVICES" >> $GITHUB_OUTPUT
-          echo "Detected services to build/deploy: $CHANGED_SERVICES"
+          # Build list for deployment
+          SERVICES_LIST=""
+          [[ "$FRONTEND" == "true" ]] && SERVICES_LIST="$SERVICES_LIST frontend"
+          [[ "$ACCOUNT_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST account_service"
+          [[ "$CATEGORY_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST category_service"
+          [[ "$CURRENCY_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST currency_service"
+          [[ "$DEBT_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST debt_service"
+          [[ "$EXPENSE_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST expense_service"
+          [[ "$GOALS_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST goals_service"
+          [[ "$INCOME_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST income_service"
+          [[ "$PDF_PARSER_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST pdf_parser_service"
+          [[ "$RECURRING_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST recurring_service"
+          [[ "$USER_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST user_service"
+          
+          echo "services_list=$SERVICES_LIST" >> $GITHUB_OUTPUT
+          echo "Services to build/deploy:$SERVICES_LIST"
 
-  build-frontend:
-    name: Build Frontend
+  # Stage 1: Frontend Build
+  stage1-frontend:
+    name: "Stage 1: Build Frontend"
     needs: detect-changes
-    if: contains(needs.detect-changes.outputs.services, 'frontend')
+    if: needs.detect-changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -121,24 +218,66 @@ jobs:
         working-directory: frontend
         run: yarn build
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-dist
-          path: frontend/dist
-          retention-days: 1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-  test-backend-services:
-    name: Test Backend Services
+      - name: Log in to Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/frontend:latest
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/frontend:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/frontend:latest
+          cache-to: type=inline
+
+  # Stage 2: Account Service Build
+  stage2-account-service:
+    name: "Stage 2: Build Account Service"
     needs: detect-changes
-    if: needs.detect-changes.outputs.backend == 'true'
+    if: needs.detect-changes.outputs.account_service == 'true'
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        service:
-          - category_service
-          - expense_service
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./account_service
+          file: ./account_service/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/account_service:latest
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/account_service:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/account_service:latest
+          cache-to: type=inline
+
+  # Stage 3: Category Service Build
+  stage3-category-service:
+    name: "Stage 3: Build Category Service"
+    needs: detect-changes
+    if: needs.detect-changes.outputs.category_service == 'true'
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -148,58 +287,343 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
-          cache-dependency-path: ${{ matrix.service }}/requirements.txt
+          cache-dependency-path: category_service/requirements.txt
 
-      - name: Install dependencies
-        working-directory: ${{ matrix.service }}
+      - name: Install dependencies & test
+        working-directory: category_service
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest pytest-cov pytest-asyncio
-
-      - name: Run tests
-        working-directory: ${{ matrix.service }}
-        run: |
           if [ -d "app/tests" ]; then
-            pytest app/tests -v --cov=app --cov-report=xml --cov-report=term
-          else
-            echo "No tests found for ${{ matrix.service }}"
+            pytest app/tests -v --cov=app --cov-report=xml
           fi
 
-      - name: Upload coverage
-        uses: codecov/codecov-action@v4
-        if: always()
-        with:
-          files: ${{ matrix.service }}/coverage.xml
-          flags: ${{ matrix.service }}
-          name: ${{ matrix.service }}
-        continue-on-error: true
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-  build-and-push:
-    name: Build and Push Images
-    needs: [detect-changes, build-frontend, test-backend-services]
-    if: |
-      always() &&
-      (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped') &&
-      (needs.test-backend-services.result == 'success' || needs.test-backend-services.result == 'skipped')
+      - name: Log in to Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./category_service
+          file: ./category_service/dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/category_service:latest
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/category_service:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/category_service:latest
+          cache-to: type=inline
+
+  # Stage 4: Currency Service Build
+  stage4-currency-service:
+    name: "Stage 4: Build Currency Service"
+    needs: detect-changes
+    if: needs.detect-changes.outputs.currency_service == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build and push
-        uses: ./.github/actions/build-push
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Registry
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          docker-username: ${{ secrets.DOCKER_USERNAME }}
-          docker-password: ${{ secrets.DOCKER_PASSWORD }}
-          services: ${{ needs.detect-changes.outputs.services }}
-          platform: linux/amd64
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./currency_service
+          file: ./currency_service/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/currency_service:latest
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/currency_service:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/currency_service:latest
+          cache-to: type=inline
+
+  # Stage 5: Debt Service Build
+  stage5-debt-service:
+    name: "Stage 5: Build Debt Service"
+    needs: detect-changes
+    if: needs.detect-changes.outputs.debt_service == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./debt_service
+          file: ./debt_service/dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/debt_service:latest
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/debt_service:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/debt_service:latest
+          cache-to: type=inline
+
+  # Stage 6: Expense Service Build
+  stage6-expense-service:
+    name: "Stage 6: Build Expense Service"
+    needs: detect-changes
+    if: needs.detect-changes.outputs.expense_service == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: expense_service/requirements.txt
+
+      - name: Install dependencies & test
+        working-directory: expense_service
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov pytest-asyncio
+          if [ -d "app/tests" ]; then
+            pytest app/tests -v --cov=app --cov-report=xml
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./expense_service
+          file: ./expense_service/dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/expense_service:latest
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/expense_service:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/expense_service:latest
+          cache-to: type=inline
+
+  # Stage 7: Goals Service Build
+  stage7-goals-service:
+    name: "Stage 7: Build Goals Service"
+    needs: detect-changes
+    if: needs.detect-changes.outputs.goals_service == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./goals_service
+          file: ./goals_service/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/goals_service:latest
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/goals_service:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/goals_service:latest
+          cache-to: type=inline
+
+  # Stage 8: Income Service Build
+  stage8-income-service:
+    name: "Stage 8: Build Income Service"
+    needs: detect-changes
+    if: needs.detect-changes.outputs.income_service == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./income_service
+          file: ./income_service/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/income_service:latest
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/income_service:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/income_service:latest
+          cache-to: type=inline
+
+  # Stage 9: PDF Parser Service Build
+  stage9-pdf-parser-service:
+    name: "Stage 9: Build PDF Parser Service"
+    needs: detect-changes
+    if: needs.detect-changes.outputs.pdf_parser_service == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./pdf_parser_service
+          file: ./pdf_parser_service/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/pdf_parser_service:latest
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/pdf_parser_service:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/pdf_parser_service:latest
+          cache-to: type=inline
+
+  # Stage 10: Recurring Service Build
+  stage10-recurring-service:
+    name: "Stage 10: Build Recurring Service"
+    needs: detect-changes
+    if: needs.detect-changes.outputs.recurring_service == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./recurring_service
+          file: ./recurring_service/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/recurring_service:latest
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/recurring_service:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/recurring_service:latest
+          cache-to: type=inline
+
+  # Stage 11: User Service Build
+  stage11-user-service:
+    name: "Stage 11: Build User Service"
+    needs: detect-changes
+    if: needs.detect-changes.outputs.user_service == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./user_service
+          file: ./user_service/dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/user_service:latest
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/user_service:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/user_service:latest
+          cache-to: type=inline
+
+  # Final Stage: Deploy
   deploy:
     name: Deploy to ${{ github.event.inputs.environment || 'production' }}
-    needs: [detect-changes, build-and-push]
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    needs: 
+      - detect-changes
+      - stage1-frontend
+      - stage2-account-service
+      - stage3-category-service
+      - stage4-currency-service
+      - stage5-debt-service
+      - stage6-expense-service
+      - stage7-goals-service
+      - stage8-income-service
+      - stage9-pdf-parser-service
+      - stage10-recurring-service
+      - stage11-user-service
+    if: |
+      always() &&
+      (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') &&
+      (needs.stage1-frontend.result == 'success' || needs.stage1-frontend.result == 'skipped') &&
+      (needs.stage2-account-service.result == 'success' || needs.stage2-account-service.result == 'skipped') &&
+      (needs.stage3-category-service.result == 'success' || needs.stage3-category-service.result == 'skipped') &&
+      (needs.stage4-currency-service.result == 'success' || needs.stage4-currency-service.result == 'skipped') &&
+      (needs.stage5-debt-service.result == 'success' || needs.stage5-debt-service.result == 'skipped') &&
+      (needs.stage6-expense-service.result == 'success' || needs.stage6-expense-service.result == 'skipped') &&
+      (needs.stage7-goals-service.result == 'success' || needs.stage7-goals-service.result == 'skipped') &&
+      (needs.stage8-income-service.result == 'success' || needs.stage8-income-service.result == 'skipped') &&
+      (needs.stage9-pdf-parser-service.result == 'success' || needs.stage9-pdf-parser-service.result == 'skipped') &&
+      (needs.stage10-recurring-service.result == 'success' || needs.stage10-recurring-service.result == 'skipped') &&
+      (needs.stage11-user-service.result == 'success' || needs.stage11-user-service.result == 'skipped')
     runs-on: ubuntu-latest
     environment:
       name: ${{ github.event.inputs.environment || 'production' }}
@@ -220,11 +644,27 @@ jobs:
           db-name: ${{ secrets.DB_NAME }}
           db-user: ${{ secrets.DB_USER }}
           db-password: ${{ secrets.DB_PASSWORD }}
-          services: ${{ needs.detect-changes.outputs.services }}
+          services: ${{ needs.detect-changes.outputs.services_list }}
 
-      - name: Notify deployment
+      - name: Build Summary
         if: always()
         run: |
-          echo "Deployment completed with status: ${{ job.status }}"
-          echo "Services deployed: ${{ needs.detect-changes.outputs.services }}"
+          echo "## 🎉 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Services Built & Deployed:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          [[ "${{ needs.stage1-frontend.result }}" == "success" ]] && echo "- ✅ Frontend" >> $GITHUB_STEP_SUMMARY
+          [[ "${{ needs.stage2-account-service.result }}" == "success" ]] && echo "- ✅ Account Service" >> $GITHUB_STEP_SUMMARY
+          [[ "${{ needs.stage3-category-service.result }}" == "success" ]] && echo "- ✅ Category Service" >> $GITHUB_STEP_SUMMARY
+          [[ "${{ needs.stage4-currency-service.result }}" == "success" ]] && echo "- ✅ Currency Service" >> $GITHUB_STEP_SUMMARY
+          [[ "${{ needs.stage5-debt-service.result }}" == "success" ]] && echo "- ✅ Debt Service" >> $GITHUB_STEP_SUMMARY
+          [[ "${{ needs.stage6-expense-service.result }}" == "success" ]] && echo "- ✅ Expense Service" >> $GITHUB_STEP_SUMMARY
+          [[ "${{ needs.stage7-goals-service.result }}" == "success" ]] && echo "- ✅ Goals Service" >> $GITHUB_STEP_SUMMARY
+          [[ "${{ needs.stage8-income-service.result }}" == "success" ]] && echo "- ✅ Income Service" >> $GITHUB_STEP_SUMMARY
+          [[ "${{ needs.stage9-pdf-parser-service.result }}" == "success" ]] && echo "- ✅ PDF Parser Service" >> $GITHUB_STEP_SUMMARY
+          [[ "${{ needs.stage10-recurring-service.result }}" == "success" ]] && echo "- ✅ Recurring Service" >> $GITHUB_STEP_SUMMARY
+          [[ "${{ needs.stage11-user-service.result }}" == "success" ]] && echo "- ✅ User Service" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment**: ${{ github.event.inputs.environment || 'production' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
 
