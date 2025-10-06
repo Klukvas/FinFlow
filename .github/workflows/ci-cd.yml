@@ -553,7 +553,22 @@ jobs:
       - stage9-pdf-parser-service
       - stage10-recurring-service
       - stage11-user-service
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    # Run deploy if on main branch OR manual dispatch, and at least one build succeeded (not skipped)
+    if: |
+      (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') &&
+      (
+        needs.stage1-frontend.result == 'success' ||
+        needs.stage2-account-service.result == 'success' ||
+        needs.stage3-category-service.result == 'success' ||
+        needs.stage4-currency-service.result == 'success' ||
+        needs.stage5-debt-service.result == 'success' ||
+        needs.stage6-expense-service.result == 'success' ||
+        needs.stage7-goals-service.result == 'success' ||
+        needs.stage8-income-service.result == 'success' ||
+        needs.stage9-pdf-parser-service.result == 'success' ||
+        needs.stage10-recurring-service.result == 'success' ||
+        needs.stage11-user-service.result == 'success'
+      )
     runs-on: ubuntu-latest
     environment:
       name: ${{ github.event.inputs.environment || 'production' }}
