@@ -316,7 +316,6 @@ dist-ssr
 *.sw?
 
 # Docker
-.dockerignore
 docker-compose.override.yml
 .docker/
 
@@ -458,11 +457,13 @@ receipt_service/temp/
 models/
 
 # Large data files
-*.csv
-*.json
-!**/package.json
 data/
 datasets/
+data/**/*.csv
+datasets/**/*.csv
+data/**/*.json
+datasets/**/*.json
+!**/package.json
 
 # Build artifacts
 build/

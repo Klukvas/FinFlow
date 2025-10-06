@@ -1,0 +1,35 @@
+# Prune build context for faster Docker builds
+node_modules
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# Local env and logs
+.env*
+*.log
+
+# Vite/TS caches and build output (source will be copied; builder runs build)
+dist
+dist-ssr
+.vite
+.cache
+*.tsbuildinfo
+
+# Test artifacts
+coverage
+playwright-report
+test-results
+
+# VCS and editor
+.git
+.gitignore
+.vscode
+.idea
+.DS_Store
+
+# Other
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

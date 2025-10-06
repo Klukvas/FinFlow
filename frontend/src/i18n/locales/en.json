@@ -1,0 +1,514 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No",
+    "confirm": "Confirm",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "name": "Name",
+    "description": "Description",
+    "amount": "Amount",
+    "date": "Date",
+    "category": "Category",
+    "type": "Type"
+  },
+  "navigation": {
+    "home": "Home",
+    "categories": "Categories",
+    "expenses": "Expenses",
+    "income": "Income",
+    "recurring": "Recurring",
+    "accounts": "Accounts",
+    "debts": "Debts",
+    "goals": "Goals",
+    "pdfParser": "PDF Parser",
+    "profile": "Profile",
+    "logout": "Logout",
+    "login": "Login",
+    "register": "Register"
+  },
+  "publicNav": {
+    "howItWorks": "How it works",
+    "features": "Features",
+    "pricing": "Pricing"
+  },
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No",
+    "confirm": "Confirm",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "name": "Name",
+    "description": "Description",
+    "amount": "Amount",
+    "date": "Date",
+    "category": "Category",
+    "type": "Type",
+    "menu": "Menu",
+    "openMenu": "Open menu"
+  },
+  "header": {
+    "appTitle": "Financial Accounting",
+    "goToProfile": "Go to profile",
+    "user": "User"
+  },
+  "auth": {
+    "username": "Username",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "loginTitle": "Login",
+    "registerTitle": "Register",
+    "loginButton": "Login",
+    "registerButton": "Register",
+    "logoutConfirm": "Are you sure you want to logout?",
+    "loginSuccess": "Successfully logged in",
+    "registerSuccess": "Successfully registered",
+    "logoutSuccess": "Successfully logged out",
+    "loginError": "Login failed",
+    "registerError": "Registration failed"
+  },
+  "category": {
+    "title": "Categories",
+    "createTitle": "Create Category",
+    "editTitle": "Edit Category",
+    "deleteTitle": "Delete Category",
+    "deleteConfirm": "Are you sure you want to delete this category?",
+    "noCategories": "No categories found",
+    "categoryCreated": "Category created successfully",
+    "categoryUpdated": "Category updated successfully",
+    "categoryDeleted": "Category deleted successfully",
+    "categoryType": "Category Type",
+    "income": "Income",
+    "expense": "Expense"
+  },
+  "expense": {
+    "title": "Expenses",
+    "createTitle": "Create Expense",
+    "editTitle": "Edit Expense",
+    "deleteTitle": "Delete Expense",
+    "deleteConfirm": "Are you sure you want to delete this expense?",
+    "noExpenses": "No expenses found",
+    "expenseCreated": "Expense created successfully",
+    "expenseUpdated": "Expense updated successfully",
+    "expenseDeleted": "Expense deleted successfully"
+  },
+  "income": {
+    "title": "Income",
+    "createTitle": "Create Income",
+    "editTitle": "Edit Income",
+    "deleteTitle": "Delete Income",
+    "deleteConfirm": "Are you sure you want to delete this income?",
+    "noIncome": "No income found",
+    "incomeCreated": "Income created successfully",
+    "incomeUpdated": "Income updated successfully",
+    "incomeDeleted": "Income deleted successfully",
+    "form": {
+      "amount": "Amount",
+      "amountPlaceholder": "Enter income amount",
+      "amountMustBePositive": "Amount must be greater than 0",
+      "currency": "Currency",
+      "category": "Category",
+      "optional": "(optional)",
+      "selectCategoryOptional": "Select category (optional)",
+      "account": "Account",
+      "noAccount": "No account",
+      "description": "Description",
+      "descriptionPlaceholder": "Income description (optional)",
+      "date": "Date",
+      "creating": "Creating...",
+      "createIncome": "Create income",
+      "createError": "Error creating income"
+    }
+  },
+  "recurring": {
+    "title": "Recurring Transactions",
+    "createTitle": "Create Recurring Transaction",
+    "editTitle": "Edit Recurring Transaction",
+    "deleteTitle": "Delete Recurring Transaction",
+    "deleteConfirm": "Are you sure you want to delete this recurring transaction?",
+    "noRecurring": "No recurring transactions found",
+    "recurringCreated": "Recurring transaction created successfully",
+    "recurringUpdated": "Recurring transaction updated successfully",
+    "recurringDeleted": "Recurring transaction deleted successfully"
+  },
+  "language": {
+    "select": "Select Language",
+    "english": "English",
+    "russian": "Russian"
+  },
+  "homepage": {
+    "hero": {
+      "title": "Manage Your Budget Simply",
+      "subtitle": "Powerful tools to help you take control of your finances.",
+      "cta": "Get Started"
+    },
+    "trustBar": {
+      "text": "Trusted by",
+      "users": "12,000+ users",
+      "and": "and integrated with leading institutions"
+    },
+    "metrics": {
+      "expenses": {
+        "amount": "$2,500",
+        "period": "this month",
+        "label": "Expenses"
+      },
+      "budget": {
+        "percentage": "70%",
+        "amount": "$3,000",
+        "label": "Budget Overview"
+      },
+      "income": {
+        "amount": "$7,200",
+        "period": "this month",
+        "label": "Income"
+      }
+    },
+    "benefits": {
+      "clarity": {
+        "title": "Clarity",
+        "subtitle": "Know where every coin goes.",
+        "description": "Clean dashboards show exactly how your money moves."
+      },
+      "control": {
+        "title": "Control",
+        "subtitle": "Budgets that adapt in real time.",
+        "description": "Smart categorization and instant recalculations keep you balanced."
+      },
+      "automation": {
+        "title": "Automation",
+        "subtitle": "Rules that work while you sleep.",
+        "description": "Create triggers for saving, investing, or alerts with one click."
+      }
+    },
+    "testimonials": {
+      "elena": {
+        "quote": "This platform replaced my entire spreadsheet workflow — and looks stunning doing it.",
+        "author": "Elena, Financial Analyst"
+      },
+      "tomas": {
+        "quote": "Finally, a budgeting app that feels built for the future.",
+        "author": "Tomas, Crypto Investor"
+      }
+    },
+    "footer": {
+      "text": "Track your expenses, monitor your income, and achieve your savings goals."
+    }
+  }
+  ,
+  "featuresPage": {
+    "title": "App Features",
+    "subtitle": "All the tools you need to manage personal finance effectively",
+    "items": [
+      {
+        "title": "Analytics & Reports",
+        "description": "Get detailed analytics with beautiful charts and diagrams. Track trends and discover patterns in your spending.",
+        "details": ["Income and expense charts", "Expense categorization", "Period comparison", "Report export"]
+      },
+      {
+        "title": "Data Security",
+        "description": "Your financial data is protected by modern encryption. We use banking-level security standards.",
+        "details": ["256-bit SSL encryption", "Two-factor authentication", "Regular backups", "GDPR compliance"]
+      },
+      {
+        "title": "Mobile Version",
+        "description": "Manage finances from any device. Data syncs in real-time.",
+        "details": ["Responsive design", "Offline mode", "Push notifications", "Quick access"]
+      },
+      {
+        "title": "Automation",
+        "description": "Set up recurring payments, receive reminders, and auto-categorize transactions.",
+        "details": ["Recurring payments", "Smart reminders", "Auto-categorization", "Operation templates"]
+      },
+      {
+        "title": "Family Accounting",
+        "description": "Keep shared budgets with family members. Set limits and control the common budget.",
+        "details": ["Shared accounts", "Family categories", "Spending limits", "User roles"]
+      },
+      {
+        "title": "Settings",
+        "description": "Personalize the app to your needs. Create custom categories and configure the interface.",
+        "details": ["Custom categories", "UI customization", "Data import", "API integrations"]
+      }
+    ]
+  },
+  "pricingPage": {
+    "title": "Choose the right plan",
+    "subtitle": "Start free and upgrade as your needs grow",
+    "popular": "Popular",
+    "plans": [
+      {
+        "name": "Basic",
+        "price": "0",
+        "period": "forever",
+        "description": "Perfect to start managing your personal finances",
+        "features": [
+          "Up to 5 expense categories",
+          "Basic reports",
+          "Mobile version",
+          "Email support",
+          "Data sync"
+        ],
+        "limitations": [
+          "Limited analytics",
+          "No data export"
+        ]
+      },
+      {
+        "name": "Professional",
+        "price": "299",
+        "period": "per month",
+        "description": "For those serious about financial management",
+        "features": [
+          "Unlimited categories",
+          "Advanced analytics",
+          "Export to Excel/PDF",
+          "Recurring payments",
+          "Priority support",
+          "Family access (up to 4)",
+          "Automatic categorization",
+          "Payment reminders"
+        ],
+        "limitations": []
+      },
+      {
+        "name": "Enterprise",
+        "price": "999",
+        "period": "per month",
+        "description": "For teams and small business",
+        "features": [
+          "All Professional features",
+          "Unlimited users",
+          "API access",
+          "Bank integrations",
+          "Dedicated manager",
+          "Custom reports",
+          "White label",
+          "SLA 99.9%"
+        ],
+        "limitations": []
+      }
+    ],
+    "ctaFree": "Start for free",
+    "ctaChoose": "Choose plan",
+    "faqTitle": "Have questions about pricing?",
+    "faqSubtitle": "Contact us and we will help you choose the right plan",
+    "faqCta": "Contact us"
+  },
+  "aboutPage": {
+    "title": "About Us",
+    "intro": "We created Financial Accounting to help people better manage their money and achieve financial goals.",
+    "mission": {
+      "title": "Our Mission",
+      "description": "Make personal finance management simple, clear and accessible to everyone. We believe that every person deserves to have full control over their money and the ability to plan their financial future."
+    },
+    "offerings": {
+      "title": "What We Offer",
+      "items": [
+        "Simple and intuitive interface",
+        "Full control over income and expenses",
+        "Detailed analytics and reports",
+        "Secure data storage",
+        "Support on all devices"
+      ]
+    },
+    "team": {
+      "title": "Our Team",
+      "description": "We are a team of developers and financial experts who understand the importance of proper money management. Our experience and knowledge help create products that truly solve user problems."
+    }
+  },
+  "contactPage": {
+    "title": "Contact Us",
+    "subtitle": "Have questions? We are always ready to help and answer any questions",
+    "contactInfo": {
+      "title": "Contact Information",
+      "email": {
+        "title": "Email",
+        "description": "Write to us anytime"
+      },
+      "phone": {
+        "title": "Phone",
+        "description": "Mon-Fri 9:00-18:00"
+      },
+      "address": {
+        "title": "Address",
+        "description": "Office in the city center"
+      },
+      "hours": {
+        "title": "Working Hours",
+        "description": "24/7 support"
+      }
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "questions": [
+        {
+          "question": "How to start using the app?",
+          "answer": "Just register and start adding your income and expenses"
+        },
+        {
+          "question": "Is my data safe?",
+          "answer": "Yes, we use banking-level encryption standards to protect your data"
+        },
+        {
+          "question": "Can I export data?",
+          "answer": "Yes, paid plans include export to Excel and PDF formats"
+        }
+      ]
+    },
+    "form": {
+      "title": "Write to Us",
+      "name": "Name",
+      "email": "Email",
+      "subject": "Subject",
+      "message": "Message",
+      "namePlaceholder": "Your name",
+      "emailPlaceholder": "your@email.com",
+      "subjectPlaceholder": "Message subject",
+      "messagePlaceholder": "Your message...",
+      "submit": "Send Message"
+    }
+  },
+  "categoryPage": {
+    "title": "Category Management",
+    "subtitle": "Create and manage expense and income categories for better financial control",
+    "createButton": "Create Category",
+    "createModalTitle": "Create New Category",
+    "editModalTitle": "Edit Category"
+  },
+  "incomePage": {
+    "title": "Income Management",
+    "subtitle": "Add and track your income for better control over financial growth",
+    "addButton": "Add Income",
+    "createModalTitle": "Add New Income"
+  },
+  "expensePage": {
+    "title": "Expense Management",
+    "subtitle": "Add and track your expenses for better budget control",
+    "addButton": "Add Expense",
+    "createModalTitle": "Add New Expense",
+    "tabs": {
+      "table": "Expense Table",
+      "dashboard": "Analytics"
+    }
+  },
+  "accountPage": {
+    "title": "Accounts",
+    "subtitle": "Manage your financial accounts",
+    "createButton": "Create Account",
+    "stats": {
+      "totalAccounts": "Total Accounts",
+      "totalBalance": "Total Balance",
+      "active": "Active"
+    },
+    "emptyState": {
+      "title": "You don't have any accounts yet",
+      "subtitle": "Create your first account to track finances",
+      "button": "Create Account"
+    },
+    "myAccounts": "My Accounts",
+    "errors": {
+      "loadAccounts": "Error loading accounts",
+      "loadSummaries": "Error loading account summaries",
+      "createAccount": "Error creating account",
+      "updateAccount": "Error updating account",
+      "archiveAccount": "Error archiving account",
+      "operationError": "Account operation error"
+    }
+  },
+  "goalsPage": {
+    "title": "Goals",
+    "createModalTitle": "Create Goal",
+    "editModalTitle": "Edit Goal",
+    "progressModalTitle": "Update Progress",
+    "messages": {
+      "goalCreated": "Goal successfully created",
+      "goalUpdated": "Goal successfully updated",
+      "goalDeleted": "Goal successfully deleted",
+      "progressUpdated": "Progress updated"
+    }
+  },
+  "authPage": {
+    "login": {
+      "title": "Sign In",
+      "subtitle": "Sign in to your account to continue",
+      "submit": "Sign In",
+      "loading": "Signing in...",
+      "noAccount": "Don't have an account?",
+      "registerLink": "Sign Up",
+      "error": "Sign in error"
+    },
+    "register": {
+      "title": "Sign Up",
+      "subtitle": "Create a new account to get started",
+      "username": "Username",
+      "usernameRequired": "Username *",
+      "usernamePlaceholder": "Enter username",
+      "submit": "Sign Up",
+      "loading": "Signing up...",
+      "hasAccount": "Already have an account?",
+      "loginLink": "Sign In",
+      "error": "Registration error"
+    }
+  }
+  ,
+  "footer": {
+    "brand": {
+      "title": "Financial Accounting",
+      "description": "Simple and effective personal finance management. Track income, expenses and plan your budget."
+    },
+    "sections": {
+      "product": "Product",
+      "company": "Company",
+      "support": "Support",
+      "legal": "Legal"
+    },
+    "links": {
+      "product": {
+        "features": "Features",
+        "pricing": "Pricing",
+        "api": "API",
+        "integrations": "Integrations"
+      },
+      "company": {
+        "about": "About",
+        "blog": "Blog",
+        "careers": "Careers",
+        "contact": "Contact"
+      },
+      "support": {
+        "help": "Help",
+        "docs": "Documentation",
+        "status": "Status",
+        "community": "Community"
+      },
+      "legal": {
+        "privacy": "Privacy Policy",
+        "terms": "Terms of Use",
+        "cookies": "Cookie",
+        "gdpr": "GDPR"
+      }
+    },
+    "bottom": {
+      "copyright": "© {{year}} Financial Accounting. All rights reserved.",
+      "madeWith": "Made with ❤️ for managing finances"
+    }
+  }
+}
