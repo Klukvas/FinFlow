@@ -55,13 +55,12 @@ runs:
         echo "Username: ${{ inputs.docker-username }}"
         for svc in ${{ inputs.services }}; do
           context="$svc"
-          if [ "$svc" = "frontend" ]; then
-            dockerfile="${{ inputs.frontend-dockerfile }}"
+          # Determine dockerfile name relative to context
+          if [ -f "$context/Dockerfile" ]; then
+            df="Dockerfile"
+          elif [ -f "$context/dockerfile" ]; then
+            df="dockerfile"
           else
-            if [ -f "$svc/Dockerfile" ]; then dockerfile="$svc/Dockerfile"; else dockerfile="$svc/dockerfile"; fi
-          fi
-
-          if [ ! -f "$dockerfile" ]; then
             echo "Skip $svc (no Dockerfile)"
             continue
           fi
@@ -73,10 +72,10 @@ runs:
             --tag $image:${{ steps.vars.outputs.ts }} \
           "
 
-          echo "Building $svc using $dockerfile -> $image"
+          echo "Building $svc using $df in context $context -> $image"
           docker buildx build \
             --platform "${{ inputs.platform }}" \
-            -f "$dockerfile" "$context" \
+            -f "$df" "$context" \
             --push $tags
         done
 
