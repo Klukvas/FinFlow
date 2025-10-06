@@ -75,31 +75,31 @@ runs:
           SERVICES="frontend account_service category_service currency_service debt_service expense_service goals_service income_service pdf_parser_service recurring_service user_service"
           echo "Using default services: $SERVICES"
         fi
-        ssh -o StrictHostKeyChecking=no "$USER@$HOST" bash -s <<'EOS'
+        ssh -o StrictHostKeyChecking=no "$USER@$HOST" bash -s <<EOS
           set -euo pipefail
           mkdir -p ~/app
           cd ~/app
-          cat > .env << 'ENVEOF'
-        REGISTRY=${REGISTRY}
-        IMAGE_PREFIX=${IMAGE_PREFIX}
-        DB_HOST=${DB_HOST}
-        DB_PORT=${DB_PORT}
-        DB_NAME=${DB_NAME}
-        DB_USER=${DB_USER}
-        DB_PASSWORD=${DB_PASSWORD}
-        NODE_ENV=production
-        ENVEOF
+          cat > .env << ENVEOF
+REGISTRY=${REGISTRY}
+IMAGE_PREFIX=${IMAGE_PREFIX}
+DB_HOST=${DB_HOST}
+DB_PORT=${DB_PORT}
+DB_NAME=${DB_NAME}
+DB_USER=${DB_USER}
+DB_PASSWORD=${DB_PASSWORD}
+NODE_ENV=production
+ENVEOF
 
-          cat > docker-compose.yml << 'COMPOSEEOF'
+          cat > docker-compose.yml << COMPOSEEOF
 
-        services:
-          frontend:
-            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/frontend:latest
-            ports:
-              - "80:80"
-            environment:
-              - NODE_ENV=production
-            restart: unless-stopped
+services:
+  frontend:
+    image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/frontend:latest
+    ports:
+      - "80:80"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
 
           account_service:
             image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/account_service:latest
@@ -172,9 +172,9 @@ runs:
             volumes:
               - redis_data:/data
 
-        volumes:
-          redis_data:
-        COMPOSEEOF
+volumes:
+  redis_data:
+COMPOSEEOF
 
           echo "Pulling latest images..."
           docker compose pull
@@ -182,5 +182,5 @@ runs:
           docker compose up -d ${SERVICES}
           echo "Pruning old images..."
           docker image prune -f || true
-        EOS
+EOS
 
