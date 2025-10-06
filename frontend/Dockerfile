@@ -3,9 +3,8 @@ WORKDIR /app
 
 # Install dependencies first (better cache)
 COPY package.json yarn.lock ./
-# Use Yarn Classic with frozen lockfile for deterministic installs
-RUN yarn --version \
-    && yarn install --frozen-lockfile
+# Install dependencies (regenerate lockfile if needed)
+RUN yarn install
 
 # Copy source and build
 COPY . .
