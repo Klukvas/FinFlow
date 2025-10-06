@@ -2,73 +2,210 @@
 
 /* Theme Variables */
 :root {
-  /* Light theme colors */
-  --color-background: #ffffff;
-  --color-background-secondary: #f8fafc;
-  --color-background-tertiary: #f1f5f9;
-  --color-surface: #ffffff;
-  --color-surface-hover: #f8fafc;
-  --color-border: #e2e8f0;
-  --color-border-hover: #cbd5e1;
-  --color-text-primary: #1e293b;
-  --color-text-secondary: #64748b;
-  --color-text-tertiary: #94a3b8;
-  --color-text-inverse: #ffffff;
-  --color-accent: #3b82f6;
-  --color-accent-hover: #2563eb;
-  --color-accent-light: #dbeafe;
-  --color-success: #10b981;
-  --color-success-light: #d1fae5;
-  --color-warning: #f59e0b;
-  --color-warning-light: #fef3c7;
-  --color-error: #ef4444;
-  --color-error-light: #fee2e2;
-  --color-shadow: rgba(0, 0, 0, 0.1);
-  --color-shadow-hover: rgba(0, 0, 0, 0.15);
+  /* Light theme colors - Luminous Gradient System */
+  /* Base Layer: Bright, sophisticated, layered like sunlight on glass */
+  --color-background: #F9FAFB;
+  --color-background-secondary: #F4F6F8;
+  --color-background-tertiary: #E8EBEF;
+  --color-surface: #FFFFFF;
+  --color-surface-hover: #F9FAFB;
+  
+  /* Borders: Subtle separation with champagne hints */
+  --color-border: #D1D5DB;
+  --color-border-hover: #9CA3AF;
+  
+  /* Typography: Rich black-blue, not pure black for softer reading */
+  --color-text-primary: #0B0E11;
+  --color-text-secondary: #4B5563;
+  --color-text-tertiary: #6B7280;
+  --color-text-inverse: #FFFFFF;
+  
+  /* Accent colors: Deep navy for trust + gold for premium */
+  --color-accent: #1E3A8A;
+  --color-accent-hover: #1E40AF;
+  --color-accent-light: #DBEAFE;
+  --color-accent-secondary: #CBA45C;
+  
+  /* Semantic colors */
+  --color-success: #059669;
+  --color-success-light: #D1FAE5;
+  --color-warning: #D97706;
+  --color-warning-light: #FEF3C7;
+  --color-error: #DC2626;
+  --color-error-light: #FEE2E2;
+  
+  /* Shadows: Subtle depth without harshness */
+  --color-shadow: rgba(0, 0, 0, 0.05);
+  --color-shadow-hover: rgba(0, 0, 0, 0.08);
+  
+  /* Premium accents: Champagne & Gold */
+  --color-gold: #CBA45C;
+  --color-gold-light: #D6B370;
+  --color-gold-border: rgba(203, 164, 92, 0.3);
+  --color-champagne: #E0D6C0;
+  
+  /* Iridescent motion trails */
+  --color-trail-primary: #CBA45C;
+  --color-trail-secondary: #5AC8FA;
+  --color-trail-tertiary: #AE7DFB;
+  
+  /* Background gradient stops */
+  --bg-gradient-start: #FFFFFF;
+  --bg-gradient-mid: #F4F6F8;
+  --bg-gradient-end: #E8EBEF;
+  --bg-warm-tint: rgba(255, 248, 231, 0.3);
   
   /* Scrollbar colors */
-  --color-scrollbar-track: #f1f5f9;
-  --color-scrollbar-thumb: #cbd5e1;
-  --color-scrollbar-thumb-hover: #94a3b8;
+  --color-scrollbar-track: #E8EBEF;
+  --color-scrollbar-thumb: #D1D5DB;
+  --color-scrollbar-thumb-hover: #9CA3AF;
+  
+  /* Particle grid (champagne theme) - enhanced visibility */
+  --particle-color: #CBA45C;
+  --particle-line-color: #D6B370;
+  --particle-opacity: 0.25;
+  --particle-line-opacity: 0.15;
 }
 
 .dark {
-  /* Futuristic dark theme colors */
-  --color-background: #0a0a0a;
-  --color-background-secondary: #111111;
-  --color-background-tertiary: #1a1a1a;
-  --color-surface: #111111;
-  --color-surface-hover: #1a1a1a;
-  --color-border: #333333;
-  --color-border-hover: #444444;
-  --color-text-primary: #ffffff;
-  --color-text-secondary: #cccccc;
-  --color-text-tertiary: #999999;
-  --color-text-inverse: #0a0a0a;
-  --color-accent: #00d4ff;
-  --color-accent-hover: #00b8e6;
-  --color-accent-light: #001a1f;
-  --color-success: #00ff88;
-  --color-success-light: #001a0f;
-  --color-warning: #ffaa00;
-  --color-warning-light: #1a0f00;
-  --color-error: #ff4444;
-  --color-error-light: #1a0000;
-  --color-shadow: rgba(0, 212, 255, 0.1);
-  --color-shadow-hover: rgba(0, 212, 255, 0.2);
+  /* Dark theme colors - Luxury Navy/Gold Futuristic */
+  /* Base Layer: Deep navy with golden accents */
+  --color-background: #0B1020;
+  --color-background-secondary: #111827;
+  --color-background-tertiary: #1F2937;
+  --color-surface: #111827;
+  --color-surface-hover: #1F2937;
+  
+  /* Borders: Golden hints */
+  --color-border: rgba(212, 175, 55, 0.2);
+  --color-border-hover: rgba(212, 175, 55, 0.35);
+  
+  /* Typography: Clean whites */
+  --color-text-primary: #F9FAFB;
+  --color-text-secondary: #D1D5DB;
+  --color-text-tertiary: #9CA3AF;
+  --color-text-inverse: #0B1020;
+  
+  /* Accent colors: Neon blue + luxury gold */
+  --color-accent: #00D4FF;
+  --color-accent-hover: #00B8E6;
+  --color-accent-light: rgba(0, 212, 255, 0.1);
+  --color-accent-secondary: #D4AF37;
+  
+  /* Semantic colors */
+  --color-success: #00FF88;
+  --color-success-light: rgba(0, 255, 136, 0.1);
+  --color-warning: #FFAA00;
+  --color-warning-light: rgba(255, 170, 0, 0.1);
+  --color-error: #FF4444;
+  --color-error-light: rgba(255, 68, 68, 0.1);
+  
+  /* Shadows: Glowing cyan/gold effects */
+  --color-shadow: rgba(0, 212, 255, 0.15);
+  --color-shadow-hover: rgba(0, 212, 255, 0.25);
+  
+  /* Premium accents: Luxury gold tones */
+  --color-gold: #D4AF37;
+  --color-gold-light: #E5C158;
+  --color-gold-border: rgba(212, 175, 55, 0.5);
+  --color-champagne: rgba(212, 175, 55, 0.3);
+  
+  /* Iridescent motion trails */
+  --color-trail-primary: #D4AF37;
+  --color-trail-secondary: #00B4FF;
+  --color-trail-tertiary: #C084FC;
+  
+  /* Background gradient stops */
+  --bg-gradient-start: #0B1020;
+  --bg-gradient-mid: #111827;
+  --bg-gradient-end: #0B1020;
+  --bg-warm-tint: rgba(212, 175, 55, 0.08);
   
   /* Scrollbar colors */
-  --color-scrollbar-track: #111111;
-  --color-scrollbar-thumb: #333333;
-  --color-scrollbar-thumb-hover: #444444;
+  --color-scrollbar-track: #111827;
+  --color-scrollbar-thumb: rgba(212, 175, 55, 0.3);
+  --color-scrollbar-thumb-hover: rgba(212, 175, 55, 0.5);
+  
+  /* Particle grid (gold theme) */
+  --particle-color: #D4AF37;
+  --particle-line-color: rgba(212, 175, 55, 0.4);
+  --particle-opacity: 0.15;
+  --particle-line-opacity: 0.1;
 }
 
 /* Apply theme colors to body */
 body {
-  background-color: var(--color-background);
+  background: radial-gradient(ellipse at 50% 30%, var(--bg-gradient-start) 0%, var(--bg-gradient-mid) 80%, var(--bg-gradient-end) 100%);
   color: var(--color-text-primary);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background 0.3s ease, color 0.3s ease;
   overflow-x: hidden;
+  position: relative;
+  min-height: 100vh;
+}
+
+/* Light theme - Luminous background with warm tint overlay + subtle shimmer */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(ellipse 800px 600px at 70% 20%, 
+      rgba(255, 248, 231, 0.4) 0%,
+      transparent 50%),
+    radial-gradient(ellipse 600px 800px at 30% 80%, 
+      rgba(203, 164, 92, 0.08) 0%,
+      transparent 60%),
+    var(--bg-warm-tint);
+  pointer-events: none;
+  z-index: 0;
+  animation: lightShimmer 40s ease-in-out infinite;
+}
+
+/* Dark theme - Nebula gradient effect */
+.dark body::before {
+  background: radial-gradient(ellipse 1200px 800px at 50% -10%, 
+    rgba(24, 37, 74, 0.3) 0%,
+    rgba(16, 24, 40, 0.8) 30%,
+    rgba(10, 15, 26, 0.95) 60%,
+    var(--color-background) 100%);
+  animation: nebulaShift 35s ease-in-out infinite;
+}
+
+/* Light theme shimmer animation */
+@keyframes lightShimmer {
+  0%, 100% { 
+    opacity: 1;
+    transform: scale(1);
+  }
+  25% { 
+    opacity: 0.85;
+    transform: scale(1.02);
+  }
+  50% { 
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+  75% { 
+    opacity: 0.95;
+    transform: scale(1.01);
+  }
+}
+
+/* Noise texture overlay for depth */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* Prevent horizontal overflow on mobile */
@@ -315,6 +452,78 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
 }
 
+/* Gold/Champagne accent utilities */
+.theme-gold {
+  color: var(--color-gold);
+}
+
+/* Light theme - enhanced gold with subtle text shadow */
+:not(.dark) .theme-gold {
+  color: var(--color-gold);
+  text-shadow: 
+    0 0 10px rgba(203, 164, 92, 0.2),
+    0 2px 4px rgba(203, 164, 92, 0.1);
+  filter: brightness(1.1);
+}
+
+.theme-gold-light {
+  color: var(--color-gold-light);
+}
+
+.theme-gold-bg {
+  background-color: var(--color-gold);
+}
+
+.theme-gold-border {
+  border-color: var(--color-gold-border);
+}
+
+.theme-champagne-bg {
+  background-color: var(--color-champagne);
+}
+
+/* Premium glow effects */
+.gold-glow {
+  box-shadow: 
+    0 0 0 1px var(--color-gold-border), 
+    0 0 18px rgba(203, 164, 92, 0.2),
+    0 4px 12px rgba(203, 164, 92, 0.1);
+}
+
+.gold-glow-hover {
+  transition: all 0.3s ease;
+}
+
+.gold-glow-hover:hover {
+  box-shadow: 
+    0 0 0 1px var(--color-gold-border), 
+    0 0 28px rgba(203, 164, 92, 0.35),
+    0 8px 24px rgba(203, 164, 92, 0.15);
+  transform: translateY(-4px);
+}
+
+/* Light theme - enhanced sunlit glow */
+:not(.dark) .gold-glow-hover:hover {
+  box-shadow: 
+    0 0 0 1px rgba(203, 164, 92, 0.4), 
+    0 0 32px rgba(203, 164, 92, 0.25),
+    0 12px 30px rgba(203, 164, 92, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.dark .gold-glow {
+  box-shadow: 
+    0 0 0 1px var(--color-gold-border), 
+    0 0 18px rgba(212, 175, 55, 0.25);
+}
+
+.dark .gold-glow-hover:hover {
+  box-shadow: 
+    0 0 0 1px var(--color-gold-border), 
+    0 0 35px rgba(212, 175, 55, 0.4),
+    0 0 60px rgba(212, 175, 55, 0.2);
+}
+
 /* Enhanced hover effects */
 .hover-lift {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -418,31 +627,140 @@ body {
   box-shadow: 0 0 20px rgba(0, 212, 255, 0.3), 0 0 40px rgba(0, 212, 255, 0.1);
 }
 
+.dark .neon-glow {
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.4), 0 0 40px rgba(0, 212, 255, 0.15);
+}
+
 .neon-glow-hover:hover {
   box-shadow: 0 0 30px rgba(0, 212, 255, 0.5), 0 0 60px rgba(0, 212, 255, 0.2);
 }
 
+/* Light theme card - elegant glass morphism with shimmer */
 .futuristic-card {
-  background: linear-gradient(135deg, rgba(17, 17, 17, 0.8), rgba(26, 26, 26, 0.6));
-  border: 1px solid rgba(0, 212, 255, 0.2);
-  backdrop-filter: blur(10px);
+  background: 
+    linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(249, 250, 251, 0.9) 100%);
+  border: 1px solid var(--color-border);
+  backdrop-filter: blur(20px);
   border-radius: 16px;
-}
-
-.futuristic-button {
-  background: linear-gradient(135deg, #00d4ff, #00b8e6);
-  border: none;
-  border-radius: 12px;
-  color: #0a0a0a;
-  font-weight: 600;
-  transition: all 0.3s ease;
+  box-shadow: 
+    0 4px 6px var(--color-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 0 0 1px rgba(203, 164, 92, 0.1);
   position: relative;
   overflow: hidden;
 }
 
+/* Light theme card shimmer effect */
+.futuristic-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(255, 248, 231, 0.3) 50%,
+    transparent 70%
+  );
+  animation: cardShimmer 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes cardShimmer {
+  0%, 100% {
+    transform: translate(-25%, -25%) rotate(0deg);
+    opacity: 0;
+  }
+  50% {
+    transform: translate(25%, 25%) rotate(45deg);
+    opacity: 1;
+  }
+}
+
+/* Dark theme card - cyberpunk aesthetic */
+.dark .futuristic-card {
+  background: linear-gradient(135deg, rgba(17, 24, 39, 0.85), rgba(31, 41, 55, 0.75));
+  border: 1px solid var(--color-gold-border);
+  box-shadow: 
+    0 4px 6px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(212, 175, 55, 0.2);
+}
+
+.dark .futuristic-card::before {
+  display: none;
+}
+
+/* Light theme button - sophisticated navy/gold with shine effect */
+.futuristic-button {
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-hover));
+  border: none;
+  border-radius: 12px;
+  color: var(--color-text-inverse);
+  font-weight: 600;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 
+    0 4px 15px rgba(30, 58, 138, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Light theme button shine effect */
+:not(.dark) .futuristic-button::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  bottom: -50%;
+  left: -50%;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.3) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 50%,
+    transparent 100%
+  );
+  transform: rotate(45deg);
+  animation: buttonShine 3s ease-in-out infinite;
+}
+
+@keyframes buttonShine {
+  0%, 100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Dark theme button - neon cyan glow */
+.dark .futuristic-button {
+  background: linear-gradient(135deg, #00d4ff, #00b8e6);
+  color: #0B1020;
+  box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+}
+
 .futuristic-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(0, 212, 255, 0.4);
+  box-shadow: 
+    0 10px 30px rgba(30, 58, 138, 0.4),
+    0 4px 15px rgba(30, 58, 138, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+:not(.dark) .futuristic-button:hover {
+  box-shadow: 
+    0 15px 40px rgba(30, 58, 138, 0.35),
+    0 5px 20px rgba(203, 164, 92, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.dark .futuristic-button:hover {
+  box-shadow: 
+    0 10px 30px rgba(0, 212, 255, 0.5),
+    0 0 60px rgba(0, 212, 255, 0.3);
 }
 
 .futuristic-button::before {
@@ -465,10 +783,15 @@ body {
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  background: conic-gradient(#00d4ff 0deg, #00d4ff 252deg, #333333 252deg);
+  background: conic-gradient(var(--color-accent) 0deg, var(--color-accent) 252deg, var(--color-border) 252deg);
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: background 0.3s ease;
+}
+
+.dark .circular-progress {
+  background: conic-gradient(var(--color-accent) 0deg, var(--color-accent) 252deg, var(--color-border) 252deg);
 }
 
 .circular-progress::before {
@@ -542,7 +865,26 @@ body {
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-.icon-draw { animation: iconDraw 500ms ease-out forwards; }
+.icon-draw { 
+  animation: iconDraw 500ms ease-out forwards; 
+}
+
+/* Light theme - subtle icon pulse for premium feel */
+:not(.dark) .icon-draw {
+  animation: iconDraw 500ms ease-out forwards, iconPulseLight 3s ease-in-out infinite;
+  animation-delay: 0s, 1s;
+}
+
+@keyframes iconPulseLight {
+  0%, 100% {
+    filter: drop-shadow(0 0 2px rgba(203, 164, 92, 0.3));
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 6px rgba(203, 164, 92, 0.5));
+    transform: translateY(-1px) scale(1.02);
+  }
+}
 
 /* Trust Bar shimmer */
 .shimmer {
@@ -566,18 +908,26 @@ body {
   100% { left: 120%; }
 }
 
-/* Testimonial card */
+/* Testimonial card - Light theme: elegant glass, Dark theme: cyberpunk glow */
 .testimonial-card {
-  background: rgba(17, 17, 17, 0.6);
-  border: 1px solid rgba(212, 175, 55, 0.15);
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--color-gold-border);
   border-radius: 16px;
   backdrop-filter: blur(8px);
   transition: transform 300ms ease, box-shadow 300ms ease;
 }
 
+.dark .testimonial-card {
+  background: rgba(17, 24, 39, 0.7);
+}
+
 .testimonial-card:hover {
   transform: scale(1.03);
-  box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.25), 0 0 28px rgba(212, 175, 55, 0.2);
+  box-shadow: 0 0 0 1px var(--color-gold-border), 0 0 28px rgba(203, 164, 92, 0.2);
+}
+
+.dark .testimonial-card:hover {
+  box-shadow: 0 0 0 1px var(--color-gold-border), 0 0 28px rgba(212, 175, 55, 0.3);
 }
 
 .logo-muted {
@@ -655,27 +1005,43 @@ body {
 
 .light-trail {
   position: absolute;
-  height: 2px;
+  height: 3px;
   background: linear-gradient(90deg, 
     transparent 0%, 
-    rgba(212, 175, 55, 0.8) 20%, 
-    rgba(0, 180, 255, 0.6) 50%, 
-    rgba(212, 175, 55, 0.8) 80%, 
+    var(--color-trail-primary) 20%, 
+    var(--color-trail-secondary) 50%, 
+    var(--color-trail-primary) 80%, 
     transparent 100%);
-  border-radius: 1px;
-  filter: blur(20px);
+  border-radius: 2px;
+  filter: blur(15px);
   z-index: 20;
   pointer-events: none;
   animation: lightTrailMove 18s ease-in-out infinite;
+  opacity: 0.3;
+}
+
+/* Light theme - more visible trails with soft glow */
+:not(.dark) .light-trail {
+  height: 4px;
+  filter: blur(12px);
+  opacity: 0.4;
+  box-shadow: 0 0 20px rgba(203, 164, 92, 0.3);
+}
+
+/* Dark theme - enhanced glow */
+.dark .light-trail {
+  filter: blur(30px);
+  opacity: 0.8;
+  box-shadow: 0 0 30px rgba(212, 175, 55, 0.4);
 }
 
 .light-trail:nth-child(2) {
   animation-delay: 6s;
   background: linear-gradient(90deg, 
     transparent 0%, 
-    rgba(0, 180, 255, 0.6) 20%, 
-    rgba(212, 175, 55, 0.8) 50%, 
-    rgba(0, 180, 255, 0.6) 80%, 
+    var(--color-trail-secondary) 20%, 
+    var(--color-trail-primary) 50%, 
+    var(--color-trail-secondary) 80%, 
     transparent 100%);
 }
 
@@ -683,8 +1049,8 @@ body {
   animation-delay: 12s;
   background: linear-gradient(90deg, 
     transparent 0%, 
-    rgba(212, 175, 55, 0.4) 30%, 
-    rgba(0, 180, 255, 0.8) 70%, 
+    var(--color-trail-tertiary) 30%, 
+    var(--color-trail-secondary) 70%, 
     transparent 100%);
 }
 
@@ -705,6 +1071,67 @@ body {
   }
 }
 
+/* Floating animation for gradient orbs */
+@keyframes animate-float {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  33% {
+    transform: translate(30px, -30px) scale(1.05);
+    opacity: 0.8;
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.95);
+    opacity: 0.9;
+  }
+}
+
+.animate-float {
+  animation: animate-float 20s ease-in-out infinite;
+}
+
+/* Light rays animation for light theme */
+@keyframes lightRays {
+  0% {
+    transform: rotate(0deg);
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: rotate(360deg);
+    opacity: 0.5;
+  }
+}
+
+/* Sparkle effect for light theme accents */
+@keyframes sparkle {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.sparkle {
+  animation: sparkle 2s ease-in-out infinite;
+}
+
+/* Glass reflection effect */
+@keyframes glassReflection {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   .gradient-nebula::before {
@@ -717,6 +1144,18 @@ body {
   }
   
   .particle-grid {
+    animation: none;
+  }
+  
+  .animate-float {
+    animation: none;
+  }
+  
+  body::before {
+    animation: none !important;
+  }
+  
+  .futuristic-card::before {
     animation: none;
   }
 }

@@ -10,6 +10,9 @@ export const Features: React.FC = () => {
     details: string[];
   }>;
 
+  // Icon mapping for features
+  const icons = [FaChartBar, FaShieldAlt, FaMobile, FaClock, FaUsers, FaCog];
+
   return (
     <div className="py-20 px-6">
       <div className="max-w-7xl mx-auto">
@@ -24,7 +27,7 @@ export const Features: React.FC = () => {
 
         <div className="space-y-16">
           {features.map((feature, index) => {
-            const Icon = feature.icon;
+            const Icon = icons[index] || FaChartBar;
             const isEven = index % 2 === 0;
             
             return (

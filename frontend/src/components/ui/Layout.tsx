@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { AppHeader } from './MobileHeader';
 import { PublicFooter } from './PublicFooter';
+import { AnimatedBackground } from './AnimatedBackground';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -62,7 +63,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   
   return (
-    <div className="min-h-screen theme-bg theme-transition">
+    <div className="min-h-screen theme-bg theme-transition relative">
+      {/* Animated background layers */}
+      <AnimatedBackground />
+      
       {/* App Header - Shows on both mobile and desktop */}
       <AppHeader
         onMenuClick={handleSidebarToggle}
@@ -70,7 +74,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         isMobile={isMobile}
       />
 
-      <div className="flex min-h-[calc(100vh-4rem)]">
+      <div className="flex min-h-[calc(100vh-4rem)] relative" style={{ zIndex: 10 }}>
         {/* Sidebar - Always visible, but collapsible on desktop */}
         <Sidebar isOpen={sidebarOpen} onClose={handleSidebarClose} />
 

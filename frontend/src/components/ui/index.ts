@@ -12,6 +12,8 @@ import { DropdownMenu, DropdownMenuItem, DropdownMenuSeparator } from "./Dropdow
 import { LoadingSpinner } from "./LoadingSpinner";
 import { LoadingState } from "./LoadingState";
 import { Modal } from "./Modal";
+import { AnimatedBackground } from "./AnimatedBackground";
+import { BackgroundCanvas } from "./BackgroundCanvas";
 
 export { 
   DeleteButton, 
@@ -36,5 +38,7 @@ export {
   DropdownMenuSeparator,
   LoadingSpinner,
   LoadingState,
-  Modal
+  Modal,
+  AnimatedBackground,
+  BackgroundCanvas
 };

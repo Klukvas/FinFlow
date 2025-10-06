@@ -60,10 +60,10 @@ export const GoalsOverview: React.FC = () => {
     return (
       <div className="theme-surface rounded-lg theme-shadow theme-border border p-6">
         <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
+          <div className="h-4 theme-bg-tertiary rounded w-1/4 mb-4"></div>
           <div className="space-y-3">
-            <div className="h-3 bg-gray-200 rounded"></div>
-            <div className="h-3 bg-gray-200 rounded w-5/6"></div>
+            <div className="h-3 theme-bg-tertiary rounded"></div>
+            <div className="h-3 theme-bg-tertiary rounded w-5/6"></div>
           </div>
         </div>
       </div>
@@ -74,12 +74,12 @@ export const GoalsOverview: React.FC = () => {
     return (
       <div className="theme-surface rounded-lg theme-shadow theme-border border p-6">
         <div className="text-center">
-          <FaBullseye className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Нет финансовых целей</h3>
-          <p className="text-gray-500 mb-4">Создайте свою первую финансовую цель для отслеживания прогресса</p>
+          <FaBullseye className="mx-auto h-12 w-12 theme-text-tertiary mb-4" />
+          <h3 className="text-lg font-semibold theme-text-primary mb-2">Нет финансовых целей</h3>
+          <p className="theme-text-secondary mb-4">Создайте свою первую финансовую цель для отслеживания прогресса</p>
           <Link
             to="/goals"
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center px-4 py-2 theme-accent-bg theme-text-inverse rounded-md hover:theme-accent-hover theme-transition"
           >
             Создать цель
             <FaArrowRight className="ml-2 w-4 h-4" />
@@ -94,12 +94,12 @@ export const GoalsOverview: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center">
-          <FaBullseye className="h-6 w-6 text-blue-600 mr-2" />
-          <h3 className="text-lg font-semibold text-gray-900">Финансовые цели</h3>
+          <FaBullseye className="h-6 w-6 theme-accent mr-2" />
+          <h3 className="text-lg font-semibold theme-text-primary">Финансовые цели</h3>
         </div>
         <Link
           to="/goals"
-          className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center"
+          className="theme-accent hover:theme-accent text-sm font-medium flex items-center theme-transition"
         >
           Все цели
           <FaArrowRight className="ml-1 w-3 h-3" />
@@ -110,59 +110,59 @@ export const GoalsOverview: React.FC = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div className="text-center">
           <div className="flex items-center justify-center mb-2">
-            <FaBullseye className="h-5 w-5 text-blue-600" />
+            <FaBullseye className="h-5 w-5 theme-accent" />
           </div>
-          <p className="text-2xl font-bold text-gray-900">{statistics.total_goals}</p>
-          <p className="text-xs text-gray-500">Всего целей</p>
+          <p className="text-2xl font-bold theme-text-primary">{statistics.total_goals}</p>
+          <p className="text-xs theme-text-tertiary">Всего целей</p>
         </div>
         
         <div className="text-center">
           <div className="flex items-center justify-center mb-2">
-            <FaPlay className="h-5 w-5 text-green-600" />
+            <FaPlay className="h-5 w-5 theme-success" />
           </div>
-          <p className="text-2xl font-bold text-gray-900">{statistics.active_goals}</p>
-          <p className="text-xs text-gray-500">Активные</p>
+          <p className="text-2xl font-bold theme-text-primary">{statistics.active_goals}</p>
+          <p className="text-xs theme-text-tertiary">Активные</p>
         </div>
         
         <div className="text-center">
           <div className="flex items-center justify-center mb-2">
-            <FaCheckCircle className="h-5 w-5 text-blue-600" />
+            <FaCheckCircle className="h-5 w-5 theme-accent" />
           </div>
-          <p className="text-2xl font-bold text-gray-900">{statistics.completed_goals}</p>
-          <p className="text-xs text-gray-500">Завершенные</p>
+          <p className="text-2xl font-bold theme-text-primary">{statistics.completed_goals}</p>
+          <p className="text-xs theme-text-tertiary">Завершенные</p>
         </div>
         
         <div className="text-center">
           <div className="flex items-center justify-center mb-2">
-            <FaChartPie className="h-5 w-5 text-purple-600" />
+            <FaChartPie className="h-5 w-5 theme-accent" />
           </div>
-          <p className="text-2xl font-bold text-gray-900">{statistics.overall_progress.toFixed(0)}%</p>
-          <p className="text-xs text-gray-500">Общий прогресс</p>
+          <p className="text-2xl font-bold theme-text-primary">{statistics.overall_progress.toFixed(0)}%</p>
+          <p className="text-xs theme-text-tertiary">Общий прогресс</p>
         </div>
       </div>
 
       {/* Financial Summary */}
-      <div className="bg-gray-50 rounded-lg p-4 mb-6">
+      <div className="theme-bg-secondary rounded-lg p-4 mb-6">
         <div className="flex items-center mb-3">
-          <FaDollarSign className="h-5 w-5 text-green-600 mr-2" />
-          <h4 className="font-semibold text-gray-900">Финансовая сводка</h4>
+          <FaDollarSign className="h-5 w-5 theme-success mr-2" />
+          <h4 className="font-semibold theme-text-primary">Финансовая сводка</h4>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <p className="text-sm text-gray-500">Накоплено</p>
-            <p className="text-lg font-bold text-green-600">
+            <p className="text-sm theme-text-tertiary">Накоплено</p>
+            <p className="text-lg font-bold theme-success">
               {statistics.total_current_amount.toLocaleString()} USD
             </p>
           </div>
           <div>
-            <p className="text-sm text-gray-500">Целевая сумма</p>
-            <p className="text-lg font-bold text-gray-900">
+            <p className="text-sm theme-text-tertiary">Целевая сумма</p>
+            <p className="text-lg font-bold theme-text-primary">
               {statistics.total_target_amount.toLocaleString()} USD
             </p>
           </div>
         </div>
         <div className="mt-3">
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full theme-bg-tertiary rounded-full h-2">
             <div
               className={`h-2 rounded-full transition-all duration-300 ${getProgressColor(statistics.overall_progress)}`}
               style={{ width: `${Math.min(statistics.overall_progress, 100)}%` }}
@@ -174,7 +174,7 @@ export const GoalsOverview: React.FC = () => {
       {/* Recent Goals */}
       {goals.length > 0 && (
         <div>
-          <h4 className="font-semibold text-gray-900 mb-4">Последние цели</h4>
+          <h4 className="font-semibold theme-text-primary mb-4">Последние цели</h4>
           <div className="space-y-3">
             {goals.map((goal) => {
               const daysRemaining = goal.target_date ? getDaysRemaining(goal.target_date) : null;

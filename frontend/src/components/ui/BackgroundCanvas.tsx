@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useCallback } from 'react';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface Particle {
   x: number;
@@ -8,7 +9,13 @@ interface Particle {
   opacity: number;
 }
 
+// Helper to get CSS variable value
+const getCSSVar = (name: string): string => {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+};
+
 export const BackgroundCanvas: React.FC = () => {
+  const { actualTheme } = useTheme();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
   const particlesRef = useRef<Particle[]>([]);
@@ -52,17 +59,23 @@ export const BackgroundCanvas: React.FC = () => {
   const drawParticles = useCallback((ctx: CanvasRenderingContext2D, particles: Particle[], mouseX: number, mouseY: number) => {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     
+    // Get theme-aware colors from CSS variables
+    const particleColor = getCSSVar('--particle-color');
+    const lineColor = getCSSVar('--particle-line-color');
+    const particleOpacity = parseFloat(getCSSVar('--particle-opacity') || '0.12');
+    const lineOpacity = parseFloat(getCSSVar('--particle-line-opacity') || '0.08');
+    
     // Draw particles
-    ctx.fillStyle = '#e5b94f';
+    ctx.fillStyle = particleColor;
     particles.forEach(particle => {
-      ctx.globalAlpha = particle.opacity * 0.05;
+      ctx.globalAlpha = particle.opacity * particleOpacity;
       ctx.beginPath();
-      ctx.arc(particle.x, particle.y, 1, 0, Math.PI * 2);
+      ctx.arc(particle.x, particle.y, 1.5, 0, Math.PI * 2);
       ctx.fill();
     });
 
     // Draw connections
-    ctx.strokeStyle = '#e5b94f';
+    ctx.strokeStyle = lineColor;
     ctx.lineWidth = 0.5;
     particles.forEach((particle, i) => {
       particles.slice(i + 1).forEach(otherParticle => {
@@ -71,8 +84,8 @@ export const BackgroundCanvas: React.FC = () => {
           (particle.y - otherParticle.y) ** 2
         );
         
-        if (distance < 120) {
-          const opacity = (1 - distance / 120) * 0.03;
+        if (distance < 150) {
+          const opacity = (1 - distance / 150) * lineOpacity;
           ctx.globalAlpha = opacity;
           ctx.beginPath();
           ctx.moveTo(particle.x, particle.y);
@@ -89,11 +102,11 @@ export const BackgroundCanvas: React.FC = () => {
       
       ctx.save();
       ctx.translate(parallaxX, parallaxY);
-      ctx.globalAlpha = 0.8;
+      ctx.fillStyle = particleColor;
       particles.forEach(particle => {
-        ctx.globalAlpha = particle.opacity * 0.05;
+        ctx.globalAlpha = particle.opacity * particleOpacity * 0.8;
         ctx.beginPath();
-        ctx.arc(particle.x, particle.y, 1, 0, Math.PI * 2);
+        ctx.arc(particle.x, particle.y, 1.5, 0, Math.PI * 2);
         ctx.fill();
       });
       ctx.restore();
@@ -169,6 +182,11 @@ export const BackgroundCanvas: React.FC = () => {
       window.removeEventListener('resize', handleResize);
     };
   }, [animate, handleMouseMove, handleResize]);
+
+  // Re-initialize particles when theme changes
+  useEffect(() => {
+    handleResize();
+  }, [actualTheme, handleResize]);
 
   return (
     <canvas
