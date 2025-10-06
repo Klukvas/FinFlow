@@ -5,7 +5,7 @@ WORKDIR /app
 COPY package.json yarn.lock ./
 # Use Corepack to ensure Yarn 4 per packageManager field
 RUN corepack enable && corepack prepare yarn@4.0.0 --activate \
-    && yarn install --frozen-lockfile
+    && yarn install --immutable
 
 # Copy source and build
 COPY . .
