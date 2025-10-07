@@ -17,10 +17,12 @@ class Settings(BaseSettings):
     internal_secret: str = "my-secret-token"
     
     # CORS
-    cors_origins: str = "*"
+    cors_origins: str = "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
     
     @property
     def cors_origins_list(self) -> List[str]:
+        if self.cors_origins == "*":
+            return ["*"]
         return [origin.strip() for origin in self.cors_origins.split(",")]
     
     # Logging

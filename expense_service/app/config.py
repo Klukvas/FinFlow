@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     MAX_DESCRIPTION_LENGTH: int = 500
     HTTP_TIMEOUT: float = 5.0
     HTTP_RETRY_ATTEMPTS: int = 3
-    CORS_ORIGINS: str = "*"  # In production, specify exact origins
+    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
     
     model_config = {
         "env_file": ".env",

@@ -16,7 +16,13 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
     # CORS
-    BACKEND_CORS_ORIGINS: List[str] = ["*"]
+    cors_origins: str = "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
+    
+    @property
+    def cors_origins_list(self) -> List[str]:
+        if self.cors_origins == "*":
+            return ["*"]
+        return [origin.strip() for origin in self.cors_origins.split(",")]
     
     # External Services
     USER_SERVICE_URL: str = "http://user_service:8000"

@@ -1,4 +1,5 @@
 import os
+from typing import List
 from pydantic_settings import BaseSettings
 
 
@@ -20,14 +21,18 @@ class Settings(BaseSettings):
     INTERNAL_SECRET: str
     
     # CORS
-    BACKEND_CORS_ORIGINS: list[str] = [
-        "http://localhost:3000",
-        "http://localhost:8080",
-        "http://localhost:5173",
-    ]
+    cors_origins: str = "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://localhost:8080"
     
     # Logging
     LOG_LEVEL: str = "INFO"
+    
+    @property
+    def cors_origins_list(self) -> List[str]:
+        return [origin.strip() for origin in self.cors_origins.split(',')]
+
+    class Config:
+        case_sensitive = False
+        env_file = ".env"
 
 
 settings = Settings()
