@@ -29,9 +29,6 @@ def validate_password_strength(password: str) -> None:
     if re.search(r'(.)\1{2,}', password):
         errors.append("Password cannot contain more than 2 consecutive identical characters")
     
-    if re.search(r'(123|abc|qwe|asd|zxc)', password.lower()):
-        errors.append("Password cannot contain common sequences")
-    
     if errors:
         raise PasswordPolicyError("; ".join(errors))
 

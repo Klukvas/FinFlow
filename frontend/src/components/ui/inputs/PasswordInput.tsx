@@ -6,6 +6,7 @@ import { Input } from "../forms/Input";
 interface PasswordInputProps {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onBlur?: () => void;
   error?: string;
   label?: string;
   required?: boolean;
@@ -14,6 +15,7 @@ interface PasswordInputProps {
 export const PasswordInput: React.FC<PasswordInputProps> = ({ 
   value, 
   onChange, 
+  onBlur,
   error,
   label = "Пароль",
   required = true 
@@ -34,6 +36,7 @@ export const PasswordInput: React.FC<PasswordInputProps> = ({
           placeholder="Введите пароль"
           value={value}
           onChange={onChange}
+          onBlur={onBlur}
           error={!!error}
           icon={<FaLock className="w-4 h-4 text-gray-400" />}
           required={required}

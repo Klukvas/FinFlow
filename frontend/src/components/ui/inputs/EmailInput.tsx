@@ -6,6 +6,7 @@ import { Input } from "../forms/Input";
 interface EmailInputProps {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onBlur?: () => void;
   error?: string | undefined;
   label?: string;
   required?: boolean;
@@ -14,6 +15,7 @@ interface EmailInputProps {
 export const EmailInput: React.FC<EmailInputProps> = ({ 
   value, 
   onChange, 
+  onBlur,
   error, 
   label = "Email",
   required = true 
@@ -31,6 +33,7 @@ export const EmailInput: React.FC<EmailInputProps> = ({
         placeholder="Введите email"
         value={value}
         onChange={onChange}
+        onBlur={onBlur}
         error={!!error}
         icon={<FaEnvelope className="w-4 h-4 text-gray-400" />}
         required={required}

@@ -75,7 +75,7 @@ export class AuthHttpClient {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         return {
-          error: errorData.detail || errorData.message || `HTTP ${response.status}`,
+          error: errorData.error || errorData.detail || errorData.message || `HTTP ${response.status}`,
           status: response.status,
         };
       }
