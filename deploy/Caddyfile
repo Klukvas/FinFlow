@@ -6,12 +6,20 @@
   encode zstd gzip
   log
 
+  # API routes - proxy to backend services
   handle_path /api/* {
     reverse_proxy account_service:8000
   }
 
+  # Frontend - SPA routing with fallback to index.html
   handle /* {
-    reverse_proxy frontend:80
+    reverse_proxy frontend:80 {
+      # Pass through the original headers
+      header_up Host {host}
+      header_up X-Real-IP {remote_host}
+      header_up X-Forwarded-For {remote_host}
+      header_up X-Forwarded-Proto {scheme}
+    }
   }
 }
 
