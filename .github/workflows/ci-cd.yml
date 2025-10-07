@@ -554,7 +554,9 @@ jobs:
       - stage10-recurring-service
       - stage11-user-service
     # Run deploy if on main branch OR manual dispatch, and at least one build succeeded (not skipped)
+    # Use always() to not fail if some jobs are skipped
     if: |
+      always() &&
       (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') &&
       (
         needs.stage1-frontend.result == 'success' ||
