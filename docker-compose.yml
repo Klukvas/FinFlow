@@ -36,6 +36,7 @@ services:
       context: ./user_service
     environment:
       ENV_FILE: .env.docker
+      CORS_ORIGINS: "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
     env_file:
       - ./user_service/.env.docker
     depends_on:
@@ -49,6 +50,7 @@ services:
       context: ./category_service
     environment:
       ENV_FILE: .env.docker
+      CORS_ORIGINS: "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
     env_file:
       - ./category_service/.env.docker
     depends_on:
@@ -62,6 +64,7 @@ services:
       context: ./expense_service
     environment:
       ENV_FILE: .env.docker
+      CORS_ORIGINS: "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
     env_file:
       - ./expense_service/.env.docker
     depends_on:
@@ -75,6 +78,7 @@ services:
       context: ./income_service
     environment:
       ENV_FILE: .env.docker
+      cors_origins: "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
     env_file:
       - ./income_service/.env.docker
     depends_on:
@@ -94,6 +98,7 @@ services:
       context: ./recurring_service
     environment:
       ENV_FILE: .env.docker
+      cors_origins: "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
     env_file:
       - ./recurring_service/.env.docker
     depends_on:
@@ -113,6 +118,7 @@ services:
       context: ./goals_service
     environment:
       ENV_FILE: .env.docker
+      cors_origins: "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
     env_file:
       - ./goals_service/.env.docker
     depends_on:
@@ -140,6 +146,7 @@ services:
       context: ./debt_service
     environment:
       ENV_FILE: .env.docker
+      cors_origins: "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
     env_file:
       - ./debt_service/.env.docker
     depends_on:
@@ -157,6 +164,7 @@ services:
       context: ./account_service
     environment:
       ENV_FILE: .env.docker
+      cors_origins: "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
     env_file:
       - ./account_service/.env.docker
     depends_on:
@@ -176,6 +184,7 @@ services:
       context: ./currency_service
     environment:
       ENV_FILE: .env.docker
+      cors_origins: "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
     env_file:
       - ./currency_service/.env.docker
     depends_on:
