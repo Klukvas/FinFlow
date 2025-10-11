@@ -27,8 +27,11 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     
     @property
-    def cors_origins_list(self) -> List[str]:
-        return [origin.strip() for origin in self.cors_origins.split(',')]
+    def cors_origins_list(self) -> list[str]:
+        """Convert CORS_ORIGINS string to list"""
+        if self.CORS_ORIGINS == "*":
+            return ["*"]
+        return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
 
     class Config:
         case_sensitive = False

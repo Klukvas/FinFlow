@@ -591,6 +591,7 @@ jobs:
           db-name: ${{ secrets.DB_NAME }}
           db-user: ${{ secrets.DB_USER }}
           db-password: ${{ secrets.DB_PASSWORD }}
+          cors-origins: ${{ secrets.CORS_ORIGINS || format('http://{0},https://{0}', secrets.HZ_HOST) }}
           services: ${{ needs.detect-changes.outputs.services_list }}
 
       - name: Build Summary

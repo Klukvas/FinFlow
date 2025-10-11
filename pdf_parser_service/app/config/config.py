@@ -28,8 +28,10 @@ class Settings(BaseSettings):
         case_sensitive = False
 
     @property
-    def cors_origins_list(self) -> List[str]:
-        """Convert comma-separated CORS origins to list"""
-        return [origin.strip() for origin in self.cors_origins.split(",")]
+    def cors_origins_list(self) -> list[str]:
+        """Convert CORS_ORIGINS string to list"""
+        if self.CORS_ORIGINS == "*":
+            return ["*"]
+        return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
 
 settings = Settings()
