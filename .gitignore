@@ -480,3 +480,6 @@ storybook-static/
 # Temporary folders
 tmp/
 temp/
+
+.env_gh
+TODO

@@ -1,0 +1,18 @@
+# Terraform files
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+secrets.tfvars
+tfplan
+
+# Crash logs
+crash.log
+
+# Secrets
+.api_token
+*.pem
+*.key
+

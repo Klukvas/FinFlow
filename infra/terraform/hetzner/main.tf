@@ -6,6 +6,7 @@ data "hcloud_ssh_key" "existing" {
   name = "gha-deploy"
 }
 
+# Private network for internal communication
 resource "hcloud_network" "private" {
   name     = "${var.project_name}-net"
   ip_range = var.network_cidr
@@ -18,9 +19,11 @@ resource "hcloud_network_subnet" "subnet" {
   ip_range     = var.network_cidr
 }
 
-resource "hcloud_firewall" "docker_host" {
-  name = "${var.project_name}-fw"
+# Firewall for application server (docker host)
+resource "hcloud_firewall" "app_server" {
+  name = "${var.project_name}-app-fw"
 
+  # SSH access
   rule {
     direction  = "in"
     protocol   = "tcp"
@@ -28,6 +31,7 @@ resource "hcloud_firewall" "docker_host" {
     source_ips = ["0.0.0.0/0", "::/0"]
   }
 
+  # HTTP access
   rule {
     direction  = "in"
     protocol   = "tcp"
@@ -35,6 +39,7 @@ resource "hcloud_firewall" "docker_host" {
     source_ips = ["0.0.0.0/0", "::/0"]
   }
 
+  # HTTPS access
   rule {
     direction  = "in"
     protocol   = "tcp"
@@ -42,13 +47,7 @@ resource "hcloud_firewall" "docker_host" {
     source_ips = ["0.0.0.0/0", "::/0"]
   }
 
-  rule {
-    direction  = "in"
-    protocol   = "tcp"
-    port       = "6379"
-    source_ips = [hcloud_server.docker_host.ipv4_address]
-  }
-
+  # ICMP (ping)
   rule {
     direction  = "in"
     protocol   = "icmp"
@@ -56,10 +55,46 @@ resource "hcloud_firewall" "docker_host" {
   }
 }
 
+# Firewall for database server
+resource "hcloud_firewall" "db_server" {
+  name = "${var.project_name}-db-fw"
+
+  # SSH access (for maintenance)
+  rule {
+    direction  = "in"
+    protocol   = "tcp"
+    port       = "22"
+    source_ips = ["0.0.0.0/0", "::/0"]
+  }
+
+  # PostgreSQL access from private network only
+  rule {
+    direction  = "in"
+    protocol   = "tcp"
+    port       = "5432"
+    source_ips = [var.network_cidr]
+  }
+
+  # ICMP (ping)
+  rule {
+    direction  = "in"
+    protocol   = "icmp"
+    source_ips = ["0.0.0.0/0", "::/0"]
+  }
+}
+
+# Generate secure password for database
+resource "random_password" "db_password" {
+  length  = 32
+  special = true
+}
+
+# Cloud-init script for application server
 locals {
-  cloud_init = <<-EOF
+  app_cloud_init = <<-EOF
   #cloud-config
   package_update: true
+  package_upgrade: true
   packages:
     - apt-transport-https
     - ca-certificates
@@ -67,6 +102,7 @@ locals {
     - gnupg
     - lsb-release
   runcmd:
+    # Install Docker
     - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
     - echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
     - apt-get update -y
@@ -74,105 +110,175 @@ locals {
     - usermod -aG docker ubuntu || true
     - systemctl enable docker
     - systemctl start docker
+    # Create app directory
+    - mkdir -p /home/ubuntu/app
+    - chown ubuntu:ubuntu /home/ubuntu/app
   EOF
 }
 
-resource "hcloud_server" "docker_host" {
-  name        = "${var.project_name}-host"
+# Application server (runs all services via docker compose)
+resource "hcloud_server" "app_server" {
+  name        = "${var.project_name}-app"
   image       = var.server_image
-  server_type = var.server_type
+  server_type = var.app_server_type
   location    = var.location
   ssh_keys    = [data.hcloud_ssh_key.existing.id]
-  user_data   = local.cloud_init
+  user_data   = local.app_cloud_init
 
   network {
     network_id = hcloud_network.private.id
+    ip         = var.app_server_private_ip
+  }
+
+  depends_on = [hcloud_network_subnet.subnet]
+
+  public_net {
+    ipv4_enabled = true
+    ipv6_enabled = true
   }
 }
 
-resource "hcloud_firewall_attachment" "docker_host" {
-  firewall_id = hcloud_firewall.docker_host.id
-  server_ids  = [hcloud_server.docker_host.id]
+resource "hcloud_firewall_attachment" "app_server" {
+  firewall_id = hcloud_firewall.app_server.id
+  server_ids  = [hcloud_server.app_server.id]
 }
 
-# PostgreSQL Database Server
-resource "hcloud_server" "postgres" {
-  name        = "${var.project_name}-db"
-  image       = "ubuntu-22.04"
-  server_type = "cx22"
-  location    = var.location
-  ssh_keys    = [data.hcloud_ssh_key.existing.id]
-
-  network {
-    network_id = hcloud_network.private.id
-  }
-}
-
+# Cloud-init script for PostgreSQL server
 locals {
-  postgres_init = <<-EOF
+  db_cloud_init = <<-EOF
   #cloud-config
   package_update: true
+  package_upgrade: true
   packages:
-    - postgresql-15
-    - postgresql-contrib-15
+    - postgresql
+    - postgresql-contrib
+  write_files:
+    - path: /tmp/setup_postgres.sh
+      permissions: '0755'
+      content: |
+        #!/bin/bash
+        set -e
+        
+        # Wait for PostgreSQL to be ready
+        until sudo -u postgres psql -c '\q' 2>/dev/null; do
+          echo "Waiting for PostgreSQL to start..."
+          sleep 2
+        done
+        
+        # Create user and database
+        sudo -u postgres psql -c "CREATE USER ${var.db_user} WITH PASSWORD '${random_password.db_password.result}';" || true
+        sudo -u postgres psql -c "CREATE DATABASE ${var.db_name} OWNER ${var.db_user};" || true
+        sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE ${var.db_name} TO ${var.db_user};" || true
+        
+        # Configure PostgreSQL to listen on private network
+        PG_VERSION=$(ls /etc/postgresql/)
+        PG_CONF="/etc/postgresql/$PG_VERSION/main/postgresql.conf"
+        PG_HBA="/etc/postgresql/$PG_VERSION/main/pg_hba.conf"
+        
+        # Update listen_addresses
+        sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '${var.db_server_private_ip},127.0.0.1'/g" $PG_CONF
+        
+        # Add access from private network
+        echo "host    all             all             ${var.network_cidr}           md5" >> $PG_HBA
+        
+        # Restart PostgreSQL
+        systemctl restart postgresql
+        
+        echo "PostgreSQL setup completed successfully"
   runcmd:
     - systemctl enable postgresql
     - systemctl start postgresql
-    - sudo -u postgres psql -c "CREATE USER ${var.db_user} WITH PASSWORD '${random_password.db_password.result}';"
-    - sudo -u postgres psql -c "CREATE DATABASE ${var.db_name} OWNER ${var.db_user};"
-    - sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE ${var.db_name} TO ${var.db_user};"
-    - echo "host all all 10.10.0.0/16 md5" >> /etc/postgresql/15/main/pg_hba.conf
-    - echo "listen_addresses = '*'" >> /etc/postgresql/15/main/postgresql.conf
-    - systemctl restart postgresql
+    - /tmp/setup_postgres.sh
   EOF
 }
 
-resource "random_password" "db_password" {
-  length  = 32
-  special = true
-}
-
-resource "hcloud_server" "postgres_with_init" {
-  name        = "${var.project_name}-db-init"
-  image       = "ubuntu-22.04"
-  server_type = "cx22"
+# Database server
+resource "hcloud_server" "db_server" {
+  name        = "${var.project_name}-db"
+  image       = var.server_image
+  server_type = var.db_server_type
   location    = var.location
   ssh_keys    = [data.hcloud_ssh_key.existing.id]
-  user_data   = local.postgres_init
+  user_data   = local.db_cloud_init
 
   network {
     network_id = hcloud_network.private.id
+    ip         = var.db_server_private_ip
   }
 
-  depends_on = [hcloud_server.postgres]
+  depends_on = [hcloud_network_subnet.subnet]
+
+  public_net {
+    ipv4_enabled = true
+    ipv6_enabled = true
+  }
 }
 
-output "docker_host_ipv4" {
-  value = hcloud_server.docker_host.ipv4_address
+resource "hcloud_firewall_attachment" "db_server" {
+  firewall_id = hcloud_firewall.db_server.id
+  server_ids  = [hcloud_server.db_server.id]
+}
+
+# Outputs
+output "app_server_public_ipv4" {
+  description = "Public IPv4 address of the application server"
+  value       = hcloud_server.app_server.ipv4_address
+}
+
+output "app_server_private_ip" {
+  description = "Private IP address of the application server"
+  value       = var.app_server_private_ip
+}
+
+output "db_server_public_ipv4" {
+  description = "Public IPv4 address of the database server (for SSH maintenance)"
+  value       = hcloud_server.db_server.ipv4_address
+}
+
+output "db_server_private_ip" {
+  description = "Private IP address of the database server (use this for DB connections)"
+  value       = var.db_server_private_ip
 }
 
 output "db_host" {
-  value = hcloud_server.postgres_with_init.ipv4_address
+  description = "Database host (private IP) - use this in docker-compose"
+  value       = var.db_server_private_ip
 }
 
 output "db_port" {
-  value = "5432"
+  description = "Database port"
+  value       = "5432"
 }
 
 output "db_user" {
-  value = var.db_user
+  description = "Database username"
+  value       = var.db_user
 }
 
 output "db_name" {
-  value = var.db_name
+  description = "Database name"
+  value       = var.db_name
 }
 
 output "db_password" {
-  value     = random_password.db_password.result
-  sensitive = true
+  description = "Database password"
+  value       = random_password.db_password.result
+  sensitive   = true
 }
 
-output "db_ssl" {
-  value = "prefer"
+output "connection_string" {
+  description = "Complete PostgreSQL connection string (use for docker-compose)"
+  value       = "postgresql://${var.db_user}:${random_password.db_password.result}@${var.db_server_private_ip}:5432/${var.db_name}"
+  sensitive   = true
+}
+
+output "ssh_command_app" {
+  description = "SSH command to connect to application server"
+  value       = "ssh ubuntu@${hcloud_server.app_server.ipv4_address}"
+}
+
+output "ssh_command_db" {
+  description = "SSH command to connect to database server"
+  value       = "ssh ubuntu@${hcloud_server.db_server.ipv4_address}"
 }
 

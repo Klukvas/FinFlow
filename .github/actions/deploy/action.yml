@@ -37,7 +37,7 @@ inputs:
   services:
     description: Space-separated services to deploy
     required: true
-    default: "frontend account_service category_service currency_service debt_service expense_service goals_service income_service pdf_parser_service recurring_service user_service"
+    default: "caddy redis frontend account_service category_service currency_service debt_service expense_service goals_service income_service pdf_parser_service recurring_service user_service"
 
 runs:
   using: "composite"
@@ -74,89 +74,231 @@ runs:
         ENVEOF
 
         cat > docker-compose.yml <<'COMPOSEEOF'
+        version: '3.8'
+
         services:
-          frontend:
-            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/frontend:latest
+          caddy:
+            image: caddy:2-alpine
+            container_name: caddy
+            restart: unless-stopped
             ports:
               - "80:80"
+              - "443:443"
+            volumes:
+              - ./Caddyfile:/etc/caddy/Caddyfile:ro
+              - caddy_data:/data
+              - caddy_config:/config
+            depends_on:
+              - frontend
+            networks:
+              - app_network
+
+          frontend:
+            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/frontend:latest
+            container_name: frontend
             environment:
               - NODE_ENV=production
             restart: unless-stopped
-
-          account_service:
-            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/account_service:latest
-            environment:
-              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
-              - REDIS_URL=redis://redis:6379/0
-            depends_on:
-              - redis
-            restart: unless-stopped
-
-          category_service:
-            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/category_service:latest
-            environment:
-              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
-            restart: unless-stopped
-
-          currency_service:
-            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/currency_service:latest
-            restart: unless-stopped
-
-          debt_service:
-            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/debt_service:latest
-            environment:
-              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
-            restart: unless-stopped
-
-          expense_service:
-            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/expense_service:latest
-            environment:
-              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
-              - REDIS_URL=redis://redis:6379/0
-            depends_on:
-              - redis
-            restart: unless-stopped
-
-          goals_service:
-            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/goals_service:latest
-            environment:
-              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
-            restart: unless-stopped
-
-          income_service:
-            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/income_service:latest
-            environment:
-              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
-              - REDIS_URL=redis://redis:6379/0
-            depends_on:
-              - redis
-            restart: unless-stopped
-
-          pdf_parser_service:
-            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/pdf_parser_service:latest
-            restart: unless-stopped
-
-          recurring_service:
-            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/recurring_service:latest
-            environment:
-              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
-            restart: unless-stopped
-
-          user_service:
-            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/user_service:latest
-            environment:
-              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
-            restart: unless-stopped
+            networks:
+              - app_network
 
           redis:
             image: redis:7-alpine
+            container_name: redis
             restart: unless-stopped
+            command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
             volumes:
               - redis_data:/data
+            networks:
+              - app_network
+
+          account_service:
+            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/account_service:latest
+            container_name: account_service
+            environment:
+              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+              - REDIS_URL=redis://redis:6379/0
+            depends_on:
+              - redis
+            restart: unless-stopped
+            networks:
+              - app_network
+
+          category_service:
+            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/category_service:latest
+            container_name: category_service
+            environment:
+              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+            restart: unless-stopped
+            networks:
+              - app_network
+
+          currency_service:
+            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/currency_service:latest
+            container_name: currency_service
+            environment:
+              - REDIS_URL=redis://redis:6379/0
+            depends_on:
+              - redis
+            restart: unless-stopped
+            networks:
+              - app_network
+
+          debt_service:
+            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/debt_service:latest
+            container_name: debt_service
+            environment:
+              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+            restart: unless-stopped
+            networks:
+              - app_network
+
+          expense_service:
+            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/expense_service:latest
+            container_name: expense_service
+            environment:
+              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+              - REDIS_URL=redis://redis:6379/0
+            depends_on:
+              - redis
+              - category_service
+              - user_service
+            restart: unless-stopped
+            networks:
+              - app_network
+
+          goals_service:
+            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/goals_service:latest
+            container_name: goals_service
+            environment:
+              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+            depends_on:
+              - user_service
+            restart: unless-stopped
+            networks:
+              - app_network
+
+          income_service:
+            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/income_service:latest
+            container_name: income_service
+            environment:
+              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+              - REDIS_URL=redis://redis:6379/0
+            depends_on:
+              - redis
+              - category_service
+              - user_service
+              - account_service
+            restart: unless-stopped
+            networks:
+              - app_network
+
+          pdf_parser_service:
+            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/pdf_parser_service:latest
+            container_name: pdf_parser_service
+            restart: unless-stopped
+            volumes:
+              - pdf_uploads:/app/uploads
+            networks:
+              - app_network
+
+          recurring_service:
+            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/recurring_service:latest
+            container_name: recurring_service
+            environment:
+              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+            depends_on:
+              - expense_service
+              - income_service
+              - category_service
+            restart: unless-stopped
+            networks:
+              - app_network
+
+          user_service:
+            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/user_service:latest
+            container_name: user_service
+            environment:
+              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+            restart: unless-stopped
+            networks:
+              - app_network
+
+        networks:
+          app_network:
+            driver: bridge
 
         volumes:
           redis_data:
+          caddy_data:
+          caddy_config:
+          pdf_uploads:
         COMPOSEEOF
+
+        # Create Caddyfile if it doesn't exist
+        if [ ! -f Caddyfile ]; then
+          cat > Caddyfile <<'CADDYEOF'
+        {
+          auto_https disable_redirects
+        }
+
+        :80 {
+          encode zstd gzip
+          log
+
+          # API routes - proxy to backend services
+          handle_path /api/users/* {
+            reverse_proxy user_service:8000
+          }
+
+          handle_path /api/categories/* {
+            reverse_proxy category_service:8000
+          }
+
+          handle_path /api/expenses/* {
+            reverse_proxy expense_service:8000
+          }
+
+          handle_path /api/income/* {
+            reverse_proxy income_service:8000
+          }
+
+          handle_path /api/accounts/* {
+            reverse_proxy account_service:8000
+          }
+
+          handle_path /api/currencies/* {
+            reverse_proxy currency_service:8000
+          }
+
+          handle_path /api/debts/* {
+            reverse_proxy debt_service:8000
+          }
+
+          handle_path /api/goals/* {
+            reverse_proxy goals_service:8000
+          }
+
+          handle_path /api/recurring/* {
+            reverse_proxy recurring_service:8000
+          }
+
+          handle_path /api/pdf/* {
+            reverse_proxy pdf_parser_service:8000
+          }
+
+          # Frontend - SPA routing with fallback to index.html
+          handle /* {
+            reverse_proxy frontend:80 {
+              header_up Host {host}
+              header_up X-Real-IP {remote_host}
+              header_up X-Forwarded-For {remote_host}
+              header_up X-Forwarded-Proto {scheme}
+            }
+          }
+        }
+        CADDYEOF
+        fi
 
         echo ""
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -218,7 +360,7 @@ runs:
 
         # Use default services if empty
         if [ -z "${SERVICES:-}" ]; then
-          SERVICES="frontend account_service category_service currency_service debt_service expense_service goals_service income_service pdf_parser_service recurring_service user_service"
+          SERVICES="caddy redis frontend account_service category_service currency_service debt_service expense_service goals_service income_service pdf_parser_service recurring_service user_service"
           echo "Using default services: $SERVICES"
         fi
 

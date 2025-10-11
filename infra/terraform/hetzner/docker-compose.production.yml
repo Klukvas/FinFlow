@@ -1,0 +1,299 @@
+version: '3.8'
+
+# Production Docker Compose for Accounting App
+# Deploy this to your app server at ~/app/docker-compose.yml
+# 
+# Before deploying:
+# 1. Create .env file with database credentials from Terraform outputs
+# 2. Update image registry paths if using custom registry
+# 3. Update CORS_ORIGINS with your domain
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+      - user_service
+      - account_service
+    networks:
+      - app_network
+
+  frontend:
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX:-yourusername}/accounting-frontend:${TAG:-latest}
+    container_name: frontend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - app_network
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  user_service:
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX:-yourusername}/user-service:${TAG:-latest}
+    container_name: user_service
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - REDIS_URL=redis://redis:6379/0
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-3600}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    networks:
+      - app_network
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  category_service:
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX:-yourusername}/category-service:${TAG:-latest}
+    container_name: category_service
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  expense_service:
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX:-yourusername}/expense-service:${TAG:-latest}
+    container_name: expense_service
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - REDIS_URL=redis://redis:6379/0
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      - CATEGORY_SERVICE_URL=http://category_service:8000
+      - USER_SERVICE_URL=http://user_service:8000
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    networks:
+      - app_network
+    depends_on:
+      redis:
+        condition: service_healthy
+      category_service:
+        condition: service_started
+      user_service:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  income_service:
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX:-yourusername}/income-service:${TAG:-latest}
+    container_name: income_service
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - REDIS_URL=redis://redis:6379/0
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      - CATEGORY_SERVICE_URL=http://category_service:8000
+      - USER_SERVICE_URL=http://user_service:8000
+      - ACCOUNT_SERVICE_URL=http://account_service:8000
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    networks:
+      - app_network
+    depends_on:
+      redis:
+        condition: service_healthy
+      category_service:
+        condition: service_started
+      user_service:
+        condition: service_started
+      account_service:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  account_service:
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX:-yourusername}/account-service:${TAG:-latest}
+    container_name: account_service
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - REDIS_URL=redis://redis:6379/0
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      - USER_SERVICE_URL=http://user_service:8000
+      - CURRENCY_SERVICE_URL=http://currency_service:8000
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    networks:
+      - app_network
+    depends_on:
+      redis:
+        condition: service_healthy
+      user_service:
+        condition: service_started
+      currency_service:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  currency_service:
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX:-yourusername}/currency-service:${TAG:-latest}
+    container_name: currency_service
+    restart: unless-stopped
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    networks:
+      - app_network
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  debt_service:
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX:-yourusername}/debt-service:${TAG:-latest}
+    container_name: debt_service
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      - CATEGORY_SERVICE_URL=http://category_service:8000
+      - USER_SERVICE_URL=http://user_service:8000
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    networks:
+      - app_network
+    depends_on:
+      category_service:
+        condition: service_started
+      user_service:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  goals_service:
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX:-yourusername}/goals-service:${TAG:-latest}
+    container_name: goals_service
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      - USER_SERVICE_URL=http://user_service:8000
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    networks:
+      - app_network
+    depends_on:
+      user_service:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  recurring_service:
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX:-yourusername}/recurring-service:${TAG:-latest}
+    container_name: recurring_service
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      - EXPENSE_SERVICE_URL=http://expense_service:8000
+      - INCOME_SERVICE_URL=http://income_service:8000
+      - CATEGORY_SERVICE_URL=http://category_service:8000
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    networks:
+      - app_network
+    depends_on:
+      expense_service:
+        condition: service_started
+      income_service:
+        condition: service_started
+      category_service:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  pdf_parser_service:
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_PREFIX:-yourusername}/pdf-parser-service:${TAG:-latest}
+    container_name: pdf_parser_service
+    restart: unless-stopped
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - pdf_uploads:/app/uploads
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  app_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  redis_data:
+    driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local
+  pdf_uploads:
+    driver: local
+
