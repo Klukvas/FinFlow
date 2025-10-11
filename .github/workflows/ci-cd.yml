@@ -7,6 +7,7 @@ on:
       - 'frontend/**'
       - '*/app/**'
       - '**/Dockerfile'
+      - '**/startup.sh'
       - '**/requirements.txt'
       - '**/pyproject.toml'
       - '**/package.json'
