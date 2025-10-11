@@ -1,9 +1,23 @@
 #!/bin/bash
 
+# Extract database host from DATABASE_URL
+# Format: postgresql://user:pass@host:port/dbname
+DB_HOST=$(echo $DATABASE_URL | sed -n 's/.*@\([^:]*\):.*/\1/p')
+DB_PORT=$(echo $DATABASE_URL | sed -n 's/.*:\([0-9]*\)\/.*/\1/p')
+
+echo "Database host: $DB_HOST:$DB_PORT"
+
 # Wait for database to be ready
 echo "Waiting for database to be ready..."
-while ! pg_isready -h db -p 5432 -U postgres; do
-  echo "Database is unavailable - sleeping"
+max_attempts=30
+attempt=0
+while ! pg_isready -h "$DB_HOST" -p "$DB_PORT" 2>/dev/null; do
+  attempt=$((attempt + 1))
+  if [ $attempt -ge $max_attempts ]; then
+    echo "WARNING: Database not ready after $max_attempts attempts. Starting anyway..."
+    break
+  fi
+  echo "Database is unavailable - sleeping (attempt $attempt/$max_attempts)"
   sleep 2
 done
 
