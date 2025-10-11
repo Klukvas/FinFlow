@@ -454,7 +454,10 @@ receipt_service/temp/
 *.model
 *.pkl
 *.joblib
-models/
+# Note: NOT ignoring */app/models/ directories - those are application code!
+# Only ignore ML model files in specific locations if needed:
+# ml_models/
+# ai_models/
 
 # Large data files
 data/
