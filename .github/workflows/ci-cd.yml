@@ -554,23 +554,14 @@ jobs:
       - stage9-pdf-parser-service
       - stage10-recurring-service
       - stage11-user-service
-    # Run deploy if on main branch OR manual dispatch, and at least one build succeeded (not skipped)
-    # Use always() to not fail if some jobs are skipped
+    # Deploy only after ALL builds complete successfully (or skip if no changes)
+    # This ensures we don't deploy while builds are still running
     if: |
-      always() &&
       (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled') &&
       (
-        needs.stage1-frontend.result == 'success' ||
-        needs.stage2-account-service.result == 'success' ||
-        needs.stage3-category-service.result == 'success' ||
-        needs.stage4-currency-service.result == 'success' ||
-        needs.stage5-debt-service.result == 'success' ||
-        needs.stage6-expense-service.result == 'success' ||
-        needs.stage7-goals-service.result == 'success' ||
-        needs.stage8-income-service.result == 'success' ||
-        needs.stage9-pdf-parser-service.result == 'success' ||
-        needs.stage10-recurring-service.result == 'success' ||
-        needs.stage11-user-service.result == 'success'
+        contains(needs.*.result, 'success')
       )
     runs-on: ubuntu-latest
     environment:
