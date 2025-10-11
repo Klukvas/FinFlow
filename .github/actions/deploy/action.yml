@@ -63,15 +63,15 @@ runs:
         cd ~/app
 
         cat > .env <<ENVEOF
-REGISTRY=$REGISTRY
-IMAGE_PREFIX=$IMAGE_PREFIX
-DB_HOST=$DB_HOST
-DB_PORT=$DB_PORT
-DB_NAME=$DB_NAME
-DB_USER=$DB_USER
-DB_PASSWORD=$DB_PASSWORD
-NODE_ENV=production
-ENVEOF
+        REGISTRY=$REGISTRY
+        IMAGE_PREFIX=$IMAGE_PREFIX
+        DB_HOST=$DB_HOST
+        DB_PORT=$DB_PORT
+        DB_NAME=$DB_NAME
+        DB_USER=$DB_USER
+        DB_PASSWORD=$DB_PASSWORD
+        NODE_ENV=production
+        ENVEOF
 
         cat > docker-compose.yml <<'COMPOSEEOF'
         version: '3.8'
