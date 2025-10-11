@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     INTERNAL_SECRET: str
     LOG_LEVEL: str = "INFO"
     MAX_CATEGORY_DEPTH: int = 2
-    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
+    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.21.159.67,https://65.21.159.67"
     
     model_config = {
         "env_file": ".env",

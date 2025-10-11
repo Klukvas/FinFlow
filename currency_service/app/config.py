@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     debug: bool = False
     
     # CORS Settings
-    cors_origins: str = "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
+    cors_origins: str = "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.21.159.67,https://65.21.159.67"
     
     # Redis
     redis_url: str = "redis://localhost:6377"

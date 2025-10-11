@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     INTERNAL_SECRET: str
     
     # CORS
-    cors_origins: str = "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://localhost:8080"
+    cors_origins: str = "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://localhost:8080,http://65.21.159.67,https://65.21.159.67"
     
     # Logging
     LOG_LEVEL: str = "INFO"

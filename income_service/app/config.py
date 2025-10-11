@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     internal_secret: str = "my-secret-token"
     
     # CORS
-    cors_origins: str = "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
+    cors_origins: str = "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.21.159.67,https://65.21.159.67"
     
     @property
     def cors_origins_list(self) -> List[str]:

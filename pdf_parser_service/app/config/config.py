@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     ALGORITHM: str
     
     # CORS Configuration
-    cors_origins: str = "http://localhost:3000,http://localhost:5173"
+    cors_origins: str = "http://localhost:3000,http://localhost:5173,http://65.21.159.67,https://65.21.159.67"
     
     # File Upload Configuration
     max_file_size: int = 10 * 1024 * 1024  # 10MB

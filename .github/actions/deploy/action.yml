@@ -74,6 +74,8 @@ runs:
         DB_NAME=$DB_NAME
         DB_USER=$DB_USER
         DB_PASSWORD=$DB_PASSWORD
+        CORS_ORIGINS=$CORS_ORIGINS
+        cors_origins=$CORS_ORIGINS
         NODE_ENV=production
         ENVEOF
 
