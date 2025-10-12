@@ -66,6 +66,9 @@ runs:
         mkdir -p ~/app
         cd ~/app
 
+        # URL-encode the password for DATABASE_URL
+        DB_PASSWORD_ENCODED=$(python3 -c "import urllib.parse; print(urllib.parse.quote_plus('$DB_PASSWORD'))")
+        
         cat > .env <<ENVEOF
         REGISTRY=$REGISTRY
         IMAGE_PREFIX=$IMAGE_PREFIX
@@ -74,9 +77,13 @@ runs:
         DB_NAME=$DB_NAME
         DB_USER=$DB_USER
         DB_PASSWORD=$DB_PASSWORD
+        DB_PASSWORD_ENCODED=$DB_PASSWORD_ENCODED
         CORS_ORIGINS=$CORS_ORIGINS
         cors_origins=$CORS_ORIGINS
         NODE_ENV=production
+        SECRET_KEY=${SECRET_KEY:-$(openssl rand -hex 32)}
+        ALGORITHM=${ALGORITHM:-HS256}
+        INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN:-$(openssl rand -hex 32)}
         ENVEOF
 
         cat > docker-compose.yml <<'COMPOSEEOF'
@@ -122,11 +129,20 @@ runs:
             image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/account_service:latest
             container_name: account_service
             environment:
-              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD_ENCODED:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
               - REDIS_URL=redis://redis:6379/0
+              - SECRET_KEY=${SECRET_KEY}
+              - ALGORITHM=${ALGORITHM}
+              - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
               - CORS_ORIGINS=${CORS_ORIGINS}
+              - USER_SERVICE_URL=http://user_service:8000
+              - EXPENSE_SERVICE_URL=http://expense_service:8000
+              - INCOME_SERVICE_URL=http://income_service:8000
+              - CURRENCY_SERVICE_URL=http://currency_service:8000
             depends_on:
               - redis
+              - user_service
+              - currency_service
             restart: unless-stopped
             networks:
               - app_network
@@ -135,7 +151,7 @@ runs:
             image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/category_service:latest
             container_name: category_service
             environment:
-              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD_ENCODED:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
               - CORS_ORIGINS=${CORS_ORIGINS}
             restart: unless-stopped
             networks:
@@ -157,7 +173,7 @@ runs:
             image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/debt_service:latest
             container_name: debt_service
             environment:
-              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD_ENCODED:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
               - CORS_ORIGINS=${CORS_ORIGINS}
             restart: unless-stopped
             networks:
@@ -167,7 +183,7 @@ runs:
             image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/expense_service:latest
             container_name: expense_service
             environment:
-              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD_ENCODED:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
               - REDIS_URL=redis://redis:6379/0
               - CORS_ORIGINS=${CORS_ORIGINS}
             depends_on:
@@ -182,8 +198,14 @@ runs:
             image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/goals_service:latest
             container_name: goals_service
             environment:
-              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD_ENCODED:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+              - SECRET_KEY=${SECRET_KEY}
+              - ALGORITHM=${ALGORITHM}
+              - INTERNAL_SECRET=${INTERNAL_SECRET_TOKEN}
               - CORS_ORIGINS=${CORS_ORIGINS}
+              - USER_SERVICE_URL=http://user_service:8000
+              - EXPENSE_SERVICE_URL=http://expense_service:8000
+              - INCOME_SERVICE_URL=http://income_service:8000
             depends_on:
               - user_service
             restart: unless-stopped
@@ -194,7 +216,7 @@ runs:
             image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/income_service:latest
             container_name: income_service
             environment:
-              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD_ENCODED:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
               - REDIS_URL=redis://redis:6379/0
               - CORS_ORIGINS=${CORS_ORIGINS}
             depends_on:
@@ -219,7 +241,7 @@ runs:
             image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/recurring_service:latest
             container_name: recurring_service
             environment:
-              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD_ENCODED:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
               - CORS_ORIGINS=${CORS_ORIGINS}
             depends_on:
               - expense_service
@@ -233,7 +255,9 @@ runs:
             image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/user_service:latest
             container_name: user_service
             environment:
-              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD_ENCODED:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+              - SECRET_KEY=${SECRET_KEY}
+              - ALGORITHM=${ALGORITHM}
               - CORS_ORIGINS=${CORS_ORIGINS}
             restart: unless-stopped
             networks:

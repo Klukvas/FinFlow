@@ -25,9 +25,16 @@ services:
   account_service:
     image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/account_service:latest
     environment:
-      - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+      - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD_ENCODED:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
       - REDIS_URL=redis://redis:6379/0
-      - cors_origins=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
+      - ALGORITHM=${ALGORITHM:-HS256}
+      - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN:-internal-secret-change-in-production}
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122
+      - USER_SERVICE_URL=http://user_service:8000
+      - EXPENSE_SERVICE_URL=http://expense_service:8000
+      - INCOME_SERVICE_URL=http://income_service:8000
+      - CURRENCY_SERVICE_URL=http://currency_service:8000
     depends_on:
       - redis
     restart: unless-stopped
@@ -74,6 +81,8 @@ services:
     image: accounting_app/goals_service:local
     environment:
       - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
+      - ALGORITHM=${ALGORITHM:-HS256}
       - cors_origins=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122
     restart: unless-stopped
 
