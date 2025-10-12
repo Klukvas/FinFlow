@@ -69,6 +69,23 @@ runs:
         # URL-encode the password for DATABASE_URL
         DB_PASSWORD_ENCODED=$(python3 -c "import urllib.parse; print(urllib.parse.quote_plus('$DB_PASSWORD'))")
         
+        # Generate secrets if not already present in existing .env
+        if [ -f .env ]; then
+          source .env 2>/dev/null || true
+        fi
+        
+        if [ -z "${SECRET_KEY:-}" ]; then
+          SECRET_KEY=$(openssl rand -hex 32)
+        fi
+        
+        if [ -z "${ALGORITHM:-}" ]; then
+          ALGORITHM="HS256"
+        fi
+        
+        if [ -z "${INTERNAL_SECRET_TOKEN:-}" ]; then
+          INTERNAL_SECRET_TOKEN=$(openssl rand -hex 32)
+        fi
+        
         cat > .env <<ENVEOF
         REGISTRY=$REGISTRY
         IMAGE_PREFIX=$IMAGE_PREFIX
@@ -81,9 +98,9 @@ runs:
         CORS_ORIGINS=$CORS_ORIGINS
         cors_origins=$CORS_ORIGINS
         NODE_ENV=production
-        SECRET_KEY=${SECRET_KEY:-$(openssl rand -hex 32)}
-        ALGORITHM=${ALGORITHM:-HS256}
-        INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN:-$(openssl rand -hex 32)}
+        SECRET_KEY=$SECRET_KEY
+        ALGORITHM=$ALGORITHM
+        INTERNAL_SECRET_TOKEN=$INTERNAL_SECRET_TOKEN
         ENVEOF
 
         cat > docker-compose.yml <<'COMPOSEEOF'
@@ -152,6 +169,9 @@ runs:
             container_name: category_service
             environment:
               - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD_ENCODED:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+              - SECRET_KEY=${SECRET_KEY}
+              - ALGORITHM=${ALGORITHM}
+              - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
               - CORS_ORIGINS=${CORS_ORIGINS}
             restart: unless-stopped
             networks:
@@ -162,6 +182,7 @@ runs:
             container_name: currency_service
             environment:
               - REDIS_URL=redis://redis:6379/0
+              - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
               - CORS_ORIGINS=${CORS_ORIGINS}
             depends_on:
               - redis
@@ -174,7 +195,11 @@ runs:
             container_name: debt_service
             environment:
               - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD_ENCODED:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+              - SECRET_KEY=${SECRET_KEY}
+              - ALGORITHM=${ALGORITHM}
+              - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
               - CORS_ORIGINS=${CORS_ORIGINS}
+              - USER_SERVICE_URL=http://user_service:8000
             restart: unless-stopped
             networks:
               - app_network
@@ -185,7 +210,13 @@ runs:
             environment:
               - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD_ENCODED:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
               - REDIS_URL=redis://redis:6379/0
+              - SECRET_KEY=${SECRET_KEY}
+              - ALGORITHM=${ALGORITHM}
+              - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
               - CORS_ORIGINS=${CORS_ORIGINS}
+              - USER_SERVICE_URL=http://user_service:8000
+              - CATEGORY_SERVICE_URL=http://category_service:8000
+              - ACCOUNT_SERVICE_URL=http://account_service:8000
             depends_on:
               - redis
               - category_service
@@ -218,7 +249,13 @@ runs:
             environment:
               - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD_ENCODED:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
               - REDIS_URL=redis://redis:6379/0
+              - SECRET_KEY=${SECRET_KEY}
+              - ALGORITHM=${ALGORITHM}
+              - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
               - CORS_ORIGINS=${CORS_ORIGINS}
+              - USER_SERVICE_URL=http://user_service:8000
+              - CATEGORY_SERVICE_URL=http://category_service:8000
+              - ACCOUNT_SERVICE_URL=http://account_service:8000
             depends_on:
               - redis
               - category_service
@@ -231,6 +268,11 @@ runs:
           pdf_parser_service:
             image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/pdf_parser_service:latest
             container_name: pdf_parser_service
+            environment:
+              - SECRET_KEY=${SECRET_KEY}
+              - ALGORITHM=${ALGORITHM}
+              - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
+              - CORS_ORIGINS=${CORS_ORIGINS}
             restart: unless-stopped
             volumes:
               - pdf_uploads:/app/uploads
@@ -242,7 +284,14 @@ runs:
             container_name: recurring_service
             environment:
               - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD_ENCODED:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+              - SECRET_KEY=${SECRET_KEY}
+              - ALGORITHM=${ALGORITHM}
+              - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
               - CORS_ORIGINS=${CORS_ORIGINS}
+              - USER_SERVICE_URL=http://user_service:8000
+              - EXPENSE_SERVICE_URL=http://expense_service:8000
+              - INCOME_SERVICE_URL=http://income_service:8000
+              - CATEGORY_SERVICE_URL=http://category_service:8000
             depends_on:
               - expense_service
               - income_service
