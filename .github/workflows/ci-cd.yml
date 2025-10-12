@@ -556,13 +556,13 @@ jobs:
       - stage11-user-service
     # Deploy only after ALL builds complete successfully (or skip if no changes)
     # This ensures we don't deploy while builds are still running
+    # Run if: on main/manual dispatch, no failures/cancellations, and at least one service built
     if: |
+      always() &&
       (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') &&
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') &&
-      (
-        contains(needs.*.result, 'success')
-      )
+      contains(needs.*.result, 'success')
     runs-on: ubuntu-latest
     environment:
       name: ${{ github.event.inputs.environment || 'production' }}
