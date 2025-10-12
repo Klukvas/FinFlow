@@ -32,9 +32,9 @@ class Settings(BaseSettings):
     @property
     def cors_origins_list(self) -> list[str]:
         """Convert CORS_ORIGINS string to list"""
-        if self.CORS_ORIGINS == "*":
+        if self.cors_origins == "*":
             return ["*"]
-        return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
+        return [origin.strip() for origin in self.cors_origins.split(",")]
 
 settings = Settings()
 
