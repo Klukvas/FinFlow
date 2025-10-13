@@ -28,7 +28,7 @@ class CategoryServiceClient(BaseHttpClient):
         try:
             headers = {
                 "Content-Type": "application/json",
-                "X-Internal-Token": settings.INTERNAL_SECRET
+                "X-Internal-Token": settings.INTERNAL_SECRET_TOKEN
             }
             
             response = await self.get(

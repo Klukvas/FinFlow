@@ -24,7 +24,7 @@ class UserServiceClient(BaseHttpClient):
         try:
             headers = {
                 "Content-Type": "application/json",
-                "X-Internal-Secret": settings.INTERNAL_SECRET
+                "X-Internal-Secret": settings.INTERNAL_SECRET_TOKEN
             }
             
             response = await self.get(

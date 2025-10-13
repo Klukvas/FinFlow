@@ -5,7 +5,7 @@ import logging
 class Settings(BaseSettings):
     CATEGORY_SERVICE_URL: str
     ACCOUNT_SERVICE_URL: str
-    INTERNAL_SECRET: str
+    INTERNAL_SECRET_TOKEN: str
     DATABASE_URL: str
     SECRET_KEY: str
     ALGORITHM: str = "HS256"

@@ -55,7 +55,6 @@ USER_SERVICE_URL=http://localhost:8001
 SECRET_KEY=your-secret-key-here
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
-INTERNAL_SECRET_TOKEN=your-internal-secret-token-here
 
 # API Settings
 API_TITLE=Account Service

@@ -32,7 +32,7 @@ class CategoryServiceClient(BaseHttpClient):
         try:
             response = self.get(
                 f"/internal/categories/{category_id}?user_id={user_id}",
-                headers={"X-Internal-Token": settings.INTERNAL_SECRET}
+                headers={"X-Internal-Token": settings.INTERNAL_SECRET_TOKEN}
             )
             
             if response.status_code == status.HTTP_404_NOT_FOUND:

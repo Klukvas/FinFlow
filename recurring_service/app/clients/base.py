@@ -25,7 +25,7 @@ class BaseServiceClient:
         url = f"{self.base_url}{endpoint}"
         
         if headers is None:
-            headers = {"Content-Type": "application/json", "X-Internal-Token": settings.INTERNAL_SECRET}
+            headers = {"Content-Type": "application/json", "X-Internal-Token": settings.INTERNAL_SECRET_TOKEN}
 
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             try:

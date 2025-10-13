@@ -35,7 +35,7 @@ def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(secu
 
 def verify_internal_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> None:
     """Verify internal service token"""
-    if credentials.credentials != settings.INTERNAL_SECRET:
+    if credentials.credentials != settings.INTERNAL_SECRET_TOKEN:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid internal token"

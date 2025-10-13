@@ -24,7 +24,7 @@ def verify_internal_token(request: Request) -> None:
             detail="Internal token required"
         )
     
-    if token != settings.INTERNAL_SECRET:
+    if token != settings.INTERNAL_SECRET_TOKEN:
         log_security_event(logger, "Invalid internal token", details="Token mismatch")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

@@ -15,8 +15,7 @@ class Settings(BaseSettings):
     USER_SERVICE_URL: str = "http://user_service:8000"
     CATEGORY_SERVICE_URL: str = "http://category_service:8000"
     ACCOUNT_SERVICE_URL: str = "http://account_service:8000"
-    INTERNAL_SECRET: str = "my-secret-token"
-    INTERNAL_SECRET_TOKEN: str = "internal-secret-key"  # Fallback for compatibility
+    INTERNAL_SECRET_TOKEN: str
     
     # CORS
     CORS_ORIGINS: str = "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.21.159.67,https://65.21.159.67"

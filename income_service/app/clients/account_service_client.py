@@ -28,7 +28,7 @@ class AccountServiceClient(BaseHttpClient):
         try:
             response = await self.get(
                 f"/internal/accounts/{account_id}/validate?user_id={user_id}",
-                headers={"X-Internal-Token": settings.INTERNAL_SECRET}
+                headers={"X-Internal-Token": settings.INTERNAL_SECRET_TOKEN}
             )
             
             if response.status_code == status.HTTP_404_NOT_FOUND:
@@ -96,7 +96,7 @@ class AccountServiceClient(BaseHttpClient):
         try:
             response = await self.put(
                 f"/internal/accounts/{account_id}/balance",
-                headers={"X-Internal-Token": settings.INTERNAL_SECRET},
+                headers={"X-Internal-Token": settings.INTERNAL_SECRET_TOKEN},
                 params={
                     "user_id": user_id, 
                     "amount_change": amount_change,

@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     INCOME_SERVICE_URL: str = "http://income_service:8000"
     
     # Internal communication
-    INTERNAL_SECRET: str = "internal-secret-key"
+    INTERNAL_SECRET_TOKEN: str
     
     # Logging
     LOG_LEVEL: str = "INFO"

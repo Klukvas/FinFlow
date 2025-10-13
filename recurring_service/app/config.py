@@ -20,8 +20,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Recurring Payments Service"
     
     # Security
-    INTERNAL_SECRET: str
-    INTERNAL_SECRET_TOKEN: str = "internal-secret-key"  # Fallback for compatibility
+    INTERNAL_SECRET_TOKEN: str
     
     # CORS
     CORS_ORIGINS: str = "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://localhost:8080,http://65.21.159.67,https://65.21.159.67"
