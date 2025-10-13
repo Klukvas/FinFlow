@@ -286,6 +286,7 @@ runs:
               - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD_ENCODED:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
               - SECRET_KEY=${SECRET_KEY}
               - ALGORITHM=${ALGORITHM}
+              - INTERNAL_SECRET=${INTERNAL_SECRET_TOKEN}
               - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
               - CORS_ORIGINS=${CORS_ORIGINS}
               - USER_SERVICE_URL=http://user_service:8000

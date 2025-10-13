@@ -25,7 +25,7 @@ services:
   account_service:
     image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/account_service:latest
     environment:
-      - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD_ENCODED:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD_ENCODED:-password}@${DB_HOST}:${DB_PORT}/${DB_NAME}
       - REDIS_URL=redis://redis:6379/0
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
       - ALGORITHM=${ALGORITHM:-HS256}
@@ -44,7 +44,7 @@ services:
       context: ../category_service
     image: accounting_app/category_service:local
     environment:
-      - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
       - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122
     restart: unless-stopped
 
@@ -59,7 +59,7 @@ services:
   debt_service:
     image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/debt_service:latest
     environment:
-      - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
       - cors_origins=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122
     restart: unless-stopped
 
@@ -68,7 +68,7 @@ services:
       context: ../expense_service
     image: accounting_app/expense_service:local
     environment:
-      - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
       - REDIS_URL=redis://redis:6379/0
       - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122
     depends_on:
@@ -80,7 +80,7 @@ services:
       context: ../goals_service
     image: accounting_app/goals_service:local
     environment:
-      - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
       - ALGORITHM=${ALGORITHM:-HS256}
       - cors_origins=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122
@@ -89,7 +89,7 @@ services:
   income_service:
     image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/income_service:latest
     environment:
-      - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
       - REDIS_URL=redis://redis:6379/0
       - cors_origins=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122
     depends_on:
@@ -103,14 +103,14 @@ services:
   recurring_service:
     image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/recurring_service:latest
     environment:
-      - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
       - cors_origins=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122
     restart: unless-stopped
 
   user_service:
     image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/user_service:latest
     environment:
-      - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
       - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122
     restart: unless-stopped
 
