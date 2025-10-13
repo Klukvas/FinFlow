@@ -9,7 +9,7 @@ from app.schemas.account import AccountTransaction
 
 class ExpenseServiceClient(BaseHttpClient):
     def __init__(self):
-        super().__init__(base_url=settings.expense_service_url)
+        super().__init__(base_url=settings.EXPENSE_SERVICE_URL)
         self.logger = get_logger(__name__)
 
     def get_expenses_by_account(self, account_id: int, user_id: int, limit: int = 100, offset: int = 0) -> List[Dict[str, Any]]:
@@ -31,7 +31,7 @@ class ExpenseServiceClient(BaseHttpClient):
         try:
             response = self.get(
                 f"/internal/expenses/account/{account_id}",
-                headers={"X-Internal-Token": settings.internal_secret_token},
+                headers={"X-Internal-Token": settings.INTERNAL_SECRET_TOKEN},
                 params={"user_id": user_id, "limit": limit, "offset": offset}
             )
             
@@ -76,7 +76,7 @@ class ExpenseServiceClient(BaseHttpClient):
         try:
             response = self.get(
                 f"/internal/expenses/account/{account_id}/validate",
-                headers={"X-Internal-Token": settings.internal_secret_token},
+                headers={"X-Internal-Token": settings.INTERNAL_SECRET_TOKEN},
                 params={"user_id": user_id}
             )
             

@@ -5,7 +5,7 @@ from typing import Dict, Any
 
 class UserServiceClient(BaseHttpClient):
     def __init__(self):
-        super().__init__(base_url=settings.user_service_url)
+        super().__init__(base_url=settings.USER_SERVICE_URL)
         self.logger = get_logger(__name__)
 
     async def get_user(self, user_id: int) -> Dict[str, Any]:
@@ -24,7 +24,7 @@ class UserServiceClient(BaseHttpClient):
         try:
             headers = {
                 "Content-Type": "application/json",
-                "X-Internal-Secret": settings.internal_secret
+                "X-Internal-Secret": settings.INTERNAL_SECRET
             }
             
             response = await self.get(

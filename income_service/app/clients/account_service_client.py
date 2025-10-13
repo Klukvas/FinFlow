@@ -8,7 +8,7 @@ from typing import Dict, Any
 
 class AccountServiceClient(BaseHttpClient):
     def __init__(self):
-        super().__init__(base_url=settings.account_service_url)
+        super().__init__(base_url=settings.ACCOUNT_SERVICE_URL)
         self.logger = get_logger(__name__)
 
     async def validate_account(self, account_id: int, user_id: int) -> Dict[str, Any]:
@@ -28,7 +28,7 @@ class AccountServiceClient(BaseHttpClient):
         try:
             response = await self.get(
                 f"/internal/accounts/{account_id}/validate?user_id={user_id}",
-                headers={"X-Internal-Token": settings.internal_secret}
+                headers={"X-Internal-Token": settings.INTERNAL_SECRET}
             )
             
             if response.status_code == status.HTTP_404_NOT_FOUND:
@@ -96,7 +96,7 @@ class AccountServiceClient(BaseHttpClient):
         try:
             response = await self.put(
                 f"/internal/accounts/{account_id}/balance",
-                headers={"X-Internal-Token": settings.internal_secret},
+                headers={"X-Internal-Token": settings.INTERNAL_SECRET},
                 params={
                     "user_id": user_id, 
                     "amount_change": amount_change,

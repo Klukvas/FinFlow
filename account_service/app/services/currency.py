@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 class CurrencyService:
     def __init__(self):
-        self.redis_client = redis.from_url(settings.redis_url, decode_responses=True)
+        self.redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
         self.http_client = httpx.AsyncClient(timeout=10.0)
         self.cache_key_prefix = "currency_rates:"
         
@@ -77,7 +77,7 @@ class CurrencyService:
     async def _fetch_exchange_rates(self, base_currency: str) -> Optional[Dict[str, float]]:
         """Fetch exchange rates from API"""
         try:
-            url = f"{settings.currency_api_url}/{base_currency}"
+            url = f"{settings.CURRENCY_API_URL}/{base_currency}"
             response = await self.http_client.get(url)
             response.raise_for_status()
             
@@ -88,7 +88,7 @@ class CurrencyService:
             cache_key = f"{self.cache_key_prefix}rates:{base_currency}"
             self.redis_client.setex(
                 cache_key, 
-                settings.currency_cache_ttl, 
+                settings.CURRENCY_CACHE_TTL, 
                 json.dumps(rates)
             )
             

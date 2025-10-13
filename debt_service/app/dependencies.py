@@ -31,7 +31,7 @@ def verify_internal_token(request: Request) -> None:
             detail="Internal token required"
         )
     
-    if token != settings.internal_secret_token:
+    if token != settings.INTERNAL_SECRET_TOKEN:
         log_security_event(logger, "Invalid internal token", details="Token mismatch")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -41,7 +41,7 @@ def verify_internal_token(request: Request) -> None:
 def decode_token(token: str) -> int:
     """Decode JWT token and extract user ID"""
     try:
-        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         user_id = int(payload["sub"])
         return user_id
     except (InvalidTokenError, KeyError, ValueError) as e:

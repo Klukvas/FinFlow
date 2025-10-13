@@ -25,7 +25,7 @@ def get_current_user_id(authorization: str = Header(None)) -> int:
     
     try:
         token = authorization.split(" ")[1]
-        payload = pyjwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+        payload = pyjwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         user_id = payload.get("sub")
         
         if not user_id:

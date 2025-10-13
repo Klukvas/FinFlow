@@ -1,43 +1,53 @@
 from pydantic_settings import BaseSettings
 from typing import List
 import os
+import logging
 
 class Settings(BaseSettings):
-    # Database
-    database_url: str = "postgresql://postgres:password@localhost:5432/income_db"
+    # Database - No default, must be provided via environment variable
+    DATABASE_URL: str
     
     # Security
-    secret_key: str = "your-secret-key-here"
-    algorithm: str = "HS256"
+    SECRET_KEY: str
+    ALGORITHM: str = "HS256"
     
     # External services
-    user_service_url: str = "http://user_service:8000"
-    category_service_url: str = "http://category_service:8000"
-    account_service_url: str = "http://account_service:8000"
-    internal_secret: str = "my-secret-token"
+    USER_SERVICE_URL: str = "http://user_service:8000"
+    CATEGORY_SERVICE_URL: str = "http://category_service:8000"
+    ACCOUNT_SERVICE_URL: str = "http://account_service:8000"
+    INTERNAL_SECRET: str = "my-secret-token"
+    INTERNAL_SECRET_TOKEN: str = "internal-secret-key"  # Fallback for compatibility
     
     # CORS
-    cors_origins: str = "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.21.159.67,https://65.21.159.67"
+    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.21.159.67,https://65.21.159.67"
     
     @property
     def cors_origins_list(self) -> List[str]:
-        if self.cors_origins == "*":
+        if self.CORS_ORIGINS == "*":
             return ["*"]
-        return [origin.strip() for origin in self.cors_origins.split(",")]
+        return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
     
     # Logging
-    log_level: str = "INFO"
+    LOG_LEVEL: str = "INFO"
     
     # Income specific settings
-    max_amount: float = 999999.99
-    max_description_length: int = 500
+    MAX_AMOUNT: float = 999999.99
+    MAX_DESCRIPTION_LENGTH: int = 500
     
     # HTTP settings
-    http_timeout: float = 5.0
-    http_retry_attempts: int = 3
+    HTTP_TIMEOUT: float = 5.0
+    HTTP_RETRY_ATTEMPTS: int = 3
     
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "case_sensitive": False
+    }
 
 settings = Settings()
+
+# Configure logging
+logging.basicConfig(
+    level=getattr(logging, settings.LOG_LEVEL.upper()),
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)

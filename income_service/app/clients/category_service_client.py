@@ -8,7 +8,7 @@ from typing import Dict, Any
 
 class CategoryServiceClient(BaseHttpClient):
     def __init__(self):
-        super().__init__(base_url=settings.category_service_url)
+        super().__init__(base_url=settings.CATEGORY_SERVICE_URL)
         self.logger = get_logger(__name__)
 
     async def validate_category(self, category_id: int, user_id: int) -> Dict[str, Any]:
@@ -28,7 +28,7 @@ class CategoryServiceClient(BaseHttpClient):
         try:
             headers = {
                 "Content-Type": "application/json",
-                "X-Internal-Token": settings.internal_secret
+                "X-Internal-Token": settings.INTERNAL_SECRET
             }
             
             response = await self.get(

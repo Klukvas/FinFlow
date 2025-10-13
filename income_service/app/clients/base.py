@@ -9,7 +9,7 @@ from app.exceptions import ExternalServiceError
 class BaseHttpClient:
     def __init__(self, base_url: str, timeout: float = None, retry_attempts: int = None):
         self.base_url = base_url
-        self.timeout = timeout or settings.http_timeout
+        self.timeout = timeout or settings.HTTP_TIMEOUT
         self.retry_attempts = retry_attempts or 3
         self.logger = get_logger(__name__)
 

@@ -8,7 +8,7 @@ from typing import Dict, Any, List
 
 class IncomeServiceClient(BaseHttpClient):
     def __init__(self):
-        super().__init__(base_url=settings.income_service_url)
+        super().__init__(base_url=settings.INCOME_SERVICE_URL)
         self.logger = get_logger(__name__)
 
     def get_incomes_by_account(self, account_id: int, user_id: int, limit: int = 100, offset: int = 0) -> List[Dict[str, Any]]:
@@ -30,7 +30,7 @@ class IncomeServiceClient(BaseHttpClient):
         try:
             response = self.get(
                 f"/internal/incomes/account/{account_id}",
-                headers={"X-Internal-Token": settings.internal_secret_token},
+                headers={"X-Internal-Token": settings.INTERNAL_SECRET_TOKEN},
                 params={"user_id": user_id, "limit": limit, "offset": offset}
             )
             
@@ -75,7 +75,7 @@ class IncomeServiceClient(BaseHttpClient):
         try:
             response = self.get(
                 f"/internal/incomes/account/{account_id}/validate",
-                headers={"X-Internal-Token": settings.internal_secret_token},
+                headers={"X-Internal-Token": settings.INTERNAL_SECRET_TOKEN},
                 params={"user_id": user_id}
             )
             

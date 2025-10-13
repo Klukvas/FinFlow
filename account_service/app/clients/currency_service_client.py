@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 class CurrencyServiceClient:
     def __init__(self):
-        self.base_url = settings.currency_service_url
+        self.base_url = settings.CURRENCY_SERVICE_URL
         self.http_client = httpx.AsyncClient(timeout=10.0)
         self.logger = logger
 

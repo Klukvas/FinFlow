@@ -1,16 +1,18 @@
 import os
 from typing import List
 from pydantic_settings import BaseSettings
+import logging
 
 
 class Settings(BaseSettings):
-    # Database
-    DATABASE_URL: str = "postgresql://postgres:password@localhost:5432/recurring_db"
+    # Database - No default, must be provided via environment variable
+    DATABASE_URL: str
 
     # Service URLs
-    EXPENSE_SERVICE_URL: str = "http://expense-service:8000"
-    INCOME_SERVICE_URL: str = "http://income-service:8000"
-    CATEGORY_SERVICE_URL: str = "http://category-service:8000"
+    EXPENSE_SERVICE_URL: str = "http://expense_service:8000"
+    INCOME_SERVICE_URL: str = "http://income_service:8000"
+    CATEGORY_SERVICE_URL: str = "http://category_service:8000"
+    USER_SERVICE_URL: str = "http://user_service:8000"
 
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
@@ -19,9 +21,10 @@ class Settings(BaseSettings):
     
     # Security
     INTERNAL_SECRET: str
+    INTERNAL_SECRET_TOKEN: str = "internal-secret-key"  # Fallback for compatibility
     
     # CORS
-    cors_origins: str = "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://localhost:8080,http://65.21.159.67,https://65.21.159.67"
+    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://localhost:8080,http://65.21.159.67,https://65.21.159.67"
     
     # Logging
     LOG_LEVEL: str = "INFO"
@@ -29,13 +32,21 @@ class Settings(BaseSettings):
     @property
     def cors_origins_list(self) -> list[str]:
         """Convert CORS_ORIGINS string to list"""
-        if self.cors_origins == "*":
+        if self.CORS_ORIGINS == "*":
             return ["*"]
-        return [origin.strip() for origin in self.cors_origins.split(",")]
+        return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
 
-    class Config:
-        case_sensitive = False
-        env_file = ".env"
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "case_sensitive": False
+    }
 
 
 settings = Settings()
+
+# Configure logging
+logging.basicConfig(
+    level=getattr(logging, settings.LOG_LEVEL.upper()),
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)

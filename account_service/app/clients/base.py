@@ -8,8 +8,8 @@ from app.exceptions import ExternalServiceError
 class BaseHttpClient:
     def __init__(self, base_url: str, timeout: float = None, retry_attempts: int = None):
         self.base_url = base_url
-        self.timeout = timeout or settings.http_timeout
-        self.retry_attempts = retry_attempts or settings.http_retry_attempts
+        self.timeout = timeout or settings.HTTP_TIMEOUT
+        self.retry_attempts = retry_attempts or settings.HTTP_RETRY_ATTEMPTS
         self.logger = get_logger(__name__)
         
         # Create client with proper configuration
