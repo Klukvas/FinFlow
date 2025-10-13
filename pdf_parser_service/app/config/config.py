@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     ALGORITHM: str
     
     # CORS Configuration
-    cors_origins: str = "http://localhost:3000,http://localhost:5173,http://65.21.159.67,https://65.21.159.67"
+    cors_origins: str
     
     # File Upload Configuration
     max_file_size: int = 10 * 1024 * 1024  # 10MB
@@ -23,9 +23,11 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     log_format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "case_sensitive": False
+    }
 
     @property
     def cors_origins_list(self) -> list[str]:
