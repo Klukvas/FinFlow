@@ -103,227 +103,23 @@ runs:
         INTERNAL_SECRET_TOKEN=$INTERNAL_SECRET_TOKEN
         ENVEOF
 
-        cat > docker-compose.yml <<'COMPOSEEOF'
-        version: '3.8'
+        # Use the docker-compose.yml from the deploy folder (already copied)
+        # This ensures we use the standardized configuration from the repository
+        echo "📋 Using docker-compose.yml from deploy folder..."
+        
+        # Verify the docker-compose.yml file exists
+        if [ ! -f docker-compose.yml ]; then
+          echo "❌ docker-compose.yml not found! Make sure it was copied from the deploy folder."
+          exit 1
+        fi
 
-        services:
-          caddy:
-            image: caddy:2-alpine
-            container_name: caddy
-            restart: unless-stopped
-            ports:
-              - "80:80"
-              - "443:443"
-            volumes:
-              - ./Caddyfile:/etc/caddy/Caddyfile:ro
-              - caddy_data:/data
-              - caddy_config:/config
-            depends_on:
-              - frontend
-            networks:
-              - app_network
-
-          frontend:
-            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/frontend:latest
-            container_name: frontend
-            environment:
-              - NODE_ENV=production
-            restart: unless-stopped
-            networks:
-              - app_network
-
-          redis:
-            image: redis:7-alpine
-            container_name: redis
-            restart: unless-stopped
-            command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
-            volumes:
-              - redis_data:/data
-            networks:
-              - app_network
-
-          account_service:
-            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/account_service:latest
-            container_name: account_service
-            environment:
-              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD_ENCODED:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
-              - REDIS_URL=redis://redis:6379/0
-              - SECRET_KEY=${SECRET_KEY}
-              - ALGORITHM=${ALGORITHM}
-              - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
-              - CORS_ORIGINS=${CORS_ORIGINS}
-              - USER_SERVICE_URL=http://user_service:8000
-              - EXPENSE_SERVICE_URL=http://expense_service:8000
-              - INCOME_SERVICE_URL=http://income_service:8000
-              - CURRENCY_SERVICE_URL=http://currency_service:8000
-            depends_on:
-              - redis
-              - user_service
-              - currency_service
-            restart: unless-stopped
-            networks:
-              - app_network
-
-          category_service:
-            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/category_service:latest
-            container_name: category_service
-            environment:
-              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD_ENCODED:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
-              - SECRET_KEY=${SECRET_KEY}
-              - ALGORITHM=${ALGORITHM}
-              - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
-              - CORS_ORIGINS=${CORS_ORIGINS}
-            restart: unless-stopped
-            networks:
-              - app_network
-
-          currency_service:
-            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/currency_service:latest
-            container_name: currency_service
-            environment:
-              - REDIS_URL=redis://redis:6379/0
-              - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
-              - CORS_ORIGINS=${CORS_ORIGINS}
-            depends_on:
-              - redis
-            restart: unless-stopped
-            networks:
-              - app_network
-
-          debt_service:
-            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/debt_service:latest
-            container_name: debt_service
-            environment:
-              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD_ENCODED:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
-              - SECRET_KEY=${SECRET_KEY}
-              - ALGORITHM=${ALGORITHM}
-              - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
-              - CORS_ORIGINS=${CORS_ORIGINS}
-              - USER_SERVICE_URL=http://user_service:8000
-            restart: unless-stopped
-            networks:
-              - app_network
-
-          expense_service:
-            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/expense_service:latest
-            container_name: expense_service
-            environment:
-              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD_ENCODED:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
-              - REDIS_URL=redis://redis:6379/0
-              - SECRET_KEY=${SECRET_KEY}
-              - ALGORITHM=${ALGORITHM}
-              - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
-              - CORS_ORIGINS=${CORS_ORIGINS}
-              - USER_SERVICE_URL=http://user_service:8000
-              - CATEGORY_SERVICE_URL=http://category_service:8000
-              - ACCOUNT_SERVICE_URL=http://account_service:8000
-            depends_on:
-              - redis
-              - category_service
-              - user_service
-            restart: unless-stopped
-            networks:
-              - app_network
-
-          goals_service:
-            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/goals_service:latest
-            container_name: goals_service
-            environment:
-              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD_ENCODED:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
-              - SECRET_KEY=${SECRET_KEY}
-              - ALGORITHM=${ALGORITHM}
-              - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
-              - CORS_ORIGINS=${CORS_ORIGINS}
-              - USER_SERVICE_URL=http://user_service:8000
-              - EXPENSE_SERVICE_URL=http://expense_service:8000
-              - INCOME_SERVICE_URL=http://income_service:8000
-            depends_on:
-              - user_service
-            restart: unless-stopped
-            networks:
-              - app_network
-
-          income_service:
-            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/income_service:latest
-            container_name: income_service
-            environment:
-              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD_ENCODED:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
-              - REDIS_URL=redis://redis:6379/0
-              - SECRET_KEY=${SECRET_KEY}
-              - ALGORITHM=${ALGORITHM}
-              - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
-              - CORS_ORIGINS=${CORS_ORIGINS}
-              - USER_SERVICE_URL=http://user_service:8000
-              - CATEGORY_SERVICE_URL=http://category_service:8000
-              - ACCOUNT_SERVICE_URL=http://account_service:8000
-            depends_on:
-              - redis
-              - category_service
-              - user_service
-              - account_service
-            restart: unless-stopped
-            networks:
-              - app_network
-
-          pdf_parser_service:
-            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/pdf_parser_service:latest
-            container_name: pdf_parser_service
-            environment:
-              - SECRET_KEY=${SECRET_KEY}
-              - ALGORITHM=${ALGORITHM}
-              - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
-              - CORS_ORIGINS=${CORS_ORIGINS}
-            restart: unless-stopped
-            volumes:
-              - pdf_uploads:/app/uploads
-            networks:
-              - app_network
-
-          recurring_service:
-            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/recurring_service:latest
-            container_name: recurring_service
-            environment:
-              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD_ENCODED:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
-              - SECRET_KEY=${SECRET_KEY}
-              - ALGORITHM=${ALGORITHM}
-              - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
-              - CORS_ORIGINS=${CORS_ORIGINS}
-              - USER_SERVICE_URL=http://user_service:8000
-              - EXPENSE_SERVICE_URL=http://expense_service:8000
-              - INCOME_SERVICE_URL=http://income_service:8000
-              - CATEGORY_SERVICE_URL=http://category_service:8000
-            depends_on:
-              - expense_service
-              - income_service
-              - category_service
-            restart: unless-stopped
-            networks:
-              - app_network
-
-          user_service:
-            image: ${REGISTRY:-docker.io}/${IMAGE_PREFIX:-yourusername}/user_service:latest
-            container_name: user_service
-            environment:
-              - DATABASE_URL=postgresql://${DB_USER:-appuser}:${DB_PASSWORD_ENCODED:-password}@${DB_HOST:-localhost}:${DB_PORT:-5432}/${DB_NAME:-appdb}
-              - SECRET_KEY=${SECRET_KEY}
-              - ALGORITHM=${ALGORITHM}
-              - CORS_ORIGINS=${CORS_ORIGINS}
-            restart: unless-stopped
-            networks:
-              - app_network
-
-        networks:
-          app_network:
-            driver: bridge
-
-        volumes:
-          redis_data:
-          caddy_data:
-          caddy_config:
-          pdf_uploads:
-        COMPOSEEOF
-
-        # Create Caddyfile if it doesn't exist
+        # Verify Caddyfile exists (should be copied from deploy folder)
+        if [ ! -f Caddyfile ]; then
+          echo "❌ Caddyfile not found! Make sure it was copied from the deploy folder."
+          exit 1
+        fi
+        
+        # Create Caddyfile if it doesn't exist (fallback)
         if [ ! -f Caddyfile ]; then
           cat > Caddyfile <<'CADDYEOF'
         {
@@ -457,6 +253,8 @@ runs:
         echo "📦 Services to deploy: $SERVICES"
         echo ""
 
-        # Transfer and execute deployment script
+        # Transfer deployment script and docker-compose.yml
         scp /tmp/deploy.sh "$USER@$HOST:/tmp/deploy.sh"
+        scp deploy/docker-compose.yml "$USER@$HOST:~/app/docker-compose.yml"
+        scp deploy/Caddyfile "$USER@$HOST:~/app/Caddyfile"
         ssh -o StrictHostKeyChecking=no "$USER@$HOST" "export REGISTRY='$REGISTRY' IMAGE_PREFIX='$IMAGE_PREFIX' DB_HOST='$DB_HOST' DB_PORT='$DB_PORT' DB_NAME='$DB_NAME' DB_USER='$DB_USER' DB_PASSWORD='$DB_PASSWORD' CORS_ORIGINS='$CORS_ORIGINS' SERVICES='$SERVICES' && bash /tmp/deploy.sh"

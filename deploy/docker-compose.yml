@@ -15,9 +15,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    build:
-      context: ../frontend
-    image: accounting_app/frontend:local
+    image: ${REGISTRY}/${IMAGE_PREFIX}/frontend:latest
     environment:
       - NODE_ENV=production
     restart: unless-stopped
@@ -40,9 +38,7 @@ services:
     restart: unless-stopped
 
   category_service:
-    build:
-      context: ../category_service
-    image: accounting_app/category_service:local
+    image: ${REGISTRY}/${IMAGE_PREFIX}/category_service:latest
     environment:
       - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
       - SECRET_KEY=${SECRET_KEY}
@@ -52,9 +48,7 @@ services:
     restart: unless-stopped
 
   currency_service:
-    build:
-      context: ../currency_service
-    image: accounting_app/currency_service:local
+    image: ${REGISTRY}/${IMAGE_PREFIX}/currency_service:latest
     environment:
       - cors_origins=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122
     restart: unless-stopped
@@ -66,13 +60,11 @@ services:
       - SECRET_KEY=${SECRET_KEY}
       - ALGORITHM=${ALGORITHM}
       - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
-      - cors_origins=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122
     restart: unless-stopped
 
   expense_service:
-    build:
-      context: ../expense_service
-    image: accounting_app/expense_service:local
+    image: ${REGISTRY}/${IMAGE_PREFIX}/expense_service:latest
     environment:
       - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
       - REDIS_URL=redis://redis:6379/0
@@ -85,15 +77,13 @@ services:
     restart: unless-stopped
 
   goals_service:
-    build:
-      context: ../goals_service
-    image: accounting_app/goals_service:local
+    image: ${REGISTRY}/${IMAGE_PREFIX}/goals_service:latest
     environment:
       - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
       - SECRET_KEY=${SECRET_KEY}
       - ALGORITHM=${ALGORITHM}
       - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
-      - cors_origins=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122
     restart: unless-stopped
 
   income_service:
@@ -104,7 +94,7 @@ services:
       - SECRET_KEY=${SECRET_KEY}
       - ALGORITHM=${ALGORITHM}
       - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
-      - cors_origins=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122
     depends_on:
       - redis
     restart: unless-stopped
@@ -120,7 +110,7 @@ services:
       - SECRET_KEY=${SECRET_KEY}
       - ALGORITHM=${ALGORITHM}
       - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
-      - cors_origins=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122
     restart: unless-stopped
 
   user_service:
