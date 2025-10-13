@@ -7,8 +7,44 @@
   log
 
   # API routes - proxy to backend services
-  handle_path /api/* {
+  handle_path /api/users/* {
+    reverse_proxy user_service:8000
+  }
+
+  handle_path /api/categories/* {
+    reverse_proxy category_service:8000
+  }
+
+  handle_path /api/expenses/* {
+    reverse_proxy expense_service:8000
+  }
+
+  handle_path /api/income/* {
+    reverse_proxy income_service:8000
+  }
+
+  handle_path /api/accounts/* {
     reverse_proxy account_service:8000
+  }
+
+  handle_path /api/currencies/* {
+    reverse_proxy currency_service:8000
+  }
+
+  handle_path /api/debts/* {
+    reverse_proxy debt_service:8000
+  }
+
+  handle_path /api/goals/* {
+    reverse_proxy goals_service:8000
+  }
+
+  handle_path /api/recurring/* {
+    reverse_proxy recurring_service:8000
+  }
+
+  handle_path /api/pdf/* {
+    reverse_proxy pdf_parser_service:8000
   }
 
   # Frontend - SPA routing with fallback to index.html
