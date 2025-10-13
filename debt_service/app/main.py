@@ -24,9 +24,9 @@ except Exception as e:
     raise
 
 app = FastAPI(
-    title=settings.api_title,
+    title="Debt Service",
     description="Microservice for managing user debts, contacts, and debt payments",
-    version=settings.api_version,
+    version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
 )
@@ -50,7 +50,7 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "debt_service",
-        "version": settings.api_version
+        "version": "1.0.0"
     }
 
 @app.get("/")
@@ -58,7 +58,7 @@ async def root():
     """Root endpoint"""
     return {
         "message": "Debt Service API",
-        "version": settings.api_version,
+        "version": "1.0.0",
         "docs": "/docs"
     }
 
