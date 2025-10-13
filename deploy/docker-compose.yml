@@ -72,6 +72,8 @@ services:
       - ALGORITHM=${ALGORITHM}
       - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
       - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122
+      - CATEGORY_SERVICE_URL=http://category_service:8000
+      - ACCOUNT_SERVICE_URL=http://account_service:8000
     depends_on:
       - redis
     restart: unless-stopped
@@ -101,6 +103,10 @@ services:
 
   pdf_parser_service:
     image: ${REGISTRY}/${IMAGE_PREFIX}/pdf_parser_service:latest
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=${ALGORITHM}
+      - cors_origins=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122
     restart: unless-stopped
 
   recurring_service:
