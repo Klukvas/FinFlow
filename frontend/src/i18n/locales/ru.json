@@ -82,7 +82,9 @@
     "registerSuccess": "Успешная регистрация",
     "logoutSuccess": "Успешный выход",
     "loginError": "Ошибка входа",
-    "registerError": "Ошибка регистрации"
+    "registerError": "Ошибка регистрации",
+    "invalidEmail": "Введите корректный email адрес",
+    "genericError": "Что-то пошло не так. Попробуйте еще раз."
   },
   "category": {
     "title": "Категории",

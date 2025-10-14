@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/shared/Button';
 import { FaPlus, FaSearch, FaFilter } from 'react-icons/fa';
 
 interface GoalsHeaderProps {

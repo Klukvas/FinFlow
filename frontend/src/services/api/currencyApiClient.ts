@@ -1,11 +1,11 @@
 import { CurrencyHttpClient } from './currencyHttpClient';
-import { config } from '@/config/env';
 
 export interface CurrencyInfo {
   code: string;
   name: string;
   symbol: string;
   flag: string;
+  locale: string;
 }
 
 export interface ConversionRequest {

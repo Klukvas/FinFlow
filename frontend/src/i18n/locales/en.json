@@ -82,7 +82,9 @@
     "registerSuccess": "Successfully registered",
     "logoutSuccess": "Successfully logged out",
     "loginError": "Login failed",
-    "registerError": "Registration failed"
+    "registerError": "Registration failed",
+    "invalidEmail": "Please enter a valid email address",
+    "genericError": "Something went wrong. Please try again."
   },
   "category": {
     "title": "Categories",

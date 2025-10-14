@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { CategoryList, CreateCategory, EditCategory, CategoryStatistics } from '../components';
-import { Modal } from '../components/ui/Modal';
-import { Button } from '../components/ui/Button';
+import { Modal } from '../components/ui/shared/Modal';
+import { Button } from '../components/ui/shared/Button';
 import { FaPlus } from 'react-icons/fa';
 import type { Category as CategoryType } from '@/types';
 

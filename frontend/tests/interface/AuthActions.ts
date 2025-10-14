@@ -18,6 +18,8 @@ export class AuthActions {
         this.registerModal = new RegistrationModal(page)
     }
 
+
+
     async login(email: string, password: string): Promise<void> {
         await this.openLoginModal()
         await this.loginModal.fillForm(email, password);
@@ -34,11 +36,20 @@ export class AuthActions {
         await this.sideBar.expectComponent()
     }
 
-    async loginAndExpectFailure(email: string, password: string): Promise<void> {
+    async registerAndExpectValidationFailure(username: string, email: string, password: string, errorMessage?: string): Promise<void> {
+        await this.openRegisterModal()
+        await this.registerModal.fillForm(username, email, password);
+        await this.registerModal.expectEmailInputError(errorMessage)
+    }
+
+    async loginAndExpectFailure(email: string, password: string, errorMessage?: string): Promise<void> {
         await this.openLoginModal()
         await this.loginModal.fillForm(email, password);
         await this.loginModal.loginButton.click()
         await expect(this.loginModal.loginError).toBeVisible()
+        if (errorMessage) {
+            await expect(this.loginModal.loginError).toHaveText(errorMessage)
+        }
     }
 
     async openLoginModal(){

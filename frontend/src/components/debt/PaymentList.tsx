@@ -1,8 +1,8 @@
 import React from 'react';
 import { DebtPaymentResponse, PaymentMethod } from '@/types/debt';
 import { useTheme } from '@/contexts/ThemeContext';
-import { Card, CardContent } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
+import { Card, CardContent } from '@/components/ui/shared/Card';
+import { Badge } from '@/components/ui/shared/Badge';
 import { 
   DollarSign, 
   Calendar, 

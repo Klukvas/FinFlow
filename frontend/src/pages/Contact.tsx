@@ -1,6 +1,6 @@
 import React from 'react';
 import { FaEnvelope, FaPhone, FaMapMarkerAlt, FaClock } from 'react-icons/fa';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/shared/Button';
 import { useTranslation } from 'react-i18next';
 
 export const Contact: React.FC = () => {

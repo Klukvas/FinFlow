@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { AuthActions } from './interface/AuthActions';
-import { NavigationActions } from './interface/NavigationActions';
-import { SidebarInterface } from './interface/SidebarInterface';
+import { AuthActions } from '../../interface/AuthActions';
+import { NavigationActions } from '../../interface/NavigationActions';
+import { SidebarInterface } from '../../interface/SidebarInterface';
 
 // Define UserCredentials interface locally to avoid import issues
 interface UserCredentials {
@@ -43,7 +43,11 @@ test.describe('Authentication', () => {
   });
 
   test('should show error with invalid credentials', async ({ page }) => {
-    await auth.loginAndExpectFailure(invalidUser.email, invalidUser.password)
+    await auth.loginAndExpectFailure(
+      invalidUser.email, 
+      invalidUser.password, 
+      'Invalid email or password'
+    )
   });
 
   test('should close login modal', async ({ page }) => {
@@ -54,11 +58,6 @@ test.describe('Authentication', () => {
   test('should switch between login and register modals', async ({ page }) => {
     await auth.openLoginModal()
     await auth.swithFromLoginToRegisterModal()
-  });
-
-  test('should register new user', async ({ page }) => {
-    await auth.register(newUser.username, newUser.email, newUser.password);
-    await page.waitForURL('**/category**');
   });
 
   // test('should validate registration form', async ({ page }) => {

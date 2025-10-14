@@ -63,51 +63,60 @@
   },
   "suites": [
     {
-      "title": "category.spec.ts",
-      "file": "category.spec.ts",
+      "title": "specs/auth/sign-up.spec.ts",
+      "file": "specs/auth/sign-up.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "Category Management",
-          "file": "category.spec.ts",
-          "line": 34,
+          "title": "Sign Up Flow",
+          "file": "specs/auth/sign-up.spec.ts",
+          "line": 29,
           "column": 6,
-          "specs": [
+          "specs": [],
+          "suites": [
             {
-              "title": "should edit an existing category",
-              "ok": true,
-              "tags": [],
-              "tests": [
+              "title": "Validation",
+              "file": "specs/auth/sign-up.spec.ts",
+              "line": 47,
+              "column": 8,
+              "specs": [
                 {
-                  "timeout": 0,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
+                  "title": "Password validation (no number)",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
                     {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 6437,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-10-04T21:52:55.665Z",
+                      "timeout": 0,
                       "annotations": [],
-                      "attachments": []
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 4090,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-10-14T22:44:54.055Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
                     }
                   ],
-                  "status": "expected"
+                  "id": "edecac03d13a42f6059f-4ca2d94334ba84f70ca3",
+                  "file": "specs/auth/sign-up.spec.ts",
+                  "line": 80,
+                  "column": 5
                 }
-              ],
-              "id": "adbed821842d55a94d05-b6163a7d8f0d5a437f9e",
-              "file": "category.spec.ts",
-              "line": 77,
-              "column": 3
+              ]
             }
           ]
         }
@@ -116,8 +125,8 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2025-10-04T21:52:54.311Z",
-    "duration": 9115.657,
+    "startTime": "2025-10-14T22:44:52.399Z",
+    "duration": 8288.538,
     "expected": 1,
     "skipped": 0,
     "unexpected": 0,

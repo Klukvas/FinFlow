@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ThemeToggle } from './ThemeToggle';
-import { LanguageSelector } from './LanguageSelector';
-import { AuthModals } from './AuthModals';
+import { ThemeToggle } from '../shared/ThemeToggle';
+import { LanguageSelector } from '../shared/LanguageSelector';
+import { AuthModals } from '../auth/AuthModals';
 import { useModal } from '@/contexts/ModalContext';
 import {
   FaHome,

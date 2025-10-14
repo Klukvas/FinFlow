@@ -2,8 +2,8 @@ import React, { useMemo, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
-import { ThemeToggle } from './ThemeToggle';
-import { LanguageSelector } from './LanguageSelector';
+import { ThemeToggle } from '../shared/ThemeToggle';
+import { LanguageSelector } from '../shared/LanguageSelector';
 import {
   FaHome,
   FaFolder,

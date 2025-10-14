@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Goal, GoalProgressUpdate } from '@/types';
-import { Modal } from '../Modal';
-import { Button } from '../Button';
+import { Modal } from '../shared/Modal';
+import { Button } from '../shared/Button';
 import { FaDollarSign } from 'react-icons/fa';
 
 interface GoalProgressModalProps {

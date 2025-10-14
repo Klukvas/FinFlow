@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CreateIncome } from '../components/ui/income/CreateIncome';
-import { Modal } from '../components/ui/Modal';
-import { Button } from '../components/ui/Button';
+import { Modal } from '../components/ui/shared/Modal';
+import { Button } from '../components/ui/shared/Button';
 import { FaPlus } from 'react-icons/fa';
 import { IncomeList } from '@/components';
 

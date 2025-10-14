@@ -175,6 +175,9 @@ def update_me(
                 raise UserValidationError("Username already taken")
             user.username = user_update.username.strip()
         
+        if user_update.base_currency is not None:
+            user.base_currency = user_update.base_currency.strip()
+        
         service.db.commit()
         service.db.refresh(user)
         

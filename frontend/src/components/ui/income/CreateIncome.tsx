@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApiClients } from '@/hooks/useApiClients';
 import { Category, IncomeCreate, AccountResponse } from '@/types';
-import { Button } from '@/components/ui/Button';
-import { MoneyInput } from '@/components/ui/MoneyInput';
+import { Button } from '@/components/ui/shared/Button';
+import { MoneyInput } from '@/components/ui/forms/MoneyInput';
 import { CurrencySelect } from '@/components/ui/forms/CurrencySelect';
 import { FormErrorHandler } from '@/utils/formErrorHandler';
 // removed unused icon and config imports

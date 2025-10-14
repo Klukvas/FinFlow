@@ -9,6 +9,7 @@ export class RegistrationModal extends BasePage {
     closeButton: Locator
     switchToLogin: Locator
     submitButton: Locator
+    formFieldError: Locator
     constructor(page: Page) {
         super(page);
         this.modal = this.getByTestId('register-modal')
@@ -16,6 +17,7 @@ export class RegistrationModal extends BasePage {
         this.emailInput = this.page.getByTestId('email-input')
         this.passwordInput = this.page.getByTestId('password-input')
         this.submitButton = this.page.getByTestId('submit-register-button')
+        this.formFieldError = this.page.getByTestId('form-field-error')
     }
 
     async expectModal(){
@@ -30,6 +32,19 @@ export class RegistrationModal extends BasePage {
         await this.usernameInput.fill(username)
         await this.emailInput.fill(email)
         await this.passwordInput.fill(password)
+    }
+
+    async expectEmailInputError(error?: string): Promise<void> {
+        await expect(this.formFieldError).toBeVisible()
+        if (error) {
+            await expect(this.formFieldError).toHaveText(error)
+        }
+    }
+    async expectPasswordInputError(error?: string): Promise<void> {
+        await expect(this.formFieldError).toBeVisible()
+        if (error) {
+            await expect(this.formFieldError).toHaveText(error)
+        }
     }
 
 }

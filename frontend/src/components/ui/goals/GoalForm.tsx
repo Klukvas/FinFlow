@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Goal, CreateGoalRequest, UpdateGoalRequest, GOAL_TYPE_LABELS, GOAL_PRIORITY_LABELS, GoalFormData } from '@/types';
-import { Button } from '../Button';
-import { MoneyInput } from '../MoneyInput';
+import { Button } from '../shared/Button';
+import { MoneyInput } from '../forms/MoneyInput';
 
 interface GoalFormProps {
   goal?: Goal;

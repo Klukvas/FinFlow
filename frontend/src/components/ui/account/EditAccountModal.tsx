@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AccountResponse } from '@/types';
-import { Modal } from '../Modal';
-import { Button } from '../Button';
+import { Modal } from '../shared/Modal';
+import { Button } from '../shared/Button';
 import { Input } from '../forms/Input';
 import { CurrencySelect } from '../forms/CurrencySelect';
 import { FaWallet } from 'react-icons/fa';

@@ -10,7 +10,7 @@ import { PaymentForm } from '@/components/debt/PaymentForm';
 import { PaymentList } from '@/components/debt/PaymentList';
 import { ContactCard } from '@/components/contact/ContactCard';
 import { ContactForm } from '@/components/contact/ContactForm';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/shared/Button';
 import { Input } from '@/components/ui/forms/Input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui';
 import { Card, CardContent } from '@/components/ui';

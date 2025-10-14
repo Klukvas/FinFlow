@@ -2,21 +2,24 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApiClients } from '@/hooks/useApiClients';
 import { UserUpdate } from '@/services/api/userApiClient';
-import { Modal } from '@/components/ui/Modal';
-import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/shared/Modal';
+import { Button } from '@/components/ui/shared/Button';
 import { FormField } from '@/components/ui/forms/FormField';
 import { Input } from '@/components/ui/forms/Input';
-import { FaUser, FaEdit, FaSave, FaTimes, FaEnvelope, FaCalendarAlt } from 'react-icons/fa';
+import { FaUser, FaEdit, FaSave, FaTimes, FaEnvelope, FaCalendarAlt, FaWallet } from 'react-icons/fa';
 import { config } from '@/config/env';
+import { CurrencySelect } from '@/components/ui/forms/CurrencySelect';
+import { ProfileSkeleton } from '@/components/ui/profile/ProfileSkeleton';
 
 export const Profile = () => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, refreshUserProfile } = useAuth();
   const { user: userApi } = useApiClients();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
-    email: ''
+    email: '',
+    currency: ''
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -25,7 +28,8 @@ export const Profile = () => {
     if (user) {
       setFormData({
         username: user.username || '',
-        email: user.email || ''
+        email: user.email || '',
+        currency: user.base_currency || ''
       });
     }
   }, [user]);
@@ -60,13 +64,14 @@ export const Profile = () => {
         updateData.email = formData.email;
       }
 
+      if (formData.currency !== user.base_currency) {
+        updateData.base_currency = formData.currency;
+      }
+
       // Если нет изменений, просто закрываем модал
       if (Object.keys(updateData).length === 0) {
         setIsEditModalOpen(false);
         return;
-      }
-
-      if (config.debug) {
       }
 
       const response = await userApi.updateProfile(updateData);
@@ -78,10 +83,11 @@ export const Profile = () => {
         }
       } else {
         setSuccess('Профиль успешно обновлен!');
-        setIsEditModalOpen(false);
         
-        // Обновляем данные пользователя
-        // TODO: Добавить обновление данных пользователя через AuthContext
+        // Refresh user profile data
+        await refreshUserProfile();
+        
+        setIsEditModalOpen(false);
       }
     } catch (err) {
       setError('Ошибка при обновлении профиля');
@@ -95,7 +101,8 @@ export const Profile = () => {
     if (user) {
       setFormData({
         username: user.username || '',
-        email: user.email || ''
+        email: user.email || '',
+        currency: user.base_currency || ''
       });
     }
     setError('');
@@ -104,11 +111,7 @@ export const Profile = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 theme-accent"></div>
-      </div>
-    );
+    return <ProfileSkeleton />;
   }
 
   return (
@@ -159,6 +162,16 @@ export const Profile = () => {
                     <p className="theme-text-primary">{user?.username || 'Не указано'}</p>
                   </div>
                 </div>
+
+                <div className="flex items-center space-x-3">
+                  <FaWallet className="w-5 h-5 theme-text-tertiary" />
+                  <div>
+                    <p className="text-sm font-medium theme-text-tertiary">Базовая валюта</p>
+                    <p className="theme-text-primary">{user?.base_currency || 'Не указано'}</p>
+                  </div>
+                </div>
+              
+
               </div>
 
               <div className="space-y-4">
@@ -178,6 +191,7 @@ export const Profile = () => {
                   </div>
                 </div>
               </div>
+
             </div>
           </div>
         </div>
@@ -269,9 +283,15 @@ export const Profile = () => {
               placeholder="Введите email"
               disabled
             />
-            <p className="text-xs theme-text-tertiary mt-1">
-              Email нельзя изменить
-            </p>
+          </FormField>
+
+          <FormField label="Базовая валюта" required>
+            <CurrencySelect
+              showFlags={true}
+              value={formData.currency}
+              onChange={(value) => handleInputChange({ target: { name: 'currency', value } } as any)}
+              placeholder="Введите базовую валюту"
+            />
           </FormField>
 
           <div className="flex justify-end space-x-3 pt-4">

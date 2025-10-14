@@ -10,7 +10,7 @@ import {
 import { GoalsHeader } from '@/components/goals/GoalsHeader';
 import { GoalsFilters } from '@/components/goals/GoalsFilters';
 import { GoalsList } from '@/components/goals/GoalsList';
-import { Modal } from '@/components/ui/Modal';
+import { Modal } from '@/components/ui/shared/Modal';
 import { FaBullseye } from 'react-icons/fa';
 import { toast } from 'sonner';
 

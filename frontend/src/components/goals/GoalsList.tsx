@@ -1,7 +1,7 @@
 import React from 'react';
 import { Goal } from '@/types';
 import { GoalCard } from '@/components/ui/goals';
-import { LoadingState } from '@/components/ui/LoadingState';
+import { LoadingState } from '@/components/ui/shared/LoadingState';
 
 interface GoalsListProps {
   goals: Goal[];

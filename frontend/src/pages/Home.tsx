@@ -1,10 +1,10 @@
 import React from 'react';
 import { FaDollarSign, FaChartPie, FaArrowUp } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/shared/Button';
 import { useModal } from '@/contexts/ModalContext';
-import { BackgroundCanvas } from '@/components/ui/BackgroundCanvas';
-import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
+import { BackgroundCanvas } from '@/components/ui/layout/BackgroundCanvas';
+import { AnimatedBackground } from '@/components/ui/layout/AnimatedBackground';
 
 export const Home: React.FC = () => {
   const { t } = useTranslation();

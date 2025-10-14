@@ -1,7 +1,7 @@
 import { Category, CreateExpenseRequest, AccountResponse } from '@/types';
 import React, { useCallback, useEffect, useState } from 'react';
 import { CurrencySelect } from '@/components/ui/forms/CurrencySelect';
-import { MoneyInput } from '@/components/ui/MoneyInput';
+import { MoneyInput } from '@/components/ui/forms/MoneyInput';
 
 import { useApiClients } from '@/hooks';
 

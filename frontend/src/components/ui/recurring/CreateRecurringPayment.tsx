@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { recurringApiService, CreateRecurringPaymentRequest } from '@/services/api/recurringApi';
 import { useApiClients } from '@/hooks/useApiClients';
 import { Category } from '@/types/category';
-import { MoneyInput } from '../MoneyInput';
+import { MoneyInput } from '../forms/MoneyInput';
 import { toast } from 'sonner';
 
 interface CreateRecurringPaymentProps {

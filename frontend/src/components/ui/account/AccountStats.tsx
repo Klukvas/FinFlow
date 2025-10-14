@@ -1,22 +1,36 @@
 import React from 'react';
 import { AccountSummary } from '@/types';
-import { Card } from '../Card';
+import { Card } from '../shared/Card';
 import { FaChartLine, FaDollarSign, FaWallet } from 'react-icons/fa';
+import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 
 interface AccountStatsProps {
   summaries: AccountSummary[];
 }
 
 export const AccountStats: React.FC<AccountStatsProps> = ({ summaries }) => {
-  const totalBalance = summaries.reduce((sum, account) => sum + account.balance, 0);
+  const { 
+    userCurrency, 
+    isLoadingRates, 
+    convertToUserCurrency, 
+    formatCurrency 
+  } = useCurrencyConversion();
+  
   const activeAccounts = summaries.filter(account => account.balance > 0).length;
 
-  const formatCurrency = (amount: number, currency: string = 'RUB') => {
-    return new Intl.NumberFormat('ru-RU', {
-      style: 'currency',
-      currency: currency
-    }).format(amount);
-  };
+  // Calculate total balance in user's currency
+  const { totalBalance, unconvertibleAccounts } = summaries.reduce((acc, account) => {
+    const convertedAmount = convertToUserCurrency(account.balance, account.currency);
+    
+    if (convertedAmount === null) {
+      // Track accounts that couldn't be converted
+      acc.unconvertibleAccounts.push(account);
+    } else {
+      acc.totalBalance += convertedAmount;
+    }
+    
+    return acc;
+  }, { totalBalance: 0, unconvertibleAccounts: [] as AccountSummary[] });
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -38,10 +52,17 @@ export const AccountStats: React.FC<AccountStatsProps> = ({ summaries }) => {
             <FaDollarSign className="w-6 h-6 text-green-600" />
           </div>
           <div className="ml-4">
-            <p className="text-sm font-medium theme-text-secondary">Общий баланс</p>
-            <p className="text-2xl font-bold theme-text-primary">
-              {formatCurrency(totalBalance)}
+            <p className="text-sm font-medium theme-text-secondary">
+              Общий баланс {isLoadingRates && '(загрузка...)'}
             </p>
+            <p className="text-2xl font-bold theme-text-primary">
+              {formatCurrency(totalBalance, userCurrency)}
+            </p>
+            {unconvertibleAccounts.length > 0 && (
+              <p className="text-xs text-orange-600 mt-1">
+                ⚠️ {unconvertibleAccounts.length} {unconvertibleAccounts.length === 1 ? 'счет' : 'счетов'} не учтен
+              </p>
+            )}
           </div>
         </div>
       </Card>

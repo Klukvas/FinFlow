@@ -1,7 +1,7 @@
 import React from 'react';
 import { FaBars } from 'react-icons/fa';
-import { ThemeToggle } from './ThemeToggle';
-import { LanguageSelector } from './LanguageSelector';
+import { ThemeToggle } from '../shared/ThemeToggle';
+import { LanguageSelector } from '../shared/LanguageSelector';
 
 interface AppHeaderProps {
   onMenuClick: () => void;

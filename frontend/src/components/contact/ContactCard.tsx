@@ -1,9 +1,9 @@
 import React from 'react';
 import { ContactResponse } from '@/types/contact';
 import { useTheme } from '@/contexts/ThemeContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/shared/Card';
+import { Badge } from '@/components/ui/shared/Badge';
+import { Button } from '@/components/ui/shared/Button';
 import { 
   User, 
   Mail, 

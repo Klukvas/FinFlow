@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AccountResponse, AccountSummary } from '@/types';
 import { useApiClients } from '@/hooks/useApiClients';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Card } from '@/components/ui/shared/Card';
+import { Button } from '@/components/ui/shared/Button';
+import { LoadingSpinner } from '@/components/ui/shared/LoadingSpinner';
 import { CreateAccountModal } from '@/components/ui/account/CreateAccountModal';
 import { EditAccountModal } from '@/components/ui/account/EditAccountModal';
 import { AccountCard } from '@/components/ui/account/AccountCard';
 import { AccountStats } from '@/components/ui/account/AccountStats';
-import { FaPlus, FaWallet, FaDollarSign, FaChartLine } from 'react-icons/fa';
+import { FaPlus, FaWallet } from 'react-icons/fa';
 
 export const Account: React.FC = () => {
   const { t } = useTranslation();
@@ -124,7 +124,6 @@ export const Account: React.FC = () => {
     }
   };
 
-  const totalBalance = summaries.reduce((sum, account) => sum + account.balance, 0);
   const activeAccounts = accounts.filter(account => !account.is_archived);
 
   if (loading) {
@@ -162,50 +161,7 @@ export const Account: React.FC = () => {
       )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="p-6">
-          <div className="flex items-center">
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <FaWallet className="w-6 h-6 text-blue-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium theme-text-secondary">{t('accountPage.stats.totalAccounts')}</p>
-              <p className="text-2xl font-bold theme-text-primary">{activeAccounts.length}</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center">
-            <div className="p-3 bg-green-100 rounded-lg">
-              <FaDollarSign className="w-6 h-6 text-green-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium theme-text-secondary">{t('accountPage.stats.totalBalance')}</p>
-              <p className="text-2xl font-bold theme-text-primary">
-                {totalBalance.toLocaleString('ru-RU', {
-                  style: 'currency',
-                  currency: 'RUB'
-                })}
-              </p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center">
-            <div className="p-3 bg-purple-100 rounded-lg">
-              <FaChartLine className="w-6 h-6 text-purple-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium theme-text-secondary">{t('accountPage.stats.active')}</p>
-              <p className="text-2xl font-bold theme-text-primary">
-                {summaries.filter(s => s.balance > 0).length}
-              </p>
-            </div>
-          </div>
-        </Card>
-      </div>
+      <AccountStats summaries={summaries} />
 
       {/* Accounts List */}
       <div className="space-y-4">

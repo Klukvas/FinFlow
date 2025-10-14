@@ -23,11 +23,13 @@ export interface UserProfile {
   id: number;
   email: string;
   username: string;
+  base_currency: string;
 }
 
 export interface UserUpdate {
   email?: string;
   username?: string;
+  base_currency?: string;
 }
 
 export interface PasswordChange {

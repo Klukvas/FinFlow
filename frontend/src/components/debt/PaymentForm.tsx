@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { DebtPaymentCreate, PaymentMethod } from '@/types/debt';
 import { useTheme } from '@/contexts/ThemeContext';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/shared/Button';
 import { Input } from '@/components/ui/forms/Input';
-import { Label } from '@/components/ui/Label';
-import { MoneyInput } from '@/components/ui/MoneyInput';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/Select';
-import { Textarea } from '@/components/ui/Textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Label } from '@/components/ui/forms/Label';
+import { MoneyInput } from '@/components/ui/forms/MoneyInput';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/forms/Select';
+import { Textarea } from '@/components/ui/forms/Textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/shared/Card';
 import { Calendar, DollarSign, CreditCard, Wallet, Banknote } from 'lucide-react';
 
 interface PaymentFormProps {

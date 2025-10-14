@@ -8,6 +8,7 @@ class CurrencyInfo(BaseModel):
     name: str = Field(..., description="Currency name (e.g., US Dollar)")
     symbol: str = Field(..., description="Currency symbol (e.g., $, €)")
     flag: str = Field(..., description="Country flag emoji")
+    locale: str = Field(..., description="Locale for formatting (e.g., en-US, de-DE)")
 
 class ExchangeRate(BaseModel):
     """Exchange rate information"""

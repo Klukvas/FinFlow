@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaCheck, FaCrown, FaRocket } from 'react-icons/fa';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/shared/Button';
 
 export const Pricing: React.FC = () => {
   const { t } = useTranslation();

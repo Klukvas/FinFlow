@@ -35,16 +35,16 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
       
       // Fallback to basic currencies if API fails
       setCurrencies([
-        { code: 'USD', name: 'US Dollar', symbol: '$', flag: '🇺🇸' },
-        { code: 'EUR', name: 'Euro', symbol: '€', flag: '🇪🇺' },
-        { code: 'GBP', name: 'British Pound', symbol: '£', flag: '🇬🇧' },
-        { code: 'JPY', name: 'Japanese Yen', symbol: '¥', flag: '🇯🇵' },
-        { code: 'CHF', name: 'Swiss Franc', symbol: 'CHF', flag: '🇨🇭' },
-        { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$', flag: '🇨🇦' },
-        { code: 'AUD', name: 'Australian Dollar', symbol: 'A$', flag: '🇦🇺' },
-        { code: 'CNY', name: 'Chinese Yuan', symbol: '¥', flag: '🇨🇳' },
-        { code: 'UAH', name: 'Ukrainian Hryvnia', symbol: '₴', flag: '🇺🇦' },
-        { code: 'RUB', name: 'Russian Ruble', symbol: '₽', flag: '🇷🇺' }
+        { code: 'USD', name: 'US Dollar', symbol: '$', flag: '🇺🇸', locale: 'en-US' },
+        { code: 'EUR', name: 'Euro', symbol: '€', flag: '🇪🇺', locale: 'de-DE' },
+        { code: 'GBP', name: 'British Pound', symbol: '£', flag: '🇬🇧', locale: 'en-GB' },
+        { code: 'JPY', name: 'Japanese Yen', symbol: '¥', flag: '🇯🇵', locale: 'ja-JP' },
+        { code: 'CHF', name: 'Swiss Franc', symbol: 'CHF', flag: '🇨🇭', locale: 'de-CH' },
+        { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$', flag: '🇨🇦', locale: 'en-CA' },
+        { code: 'AUD', name: 'Australian Dollar', symbol: 'A$', flag: '🇦🇺', locale: 'en-AU' },
+        { code: 'CNY', name: 'Chinese Yuan', symbol: '¥', flag: '🇨🇳', locale: 'zh-CN' },
+        { code: 'UAH', name: 'Ukrainian Hryvnia', symbol: '₴', flag: '🇺🇦', locale: 'uk-UA' },
+        { code: 'RUB', name: 'Russian Ruble', symbol: '₽', flag: '🇷🇺', locale: 'ru-RU' }
       ]);
     } finally {
       setIsLoading(false);

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { ContactCreate, ContactUpdate } from '@/types/contact';
 import { useTheme } from '@/contexts/ThemeContext';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/shared/Button';
 import { Input } from '@/components/ui/forms/Input';
-import { Label } from '@/components/ui/Label';
-import { Textarea } from '@/components/ui/Textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Label } from '@/components/ui/forms/Label';
+import { Textarea } from '@/components/ui/forms/Textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/shared/Card';
 import { User, Mail, Phone, Building2, MapPin, FileText } from 'lucide-react';
 
 interface ContactFormProps {

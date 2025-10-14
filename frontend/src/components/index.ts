@@ -3,21 +3,23 @@ export { EmailInput } from './ui/inputs/EmailInput';
 export { PasswordInput } from './ui/inputs/PasswordInput';
 
 // Layout Components
-export { Sidebar } from './ui/Sidebar';
-export { MobileHeader } from './ui/MobileHeader';
-export { DesktopHeader } from './ui/DesktopHeader';
-export { PublicHeader } from './ui/PublicHeader';
-export { PublicFooter } from './ui/PublicFooter';
-export { PublicLayout } from './ui/PublicLayout';
-export { Modal } from './ui/Modal';
-export { Button } from './ui/Button';
-export { LoadingSpinner } from './ui/LoadingSpinner';
-export { ThemeToggle } from './ui/ThemeToggle';
+export { Sidebar } from './ui/layout/Sidebar';
+export { MobileHeader } from './ui/layout/MobileHeader';
+export { DesktopHeader } from './ui/layout/DesktopHeader';
+export { PublicHeader } from './ui/layout/PublicHeader';
+export { PublicFooter } from './ui/layout/PublicFooter';
+export { PublicLayout } from './ui/layout/PublicLayout';
+
+// Shared Components
+export { Modal } from './ui/shared/Modal';
+export { Button } from './ui/shared/Button';
+export { LoadingSpinner } from './ui/shared/LoadingSpinner';
+export { ThemeToggle } from './ui/shared/ThemeToggle';
 
 // Auth Components
-export { LoginModal } from './ui/LoginModal';
-export { RegisterModal } from './ui/RegisterModal';
-export { AuthModals } from './ui/AuthModals';
+export { LoginModal } from './ui/auth/LoginModal';
+export { RegisterModal } from './ui/auth/RegisterModal';
+export { AuthModals } from './ui/auth/AuthModals';
 
 // Form Components
 export { FormField } from './ui/forms/FormField';

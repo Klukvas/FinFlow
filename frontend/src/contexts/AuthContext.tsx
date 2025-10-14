@@ -6,6 +6,7 @@ interface User {
   id: number;
   email: string;
   username: string;
+  base_currency: string;
 }
 
 interface AuthContextType {
@@ -18,6 +19,7 @@ interface AuthContextType {
   register: (email: string, password: string, username: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   refreshAccessToken: () => Promise<boolean>;
+  refreshUserProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -222,6 +224,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     register,
     logout,
     refreshAccessToken,
+    refreshUserProfile: fetchUserProfile,
   };
 
   return (

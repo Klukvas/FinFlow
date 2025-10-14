@@ -1,8 +1,8 @@
 import React from 'react';
 import { AccountResponse, AccountSummary } from '@/types';
-import { Card } from '../Card';
-import { EditButton } from '../EditButton';
-import { DeleteButton } from '../DeleteButton';
+import { Card } from '../shared/Card';
+import { EditButton } from '../shared/EditButton';
+import { DeleteButton } from '../shared/DeleteButton';
 import { FaWallet, FaDollarSign, FaChartLine } from 'react-icons/fa';
 
 interface AccountCardProps {

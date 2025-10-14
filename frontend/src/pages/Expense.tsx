@@ -3,9 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { CreateExpense } from '../components/ui/expense/createExpense';
 import { ExpenseList } from '../components/ui/expense/expenseList';
 import { ExpenseDashboard } from '../components/ui/expense/ExpenseDashboard';
-import { Modal } from '../components/ui/Modal';
-import { Button } from '../components/ui/Button';
-import { Tabs } from '../components/ui/Tabs';
+import { Modal } from '../components/ui/shared/Modal';
+import { Button } from '../components/ui/shared/Button';
+import { Tabs } from '../components/ui/shared/Tabs';
 import { FaPlus, FaTable, FaChartBar } from 'react-icons/fa';
 
 export const Expense = () => {

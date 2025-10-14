@@ -22,36 +22,36 @@ class CurrencyService:
         
         # Supported currencies with metadata
         self.supported_currencies = {
-            "USD": {"name": "US Dollar", "symbol": "$", "flag": "🇺🇸"},
-            "EUR": {"name": "Euro", "symbol": "€", "flag": "🇪🇺"},
-            "UAH": {"name": "Ukrainian Hryvnia", "symbol": "₴", "flag": "🇺🇦"},
-            "GBP": {"name": "British Pound", "symbol": "£", "flag": "🇬🇧"},
-            "JPY": {"name": "Japanese Yen", "symbol": "¥", "flag": "🇯🇵"},
-            "CAD": {"name": "Canadian Dollar", "symbol": "C$", "flag": "🇨🇦"},
-            "AUD": {"name": "Australian Dollar", "symbol": "A$", "flag": "🇦🇺"},
-            "CHF": {"name": "Swiss Franc", "symbol": "CHF", "flag": "🇨🇭"},
-            "CNY": {"name": "Chinese Yuan", "symbol": "¥", "flag": "🇨🇳"},
-            "RUB": {"name": "Russian Ruble", "symbol": "₽", "flag": "🇷🇺"},
-            "INR": {"name": "Indian Rupee", "symbol": "₹", "flag": "🇮🇳"},
-            "BRL": {"name": "Brazilian Real", "symbol": "R$", "flag": "🇧🇷"},
-            "MXN": {"name": "Mexican Peso", "symbol": "$", "flag": "🇲🇽"},
-            "KRW": {"name": "South Korean Won", "symbol": "₩", "flag": "🇰🇷"},
-            "SGD": {"name": "Singapore Dollar", "symbol": "S$", "flag": "🇸🇬"},
-            "NZD": {"name": "New Zealand Dollar", "symbol": "NZ$", "flag": "🇳🇿"},
-            "NOK": {"name": "Norwegian Krone", "symbol": "kr", "flag": "🇳🇴"},
-            "SEK": {"name": "Swedish Krona", "symbol": "kr", "flag": "🇸🇪"},
-            "DKK": {"name": "Danish Krone", "symbol": "kr", "flag": "🇩🇰"},
-            "PLN": {"name": "Polish Zloty", "symbol": "zł", "flag": "🇵🇱"},
-            "CZK": {"name": "Czech Koruna", "symbol": "Kč", "flag": "🇨🇿"},
-            "HUF": {"name": "Hungarian Forint", "symbol": "Ft", "flag": "🇭🇺"},
-            "TRY": {"name": "Turkish Lira", "symbol": "₺", "flag": "🇹🇷"},
-            "ZAR": {"name": "South African Rand", "symbol": "R", "flag": "🇿🇦"},
-            "AED": {"name": "UAE Dirham", "symbol": "د.إ", "flag": "🇦🇪"},
-            "SAR": {"name": "Saudi Riyal", "symbol": "ر.س", "flag": "🇸🇦"},
-            "THB": {"name": "Thai Baht", "symbol": "฿", "flag": "🇹🇭"},
-            "MYR": {"name": "Malaysian Ringgit", "symbol": "RM", "flag": "🇲🇾"},
-            "IDR": {"name": "Indonesian Rupiah", "symbol": "Rp", "flag": "🇮🇩"},
-            "PHP": {"name": "Philippine Peso", "symbol": "₱", "flag": "🇵🇭"},
+            "USD": {"name": "US Dollar", "symbol": "$", "flag": "🇺🇸", "locale": "en-US"},
+            "EUR": {"name": "Euro", "symbol": "€", "flag": "🇪🇺", "locale": "de-DE"},
+            "UAH": {"name": "Ukrainian Hryvnia", "symbol": "₴", "flag": "🇺🇦", "locale": "uk-UA"},
+            "GBP": {"name": "British Pound", "symbol": "£", "flag": "🇬🇧", "locale": "en-GB"},
+            "JPY": {"name": "Japanese Yen", "symbol": "¥", "flag": "🇯🇵", "locale": "ja-JP"},
+            "CAD": {"name": "Canadian Dollar", "symbol": "C$", "flag": "🇨🇦", "locale": "en-CA"},
+            "AUD": {"name": "Australian Dollar", "symbol": "A$", "flag": "🇦🇺", "locale": "en-AU"},
+            "CHF": {"name": "Swiss Franc", "symbol": "CHF", "flag": "🇨🇭", "locale": "de-CH"},
+            "CNY": {"name": "Chinese Yuan", "symbol": "¥", "flag": "🇨🇳", "locale": "zh-CN"},
+            "RUB": {"name": "Russian Ruble", "symbol": "₽", "flag": "🇷🇺", "locale": "ru-RU"},
+            "INR": {"name": "Indian Rupee", "symbol": "₹", "flag": "🇮🇳", "locale": "en-IN"},
+            "BRL": {"name": "Brazilian Real", "symbol": "R$", "flag": "🇧🇷", "locale": "pt-BR"},
+            "MXN": {"name": "Mexican Peso", "symbol": "$", "flag": "🇲🇽", "locale": "es-MX"},
+            "KRW": {"name": "South Korean Won", "symbol": "₩", "flag": "🇰🇷", "locale": "ko-KR"},
+            "SGD": {"name": "Singapore Dollar", "symbol": "S$", "flag": "🇸🇬", "locale": "en-SG"},
+            "NZD": {"name": "New Zealand Dollar", "symbol": "NZ$", "flag": "🇳🇿", "locale": "en-NZ"},
+            "NOK": {"name": "Norwegian Krone", "symbol": "kr", "flag": "🇳🇴", "locale": "no-NO"},
+            "SEK": {"name": "Swedish Krona", "symbol": "kr", "flag": "🇸🇪", "locale": "sv-SE"},
+            "DKK": {"name": "Danish Krone", "symbol": "kr", "flag": "🇩🇰", "locale": "da-DK"},
+            "PLN": {"name": "Polish Zloty", "symbol": "zł", "flag": "🇵🇱", "locale": "pl-PL"},
+            "CZK": {"name": "Czech Koruna", "symbol": "Kč", "flag": "🇨🇿", "locale": "cs-CZ"},
+            "HUF": {"name": "Hungarian Forint", "symbol": "Ft", "flag": "🇭🇺", "locale": "hu-HU"},
+            "TRY": {"name": "Turkish Lira", "symbol": "₺", "flag": "🇹🇷", "locale": "tr-TR"},
+            "ZAR": {"name": "South African Rand", "symbol": "R", "flag": "🇿🇦", "locale": "en-ZA"},
+            "AED": {"name": "UAE Dirham", "symbol": "د.إ", "flag": "🇦🇪", "locale": "ar-AE"},
+            "SAR": {"name": "Saudi Riyal", "symbol": "ر.س", "flag": "🇸🇦", "locale": "ar-SA"},
+            "THB": {"name": "Thai Baht", "symbol": "฿", "flag": "🇹🇭", "locale": "th-TH"},
+            "MYR": {"name": "Malaysian Ringgit", "symbol": "RM", "flag": "🇲🇾", "locale": "ms-MY"},
+            "IDR": {"name": "Indonesian Rupiah", "symbol": "Rp", "flag": "🇮🇩", "locale": "id-ID"},
+            "PHP": {"name": "Philippine Peso", "symbol": "₱", "flag": "🇵🇭", "locale": "fil-PH"},
         }
     
     async def get_supported_currencies(self) -> List[CurrencyInfo]:
@@ -334,7 +334,8 @@ class CurrencyService:
                             code=code,
                             name=info["name"],
                             symbol=info["symbol"],
-                            flag=info["flag"]
+                            flag=info["flag"],
+                            locale=info["locale"]
                         ))
                     else:
                         # Generate basic info for unknown currencies
@@ -342,7 +343,8 @@ class CurrencyService:
                             code=code,
                             name=f"{code} Currency",
                             symbol=code,
-                            flag="🌍"
+                            flag="🌍",
+                            locale="en-US"
                         ))
             
             logger.info(f"Fetched {len(currencies)} top currencies from API")
@@ -362,7 +364,8 @@ class CurrencyService:
                     code=code,
                     name=info["name"],
                     symbol=info["symbol"],
-                    flag=info["flag"]
+                    flag=info["flag"],
+                    locale=info["locale"]
                 ))
         return currencies
 

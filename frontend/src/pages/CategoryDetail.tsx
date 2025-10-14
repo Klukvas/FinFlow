@@ -3,8 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useApiClients } from '@/hooks/useApiClients';
 import { Category, ExpenseResponse } from '@/types';
 import { IncomeOut } from '@/types/income';
-import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
+import { Button } from '@/components/ui/shared/Button';
+import { Modal } from '@/components/ui/shared/Modal';
 import { FaArrowLeft, FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
 import { toast } from 'sonner';
 

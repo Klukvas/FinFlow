@@ -1,6 +1,6 @@
 import React from 'react';
 import { GoalFilters } from '@/types';
-import { Select } from '@/components/ui/Select';
+import { Select } from '@/components/ui/forms/Select';
 
 interface GoalsFiltersProps {
   filters: GoalFilters;
