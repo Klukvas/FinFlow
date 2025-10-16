@@ -9,7 +9,7 @@ const __dirname = dirname(__filename);
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
-  testDir: './tests',
+  testDir: './specs',
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -53,17 +53,9 @@ export default defineConfig({
 
   ],
 
-  /* Run your local dev server before starting the tests */
-  webServer: {
-    command: 'yarn dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-  },
-
   /* Global setup and teardown */
-  globalSetup: resolve(__dirname, './tests/global-setup.ts'),
-  globalTeardown: resolve(__dirname, './tests/global-teardown.ts'),
+  globalSetup: resolve(__dirname, './global-setup.ts'),
+  globalTeardown: resolve(__dirname, './global-teardown.ts'),
 
   /* Test timeout */
   timeout: 30000,
@@ -76,4 +68,3 @@ export default defineConfig({
   /* Output directory for test artifacts */
   outputDir: 'test-results/',
 });
-

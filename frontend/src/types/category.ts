@@ -27,3 +27,17 @@ export interface Category {
     created_at?: string;
     updated_at?: string;
   }
+
+export interface CategoryListResponse {
+    items: Category[];
+    total: number;
+    page: number;
+    size: number;
+    pages: number;
+  }
+
+export interface CategoryFilters {
+    flat?: boolean;
+    page?: number;
+    size?: number;
+  }

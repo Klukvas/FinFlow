@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, status, Query, Path
-from typing import List, Optional
+from typing import List, Optional, Annotated
 from datetime import date
-from app.schemas.expense import ExpenseCreate, ExpenseResponse, ExpenseResponse, ExpenseUpdate, ExpenseSummary, ExpenseStats
+from app.schemas.expense import ExpenseCreate, ExpenseResponse, ExpenseResponse, ExpenseUpdate, ExpenseSummary, ExpenseStats, ExpenseListResponse
 from app.services.expense import ExpenseService
 from app.dependencies import get_expense_service, get_current_user_id
 from app.exceptions import (
@@ -65,6 +65,42 @@ def read_expenses(
     Returns a list of all expenses ordered by date (newest first).
     """
     return service.get_all(user_id)
+
+@router.get(
+    "/paginated", 
+    response_model=ExpenseListResponse,
+    summary="Get paginated expenses",
+    description="Retrieve paginated expenses for the authenticated user with pagination metadata",
+    responses={
+        200: {"description": "Expenses retrieved successfully"},
+        401: {"description": "Unauthorized - invalid or missing token"},
+    }
+)
+def read_expenses_paginated(
+    page: Annotated[int, Query(description="Page number", ge=1)] = 1,
+    size: Annotated[int, Query(description="Number of items per page", ge=1, le=100)] = 50,
+    service: ExpenseService = Depends(get_expense_service),
+    user_id: int = Depends(get_current_user_id)
+) -> ExpenseListResponse:
+    """
+    Get paginated expenses for the authenticated user.
+    
+    - **page**: Page number (starts from 1)
+    - **size**: Number of items per page (1-100, default 50)
+    
+    Returns paginated results with metadata including total count, current page, and total pages.
+    """
+    expenses, total = service.get_all_paginated(user_id, page, size)
+    
+    pages = (total + size - 1) // size  # Calculate total pages
+    
+    return ExpenseListResponse(
+        items=expenses,
+        total=total,
+        page=page,
+        size=size,
+        pages=pages
+    )
 
 @router.get(
     "/{expense_id}", 

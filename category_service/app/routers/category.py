@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, status, Query, Path
 from typing import List, Annotated
 
-from app.schemas.category import CategoryCreate, CategoryOut
+from app.schemas.category import CategoryCreate, CategoryOut, CategoryListResponse
 from app.services.category import CategoryService
 from app.dependencies import get_category_service, get_current_user_id
 from app.exceptions import (
@@ -45,9 +45,9 @@ def create_category(
 
 @router.get(
     "/", 
-    response_model=List[CategoryOut],
+    response_model=CategoryListResponse,
     summary="Get all categories",
-    description="Retrieve all categories for the authenticated user, either as a hierarchical tree or flat list",
+    description="Retrieve all categories for the authenticated user, either as a hierarchical tree or flat list with pagination support",
     responses={
         200: {"description": "Categories retrieved successfully"},
         401: {"description": "Unauthorized - invalid or missing token"},
@@ -55,18 +55,35 @@ def create_category(
 )
 def read_categories(
     flat: Annotated[bool, Query(description="Return flat list instead of hierarchical tree")] = False,
+    page: Annotated[int, Query(description="Page number", ge=1)] = 1,
+    size: Annotated[int, Query(description="Number of items per page", ge=1, le=100)] = 50,
     service: CategoryService = Depends(get_category_service),
     user_id: int = Depends(get_current_user_id)
-) -> List[CategoryOut]:
+) -> CategoryListResponse:
     """
-    Get all categories for the authenticated user.
+    Get all categories for the authenticated user with pagination support.
     
     - **flat**: If true, returns a flat list of all categories
     - **flat**: If false, returns root categories with their children (hierarchical)
+    - **page**: Page number (starts from 1)
+    - **size**: Number of items per page (1-100, default 50)
+    
+    Returns paginated results with metadata including total count, current page, and total pages.
     """
     if flat:
-        return service.get_all_flat(user_id)
-    return service.get_all(user_id)
+        categories, total = service.get_all_flat(user_id, page, size)
+    else:
+        categories, total = service.get_all(user_id, page, size)
+    
+    pages = (total + size - 1) // size  # Calculate total pages
+    
+    return CategoryListResponse(
+        items=categories,
+        total=total,
+        page=page,
+        size=size,
+        pages=pages
+    )
 
 @router.get(
     "/{category_id}", 

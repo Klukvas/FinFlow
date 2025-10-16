@@ -1,0 +1,390 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e5]:
+        - button "Переключить сайдбар" [ref=e6]:
+          - img [ref=e7]
+        - heading "Категории" [level=1] [ref=e9]
+        - generic [ref=e10]:
+          - button "🇺🇸 English" [ref=e12]:
+            - img [ref=e13]
+            - generic [ref=e15]: 🇺🇸
+            - generic [ref=e16]: English
+            - img [ref=e17]
+          - button "Switch to light theme" [ref=e19]:
+            - img [ref=e20]
+    - generic [ref=e23]:
+      - generic [ref=e25]:
+        - heading "Financial Accounting" [level=1] [ref=e27]
+        - navigation [ref=e28]:
+          - link "Categories" [ref=e29] [cursor=pointer]:
+            - /url: /category
+            - img [ref=e30]
+            - generic [ref=e32]: Categories
+          - link "Accounts" [ref=e33] [cursor=pointer]:
+            - /url: /account
+            - img [ref=e34]
+            - generic [ref=e36]: Accounts
+          - link "Expenses" [ref=e37] [cursor=pointer]:
+            - /url: /expense
+            - img [ref=e38]
+            - generic [ref=e40]: Expenses
+          - link "Income" [ref=e41] [cursor=pointer]:
+            - /url: /income
+            - img [ref=e42]
+            - generic [ref=e44]: Income
+          - link "Debts" [ref=e45] [cursor=pointer]:
+            - /url: /debts
+            - img [ref=e46]
+            - generic [ref=e48]: Debts
+          - link "Recurring" [ref=e49] [cursor=pointer]:
+            - /url: /recurring
+            - img [ref=e50]
+            - generic [ref=e52]: Recurring
+          - link "Goals" [ref=e53] [cursor=pointer]:
+            - /url: /goals
+            - img [ref=e54]
+            - generic [ref=e56]: Goals
+          - link "PDF Parser" [ref=e57] [cursor=pointer]:
+            - /url: /pdf-parser
+            - img [ref=e58]
+            - generic [ref=e60]: PDF Parser
+        - generic [ref=e61]:
+          - link "Andrii root@root.root" [ref=e62] [cursor=pointer]:
+            - /url: /profile
+            - img [ref=e64]
+            - generic [ref=e66]:
+              - paragraph [ref=e67]: Andrii
+              - paragraph [ref=e68]: root@root.root
+          - button "Logout" [ref=e69]:
+            - img [ref=e70]
+            - text: Logout
+      - generic [ref=e72]:
+        - main [ref=e73]:
+          - generic [ref=e76]:
+            - generic [ref=e80]:
+              - generic [ref=e81]:
+                - generic [ref=e82]:
+                  - img [ref=e84]
+                  - heading "Category Management" [level=1] [ref=e86]
+                - paragraph [ref=e87]: Create and manage expense and income categories for better financial control
+              - button "Create Category" [ref=e89]:
+                - img [ref=e91]
+                - generic [ref=e93]: Create Category
+            - generic [ref=e94]:
+              - generic [ref=e95]:
+                - img [ref=e97]
+                - heading "Статистика категорий" [level=3] [ref=e99]
+              - generic [ref=e100]:
+                - generic [ref=e101]:
+                  - img [ref=e104]
+                  - generic [ref=e106]: "22"
+                  - generic [ref=e107]: Всего категорий
+                - generic [ref=e108]:
+                  - img [ref=e111]
+                  - generic [ref=e113]: "8"
+                  - generic [ref=e114]: Категории расходов
+                - generic [ref=e115]:
+                  - img [ref=e118]
+                  - generic [ref=e120]: "14"
+                  - generic [ref=e121]: Категории доходов
+                - generic [ref=e122]:
+                  - img [ref=e125]
+                  - generic [ref=e127]: "21"
+                  - generic [ref=e128]: Родительские
+                - generic [ref=e129]:
+                  - img [ref=e132]
+                  - generic [ref=e134]: "1"
+                  - generic [ref=e135]: Дочерние
+            - generic [ref=e137]:
+              - generic [ref=e139]:
+                - generic [ref=e140]:
+                  - img [ref=e142]
+                  - heading "Категории" [level=2] [ref=e144]
+                  - generic [ref=e145]: "21"
+                - generic [ref=e146]:
+                  - button "Иерархия" [ref=e147]
+                  - button "Список" [ref=e148]
+              - generic [ref=e149]:
+                - table [ref=e153]:
+                  - rowgroup [ref=e154]:
+                    - row "Название Тип Родительская категория ID Действия" [ref=e155]:
+                      - cell "Название" [ref=e156]
+                      - cell "Тип" [ref=e157]
+                      - cell "Родительская категория" [ref=e158]
+                      - cell "ID" [ref=e159]
+                      - cell "Действия" [ref=e160]
+                  - rowgroup [ref=e161]:
+                    - 'row "Food Расходы Корневая категория #4" [ref=e162] [cursor=pointer]':
+                      - cell "Food" [ref=e163]:
+                        - generic [ref=e166]: Food
+                      - cell "Расходы" [ref=e167]:
+                        - generic [ref=e168]: Расходы
+                      - cell "Корневая категория" [ref=e169]:
+                        - generic [ref=e170]: Корневая категория
+                      - cell "#4" [ref=e171]:
+                        - generic [ref=e172]: "#4"
+                      - cell [ref=e173]:
+                        - generic [ref=e174]:
+                          - button "Редактировать" [ref=e175]:
+                            - img [ref=e176]
+                          - button "Удалить" [ref=e178]:
+                            - img [ref=e179]
+                    - 'row "Restorant Расходы Food #5" [ref=e181] [cursor=pointer]':
+                      - cell "Restorant" [ref=e182]:
+                        - generic [ref=e185]: Restorant
+                      - cell "Расходы" [ref=e186]:
+                        - generic [ref=e187]: Расходы
+                      - cell "Food" [ref=e188]:
+                        - generic [ref=e189]: Food
+                      - cell "#5" [ref=e190]:
+                        - generic [ref=e191]: "#5"
+                      - cell [ref=e192]:
+                        - generic [ref=e193]:
+                          - button "Редактировать" [ref=e194]:
+                            - img [ref=e195]
+                          - button "Удалить" [ref=e197]:
+                            - img [ref=e198]
+                    - 'row "Test Income Category 7qi7wb Доходы Корневая категория #11" [ref=e200] [cursor=pointer]':
+                      - cell "Test Income Category 7qi7wb" [ref=e201]:
+                        - generic [ref=e204]: Test Income Category 7qi7wb
+                      - cell "Доходы" [ref=e205]:
+                        - generic [ref=e206]: Доходы
+                      - cell "Корневая категория" [ref=e207]:
+                        - generic [ref=e208]: Корневая категория
+                      - cell "#11" [ref=e209]:
+                        - generic [ref=e210]: "#11"
+                      - cell [ref=e211]:
+                        - generic [ref=e212]:
+                          - button "Редактировать" [ref=e213]:
+                            - img [ref=e214]
+                          - button "Удалить" [ref=e216]:
+                            - img [ref=e217]
+                    - 'row "Test Income Category jta3ux Доходы Корневая категория #12" [ref=e219] [cursor=pointer]':
+                      - cell "Test Income Category jta3ux" [ref=e220]:
+                        - generic [ref=e223]: Test Income Category jta3ux
+                      - cell "Доходы" [ref=e224]:
+                        - generic [ref=e225]: Доходы
+                      - cell "Корневая категория" [ref=e226]:
+                        - generic [ref=e227]: Корневая категория
+                      - cell "#12" [ref=e228]:
+                        - generic [ref=e229]: "#12"
+                      - cell [ref=e230]:
+                        - generic [ref=e231]:
+                          - button "Редактировать" [ref=e232]:
+                            - img [ref=e233]
+                          - button "Удалить" [ref=e235]:
+                            - img [ref=e236]
+                    - 'row "Test Income Category gu0daj Доходы Корневая категория #10" [ref=e238] [cursor=pointer]':
+                      - cell "Test Income Category gu0daj" [ref=e239]:
+                        - generic [ref=e242]: Test Income Category gu0daj
+                      - cell "Доходы" [ref=e243]:
+                        - generic [ref=e244]: Доходы
+                      - cell "Корневая категория" [ref=e245]:
+                        - generic [ref=e246]: Корневая категория
+                      - cell "#10" [ref=e247]:
+                        - generic [ref=e248]: "#10"
+                      - cell [ref=e249]:
+                        - generic [ref=e250]:
+                          - button "Редактировать" [ref=e251]:
+                            - img [ref=e252]
+                          - button "Удалить" [ref=e254]:
+                            - img [ref=e255]
+                    - 'row "Test Income Category kmu63y Доходы Корневая категория #13" [ref=e257] [cursor=pointer]':
+                      - cell "Test Income Category kmu63y" [ref=e258]:
+                        - generic [ref=e261]: Test Income Category kmu63y
+                      - cell "Доходы" [ref=e262]:
+                        - generic [ref=e263]: Доходы
+                      - cell "Корневая категория" [ref=e264]:
+                        - generic [ref=e265]: Корневая категория
+                      - cell "#13" [ref=e266]:
+                        - generic [ref=e267]: "#13"
+                      - cell [ref=e268]:
+                        - generic [ref=e269]:
+                          - button "Редактировать" [ref=e270]:
+                            - img [ref=e271]
+                          - button "Удалить" [ref=e273]:
+                            - img [ref=e274]
+                    - 'row "Test Category iyn7us Расходы Корневая категория #8" [ref=e276] [cursor=pointer]':
+                      - cell "Test Category iyn7us" [ref=e277]:
+                        - generic [ref=e280]: Test Category iyn7us
+                      - cell "Расходы" [ref=e281]:
+                        - generic [ref=e282]: Расходы
+                      - cell "Корневая категория" [ref=e283]:
+                        - generic [ref=e284]: Корневая категория
+                      - cell "#8" [ref=e285]:
+                        - generic [ref=e286]: "#8"
+                      - cell [ref=e287]:
+                        - generic [ref=e288]:
+                          - button "Редактировать" [ref=e289]:
+                            - img [ref=e290]
+                          - button "Удалить" [ref=e292]:
+                            - img [ref=e293]
+                    - 'row "Test Category Расходы Корневая категория #6" [ref=e295] [cursor=pointer]':
+                      - cell "Test Category" [ref=e296]:
+                        - generic [ref=e299]: Test Category
+                      - cell "Расходы" [ref=e300]:
+                        - generic [ref=e301]: Расходы
+                      - cell "Корневая категория" [ref=e302]:
+                        - generic [ref=e303]: Корневая категория
+                      - cell "#6" [ref=e304]:
+                        - generic [ref=e305]: "#6"
+                      - cell [ref=e306]:
+                        - generic [ref=e307]:
+                          - button "Редактировать" [ref=e308]:
+                            - img [ref=e309]
+                          - button "Удалить" [ref=e311]:
+                            - img [ref=e312]
+                    - 'row "Test Income Category 0wb2k7 Доходы Корневая категория #14" [ref=e314] [cursor=pointer]':
+                      - cell "Test Income Category 0wb2k7" [ref=e315]:
+                        - generic [ref=e318]: Test Income Category 0wb2k7
+                      - cell "Доходы" [ref=e319]:
+                        - generic [ref=e320]: Доходы
+                      - cell "Корневая категория" [ref=e321]:
+                        - generic [ref=e322]: Корневая категория
+                      - cell "#14" [ref=e323]:
+                        - generic [ref=e324]: "#14"
+                      - cell [ref=e325]:
+                        - generic [ref=e326]:
+                          - button "Редактировать" [ref=e327]:
+                            - img [ref=e328]
+                          - button "Удалить" [ref=e330]:
+                            - img [ref=e331]
+                    - 'row "Test Income Category v427lv Доходы Корневая категория #9" [ref=e333] [cursor=pointer]':
+                      - cell "Test Income Category v427lv" [ref=e334]:
+                        - generic [ref=e337]: Test Income Category v427lv
+                      - cell "Доходы" [ref=e338]:
+                        - generic [ref=e339]: Доходы
+                      - cell "Корневая категория" [ref=e340]:
+                        - generic [ref=e341]: Корневая категория
+                      - cell "#9" [ref=e342]:
+                        - generic [ref=e343]: "#9"
+                      - cell [ref=e344]:
+                        - generic [ref=e345]:
+                          - button "Редактировать" [ref=e346]:
+                            - img [ref=e347]
+                          - button "Удалить" [ref=e349]:
+                            - img [ref=e350]
+                    - 'row "Test Category 4ycunl Расходы Корневая категория #7" [ref=e352] [cursor=pointer]':
+                      - cell "Test Category 4ycunl" [ref=e353]:
+                        - generic [ref=e356]: Test Category 4ycunl
+                      - cell "Расходы" [ref=e357]:
+                        - generic [ref=e358]: Расходы
+                      - cell "Корневая категория" [ref=e359]:
+                        - generic [ref=e360]: Корневая категория
+                      - cell "#7" [ref=e361]:
+                        - generic [ref=e362]: "#7"
+                      - cell [ref=e363]:
+                        - generic [ref=e364]:
+                          - button "Редактировать" [ref=e365]:
+                            - img [ref=e366]
+                          - button "Удалить" [ref=e368]:
+                            - img [ref=e369]
+                - generic [ref=e372]:
+                  - generic [ref=e373]:
+                    - generic [ref=e374]: Показано 1-10 из 21
+                    - generic [ref=e375]:
+                      - generic [ref=e376]: "на странице:"
+                      - combobox [ref=e377]:
+                        - option "5"
+                        - option "10" [selected]
+                        - option "25"
+                        - option "50"
+                  - generic [ref=e378]:
+                    - button "Назад" [disabled] [ref=e379]:
+                      - img [ref=e380]
+                      - text: Назад
+                    - generic [ref=e382]:
+                      - button "1" [ref=e383]
+                      - button "2" [ref=e384]
+                      - button "3" [ref=e385]
+                    - button "Вперед" [ref=e386]:
+                      - text: Вперед
+                      - img [ref=e387]
+        - contentinfo [ref=e389]:
+          - generic [ref=e390]:
+            - generic [ref=e391]:
+              - generic [ref=e392]:
+                - heading "Financial Accounting" [level=3] [ref=e393]
+                - paragraph [ref=e394]: Simple and effective personal finance management. Track income, expenses and plan your budget.
+                - generic [ref=e395]:
+                  - link "GitHub" [ref=e396] [cursor=pointer]:
+                    - /url: https://github.com
+                    - img [ref=e397]
+                  - link "LinkedIn" [ref=e399] [cursor=pointer]:
+                    - /url: https://linkedin.com
+                    - img [ref=e400]
+                  - link "Twitter" [ref=e402] [cursor=pointer]:
+                    - /url: https://twitter.com
+                    - img [ref=e403]
+                  - link "Email" [ref=e405] [cursor=pointer]:
+                    - /url: mailto:support@example.com
+                    - img [ref=e406]
+              - generic [ref=e408]:
+                - heading "Product" [level=4] [ref=e409]
+                - list [ref=e410]:
+                  - listitem [ref=e411]:
+                    - link "Features" [ref=e412] [cursor=pointer]:
+                      - /url: /features
+                  - listitem [ref=e413]:
+                    - link "Pricing" [ref=e414] [cursor=pointer]:
+                      - /url: /pricing
+                  - listitem [ref=e415]:
+                    - link "API" [ref=e416] [cursor=pointer]:
+                      - /url: /api
+                  - listitem [ref=e417]:
+                    - link "Integrations" [ref=e418] [cursor=pointer]:
+                      - /url: /integrations
+              - generic [ref=e419]:
+                - heading "Company" [level=4] [ref=e420]
+                - list [ref=e421]:
+                  - listitem [ref=e422]:
+                    - link "About" [ref=e423] [cursor=pointer]:
+                      - /url: /about
+                  - listitem [ref=e424]:
+                    - link "Blog" [ref=e425] [cursor=pointer]:
+                      - /url: /blog
+                  - listitem [ref=e426]:
+                    - link "Careers" [ref=e427] [cursor=pointer]:
+                      - /url: /careers
+                  - listitem [ref=e428]:
+                    - link "Contact" [ref=e429] [cursor=pointer]:
+                      - /url: /contact
+              - generic [ref=e430]:
+                - heading "Support" [level=4] [ref=e431]
+                - list [ref=e432]:
+                  - listitem [ref=e433]:
+                    - link "Help" [ref=e434] [cursor=pointer]:
+                      - /url: /help
+                  - listitem [ref=e435]:
+                    - link "Documentation" [ref=e436] [cursor=pointer]:
+                      - /url: /docs
+                  - listitem [ref=e437]:
+                    - link "Status" [ref=e438] [cursor=pointer]:
+                      - /url: /status
+                  - listitem [ref=e439]:
+                    - link "Community" [ref=e440] [cursor=pointer]:
+                      - /url: /community
+              - generic [ref=e441]:
+                - heading "Legal" [level=4] [ref=e442]
+                - list [ref=e443]:
+                  - listitem [ref=e444]:
+                    - link "Privacy Policy" [ref=e445] [cursor=pointer]:
+                      - /url: /privacy
+                  - listitem [ref=e446]:
+                    - link "Terms of Use" [ref=e447] [cursor=pointer]:
+                      - /url: /terms
+                  - listitem [ref=e448]:
+                    - link "Cookie" [ref=e449] [cursor=pointer]:
+                      - /url: /cookies
+                  - listitem [ref=e450]:
+                    - link "GDPR" [ref=e451] [cursor=pointer]:
+                      - /url: /gdpr
+            - generic [ref=e453]:
+              - paragraph [ref=e454]: © 2025 Financial Accounting. All rights reserved.
+              - paragraph [ref=e456]: Made with ❤️ for managing finances
+  - region "Notifications alt+T"
+```

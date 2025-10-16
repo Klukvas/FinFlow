@@ -1,5 +1,6 @@
-import { Category, ExpenseResponse } from '@/types';
+import { Category, ExpenseResponse, CategoryListResponse } from '@/types';
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { CategoryComparisonChart } from '../dashboard/CategoryComparisonChart';
 import { CategoryExpensesChart } from '../dashboard/CategoryExpensesChart';
@@ -10,6 +11,7 @@ import { WeekdayExpensesChart } from '../dashboard/WeekdayExpensesChart';
 import { useApiClients } from '@/hooks';
 
 export const ExpenseDashboard: React.FC = () => {
+  const { t } = useTranslation();
   const [expenses, setExpenses] = useState<ExpenseResponse[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +23,11 @@ export const ExpenseDashboard: React.FC = () => {
       setLoading(true);
       const [expensesResponse, categoriesResponse] = await Promise.all([
         expense.getExpenses(),
-        category.getCategories(true) // Запрашиваем все категории в плоском виде
+        category.getCategoriesPaginated({
+          flat: true,
+          page: 1,
+          size: 100 // Максимальный размер страницы
+        })
       ]);
 
       if ('error' in expensesResponse) {
@@ -33,15 +39,16 @@ export const ExpenseDashboard: React.FC = () => {
       if ('error' in categoriesResponse) {
         setError(categoriesResponse.error);
       } else {
-        setCategories(categoriesResponse);
+        const paginatedResponse = categoriesResponse as CategoryListResponse;
+        setCategories(paginatedResponse.items || []);
       }
     } catch (err) {
-      setError('Ошибка при загрузке данных');
+      setError(t('expense.dashboard.loadError'));
       console.error('Error fetching data:', err);
     } finally {
       setLoading(false);
     }
-  }, [expense, category]);
+  }, [expense, category, t]);
 
   useEffect(() => {
     fetchData();
@@ -54,7 +61,7 @@ export const ExpenseDashboard: React.FC = () => {
           <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-2 sm:border-3 theme-border"></div>
           <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-2 sm:border-3 theme-error border-t-transparent absolute top-0 left-0"></div>
         </div>
-        <span className="ml-3 theme-text-secondary text-sm sm:text-base">Загрузка аналитики...</span>
+        <span className="ml-3 theme-text-secondary text-sm sm:text-base">{t('expense.dashboard.loading')}</span>
       </div>
     );
   }

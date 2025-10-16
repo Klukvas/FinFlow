@@ -12,6 +12,8 @@ export { Skeleton, SkeletonText, SkeletonCard, SkeletonTable } from "./shared/Sk
 export { Tabs } from "./shared/Tabs";
 export { ThemeToggle } from "./shared/ThemeToggle";
 export { LanguageSelector } from "./shared/LanguageSelector";
+export { Pagination } from "./shared/Pagination";
+export { PaginationView } from "./shared/PaginationView";
 
 // Form components
 export { Input } from "./forms/Input";

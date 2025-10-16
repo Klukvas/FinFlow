@@ -98,7 +98,47 @@
     "categoryDeleted": "Category deleted successfully",
     "categoryType": "Category Type",
     "income": "Income",
-    "expense": "Expense"
+    "expense": "Expense",
+    "form": {
+      "name": "Category Name",
+      "namePlaceholder": "Enter category name",
+      "type": "Category Type",
+      "parentCategory": "Parent Category",
+      "noParentCategory": "No parent category",
+      "optional": "(optional)",
+      "required": "*",
+      "createButton": "Create Category",
+      "updateButton": "Save Changes",
+      "creating": "Creating...",
+      "updating": "Saving...",
+      "createError": "Error creating category",
+      "updateError": "Error updating category"
+    },
+    "list": {
+      "loading": "Loading categories...",
+      "loadingSubtitle": "Please wait",
+      "hierarchicalView": "Hierarchy",
+      "flatView": "List",
+      "name": "Name",
+      "type": "Type",
+      "parentCategory": "Parent Category",
+      "id": "ID",
+      "actions": "Actions",
+      "rootCategory": "Root Category",
+      "noCategoriesOnPage": "No categories on this page",
+      "noCategoriesAtAll": "No categories created yet",
+      "noCategoriesSubtitle": "Create your first category to organize your income and expenses",
+      "noCategoriesOnPageSubtitle": "Try going to another page or changing filters"
+    },
+    "statistics": {
+      "title": "Category Statistics",
+      "totalCategories": "Total Categories",
+      "expenseCategories": "Expense Categories",
+      "incomeCategories": "Income Categories",
+      "parentCategories": "Parent",
+      "childCategories": "Child",
+      "loadError": "Error loading statistics"
+    }
   },
   "expense": {
     "title": "Expenses",
@@ -109,7 +149,52 @@
     "noExpenses": "No expenses found",
     "expenseCreated": "Expense created successfully",
     "expenseUpdated": "Expense updated successfully",
-    "expenseDeleted": "Expense deleted successfully"
+    "expenseDeleted": "Expense deleted successfully",
+    "list": {
+      "title": "Expense List",
+      "loading": "Loading expenses...",
+      "loadingSubtitle": "Please wait",
+      "date": "Date",
+      "amount": "Amount",
+      "category": "Category",
+      "description": "Description",
+      "actions": "Actions",
+      "noDate": "Not specified",
+      "unknownCategory": "Unknown",
+      "noDescription": "No description",
+      "noExpensesOnPage": "No expenses on this page",
+      "noExpensesAtAll": "No expenses added yet",
+      "noExpensesSubtitle": "Add your first expense to start tracking your spending",
+      "noExpensesOnPageSubtitle": "Try going to another page or changing filters"
+    },
+    "form": {
+      "amount": "Amount",
+      "amountPlaceholder": "0.00",
+      "amountMustBePositive": "Amount must be greater than 0",
+      "currency": "Currency",
+      "category": "Category",
+      "noCategory": "No category",
+      "loadingCategories": "Loading categories...",
+      "noCategoriesAvailable": "No categories available",
+      "account": "Account",
+      "noAccount": "No account",
+      "loadingAccounts": "Loading accounts...",
+      "noAccountsAvailable": "No accounts available",
+      "date": "Date",
+      "description": "Description",
+      "descriptionPlaceholder": "Add expense description...",
+      "optional": "(optional)",
+      "required": "*",
+      "creating": "Creating...",
+      "createButton": "Add Expense",
+      "createError": "Error creating expense",
+      "loadCategoriesError": "Error loading categories",
+      "loadAccountsError": "Error loading accounts"
+    },
+    "dashboard": {
+      "loading": "Loading analytics...",
+      "loadError": "Error loading data"
+    }
   },
   "income": {
     "title": "Income",
@@ -254,7 +339,8 @@
   "pricingPage": {
     "title": "Choose the right plan",
     "subtitle": "Start free and upgrade as your needs grow",
-    "popular": "Popular",
+    "popular": "Available",
+    "inDevelopment": "In Development",
     "plans": [
       {
         "name": "Basic",
@@ -271,11 +357,12 @@
         "limitations": [
           "Limited analytics",
           "No data export"
-        ]
+        ],
+        "available": true
       },
       {
         "name": "Professional",
-        "price": "299",
+        "price": "9.99",
         "period": "per month",
         "description": "For those serious about financial management",
         "features": [
@@ -288,11 +375,12 @@
           "Automatic categorization",
           "Payment reminders"
         ],
-        "limitations": []
+        "limitations": [],
+        "available": false
       },
       {
         "name": "Enterprise",
-        "price": "999",
+        "price": "29.99",
         "period": "per month",
         "description": "For teams and small business",
         "features": [
@@ -305,11 +393,12 @@
           "White label",
           "SLA 99.9%"
         ],
-        "limitations": []
+        "limitations": [],
+        "available": false
       }
     ],
     "ctaFree": "Start for free",
-    "ctaChoose": "Choose plan",
+    "ctaChoose": "Get Started",
     "faqTitle": "Have questions about pricing?",
     "faqSubtitle": "Contact us and we will help you choose the right plan",
     "faqCta": "Contact us"

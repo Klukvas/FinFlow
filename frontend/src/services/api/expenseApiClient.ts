@@ -1,5 +1,5 @@
-import { CreateExpenseRequest, ErrorResponse, ExpenseResponse, ExpenseUpdate } from '@/types';
-import { AuthHttpClient, ApiError } from './AuthHttpClient';
+import { CreateExpenseRequest, ErrorResponse, ExpenseResponse, ExpenseUpdate, ExpenseListResponse, ExpenseFilters } from '@/types';
+import { AuthHttpClient } from './AuthHttpClient';
 import { config } from '@/config/env';
 
 export class ExpenseApiClient {
@@ -22,6 +22,22 @@ export class ExpenseApiClient {
 
   async getExpenses(): Promise<ExpenseResponse[] | { error: string }> {
     return this.httpClient.get<ExpenseResponse[]>('/');
+  }
+
+  async getExpensesPaginated(filters: ExpenseFilters = {}): Promise<ExpenseListResponse | ErrorResponse> {
+    const params = new URLSearchParams();
+    
+    if (filters.page !== undefined) {
+      params.append('page', filters.page.toString());
+    }
+    if (filters.size !== undefined) {
+      params.append('size', filters.size.toString());
+    }
+    
+    const queryString = params.toString();
+    const url = queryString ? `/paginated?${queryString}` : '/paginated';
+    
+    return this.httpClient.get<ExpenseListResponse>(url);
   }
 
   async getExpense(id: number): Promise<ExpenseResponse | ErrorResponse> {

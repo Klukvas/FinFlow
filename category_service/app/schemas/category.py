@@ -109,5 +109,34 @@ class CategorySummary(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class CategoryListResponse(BaseModel):
+    """Paginated response schema for categories"""
+    items: List[CategoryOut]
+    total: int = Field(description="Total number of categories")
+    page: int = Field(description="Current page number")
+    size: int = Field(description="Number of items per page")
+    pages: int = Field(description="Total number of pages")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "items": [
+                    {
+                        "id": 1,
+                        "name": "Food & Dining",
+                        "parent_id": None,
+                        "user_id": 1,
+                        "type": "EXPENSE",
+                        "children": []
+                    }
+                ],
+                "total": 25,
+                "page": 1,
+                "size": 10,
+                "pages": 3
+            }
+        }
+    )
+
 # Update forward references
 CategoryOut.model_rebuild()

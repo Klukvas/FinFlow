@@ -160,21 +160,38 @@ class CategoryService:
             self.logger.error(f"Unexpected error during category creation: {e}")
             raise CategoryValidationError("Failed to create category")
 
-    def get_all(self, user_id: int) -> List[Category]:
-        """Get root categories with their full hierarchy"""
+    def get_all(self, user_id: int, page: int = 1, size: int = 50) -> tuple[List[Category], int]:
+        """Get root categories with their full hierarchy (paginated)"""
         try:
-            return self.db.query(Category).filter(
+            # Get total count
+            total = self.db.query(Category).filter(
                 Category.user_id == user_id,
                 Category.parent_id.is_(None)
-            ).options(joinedload(Category.children)).all()
+            ).count()
+            
+            # Get paginated results
+            categories = self.db.query(Category).filter(
+                Category.user_id == user_id,
+                Category.parent_id.is_(None)
+            ).options(joinedload(Category.children)).offset((page - 1) * size).limit(size).all()
+            
+            return categories, total
         except Exception as e:
             self.logger.error(f"Error retrieving categories: {e}")
             raise CategoryValidationError("Failed to retrieve categories")
 
-    def get_all_flat(self, user_id: int) -> List[Category]:
-        """Get all categories in a flat list"""
+    def get_all_flat(self, user_id: int, page: int = 1, size: int = 50) -> tuple[List[Category], int]:
+        """Get all categories in a flat list (paginated)"""
         try:
-            return self.db.query(Category).filter(Category.user_id == user_id).all()
+            # Get total count
+            total = self.db.query(Category).filter(Category.user_id == user_id).count()
+            
+            # Get paginated results
+            categories = self.db.query(Category).filter(
+                Category.user_id == user_id
+            ).offset((page - 1) * size).limit(size).all()
+            
+            return categories, total
         except Exception as e:
             self.logger.error(f"Error retrieving flat categories: {e}")
             raise CategoryValidationError("Failed to retrieve categories")

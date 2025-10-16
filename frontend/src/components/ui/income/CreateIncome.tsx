@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApiClients } from '@/hooks/useApiClients';
-import { Category, IncomeCreate, AccountResponse } from '@/types';
+import { Category, IncomeCreate, AccountResponse, CategoryListResponse } from '@/types';
 import { Button } from '@/components/ui/shared/Button';
 import { MoneyInput } from '@/components/ui/forms/MoneyInput';
 import { CurrencySelect } from '@/components/ui/forms/CurrencySelect';
@@ -32,12 +32,20 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) =
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await category.getCategories();
+        const response = await category.getCategoriesPaginated({
+          flat: true,
+          page: 1,
+          size: 100 // Максимальный размер страницы
+        });
+        
         if ('error' in response) {
           console.error('Failed to fetch categories:', response.error);
         } else {
+          const paginatedResponse = response as CategoryListResponse;
+          const allCategories = paginatedResponse.items || [];
+          
           // Filter only income categories
-          const incomeCategories = response.filter(cat => cat.type === 'INCOME');
+          const incomeCategories = allCategories.filter(cat => cat.type === 'INCOME');
           setCategories(incomeCategories);
         }
       } catch (err) {

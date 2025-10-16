@@ -37,3 +37,16 @@ export interface ExpenseCreate {
     description: string;
     date: string;
   }
+
+  export interface ExpenseListResponse {
+    items: ExpenseResponse[];
+    total: number;
+    page: number;
+    size: number;
+    pages: number;
+  }
+
+  export interface ExpenseFilters {
+    page?: number;
+    size?: number;
+  }

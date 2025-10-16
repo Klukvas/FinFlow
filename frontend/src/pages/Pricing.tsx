@@ -12,6 +12,9 @@ export const Pricing: React.FC = () => {
     description: string;
     features: string[];
     limitations: string[];
+    popular?: boolean;
+    icon?: React.ComponentType<{ className?: string }>;
+    available?: boolean;
   }>;
 
   return (
@@ -32,9 +35,18 @@ export const Pricing: React.FC = () => {
               key={index}
               className={`relative theme-surface theme-border border rounded-lg p-8 theme-shadow hover:theme-shadow-hover theme-transition ${
                 plan.popular ? 'ring-2 ring-blue-500 scale-105' : ''
+              } ${
+                !plan.available ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >
-              {plan.name === t('pricingPage.plans.1.name') && (
+              {!plan.available && (
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                  <span className="bg-gray-500 text-white px-4 py-1 rounded-full text-sm font-medium">
+                    {t('pricingPage.inDevelopment')}
+                  </span>
+                </div>
+              )}
+              {plan.available && plan.name === t('pricingPage.plans.0.name') && (
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                   <span className="theme-accent-bg theme-text-inverse px-4 py-1 rounded-full text-sm font-medium">
                     {t('pricingPage.popular')}
@@ -56,7 +68,7 @@ export const Pricing: React.FC = () => {
                 </p>
                 <div className="mb-6">
                   <span className="text-4xl font-bold theme-text-primary">
-                    ₽{plan.price}
+                    ${plan.price}
                   </span>
                   <span className="theme-text-secondary ml-2">
                     {plan.period}
@@ -84,11 +96,17 @@ export const Pricing: React.FC = () => {
               </div>
 
               <Button
-                variant={plan.name === t('pricingPage.plans.1.name') ? 'primary' : 'outline'}
+                variant={plan.available ? (plan.name === t('pricingPage.plans.0.name') ? 'primary' : 'outline') : 'outline'}
                 fullWidth
                 size="lg"
+                disabled={!plan.available}
               >
-                {plan.price === '0' ? t('pricingPage.ctaFree') : t('pricingPage.ctaChoose')}
+                {!plan.available 
+                  ? t('pricingPage.inDevelopment')
+                  : plan.price === '0' 
+                    ? t('pricingPage.ctaFree') 
+                    : t('pricingPage.ctaChoose')
+                }
               </Button>
             </div>
           ))}

@@ -98,7 +98,47 @@
     "categoryDeleted": "Категория успешно удалена",
     "categoryType": "Тип категории",
     "income": "Доход",
-    "expense": "Расход"
+    "expense": "Расход",
+    "form": {
+      "name": "Название категории",
+      "namePlaceholder": "Введите название категории",
+      "type": "Тип категории",
+      "parentCategory": "Родительская категория",
+      "noParentCategory": "Без родительской категории",
+      "optional": "(необязательно)",
+      "required": "*",
+      "createButton": "Создать категорию",
+      "updateButton": "Сохранить изменения",
+      "creating": "Создание...",
+      "updating": "Сохранение...",
+      "createError": "Ошибка при создании категории",
+      "updateError": "Ошибка при обновлении категории"
+    },
+    "list": {
+      "loading": "Загрузка категорий...",
+      "loadingSubtitle": "Пожалуйста, подождите",
+      "hierarchicalView": "Иерархия",
+      "flatView": "Список",
+      "name": "Название",
+      "type": "Тип",
+      "parentCategory": "Родительская категория",
+      "id": "ID",
+      "actions": "Действия",
+      "rootCategory": "Корневая категория",
+      "noCategoriesOnPage": "Нет категорий на этой странице",
+      "noCategoriesAtAll": "Категории пока не созданы",
+      "noCategoriesSubtitle": "Создайте первую категорию для организации ваших доходов и расходов",
+      "noCategoriesOnPageSubtitle": "Попробуйте перейти на другую страницу или изменить фильтры"
+    },
+    "statistics": {
+      "title": "Статистика категорий",
+      "totalCategories": "Всего категорий",
+      "expenseCategories": "Категории расходов",
+      "incomeCategories": "Категории доходов",
+      "parentCategories": "Родительские",
+      "childCategories": "Дочерние",
+      "loadError": "Ошибка при загрузке статистики"
+    }
   },
   "expense": {
     "title": "Расходы",
@@ -109,7 +149,52 @@
     "noExpenses": "Расходы не найдены",
     "expenseCreated": "Расход успешно создан",
     "expenseUpdated": "Расход успешно обновлен",
-    "expenseDeleted": "Расход успешно удален"
+    "expenseDeleted": "Расход успешно удален",
+    "list": {
+      "title": "Список расходов",
+      "loading": "Загрузка расходов...",
+      "loadingSubtitle": "Пожалуйста, подождите",
+      "date": "Дата",
+      "amount": "Сумма",
+      "category": "Категория",
+      "description": "Описание",
+      "actions": "Действия",
+      "noDate": "Не указана",
+      "unknownCategory": "Неизвестно",
+      "noDescription": "Без описания",
+      "noExpensesOnPage": "Нет расходов на этой странице",
+      "noExpensesAtAll": "Расходы пока не добавлены",
+      "noExpensesSubtitle": "Добавьте первый расход для начала отслеживания ваших трат",
+      "noExpensesOnPageSubtitle": "Попробуйте перейти на другую страницу или изменить фильтры"
+    },
+    "form": {
+      "amount": "Сумма",
+      "amountPlaceholder": "0.00",
+      "amountMustBePositive": "Сумма должна быть больше 0",
+      "currency": "Валюта",
+      "category": "Категория",
+      "noCategory": "Без категории",
+      "loadingCategories": "Загрузка категорий...",
+      "noCategoriesAvailable": "Нет доступных категорий",
+      "account": "Аккаунт",
+      "noAccount": "Без аккаунта",
+      "loadingAccounts": "Загрузка аккаунтов...",
+      "noAccountsAvailable": "Нет доступных аккаунтов",
+      "date": "Дата",
+      "description": "Описание",
+      "descriptionPlaceholder": "Добавьте описание расхода...",
+      "optional": "(необязательно)",
+      "required": "*",
+      "creating": "Создание...",
+      "createButton": "Добавить расход",
+      "createError": "Ошибка при создании расхода",
+      "loadCategoriesError": "Ошибка при загрузке категорий",
+      "loadAccountsError": "Ошибка при загрузке аккаунтов"
+    },
+    "dashboard": {
+      "loading": "Загрузка аналитики...",
+      "loadError": "Ошибка при загрузке данных"
+    }
   },
   "income": {
     "title": "Доходы",
@@ -254,7 +339,8 @@
   "pricingPage": {
     "title": "Выберите подходящий план",
     "subtitle": "Начните бесплатно и переходите на платные планы по мере роста ваших потребностей",
-    "popular": "Популярный",
+    "popular": "Доступно",
+    "inDevelopment": "В разработке",
     "plans": [
       {
         "name": "Базовый",
@@ -271,11 +357,12 @@
         "limitations": [
           "Ограниченная аналитика",
           "Нет экспорта данных"
-        ]
+        ],
+        "available": true
       },
       {
         "name": "Профессиональный",
-        "price": "299",
+        "price": "9.99",
         "period": "в месяц",
         "description": "Для тех, кто серьезно относится к управлению финансами",
         "features": [
@@ -288,11 +375,12 @@
           "Автоматическая категоризация",
           "Напоминания о платежах"
         ],
-        "limitations": []
+        "limitations": [],
+        "available": false
       },
       {
         "name": "Корпоративный",
-        "price": "999",
+        "price": "29.99",
         "period": "в месяц",
         "description": "Для команд и малого бизнеса",
         "features": [
@@ -305,11 +393,12 @@
           "Белый лейбл",
           "SLA 99.9%"
         ],
-        "limitations": []
+        "limitations": [],
+        "available": false
       }
     ],
     "ctaFree": "Начать бесплатно",
-    "ctaChoose": "Выбрать план",
+    "ctaChoose": "Начать",
     "faqTitle": "Есть вопросы о тарифах?",
     "faqSubtitle": "Свяжитесь с нами, и мы поможем выбрать подходящий план",
     "faqCta": "Связаться с нами"

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useApiClients } from '@/hooks/useApiClients';
-import { IncomeOut, Category } from '@/types';
+import { IncomeOut, Category, CategoryListResponse } from '@/types';
 import { DeleteButton } from '@/components/ui';
 
 export const IncomeList: React.FC = () => {
@@ -17,7 +17,11 @@ export const IncomeList: React.FC = () => {
         setIsLoading(true);
         const [incomesResponse, categoriesResponse] = await Promise.all([
           income.getIncomes(),
-          category.getCategories()
+          category.getCategoriesPaginated({
+            flat: true,
+            page: 1,
+            size: 100 // Максимальный размер страницы
+          })
         ]);
 
         if ('error' in incomesResponse) {
@@ -29,7 +33,8 @@ export const IncomeList: React.FC = () => {
         if ('error' in categoriesResponse) {
           console.error('Failed to fetch categories:', categoriesResponse.error);
         } else {
-          setCategories(categoriesResponse);
+          const paginatedResponse = categoriesResponse as CategoryListResponse;
+          setCategories(paginatedResponse.items || []);
         }
       } catch (err) {
         console.error('Error fetching data:', err);

@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, ConfigDict, field_validator
-from typing import Optional
+from typing import List, Optional
 from datetime import date as datetime_date
 from decimal import Decimal
 import re
@@ -212,6 +212,37 @@ class ExpenseStats(BaseModel):
                     "1": {"name": "Food", "amount": 500.25, "count": 8},
                     "2": {"name": "Transport", "amount": 750.50, "count": 7}
                 }
+            }
+        }
+    )
+
+class ExpenseListResponse(BaseModel):
+    """Paginated response schema for expenses"""
+    items: List[ExpenseResponse] = Field(description="List of expenses")
+    total: int = Field(description="Total number of expenses")
+    page: int = Field(description="Current page number")
+    size: int = Field(description="Number of items per page")
+    pages: int = Field(description="Total number of pages")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "items": [
+                    {
+                        "id": 1,
+                        "amount": 25.50,
+                        "category_id": 1,
+                        "account_id": 1,
+                        "description": "Lunch at restaurant",
+                        "date": "2024-01-15",
+                        "user_id": 1,
+                        "currency": "USD"
+                    }
+                ],
+                "total": 150,
+                "page": 1,
+                "size": 10,
+                "pages": 15
             }
         }
     )

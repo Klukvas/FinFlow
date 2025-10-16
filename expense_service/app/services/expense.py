@@ -177,6 +177,25 @@ class ExpenseService:
             self.logger.error(f"Error retrieving expenses: {e}")
             raise ExpenseValidationError("Failed to retrieve expenses")
 
+    def get_all_paginated(self, user_id: int, page: int = 1, size: int = 50) -> tuple[List[Expense], int]:
+        """Get paginated expenses for the user"""
+        try:
+            # Calculate offset
+            offset = (page - 1) * size
+            
+            # Get total count
+            total = self.db.query(Expense).filter(Expense.user_id == user_id).count()
+            
+            # Get paginated results
+            expenses = self.db.query(Expense).filter(
+                Expense.user_id == user_id
+            ).order_by(Expense.date.desc()).offset(offset).limit(size).all()
+            
+            return expenses, total
+        except Exception as e:
+            self.logger.error(f"Error retrieving paginated expenses: {e}")
+            raise ExpenseValidationError("Failed to retrieve expenses")
+
     def get(self, expense_id: int, user_id: int) -> Expense:
         """Get a specific expense by ID"""
         return self._validate_expense_ownership(expense_id, user_id)

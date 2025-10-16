@@ -1,5 +1,6 @@
-import { Category, CreateExpenseRequest, AccountResponse } from '@/types';
+import { Category, CreateExpenseRequest, AccountResponse, CategoryListResponse } from '@/types';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CurrencySelect } from '@/components/ui/forms/CurrencySelect';
 import { MoneyInput } from '@/components/ui/forms/MoneyInput';
 
@@ -10,6 +11,7 @@ interface CreateExpenseProps {
 }
 
 export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }) => {
+    const { t } = useTranslation();
     const {category, expense, account, currency} = useApiClients();
     
     const [formData, setFormData] = useState<CreateExpenseRequest>({
@@ -32,22 +34,31 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
     const fetchCategories = useCallback(async () => {
         setIsLoadingCategories(true);
         try {
-            const response = await category.getCategories(true); // Get flat list
+            // Используем новый пагинированный API для получения категорий расходов
+            const response = await category.getCategoriesPaginated({
+                flat: true,
+                page: 1,
+                size: 100 // Максимальный размер страницы
+            });
+            
             if ('error' in response) {
                 setError(response.error);
             } else {
+                const paginatedResponse = response as CategoryListResponse;
+                const allCategories = paginatedResponse.items || [];
+                
                 // Filter only expense categories
-                const expenseCategories = response.filter(cat => cat.type === 'EXPENSE');
+                const expenseCategories = allCategories.filter(cat => cat.type === 'EXPENSE');
                 setCategories(expenseCategories);
                 // Категория остается пустой по умолчанию (необязательная)
             }
         } catch (err) {
-            setError('Ошибка при загрузке категорий');
+            setError(t('expense.form.loadCategoriesError'));
             console.error('Error fetching categories:', err);
         } finally {
             setIsLoadingCategories(false);
         }
-    }, [category]);
+    }, [category, t]);
 
     const fetchAccounts = useCallback(async () => {
         setIsLoadingAccounts(true);
@@ -59,12 +70,12 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                 setAccounts(response);
             }
         } catch (err) {
-            setError('Ошибка при загрузке аккаунтов');
+            setError(t('expense.form.loadAccountsError'));
             console.error('Error fetching accounts:', err);
         } finally {
             setIsLoadingAccounts(false);
         }
-    }, [account]);
+    }, [account, t]);
 
     useEffect(() => {
         fetchCategories();
@@ -95,7 +106,7 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
         e.preventDefault();
         
         if (!formData.amount || formData.amount <= 0) {
-            setError('Сумма должна быть больше 0');
+            setError(t('expense.form.amountMustBePositive'));
             return;
         }
         
@@ -127,7 +138,7 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                 onExpenseCreated();
             }
         } catch (err) {
-            setError('Ошибка при создании расхода');
+            setError(t('expense.form.createError'));
             console.error('Error creating expense:', err);
         } finally {
             setIsLoading(false);
@@ -140,19 +151,19 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                 <div className="space-y-4 sm:space-y-6">
                     {/* Сумма */}
                     <MoneyInput
-                        label="Сумма"
+                        label={t('expense.form.amount')}
                         value={formData.amount || ''}
                         onChange={handleAmountChange}
-                        placeholder="0.00"
+                        placeholder={t('expense.form.amountPlaceholder')}
                         required
-                        error={!formData.amount || formData.amount <= 0 ? 'Сумма должна быть больше 0' : undefined}
+                        error={!formData.amount || formData.amount <= 0 ? t('expense.form.amountMustBePositive') : undefined}
                         className="w-full"
                     />
 
                     {/* Валюта */}
                     <div className="space-y-2">
                         <label className="block text-sm font-semibold theme-text-primary" htmlFor="currency">
-                            Валюта
+                            {t('expense.form.currency')}
                         </label>
                         <CurrencySelect
                             value={formData.currency || 'USD'}
@@ -165,8 +176,8 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                     {/* Категория */}
                     <div className="space-y-2">
                         <label className="block text-sm font-semibold theme-text-primary" htmlFor="category_id">
-                            Категория
-                            <span className="theme-text-tertiary font-normal ml-1">(необязательно)</span>
+                            {t('expense.form.category')}
+                            <span className="theme-text-tertiary font-normal ml-1">{t('expense.form.optional')}</span>
                         </label>
                         <select
                             id="category_id"
@@ -176,11 +187,11 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                             className="w-full px-3 sm:px-4 py-3 theme-surface theme-border border rounded-lg sm:rounded-xl theme-text-primary focus:ring-2 focus:ring-red-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px] disabled:opacity-50"
                             disabled={isLoadingCategories}
                         >
-                            <option value="">Без категории</option>
+                            <option value="">{t('expense.form.noCategory')}</option>
                             {isLoadingCategories ? (
-                                <option>Загрузка категорий...</option>
+                                <option>{t('expense.form.loadingCategories')}</option>
                             ) : categories.length === 0 ? (
-                                <option value="">Нет доступных категорий</option>
+                                <option value="">{t('expense.form.noCategoriesAvailable')}</option>
                             ) : (
                                 categories.map(cat => (
                                     <option key={cat.id} value={cat.id}>
@@ -194,8 +205,8 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                     {/* Аккаунт */}
                     <div className="space-y-2">
                         <label className="block text-sm font-semibold theme-text-primary" htmlFor="account_id">
-                            Аккаунт
-                            <span className="theme-text-tertiary font-normal ml-1">(необязательно)</span>
+                            {t('expense.form.account')}
+                            <span className="theme-text-tertiary font-normal ml-1">{t('expense.form.optional')}</span>
                         </label>
                         <select
                             id="account_id"
@@ -205,11 +216,11 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                             className="w-full px-3 sm:px-4 py-3 theme-surface theme-border border rounded-lg sm:rounded-xl theme-text-primary focus:ring-2 focus:ring-red-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px] disabled:opacity-50"
                             disabled={isLoadingAccounts}
                         >
-                            <option value="">Без аккаунта</option>
+                            <option value="">{t('expense.form.noAccount')}</option>
                             {isLoadingAccounts ? (
-                                <option>Загрузка аккаунтов...</option>
+                                <option>{t('expense.form.loadingAccounts')}</option>
                             ) : accounts.length === 0 ? (
-                                <option value="">Нет доступных аккаунтов</option>
+                                <option value="">{t('expense.form.noAccountsAvailable')}</option>
                             ) : (
                                 accounts.map(account => (
                                     <option key={account.id} value={account.id}>
@@ -223,8 +234,8 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                     {/* Дата */}
                     <div className="space-y-2">
                         <label className="block text-sm font-semibold theme-text-primary" htmlFor="date">
-                            Дата
-                            <span className="text-red-500 ml-1">*</span>
+                            {t('expense.form.date')}
+                            <span className="text-red-500 ml-1">{t('expense.form.required')}</span>
                         </label>
                         <input
                             type="date"
@@ -240,15 +251,15 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                     {/* Описание */}
                     <div className="space-y-2">
                         <label className="block text-sm font-semibold theme-text-primary" htmlFor="description">
-                            Описание
-                            <span className="theme-text-tertiary font-normal ml-1">(необязательно)</span>
+                            {t('expense.form.description')}
+                            <span className="theme-text-tertiary font-normal ml-1">{t('expense.form.optional')}</span>
                         </label>
                         <textarea
                             id="description"
                             name="description"
                             value={formData.description}
                             onChange={handleChange}
-                            placeholder="Добавьте описание расхода..."
+                            placeholder={t('expense.form.descriptionPlaceholder')}
                             className="w-full px-3 sm:px-4 py-3 theme-surface theme-border border rounded-lg sm:rounded-xl theme-text-primary placeholder-gray-400 focus:ring-2 focus:ring-red-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg resize-none text-sm sm:text-base min-h-[88px]"
                             rows={3}
                         />
@@ -279,14 +290,14 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                                 <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-2 border-white/30"></div>
                                 <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-2 border-white border-t-transparent absolute top-0 left-0"></div>
                             </div>
-                            Создание...
+                            {t('expense.form.creating')}
                         </>
                     ) : (
                         <>
                             <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                             </svg>
-                            Добавить расход
+                            {t('expense.form.createButton')}
                         </>
                     )}
                 </button>

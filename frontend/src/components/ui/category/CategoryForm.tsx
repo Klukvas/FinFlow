@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { CreateCategoryRequest, Category } from '@/types';
 import { useApiClients } from '@hooks';
@@ -19,6 +20,7 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
   onCancel,
   onSuccess
 }) => {
+  const { t } = useTranslation();
   const { category } = useApiClients();
   const [formData, setFormData] = useState<CreateCategoryRequest>(() => {
     if (mode === 'edit' && initialData) {
@@ -51,20 +53,30 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
   const fetchParentCategories = useCallback(async () => {
     try {
       const res = await category.getCategories(true); // Get flat list
+      console.log('CategoryForm: getCategories response:', res, 'Type:', typeof res, 'IsArray:', Array.isArray(res));
+      
       if (!('error' in res)) {
+        const categories = res as Category[];
+        console.log('CategoryForm: Setting categories:', categories);
+        
         if (mode === 'edit' && initialData) {
           // Filter out the current category and its children to prevent circular references
-          const filteredCategories = res.filter(cat => 
+          const filteredCategories = categories.filter(cat => 
             cat.id !== initialData.id && 
-            !isChildCategory(cat, initialData.id, res)
+            !isChildCategory(cat, initialData.id, categories)
           );
+          console.log('CategoryForm: Setting filtered categories:', filteredCategories);
           setParentCategories(filteredCategories);
         } else {
-          setParentCategories(res);
+          setParentCategories(categories);
         }
+      } else {
+        console.error('Error fetching parent categories:', res.error);
+        setParentCategories([]); // Set empty array as fallback
       }
     } catch (err) {
       console.error('Error fetching parent categories:', err);
+      setParentCategories([]); // Set empty array as fallback
     }
   }, [category, mode, initialData]);
 
@@ -92,7 +104,7 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
         onSuccess();
       }
     } catch (err) {
-      const errorMessage = mode === 'create' ? 'Ошибка при создании категории' : 'Ошибка при обновлении категории';
+      const errorMessage = mode === 'create' ? t('category.form.createError') : t('category.form.updateError');
       setError(errorMessage);
       FormErrorHandler.handleFormError(err, errorMessage, setFieldErrors);
     } finally {
@@ -101,14 +113,17 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
   }, [formData, onSubmit, onSuccess, mode]);
 
   const submitButtonText = useMemo(() => 
-    mode === 'create' ? 'Создать категорию' : 'Сохранить изменения', 
-    [mode]
+    mode === 'create' ? t('category.form.createButton') : t('category.form.updateButton'), 
+    [mode, t]
   );
   
   const loadingText = useMemo(() => 
-    mode === 'create' ? 'Создание...' : 'Сохранение...', 
-    [mode]
+    mode === 'create' ? t('category.form.creating') : t('category.form.updating'), 
+    [mode, t]
   );
+
+  // Debug logging
+  console.log('CategoryForm: parentCategories state:', parentCategories, 'Type:', typeof parentCategories, 'IsArray:', Array.isArray(parentCategories));
 
   return (
     <div className="w-full">
@@ -119,8 +134,8 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
         <div className="space-y-4 sm:space-y-6">
           <div className="space-y-2">
             <label className="block text-sm font-semibold theme-text-primary" htmlFor="name">
-              Название категории
-              <span className="text-red-500 ml-1">*</span>
+              {t('category.form.name')}
+              <span className="text-red-500 ml-1">{t('category.form.required')}</span>
             </label>
             <input
               type="text"
@@ -129,7 +144,7 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
               data-testid='category-name-input'
               value={formData.name}
               onChange={handleChange}
-              placeholder="Введите название категории"
+              placeholder={t('category.form.namePlaceholder')}
               className={`w-full px-3 sm:px-4 py-3 theme-surface border rounded-lg sm:rounded-xl theme-text-primary placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px] ${
                 FormErrorHandler.hasFieldError(fieldErrors, 'name') ? 'border-red-500' : 'theme-border'
               }`}
@@ -142,8 +157,8 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
 
           <div className="space-y-2">
             <label className="block text-sm font-semibold theme-text-primary" htmlFor="type">
-              Тип категории
-              <span className="text-red-500 ml-1">*</span>
+              {t('category.form.type')}
+              <span className="text-red-500 ml-1">{t('category.form.required')}</span>
             </label>
             <select
               id="type"
@@ -155,8 +170,8 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
                 FormErrorHandler.hasFieldError(fieldErrors, 'type') ? 'border-red-500' : 'theme-border'
               }`}
             >
-              <option value="EXPENSE">Расходы</option>
-              <option value="INCOME">Доходы</option>
+              <option value="EXPENSE">{t('category.expense')}</option>
+              <option value="INCOME">{t('category.income')}</option>
             </select>
             {FormErrorHandler.hasFieldError(fieldErrors, 'type') && (
               <p className="text-sm text-red-500 mt-1">{FormErrorHandler.getFieldError(fieldErrors, 'type')}</p>
@@ -165,8 +180,8 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
 
           <div className="space-y-2">
             <label className="block text-sm font-semibold theme-text-primary" htmlFor="parent_id">
-              Родительская категория
-              <span className="theme-text-tertiary font-normal ml-1">(необязательно)</span>
+              {t('category.form.parentCategory')}
+              <span className="theme-text-tertiary font-normal ml-1">{t('category.form.optional')}</span>
             </label>
             <select
               id="parent_id"
@@ -176,8 +191,8 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
               onChange={handleChange}
               className="w-full px-3 sm:px-4 py-3 theme-surface border theme-border rounded-lg sm:rounded-xl theme-text-primary focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px]"
             >
-              <option value="">Без родительской категории</option>
-              {parentCategories.map((cat) => (
+              <option value="">{t('category.form.noParentCategory')}</option>
+              {Array.isArray(parentCategories) && parentCategories.map((cat) => (
                 <option key={cat.id} value={cat.id}>
                   {cat.name}
                 </option>
@@ -209,7 +224,7 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
               <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
-              Отмена
+              {t('common.cancel')}
             </button>
           )}
           <button

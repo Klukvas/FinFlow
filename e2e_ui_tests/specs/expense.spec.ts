@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
-import { AuthActions } from './interface/AuthActions';
-import { CategoryActions } from './interface/CategoryActions';
-import { ExpenseActions } from './interface/ExpenseActions';
-import { NavigationActions } from './interface/NavigationActions';
+import { AuthActions } from '../interface/AuthActions';
+import { CategoryActions } from '../interface/CategoryActions';
+import { ExpenseActions } from '../interface/ExpenseActions';
+import { NavigationActions } from '../interface/NavigationActions';
 
 // Define interfaces locally
 interface UserCredentials {
