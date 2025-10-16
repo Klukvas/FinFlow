@@ -1,6 +1,5 @@
 import { Category, CreateExpenseRequest, AccountResponse, CategoryListResponse } from '@/types';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { CurrencySelect } from '@/components/ui/forms/CurrencySelect';
 import { MoneyInput } from '@/components/ui/forms/MoneyInput';
 
@@ -11,7 +10,6 @@ interface CreateExpenseProps {
 }
 
 export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }) => {
-    const { t } = useTranslation();
     const {category, expense, account, currency} = useApiClients();
     
     const [formData, setFormData] = useState<CreateExpenseRequest>({
@@ -53,12 +51,12 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                 // Категория остается пустой по умолчанию (необязательная)
             }
         } catch (err) {
-            setError(t('expense.form.loadCategoriesError'));
+            setError('Ошибка при загрузке категорий');
             console.error('Error fetching categories:', err);
         } finally {
             setIsLoadingCategories(false);
         }
-    }, [category, t]);
+    }, [category]);
 
     const fetchAccounts = useCallback(async () => {
         setIsLoadingAccounts(true);
@@ -70,12 +68,12 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                 setAccounts(response);
             }
         } catch (err) {
-            setError(t('expense.form.loadAccountsError'));
+            setError('Ошибка при загрузке аккаунтов');
             console.error('Error fetching accounts:', err);
         } finally {
             setIsLoadingAccounts(false);
         }
-    }, [account, t]);
+    }, [account]);
 
     useEffect(() => {
         fetchCategories();
@@ -106,7 +104,7 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
         e.preventDefault();
         
         if (!formData.amount || formData.amount <= 0) {
-            setError(t('expense.form.amountMustBePositive'));
+            setError('Сумма должна быть больше 0');
             return;
         }
         
@@ -138,7 +136,7 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                 onExpenseCreated();
             }
         } catch (err) {
-            setError(t('expense.form.createError'));
+            setError('Ошибка при создании расхода');
             console.error('Error creating expense:', err);
         } finally {
             setIsLoading(false);
@@ -151,19 +149,19 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                 <div className="space-y-4 sm:space-y-6">
                     {/* Сумма */}
                     <MoneyInput
-                        label={t('expense.form.amount')}
+                        label="Сумма"
                         value={formData.amount || ''}
                         onChange={handleAmountChange}
-                        placeholder={t('expense.form.amountPlaceholder')}
+                        placeholder="0.00"
                         required
-                        error={!formData.amount || formData.amount <= 0 ? t('expense.form.amountMustBePositive') : undefined}
+                        error={!formData.amount || formData.amount <= 0 ? 'Сумма должна быть больше 0' : undefined}
                         className="w-full"
                     />
 
                     {/* Валюта */}
                     <div className="space-y-2">
                         <label className="block text-sm font-semibold theme-text-primary" htmlFor="currency">
-                            {t('expense.form.currency')}
+                            Валюта
                         </label>
                         <CurrencySelect
                             value={formData.currency || 'USD'}
@@ -176,8 +174,8 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                     {/* Категория */}
                     <div className="space-y-2">
                         <label className="block text-sm font-semibold theme-text-primary" htmlFor="category_id">
-                            {t('expense.form.category')}
-                            <span className="theme-text-tertiary font-normal ml-1">{t('expense.form.optional')}</span>
+                            Категория
+                            <span className="theme-text-tertiary font-normal ml-1">(необязательно)</span>
                         </label>
                         <select
                             id="category_id"
@@ -187,11 +185,11 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                             className="w-full px-3 sm:px-4 py-3 theme-surface theme-border border rounded-lg sm:rounded-xl theme-text-primary focus:ring-2 focus:ring-red-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px] disabled:opacity-50"
                             disabled={isLoadingCategories}
                         >
-                            <option value="">{t('expense.form.noCategory')}</option>
+                            <option value="">Без категории</option>
                             {isLoadingCategories ? (
-                                <option>{t('expense.form.loadingCategories')}</option>
+                                <option>Загрузка категорий...</option>
                             ) : categories.length === 0 ? (
-                                <option value="">{t('expense.form.noCategoriesAvailable')}</option>
+                                <option value="">Нет доступных категорий</option>
                             ) : (
                                 categories.map(cat => (
                                     <option key={cat.id} value={cat.id}>
@@ -205,8 +203,8 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                     {/* Аккаунт */}
                     <div className="space-y-2">
                         <label className="block text-sm font-semibold theme-text-primary" htmlFor="account_id">
-                            {t('expense.form.account')}
-                            <span className="theme-text-tertiary font-normal ml-1">{t('expense.form.optional')}</span>
+                            Аккаунт
+                            <span className="theme-text-tertiary font-normal ml-1">(необязательно)</span>
                         </label>
                         <select
                             id="account_id"
@@ -216,11 +214,11 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                             className="w-full px-3 sm:px-4 py-3 theme-surface theme-border border rounded-lg sm:rounded-xl theme-text-primary focus:ring-2 focus:ring-red-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px] disabled:opacity-50"
                             disabled={isLoadingAccounts}
                         >
-                            <option value="">{t('expense.form.noAccount')}</option>
+                            <option value="">Без аккаунта</option>
                             {isLoadingAccounts ? (
-                                <option>{t('expense.form.loadingAccounts')}</option>
+                                <option>Загрузка аккаунтов...</option>
                             ) : accounts.length === 0 ? (
-                                <option value="">{t('expense.form.noAccountsAvailable')}</option>
+                                <option value="">Нет доступных аккаунтов</option>
                             ) : (
                                 accounts.map(account => (
                                     <option key={account.id} value={account.id}>
@@ -234,8 +232,8 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                     {/* Дата */}
                     <div className="space-y-2">
                         <label className="block text-sm font-semibold theme-text-primary" htmlFor="date">
-                            {t('expense.form.date')}
-                            <span className="text-red-500 ml-1">{t('expense.form.required')}</span>
+                            Дата
+                            <span className="text-red-500 ml-1">*</span>
                         </label>
                         <input
                             type="date"
@@ -251,15 +249,15 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                     {/* Описание */}
                     <div className="space-y-2">
                         <label className="block text-sm font-semibold theme-text-primary" htmlFor="description">
-                            {t('expense.form.description')}
-                            <span className="theme-text-tertiary font-normal ml-1">{t('expense.form.optional')}</span>
+                            Описание
+                            <span className="theme-text-tertiary font-normal ml-1">(необязательно)</span>
                         </label>
                         <textarea
                             id="description"
                             name="description"
                             value={formData.description}
                             onChange={handleChange}
-                            placeholder={t('expense.form.descriptionPlaceholder')}
+                            placeholder="Добавьте описание расхода..."
                             className="w-full px-3 sm:px-4 py-3 theme-surface theme-border border rounded-lg sm:rounded-xl theme-text-primary placeholder-gray-400 focus:ring-2 focus:ring-red-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg resize-none text-sm sm:text-base min-h-[88px]"
                             rows={3}
                         />
@@ -290,14 +288,14 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                                 <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-2 border-white/30"></div>
                                 <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-2 border-white border-t-transparent absolute top-0 left-0"></div>
                             </div>
-                            {t('expense.form.creating')}
+                            Создание...
                         </>
                     ) : (
                         <>
                             <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                             </svg>
-                            {t('expense.form.createButton')}
+                            Добавить расход
                         </>
                     )}
                 </button>

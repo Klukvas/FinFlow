@@ -22,7 +22,6 @@ async function globalTeardown(config: FullConfig) {
     // Example: Clear test data
     // await clearTestData(page);
 
-    console.log('Global teardown completed successfully');
 
   } catch (error) {
     console.error('Global teardown failed:', error);

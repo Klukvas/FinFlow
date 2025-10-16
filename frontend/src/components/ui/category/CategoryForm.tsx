@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { CreateCategoryRequest, Category } from '@/types';
 import { useApiClients } from '@hooks';
-import { FormErrorHandler } from '@/utils/formErrorHandler';
+import { ErrorHandler } from '@/utils/errorHandler';
 
 interface CategoryFormProps {
   mode: 'create' | 'edit';
@@ -37,7 +37,6 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
   });
   const [parentCategories, setParentCategories] = useState<Category[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
 
   // Helper function to check if a category is a child of the current category (for edit mode)
@@ -53,11 +52,9 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
   const fetchParentCategories = useCallback(async () => {
     try {
       const res = await category.getCategories(true); // Get flat list
-      console.log('CategoryForm: getCategories response:', res, 'Type:', typeof res, 'IsArray:', Array.isArray(res));
       
       if (!('error' in res)) {
         const categories = res as Category[];
-        console.log('CategoryForm: Setting categories:', categories);
         
         if (mode === 'edit' && initialData) {
           // Filter out the current category and its children to prevent circular references
@@ -65,17 +62,14 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
             cat.id !== initialData.id && 
             !isChildCategory(cat, initialData.id, categories)
           );
-          console.log('CategoryForm: Setting filtered categories:', filteredCategories);
           setParentCategories(filteredCategories);
         } else {
           setParentCategories(categories);
         }
       } else {
-        console.error('Error fetching parent categories:', res.error);
         setParentCategories([]); // Set empty array as fallback
       }
     } catch (err) {
-      console.error('Error fetching parent categories:', err);
       setParentCategories([]); // Set empty array as fallback
     }
   }, [category, mode, initialData]);
@@ -96,7 +90,6 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
     e.preventDefault();
     setIsLoading(true);
     setError(null);
-    FormErrorHandler.clearFieldErrors(setFieldErrors);
 
     try {
       await onSubmit(formData);
@@ -106,7 +99,7 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
     } catch (err) {
       const errorMessage = mode === 'create' ? t('category.form.createError') : t('category.form.updateError');
       setError(errorMessage);
-      FormErrorHandler.handleFormError(err, errorMessage, setFieldErrors);
+      ErrorHandler.handleApiError(err, errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -121,9 +114,6 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
     mode === 'create' ? t('category.form.creating') : t('category.form.updating'), 
     [mode, t]
   );
-
-  // Debug logging
-  console.log('CategoryForm: parentCategories state:', parentCategories, 'Type:', typeof parentCategories, 'IsArray:', Array.isArray(parentCategories));
 
   return (
     <div className="w-full">
@@ -145,14 +135,9 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
               value={formData.name}
               onChange={handleChange}
               placeholder={t('category.form.namePlaceholder')}
-              className={`w-full px-3 sm:px-4 py-3 theme-surface border rounded-lg sm:rounded-xl theme-text-primary placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px] ${
-                FormErrorHandler.hasFieldError(fieldErrors, 'name') ? 'border-red-500' : 'theme-border'
-              }`}
+              className="w-full px-3 sm:px-4 py-3 theme-surface border theme-border rounded-lg sm:rounded-xl theme-text-primary placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px]"
               required
             />
-            {FormErrorHandler.hasFieldError(fieldErrors, 'name') && (
-              <p className="text-sm text-red-500 mt-1">{FormErrorHandler.getFieldError(fieldErrors, 'name')}</p>
-            )}
           </div>
 
           <div className="space-y-2">
@@ -166,16 +151,11 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
               name="type"
               value={formData.type}
               onChange={handleChange}
-              className={`w-full px-3 sm:px-4 py-3 theme-surface border rounded-lg sm:rounded-xl theme-text-primary focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px] ${
-                FormErrorHandler.hasFieldError(fieldErrors, 'type') ? 'border-red-500' : 'theme-border'
-              }`}
+              className="w-full px-3 sm:px-4 py-3 theme-surface border theme-border rounded-lg sm:rounded-xl theme-text-primary focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px]"
             >
               <option value="EXPENSE">{t('category.expense')}</option>
               <option value="INCOME">{t('category.income')}</option>
             </select>
-            {FormErrorHandler.hasFieldError(fieldErrors, 'type') && (
-              <p className="text-sm text-red-500 mt-1">{FormErrorHandler.getFieldError(fieldErrors, 'type')}</p>
-            )}
           </div>
 
           <div className="space-y-2">
@@ -193,7 +173,7 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
             >
               <option value="">{t('category.form.noParentCategory')}</option>
               {Array.isArray(parentCategories) && parentCategories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
+                <option key={cat.id} value={cat.id} data-testid={`category-parent-option-${cat.name.toLowerCase().replace(/\s+/g, '-')}`}>
                   {cat.name}
                 </option>
               ))}
@@ -201,7 +181,7 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
           </div>
 
           {error && (
-            <div className="theme-error-light border theme-border rounded-lg sm:rounded-xl p-3 sm:p-4">
+            <div className="theme-error-light border theme-border rounded-lg sm:rounded-xl p-3 sm:p-4" data-testid='category-form-error'>
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="w-4 h-4 sm:w-5 sm:h-5 text-red-500 flex-shrink-0">
                   <svg fill="currentColor" viewBox="0 0 20 20">

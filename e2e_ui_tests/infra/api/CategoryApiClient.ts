@@ -25,7 +25,7 @@ export class CategoryApiClient extends BaseApiClient {
     if (filters.size) params.append('size', filters.size.toString());
     
     const queryString = params.toString();
-    const url = queryString ? `/?${queryString}` : '/';
+    const url = queryString ? `/categories/?${queryString}` : '/categories/';
     
     return this.makeRequest(async () => {
       return await this.get<PaginatedResponse<Category>>(url);
@@ -34,25 +34,25 @@ export class CategoryApiClient extends BaseApiClient {
 
   async getCategory(id: number): Promise<ApiResponse<Category>> {
     return this.makeRequest(async () => {
-      return await this.get<Category>(`/${id}`);
+      return await this.get<Category>(`/categories/${id}`);
     });
   }
 
   async createCategory(data: CreateCategoryRequest): Promise<ApiResponse<Category>> {
     return this.makeRequest(async () => {
-      return await this.post<Category>('/', data);
+      return await this.post<Category>('/categories/', data);
     });
   }
 
   async updateCategory(id: number, data: UpdateCategoryRequest): Promise<ApiResponse<Category>> {
     return this.makeRequest(async () => {
-      return await this.put<Category>(`/${id}`, data);
+      return await this.put<Category>(`/categories/${id}`, data);
     });
   }
 
   async deleteCategory(id: number): Promise<ApiResponse<void>> {
     return this.makeRequest(async () => {
-      return await this.delete<void>(`/${id}`);
+      return await this.delete<void>(`/categories/${id}`);
     });
   }
 
@@ -64,16 +64,12 @@ export class CategoryApiClient extends BaseApiClient {
 
   // Helper methods for common operations
   async getAllCategoriesFlat(): Promise<ApiResponse<Category[]>> {
-    console.log('📡 CategoryApiClient: Calling getCategories with flat=true, size=1000');
-    const response = await this.getCategories({ flat: true, size: 1000 });
-    console.log('📡 CategoryApiClient: getCategories response:', response);
+    const response = await this.getCategories({ flat: true, size: 100 });
     
     if (response.data) {
-      console.log(`📡 CategoryApiClient: Returning ${response.data.items.length} categories`);
       return { data: response.data.items };
     }
     
-    console.log('📡 CategoryApiClient: No data in response, returning error response');
     return { error: response.error || 'No categories found' };
   }
 

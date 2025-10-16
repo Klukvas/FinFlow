@@ -92,12 +92,6 @@ export class PDFParserApiClient {
       formData.append('bank_type', bankType);
     }
 
-    console.log('API Client - Sending FormData:', {
-      hasFile: formData.has('file'),
-      fileSize: file.size,
-      bankType: bankType || 'none',
-      formDataEntries: Array.from(formData.entries())
-    });
 
     return this.httpClient.post<PDFParseResponse>('/parse', formData);
   }

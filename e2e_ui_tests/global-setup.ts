@@ -5,7 +5,6 @@ async function globalSetup(config: FullConfig) {
   const page = await browser.newPage();
   // Set base URL
   const baseURL = config.projects[0].use.baseURL || 'http://localhost:3000';
-  console.log(`Using base URL: ${baseURL}`);
 
   // Wait for the application to be ready
   await page.goto(baseURL);
@@ -27,7 +26,6 @@ async function globalSetup(config: FullConfig) {
   // Example: Create a test user if needed
   // await createTestUser(page);
 
-  console.log('sGlobal setup completed successfully');
 
   await browser.close();
 }

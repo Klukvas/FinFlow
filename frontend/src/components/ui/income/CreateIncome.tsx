@@ -5,7 +5,7 @@ import { Category, IncomeCreate, AccountResponse, CategoryListResponse } from '@
 import { Button } from '@/components/ui/shared/Button';
 import { MoneyInput } from '@/components/ui/forms/MoneyInput';
 import { CurrencySelect } from '@/components/ui/forms/CurrencySelect';
-import { FormErrorHandler } from '@/utils/formErrorHandler';
+import { ErrorHandler } from '@/utils/errorHandler';
 // removed unused icon and config imports
 
 interface CreateIncomeProps {
@@ -26,7 +26,6 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) =
   const [categories, setCategories] = useState<Category[]>([]);
   const [accounts, setAccounts] = useState<AccountResponse[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [_, setFieldErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -89,7 +88,6 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) =
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    FormErrorHandler.clearFieldErrors(setFieldErrors);
     setIsLoading(true);
 
     try {
@@ -114,7 +112,9 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) =
         });
       }
     } catch (err) {
-      FormErrorHandler.handleFormError(err, t('income.form.createError'), setFieldErrors);
+      const errorMessage = t('income.form.createError');
+      setError(errorMessage);
+      ErrorHandler.handleApiError(err, errorMessage);
     } finally {
       setIsLoading(false);
     }

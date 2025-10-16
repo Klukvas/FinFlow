@@ -1,5 +1,10 @@
 export interface CategoryData {
     name: string;
-    type?: 'expense' | 'income' | 'Доходы' | 'Расходы';
+    type: 'EXPENSE' | 'INCOME';
     parentCategoryName?: string;
-  }
+}
+
+export type CreateCategoryFailureData = CategoryData & {
+  toastErrorMessage?: string;
+  formErrorMessage?: string;
+}

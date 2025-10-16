@@ -24,14 +24,29 @@ const testUser: UserCredentials = {
 // Generate random suffix for test categories to avoid conflicts
 const randomSuffix = Math.random().toString(36).substring(2, 8);
 
-const testCategory: CategoryData = {
+const expenceRootCategory: CategoryData = {
   name: `Test Category ${randomSuffix}`,
+  type: 'EXPENSE'
 };
 
-const testCategoryIncome: CategoryData = {
-  name: `Test Income Category ${randomSuffix}`,
-  type: 'Доходы',
+const childExpenceCategory: CategoryData = {
+  name: `Child Test Category ${randomSuffix}`,
+  type: 'EXPENSE',
+  parentCategoryName: expenceRootCategory.name
 };
+
+const incomeRootCategory: CategoryData = {
+  name: `Income Root Category ${randomSuffix}`,
+  type: 'INCOME',
+};
+
+const childIncomeCategory: CategoryData = {
+  name: `Child Income Category ${randomSuffix}`,
+  type: 'INCOME',
+  parentCategoryName: incomeRootCategory.name
+};
+
+
 
 test.describe('Category Management', () => {
   let auth: AuthActions;
@@ -40,47 +55,96 @@ test.describe('Category Management', () => {
   let sidebar: SidebarInterface;
   let categoryApi: CategoryApiActions;
   let userApi: UserApiActions;
+
+  test.beforeAll(async () => {
+    userApi = new UserApiActions(new UserApiClient('http://localhost:8001'));
+    categoryApi = new CategoryApiActions(new CategoryApiClient('http://localhost:8002'));
+  })
   test.beforeEach(async ({ page }) => {
     auth = new AuthActions(page);
     category = new CategoryActions(page);
     navigation = new NavigationActions(page);
     sidebar = new SidebarInterface(page);
 
-    userApi = new UserApiActions(new UserApiClient('http://localhost:8001'));
     const token = await userApi.getToken(testUser.email, testUser.password);
-    categoryApi = new CategoryApiActions(new CategoryApiClient('http://localhost:8002'));
+    
     await categoryApi.deleteAllCategories(token);
 
-    await page.goto('')
     await auth.login(testUser.email, testUser.password);
     await sidebar.navigateToCategory();
 
   });
 
-  test.afterEach(async ({ page }) => {
-    // await category.delete(testCategory.name);
+  test.afterEach(async () => {
   });
 
   test.describe('Create Category', () => {
-    test('should create a new expense category', async ({ page }) => {
-      await category.createCategory({...testCategory})
-      await category.expectCategoryCreated({...testCategory})
-    });
-  
-    test('should create a new income category', async ({ page }) => {
-      await category.createCategory({...testCategoryIncome})
-      await category.expectCategoryCreated({...testCategoryIncome})
-    });
+    test.describe('Happy Path', () => {
+      test('should create a new expense category', async ({ page }) => {
+        await category.createCategory({...expenceRootCategory})
+        await category.expectCategoryCreated({...expenceRootCategory})
+      });
+    
+      test('should create a new income category', async ({ page }) => {
+        await category.createCategory({...incomeRootCategory})
+        await category.expectCategoryCreated({...incomeRootCategory})
+      });
+
+      test('should create a new expense category with parent category', async ({}) => {
+        await category.createCategory({...expenceRootCategory})
+        await category.expectCategoryCreated({...expenceRootCategory})
+
+        await category.createCategory({...childExpenceCategory})
+        await category.expectCategoryCreated({...childExpenceCategory})
+
+      })
+
+      test('should create a new income category with parent category', async ({}) => {
+        await category.createCategory({...incomeRootCategory})
+        await category.expectCategoryCreated({...incomeRootCategory})
+
+        await category.createCategory({...childIncomeCategory})
+        await category.expectCategoryCreated({...childIncomeCategory})
+
+      })
+    })
+    test.describe('Unhappy Path', () => {
+      test('should not create a category with the same name', async ({page}) => {
+        await category.createCategory({...expenceRootCategory})
+        await category.expectCategoryCreated({...expenceRootCategory})
+
+        await category.createCategoryAndExpectFailure({
+          ...expenceRootCategory, 
+          toastErrorMessage: `Category name '${expenceRootCategory.name}' already exists for this user`, 
+          formErrorMessage: 'Error creating category'
+        })
+
+      })
+      test('should not create a category with the same name (different category type)', async ({page}) => {
+        await category.createCategory({...expenceRootCategory})
+        await category.expectCategoryCreated({...expenceRootCategory})
+
+        await category.createCategoryAndExpectFailure({
+          ...expenceRootCategory,
+          type: 'INCOME',
+          toastErrorMessage: `Category name '${expenceRootCategory.name}' already exists for this user`, 
+          formErrorMessage: 'Error creating category'
+        })
+
+      })
+    })
+
+    
   })
 
   test.describe('Edit Category', () => {
     test('should edit an existing category (name only)', async ({ page }) => {
-      await category.createCategory({...testCategoryIncome})
-      await category.expectCategoryCreated({...testCategoryIncome})
+      await category.createCategory({...incomeRootCategory})
+      await category.expectCategoryCreated({...incomeRootCategory})
   
-      const updatedCategory = {...testCategoryIncome, name: 'Updated Test Category'}
+      const updatedCategory = {...incomeRootCategory, name: 'Updated Test Category'}
   
-      await category.editCategory(testCategoryIncome.name, updatedCategory)
+      await category.editCategory(incomeRootCategory.name, updatedCategory)
       await category.expectCategoryCreated(updatedCategory)
   
     });

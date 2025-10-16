@@ -48,9 +48,6 @@ export class AuthHttpClient {
 
       // If token expired, try to refresh
       if (response.status === 401 && token) {
-        if (config.debug) {
-          console.log('Token expired, attempting refresh...');
-        }
         
         const refreshed = await this.refreshToken();
         if (refreshed) {

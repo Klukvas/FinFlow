@@ -56,7 +56,9 @@ export class ErrorHandler {
     const errorMessage = this.getErrorMessage(error, fallbackMessage);
 
     console.error('API Error:', error);
-    toast.error(errorMessage);
+    toast.error(errorMessage, {
+      testId: 'error-toast'
+    });
   }
 
   static handleAsyncError<T>(

@@ -17,7 +17,9 @@
     "reporter": [
       [
         "html",
-        null
+        {
+          "open": "never"
+        }
       ],
       [
         "json",
@@ -67,102 +69,58 @@
         {
           "title": "Category Management",
           "file": "category.spec.ts",
-          "line": 36,
+          "line": 51,
           "column": 6,
           "specs": [],
           "suites": [
             {
               "title": "Create Category",
               "file": "category.spec.ts",
-              "line": 64,
+              "line": 79,
               "column": 8,
-              "specs": [
+              "specs": [],
+              "suites": [
                 {
-                  "title": "should create a new expense category",
-                  "ok": false,
-                  "tags": [],
-                  "tests": [
+                  "title": "Unhappy Path",
+                  "file": "category.spec.ts",
+                  "line": 109,
+                  "column": 10,
+                  "specs": [
                     {
-                      "timeout": 0,
-                      "annotations": [],
-                      "expectedStatus": "passed",
-                      "projectId": "chromium",
-                      "projectName": "chromium",
-                      "results": [
+                      "title": "should not create a category with the same name (different category type)",
+                      "ok": true,
+                      "tags": [],
+                      "tests": [
                         {
-                          "workerIndex": 0,
-                          "parallelIndex": 0,
-                          "status": "failed",
-                          "duration": 14968,
-                          "error": {
-                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('table-category-test-category-66xo0l')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('table-category-test-category-66xo0l')\u001b[22m\n",
-                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('table-category-test-category-66xo0l')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('table-category-test-category-66xo0l')\u001b[22m\n\n    at CategoryActions.expectCategoryCreated (/Users/andreypavlenko/Desktop/Projects/Python/accounting_app/e2e_ui_tests/interface/CategoryActions.ts:45:35)\n    at /Users/andreypavlenko/Desktop/Projects/Python/accounting_app/e2e_ui_tests/specs/category.spec.ts:67:22",
-                            "location": {
-                              "file": "/Users/andreypavlenko/Desktop/Projects/Python/accounting_app/e2e_ui_tests/interface/CategoryActions.ts",
-                              "column": 35,
-                              "line": 45
-                            },
-                            "snippet": "\u001b[90m   at \u001b[39m../interface/CategoryActions.ts:45\n\n\u001b[0m \u001b[90m 43 |\u001b[39m   \u001b[36masync\u001b[39m expectCategoryCreated(category\u001b[33m:\u001b[39m \u001b[33mCategoryData\u001b[39m){\n \u001b[90m 44 |\u001b[39m     \u001b[36mconst\u001b[39m createdCategory \u001b[33m=\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mcategoryPage\u001b[33m.\u001b[39mgetCategoryItem(category\u001b[33m.\u001b[39mname)\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 45 |\u001b[39m     \u001b[36mawait\u001b[39m expect(createdCategory)\u001b[33m.\u001b[39mtoBeVisible()\n \u001b[90m    |\u001b[39m                                   \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 46 |\u001b[39m     \u001b[36mawait\u001b[39m expect(createdCategory\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'category-name'\u001b[39m))\u001b[33m.\u001b[39mtoContainText(category\u001b[33m.\u001b[39mname)\n \u001b[90m 47 |\u001b[39m     \u001b[36mawait\u001b[39m expect(createdCategory\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'category-type'\u001b[39m))\u001b[33m.\u001b[39mtoContainText(category\u001b[33m.\u001b[39mtype \u001b[33m||\u001b[39m \u001b[32m'Расходы'\u001b[39m)\n \u001b[90m 48 |\u001b[39m     \u001b[36mif\u001b[39m(category\u001b[33m.\u001b[39mparentCategoryName){\u001b[0m"
-                          },
-                          "errors": [
-                            {
-                              "location": {
-                                "file": "/Users/andreypavlenko/Desktop/Projects/Python/accounting_app/e2e_ui_tests/interface/CategoryActions.ts",
-                                "column": 35,
-                                "line": 45
-                              },
-                              "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('table-category-test-category-66xo0l')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('table-category-test-category-66xo0l')\u001b[22m\n\n\n\u001b[90m   at \u001b[39m../interface/CategoryActions.ts:45\n\n\u001b[0m \u001b[90m 43 |\u001b[39m   \u001b[36masync\u001b[39m expectCategoryCreated(category\u001b[33m:\u001b[39m \u001b[33mCategoryData\u001b[39m){\n \u001b[90m 44 |\u001b[39m     \u001b[36mconst\u001b[39m createdCategory \u001b[33m=\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mcategoryPage\u001b[33m.\u001b[39mgetCategoryItem(category\u001b[33m.\u001b[39mname)\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 45 |\u001b[39m     \u001b[36mawait\u001b[39m expect(createdCategory)\u001b[33m.\u001b[39mtoBeVisible()\n \u001b[90m    |\u001b[39m                                   \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 46 |\u001b[39m     \u001b[36mawait\u001b[39m expect(createdCategory\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'category-name'\u001b[39m))\u001b[33m.\u001b[39mtoContainText(category\u001b[33m.\u001b[39mname)\n \u001b[90m 47 |\u001b[39m     \u001b[36mawait\u001b[39m expect(createdCategory\u001b[33m.\u001b[39mgetByTestId(\u001b[32m'category-type'\u001b[39m))\u001b[33m.\u001b[39mtoContainText(category\u001b[33m.\u001b[39mtype \u001b[33m||\u001b[39m \u001b[32m'Расходы'\u001b[39m)\n \u001b[90m 48 |\u001b[39m     \u001b[36mif\u001b[39m(category\u001b[33m.\u001b[39mparentCategoryName){\u001b[0m\n\u001b[2m    at CategoryActions.expectCategoryCreated (/Users/andreypavlenko/Desktop/Projects/Python/accounting_app/e2e_ui_tests/interface/CategoryActions.ts:45:35)\u001b[22m\n\u001b[2m    at /Users/andreypavlenko/Desktop/Projects/Python/accounting_app/e2e_ui_tests/specs/category.spec.ts:67:22\u001b[22m"
-                            }
-                          ],
-                          "stdout": [
-                            {
-                              "text": "🗑️ deleteAllCategories: Starting cleanup with token: Present\n"
-                            },
-                            {
-                              "text": "📋 deleteAllCategories: Fetching all categories...\n"
-                            },
-                            {
-                              "text": "📋 deleteAllCategories: Categories response: { error: \u001b[32m'Not Found'\u001b[39m }\n"
-                            },
-                            {
-                              "text": "⚠️ deleteAllCategories: No categories found or error in response\n"
-                            }
-                          ],
-                          "stderr": [],
-                          "retry": 0,
-                          "startTime": "2025-10-16T13:52:57.468Z",
+                          "timeout": 0,
                           "annotations": [],
-                          "attachments": [
+                          "expectedStatus": "passed",
+                          "projectId": "chromium",
+                          "projectName": "chromium",
+                          "results": [
                             {
-                              "name": "screenshot",
-                              "contentType": "image/png",
-                              "path": "/Users/andreypavlenko/Desktop/Projects/Python/accounting_app/e2e_ui_tests/test-results/category-Category-Manageme-639be-eate-a-new-expense-category-chromium/test-failed-1.png"
-                            },
-                            {
-                              "name": "video",
-                              "contentType": "video/webm",
-                              "path": "/Users/andreypavlenko/Desktop/Projects/Python/accounting_app/e2e_ui_tests/test-results/category-Category-Manageme-639be-eate-a-new-expense-category-chromium/video.webm"
-                            },
-                            {
-                              "name": "error-context",
-                              "contentType": "text/markdown",
-                              "path": "/Users/andreypavlenko/Desktop/Projects/Python/accounting_app/e2e_ui_tests/test-results/category-Category-Manageme-639be-eate-a-new-expense-category-chromium/error-context.md"
+                              "workerIndex": 0,
+                              "parallelIndex": 0,
+                              "status": "passed",
+                              "duration": 4715,
+                              "errors": [],
+                              "stdout": [],
+                              "stderr": [],
+                              "retry": 0,
+                              "startTime": "2025-10-16T20:03:30.448Z",
+                              "annotations": [],
+                              "attachments": []
                             }
                           ],
-                          "errorLocation": {
-                            "file": "/Users/andreypavlenko/Desktop/Projects/Python/accounting_app/e2e_ui_tests/interface/CategoryActions.ts",
-                            "column": 35,
-                            "line": 45
-                          }
+                          "status": "expected"
                         }
                       ],
-                      "status": "unexpected"
+                      "id": "adbed821842d55a94d05-6b555f4489ec5ea2f2c7",
+                      "file": "category.spec.ts",
+                      "line": 121,
+                      "column": 7
                     }
-                  ],
-                  "id": "adbed821842d55a94d05-074f8f1dbc33cac3d0d2",
-                  "file": "category.spec.ts",
-                  "line": 65,
-                  "column": 5
+                  ]
                 }
               ]
             }
@@ -171,17 +129,13 @@
       ]
     }
   ],
-  "errors": [
-    {
-      "message": "\u001b[31mTesting stopped early after 1 maximum allowed failures.\u001b[39m"
-    }
-  ],
+  "errors": [],
   "stats": {
-    "startTime": "2025-10-16T13:52:54.180Z",
-    "duration": 20904.061999999998,
-    "expected": 0,
+    "startTime": "2025-10-16T20:03:27.934Z",
+    "duration": 9520.796,
+    "expected": 1,
     "skipped": 0,
-    "unexpected": 1,
+    "unexpected": 0,
     "flaky": 0
   }
 }
