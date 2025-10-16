@@ -7,4 +7,5 @@ export interface CategoryData {
 export type CreateCategoryFailureData = CategoryData & {
   toastErrorMessage?: string;
   formErrorMessage?: string;
+  nameError?: string;
 }

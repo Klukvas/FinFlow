@@ -102,11 +102,13 @@
     "form": {
       "name": "Category Name",
       "namePlaceholder": "Enter category name",
+      "nameRequired": "Category name is required",
       "type": "Category Type",
       "parentCategory": "Parent Category",
       "noParentCategory": "No parent category",
       "optional": "(optional)",
       "required": "*",
+      "readOnly": "(read-only)",
       "createButton": "Create Category",
       "updateButton": "Save Changes",
       "creating": "Creating...",

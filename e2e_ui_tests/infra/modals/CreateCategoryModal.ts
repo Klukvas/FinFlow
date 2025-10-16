@@ -11,10 +11,12 @@ export class CreateCategoryModal extends BasePage {
   submitButton: Locator
   errorToast: Locator
   formError: Locator
+  nameError: Locator
   constructor(page: Page) {
     super(page);
     this.modal = this.page.getByTestId('category-modal')
     this.nameInput = this.modal.getByTestId('category-name-input')
+    this.nameError = this.modal.getByTestId('category-name-error')
     this.categoryTypeSelect = this.modal.getByTestId('category-type-select')
     this.categoryParentSelect = this.modal.getByTestId('category-parent-select')
     this.closeButton = this.modal.getByTestId('modal-close-button')
@@ -26,6 +28,13 @@ export class CreateCategoryModal extends BasePage {
     await expect(this.errorToast).toBeVisible()
     if(errorMessage){
       await expect(this.errorToast).toContainText(errorMessage, {ignoreCase: true})
+    }
+  }
+
+  async expectNameError(errorMessage?: string): Promise<void> {
+    await expect(this.nameError).toBeVisible()
+    if(errorMessage){
+      await expect(this.nameError).toContainText(errorMessage, {ignoreCase: true})
     }
   }
 
@@ -45,8 +54,10 @@ export class CreateCategoryModal extends BasePage {
     await expect(this.closeButton).toBeVisible()
   }
 
-  async fillForm({name, type, parentCategoryName}: CategoryData){
-    await this.nameInput.fill(name)
+  async fillForm({name, type, parentCategoryName}: Partial<CategoryData>){
+    if(name){
+      await this.nameInput.fill(name)
+    }
     if(type){
       await this.categoryTypeSelect.selectOption(type)
     }

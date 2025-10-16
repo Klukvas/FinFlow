@@ -69,25 +69,25 @@
         {
           "title": "Category Management",
           "file": "category.spec.ts",
-          "line": 51,
+          "line": 56,
           "column": 6,
           "specs": [],
           "suites": [
             {
-              "title": "Create Category",
+              "title": "Edit Category",
               "file": "category.spec.ts",
-              "line": 79,
+              "line": 155,
               "column": 8,
               "specs": [],
               "suites": [
                 {
-                  "title": "Unhappy Path",
+                  "title": "Happy Path",
                   "file": "category.spec.ts",
-                  "line": 109,
+                  "line": 157,
                   "column": 10,
                   "specs": [
                     {
-                      "title": "should not create a category with the same name (different category type)",
+                      "title": "should add parent category",
                       "ok": true,
                       "tags": [],
                       "tests": [
@@ -102,12 +102,12 @@
                               "workerIndex": 0,
                               "parallelIndex": 0,
                               "status": "passed",
-                              "duration": 4715,
+                              "duration": 6097,
                               "errors": [],
                               "stdout": [],
                               "stderr": [],
                               "retry": 0,
-                              "startTime": "2025-10-16T20:03:30.448Z",
+                              "startTime": "2025-10-16T20:34:57.706Z",
                               "annotations": [],
                               "attachments": []
                             }
@@ -115,9 +115,9 @@
                           "status": "expected"
                         }
                       ],
-                      "id": "adbed821842d55a94d05-6b555f4489ec5ea2f2c7",
+                      "id": "adbed821842d55a94d05-aa1443161fc455e3bb49",
                       "file": "category.spec.ts",
-                      "line": 121,
+                      "line": 176,
                       "column": 7
                     }
                   ]
@@ -131,8 +131,8 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2025-10-16T20:03:27.934Z",
-    "duration": 9520.796,
+    "startTime": "2025-10-16T20:34:55.521Z",
+    "duration": 10203.274000000001,
     "expected": 1,
     "skipped": 0,
     "unexpected": 0,

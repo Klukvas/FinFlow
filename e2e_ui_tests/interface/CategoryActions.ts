@@ -13,6 +13,11 @@ export class CategoryActions {
     this.categoryPage = new CategoryPage(page);
     this.createCategoryModal = new CreateCategoryModal(page);
   }
+  async expectCategoryTypeSelectState(type: 'EXPENSE' | 'INCOME', state: 'disabled' | 'enabled'){
+    const categoryType = this.createCategoryModal.categoryTypeSelect
+    state === 'disabled' ? await expect(categoryType).toBeDisabled() : await expect(categoryType).toBeEnabled()
+    await expect(categoryType).toHaveValue(type)
+  }
 
   async openCreateCategoryModal(){
     await this.categoryPage.createCategoryButton.click()
@@ -26,13 +31,20 @@ export class CategoryActions {
     await this.expectCreateModalState('hidden')
   }
 
-  async createCategoryAndExpectFailure({name, type, parentCategoryName, toastErrorMessage, formErrorMessage}: CreateCategoryFailureData){
+  async createCategoryAndExpectFailure({name, type, parentCategoryName, toastErrorMessage, formErrorMessage, nameError}: CreateCategoryFailureData){
     await this.openCreateCategoryModal()
     await this.createCategoryModal.fillForm({name, type, parentCategoryName})
     await this.createCategoryModal.submitButton.click()
     await this.expectCreateModalState('visible')
-    await this.createCategoryModal.expectErrorToast(toastErrorMessage)
-    await this.createCategoryModal.expectFormError(formErrorMessage)
+    if(toastErrorMessage){
+      await this.createCategoryModal.expectErrorToast(toastErrorMessage)
+    }
+    if(formErrorMessage){
+      await this.createCategoryModal.expectFormError(formErrorMessage)
+    }
+    if(nameError){
+      await this.createCategoryModal.expectNameError(nameError)
+    }
   }
 
   async expectCreateModalState(state?: 'hidden' | 'visible'){
@@ -40,10 +52,13 @@ export class CategoryActions {
     state === 'hidden' ?await exp.toBeHidden() : await exp.toBeVisible()
   }
 
-
-  async editCategory(categoryName: string, updatedData: CategoryData){
+  async openEditCategoryModal(categoryName: string){
     await this.categoryPage.getCategoryItem(categoryName).getByTestId('category-edit-button').click()
-    await this.page.pause()
+    await this.createCategoryModal.expectModal()
+  }
+
+  async editCategory(categoryName: string, updatedData: Partial<CategoryData>){
+    await this.openEditCategoryModal(categoryName)
     await this.createCategoryModal.fillForm(updatedData)
     await this.createCategoryModal.submitButton.click()
     await this.expectCreateModalState('hidden')

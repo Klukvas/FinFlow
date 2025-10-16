@@ -38,6 +38,7 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
   const [parentCategories, setParentCategories] = useState<Category[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // Helper function to check if a category is a child of the current category (for edit mode)
   const isChildCategory = (cat: Category, parentId: number, allCategories: Category[]): boolean => {
@@ -84,12 +85,29 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
       ...prev,
       [name]: name === 'parent_id' ? (value ? parseInt(value) : undefined) : value
     }));
-  }, []);
+    
+    // Clear field error when user starts typing
+    if (fieldErrors[name]) {
+      setFieldErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  }, [fieldErrors]);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
+    setFieldErrors({});
+
+    // Client-side validation for name field
+    if (!formData.name || !formData.name.trim()) {
+      setFieldErrors({ name: t('category.form.nameRequired') });
+      setIsLoading(false);
+      return;
+    }
 
     try {
       await onSubmit(formData);
@@ -103,7 +121,7 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
     } finally {
       setIsLoading(false);
     }
-  }, [formData, onSubmit, onSuccess, mode]);
+  }, [formData, onSubmit, onSuccess, mode, t]);
 
   const submitButtonText = useMemo(() => 
     mode === 'create' ? t('category.form.createButton') : t('category.form.updateButton'), 
@@ -120,6 +138,7 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
       <form
         onSubmit={handleSubmit}
         className="space-y-4 sm:space-y-6"
+        noValidate
       >
         <div className="space-y-4 sm:space-y-6">
           <div className="space-y-2">
@@ -135,15 +154,23 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
               value={formData.name}
               onChange={handleChange}
               placeholder={t('category.form.namePlaceholder')}
-              className="w-full px-3 sm:px-4 py-3 theme-surface border theme-border rounded-lg sm:rounded-xl theme-text-primary placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px]"
-              required
+              className={`w-full px-3 sm:px-4 py-3 theme-surface border rounded-lg sm:rounded-xl theme-text-primary placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px] ${
+                fieldErrors.name ? 'border-red-500' : 'theme-border'
+              }`}
             />
+            {fieldErrors.name && (
+              <p className="text-sm text-red-500 mt-1" data-testid="category-name-error">{fieldErrors.name}</p>
+            )}
           </div>
 
           <div className="space-y-2">
             <label className="block text-sm font-semibold theme-text-primary" htmlFor="type">
               {t('category.form.type')}
-              <span className="text-red-500 ml-1">{t('category.form.required')}</span>
+              {mode === 'edit' ? (
+                <span className="theme-text-tertiary font-normal ml-1">{t('category.form.readOnly')}</span>
+              ) : (
+                <span className="text-red-500 ml-1">{t('category.form.required')}</span>
+              )}
             </label>
             <select
               id="type"
@@ -151,7 +178,10 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
               name="type"
               value={formData.type}
               onChange={handleChange}
-              className="w-full px-3 sm:px-4 py-3 theme-surface border theme-border rounded-lg sm:rounded-xl theme-text-primary focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px]"
+              disabled={mode === 'edit'}
+              className={`w-full px-3 sm:px-4 py-3 theme-surface border theme-border rounded-lg sm:rounded-xl theme-text-primary focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px] ${
+                mode === 'edit' ? 'opacity-60 cursor-not-allowed' : ''
+              }`}
             >
               <option value="EXPENSE">{t('category.expense')}</option>
               <option value="INCOME">{t('category.income')}</option>

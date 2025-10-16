@@ -40,6 +40,11 @@ const incomeRootCategory: CategoryData = {
   type: 'INCOME',
 };
 
+const incomeRootCategory2: CategoryData = {
+  name: `Income Root Category 2 ${randomSuffix}`,
+  type: 'INCOME',
+};
+
 const childIncomeCategory: CategoryData = {
   name: `Child Income Category ${randomSuffix}`,
   type: 'INCOME',
@@ -70,6 +75,7 @@ test.describe('Category Management', () => {
     
     await categoryApi.deleteAllCategories(token);
 
+    await page.goto('')
     await auth.login(testUser.email, testUser.password);
     await sidebar.navigateToCategory();
 
@@ -79,6 +85,7 @@ test.describe('Category Management', () => {
   });
 
   test.describe('Create Category', () => {
+    
     test.describe('Happy Path', () => {
       test('should create a new expense category', async ({ page }) => {
         await category.createCategory({...expenceRootCategory})
@@ -108,6 +115,7 @@ test.describe('Category Management', () => {
 
       })
     })
+
     test.describe('Unhappy Path', () => {
       test('should not create a category with the same name', async ({page}) => {
         await category.createCategory({...expenceRootCategory})
@@ -132,46 +140,78 @@ test.describe('Category Management', () => {
         })
 
       })
+      test('should not create a category with an empty name', async ({page}) => {
+        await category.createCategoryAndExpectFailure({
+          ...expenceRootCategory,
+          name: '',
+          nameError: 'Category name is required'
+        })
+
+      })
     })
 
-    
   })
 
   test.describe('Edit Category', () => {
-    test('should edit an existing category (name only)', async ({ page }) => {
-      await category.createCategory({...incomeRootCategory})
-      await category.expectCategoryCreated({...incomeRootCategory})
-  
-      const updatedCategory = {...incomeRootCategory, name: 'Updated Test Category'}
-  
-      await category.editCategory(incomeRootCategory.name, updatedCategory)
-      await category.expectCategoryCreated(updatedCategory)
-  
-    });
+
+    test.describe('Happy Path', () => {
+      test('should edit an existing category (name only)', async () => {
+        await category.createCategory({...incomeRootCategory})
+        await category.expectCategoryCreated({...incomeRootCategory})
+    
+        const updatedCategory = {...incomeRootCategory, name: 'Updated Test Category'}
+    
+        await category.editCategory(incomeRootCategory.name, updatedCategory)
+        await category.expectCategoryCreated(updatedCategory)
+    
+      });
+
+      test('type should be read-only', async () => {
+        await category.createCategory({...incomeRootCategory})
+        await category.expectCategoryCreated({...incomeRootCategory})
+        await category.openEditCategoryModal(incomeRootCategory.name)
+        await category.expectCategoryTypeSelectState('INCOME', 'disabled')
+      });
+
+      test('should add parent category', async () => {
+        await category.createCategory({...incomeRootCategory})
+        await category.expectCategoryCreated({...incomeRootCategory})
+
+        await category.createCategory({...incomeRootCategory2})
+        await category.expectCategoryCreated({...incomeRootCategory2})
+
+        await category.editCategory(incomeRootCategory2.name, {parentCategoryName: incomeRootCategory.name})
+        await category.expectCategoryCreated({...incomeRootCategory2, parentCategoryName: incomeRootCategory.name})
+      });
+
+
+    })
+
+
   })
 
   
 
   
 
-  test('should delete a category', async ({ page }) => {
+  test('should delete a category', async () => {
   });
 
-  test('should search categories', async ({ page }) => {
+  test('should search categories', async () => {
   });
 
-  test('should validate required fields in category creation', async ({ page }) => {
+  test('should validate required fields in category creation', async () => {
   });
 
-  test('should show category statistics', async ({ page }) => {
+  test('should show category statistics', async () => {
   });
 
-  test('should handle category creation with special characters', async ({ page }) => {
+  test('should handle category creation with special characters', async () => {
   });
 
-  test('should cancel category creation', async ({ page }) => {
+  test('should cancel category creation', async () => {
   });
 
-  test('should close category modal with close button', async ({ page }) => {
+  test('should close category modal with close button', async () => {
   });
 });
