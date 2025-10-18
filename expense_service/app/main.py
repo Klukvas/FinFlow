@@ -5,6 +5,7 @@ from fastapi.exceptions import RequestValidationError
 from starlette.middleware.base import BaseHTTPMiddleware
 from app.exception_handlers import (
     custom_validation_exception_handler,
+    standardized_error_handler,
     expense_not_found_handler,
     expense_validation_handler,
     expense_amount_handler,
@@ -14,6 +15,7 @@ from app.exception_handlers import (
     http_exception_handler
 )
 from app.exceptions import (
+    StandardizedError,
     ExpenseNotFoundError,
     ExpenseValidationError,
     ExpenseAmountError,
@@ -112,6 +114,7 @@ app = FastAPI(
 
 # Register exception handlers
 app.add_exception_handler(RequestValidationError, custom_validation_exception_handler)
+app.add_exception_handler(StandardizedError, standardized_error_handler)
 app.add_exception_handler(ExpenseNotFoundError, expense_not_found_handler)
 app.add_exception_handler(ExpenseValidationError, expense_validation_handler)
 app.add_exception_handler(ExpenseAmountError, expense_amount_handler)

@@ -9,6 +9,7 @@ from app.schemas.expense import ExpenseCreate, ExpenseUpdate
 from app.clients.category_service_client import CategoryServiceClient
 from app.clients.account_service_client import AccountServiceClient
 from app.exceptions import (
+    ErrorCode,
     ExpenseNotFoundError,
     ExpenseValidationError,
     ExpenseAmountError,
@@ -39,7 +40,11 @@ class ExpenseService:
     def _validate_amount(self, amount: Decimal) -> Decimal:
         """Validate and normalize amount"""
         if amount <= 0:
-            raise ExpenseValidationError("Amount must be greater than 0")
+            raise ExpenseValidationError(
+                "Amount must be greater than 0",
+                ErrorCode.EXPENSE_AMOUNT_INVALID,
+                {"amount": float(amount)}
+            )
         
         if amount > settings.MAX_AMOUNT:
             raise ExpenseAmountError(amount, settings.MAX_AMOUNT)
@@ -64,12 +69,12 @@ class ExpenseService:
         
         # Check if date is not in the future
         if expense_date > date.today():
-            raise ExpenseValidationError("Expense date cannot be in the future")
+            raise ExpenseDateError(str(expense_date), "future")
         
         # Check if date is not too far in the past (e.g., more than 10 years)
         min_date = date.today().replace(year=date.today().year - 10)
         if expense_date < min_date:
-            raise ExpenseValidationError("Expense date cannot be more than 10 years in the past")
+            raise ExpenseDateError(str(expense_date), "too_old")
         
         return expense_date
 
@@ -79,7 +84,7 @@ class ExpenseService:
             return self.category_client.validate_category(category_id, user_id)
         except Exception as e:
             self.logger.error(f"Category validation failed: {e}")
-            raise
+            raise ExternalServiceError("category_service", str(e), ErrorCode.CATEGORY_VALIDATION_FAILED)
 
     def _validate_account(self, account_id: int, user_id: int) -> dict:
         """Validate account exists and belongs to user"""
@@ -87,7 +92,7 @@ class ExpenseService:
             return self.account_client.validate_account(account_id, user_id)
         except Exception as e:
             self.logger.error(f"Account validation failed: {e}")
-            raise
+            raise ExternalServiceError("account_service", str(e), ErrorCode.ACCOUNT_VALIDATION_FAILED)
 
     def _handle_balance_updates(self, expense: Expense, old_amount: float, old_account_id: int, user_id: int) -> None:
         """Handle account balance updates when expense amount or account changes"""
@@ -107,7 +112,11 @@ class ExpenseService:
                     
         except Exception as e:
             self.logger.error(f"Failed to handle balance updates: {e}")
-            raise ExpenseValidationError("Failed to update account balances")
+            raise ExpenseValidationError(
+                "Failed to update account balances",
+                ErrorCode.ACCOUNT_BALANCE_UPDATE_FAILED,
+                {"original_error": str(e)}
+            )
 
     def create(self, data: ExpenseCreate, user_id: int) -> Expense:
         """Create a new expense with proper validation and transaction management"""
@@ -157,7 +166,11 @@ class ExpenseService:
             except Exception as e:
                 self.db.rollback()
                 self.logger.error(f"Database error during expense creation: {e}")
-                raise ExpenseValidationError("Failed to create expense")
+                raise ExpenseValidationError(
+                    "Failed to create expense",
+                    ErrorCode.EXPENSE_CREATION_FAILED,
+                    {"original_error": str(e)}
+                )
             
             
         except (ExpenseValidationError, ExpenseAmountError, ExpenseDateError, 
@@ -167,11 +180,19 @@ class ExpenseService:
         except IntegrityError as e:
             self.db.rollback()
             self.logger.error(f"Database integrity error during expense creation: {e}")
-            raise ExpenseValidationError("Database constraint violation")
+            raise ExpenseValidationError(
+                "Database constraint violation",
+                ErrorCode.DATABASE_CONSTRAINT_VIOLATION,
+                {"original_error": str(e)}
+            )
         except Exception as e:
             self.db.rollback()
             self.logger.error(f"Unexpected error during expense creation: {e}")
-            raise ExpenseValidationError("Failed to create expense")
+            raise ExpenseValidationError(
+                "Failed to create expense",
+                ErrorCode.EXPENSE_CREATION_FAILED,
+                {"original_error": str(e)}
+            )
 
     def get_all(self, user_id: int) -> List[Expense]:
         """Get all expenses for the user"""
@@ -179,7 +200,11 @@ class ExpenseService:
             return self.db.query(Expense).filter(Expense.user_id == user_id).order_by(Expense.date.desc()).all()
         except Exception as e:
             self.logger.error(f"Error retrieving expenses: {e}")
-            raise ExpenseValidationError("Failed to retrieve expenses")
+            raise ExpenseValidationError(
+                "Failed to retrieve expenses",
+                ErrorCode.EXPENSE_RETRIEVAL_FAILED,
+                {"original_error": str(e)}
+            )
 
     def get_all_paginated(self, user_id: int, page: int = 1, size: int = 50) -> tuple[List[Expense], int]:
         """Get paginated expenses for the user"""
@@ -198,7 +223,11 @@ class ExpenseService:
             return expenses, total
         except Exception as e:
             self.logger.error(f"Error retrieving paginated expenses: {e}")
-            raise ExpenseValidationError("Failed to retrieve expenses")
+            raise ExpenseValidationError(
+                "Failed to retrieve expenses",
+                ErrorCode.EXPENSE_RETRIEVAL_FAILED,
+                {"original_error": str(e)}
+            )
 
     def get(self, expense_id: int, user_id: int) -> Expense:
         """Get a specific expense by ID"""
@@ -280,11 +309,19 @@ class ExpenseService:
         except IntegrityError as e:
             self.db.rollback()
             self.logger.error(f"Database integrity error during expense update: {e}")
-            raise ExpenseValidationError("Database constraint violation")
+            raise ExpenseValidationError(
+                "Database constraint violation",
+                ErrorCode.DATABASE_CONSTRAINT_VIOLATION,
+                {"original_error": str(e)}
+            )
         except Exception as e:
             self.db.rollback()
             self.logger.error(f"Unexpected error during expense update: {e}")
-            raise ExpenseValidationError("Failed to update expense")
+            raise ExpenseValidationError(
+                "Failed to update expense",
+                ErrorCode.EXPENSE_UPDATE_FAILED,
+                {"original_error": str(e)}
+            )
 
     def delete(self, expense_id: int, user_id: int) -> dict:
         """Delete an expense with proper validation and transaction management"""
@@ -319,7 +356,11 @@ class ExpenseService:
         except Exception as e:
             self.db.rollback()
             self.logger.error(f"Unexpected error during expense deletion: {e}")
-            raise ExpenseValidationError("Failed to delete expense")
+            raise ExpenseValidationError(
+                "Failed to delete expense",
+                ErrorCode.EXPENSE_DELETE_FAILED,
+                {"original_error": str(e)}
+            )
 
     def get_by_category(self, category_id: int, user_id: int) -> List[Expense]:
         """Get all expenses for a specific category"""
@@ -333,13 +374,21 @@ class ExpenseService:
             ).order_by(Expense.date.desc()).all()
         except Exception as e:
             self.logger.error(f"Error retrieving expenses by category: {e}")
-            raise ExpenseValidationError("Failed to retrieve expenses by category")
+            raise ExpenseValidationError(
+                "Failed to retrieve expenses by category",
+                ErrorCode.EXPENSE_RETRIEVAL_FAILED,
+                {"original_error": str(e), "category_id": category_id}
+            )
 
     def get_by_date_range(self, start_date: date, end_date: date, user_id: int) -> List[Expense]:
         """Get expenses within a date range"""
         try:
             if start_date > end_date:
-                raise ExpenseValidationError("Start date cannot be after end date")
+                raise ExpenseValidationError(
+                    "Start date cannot be after end date",
+                    ErrorCode.INVALID_DATE_RANGE,
+                    {"start_date": str(start_date), "end_date": str(end_date)}
+                )
             
             return self.db.query(Expense).filter(
                 Expense.user_id == user_id,
@@ -348,4 +397,8 @@ class ExpenseService:
             ).order_by(Expense.date.desc()).all()
         except Exception as e:
             self.logger.error(f"Error retrieving expenses by date range: {e}")
-            raise ExpenseValidationError("Failed to retrieve expenses by date range")
+            raise ExpenseValidationError(
+                "Failed to retrieve expenses by date range",
+                ErrorCode.EXPENSE_RETRIEVAL_FAILED,
+                {"original_error": str(e), "start_date": str(start_date), "end_date": str(end_date)}
+            )

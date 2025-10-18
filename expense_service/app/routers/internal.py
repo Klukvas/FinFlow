@@ -6,6 +6,7 @@ from app.services.expense import ExpenseService
 from app.dependencies import get_expense_service_internal, verify_internal_token
 from app.utils.logger import get_logger
 from app.models.expense import Expense
+from app.exceptions import ErrorCode, ExpenseValidationError
 
 # Create a separate router for internal endpoints
 router = APIRouter(prefix="/internal", tags=["Internal"])
@@ -58,9 +59,10 @@ async def internal_expense_create(
         
     except Exception as e:
         logger.error(f"Unexpected error in internal expense creation: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error while creating expense"
+        raise ExpenseValidationError(
+            "Internal server error while creating expense",
+            ErrorCode.EXPENSE_CREATION_FAILED,
+            {"original_error": str(e)}
         )
 
 
@@ -118,9 +120,10 @@ async def get_expenses_by_account(
         
     except Exception as e:
         logger.error(f"Unexpected error retrieving expenses by account: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error while retrieving expenses"
+        raise ExpenseValidationError(
+            "Internal server error while retrieving expenses",
+            ErrorCode.EXPENSE_RETRIEVAL_FAILED,
+            {"original_error": str(e), "account_id": account_id}
         )
 
 
@@ -175,7 +178,8 @@ async def validate_account_for_expenses(
         
     except Exception as e:
         logger.error(f"Account validation failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Account not found or not owned by user"
+        raise ExpenseValidationError(
+            "Account not found or not owned by user",
+            ErrorCode.ACCOUNT_NOT_FOUND,
+            {"original_error": str(e), "account_id": account_id, "user_id": user_id}
         )

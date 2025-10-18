@@ -5,6 +5,7 @@ from app.schemas.expense import ExpenseCreate, ExpenseResponse, ExpenseResponse,
 from app.services.expense import ExpenseService
 from app.dependencies import get_expense_service, get_current_user_id
 from app.exceptions import (
+    ErrorCode,
     ExpenseNotFoundError,
     ExpenseValidationError,
     ExpenseAmountError,
