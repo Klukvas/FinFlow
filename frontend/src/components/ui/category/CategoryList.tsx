@@ -2,6 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Category } from '@types';
 import { useApiClients } from '@hooks';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { DeleteButton, EditButton, PaginationView } from '@/components/ui';
 
 interface CategoryListProps {
@@ -39,17 +40,22 @@ export const CategoryList: React.FC<CategoryListProps> = ({
   const [showFlat, setShowFlat] = useState(false);
   
   const { category } = useApiClients();
+  const { handleCategoryError } = useErrorHandler();
 
   const handleDelete = async (id: number) => {
     setDeletingId(id);
     try {
       const response = await category.deleteCategory(id);
+      
       if (!response || 'error' in response) {
-        console.error('Error deleting category:', response?.error);
+        // Handle API error with errorCode
+        handleCategoryError(response, true);
+        return; // Don't refresh data if there was an error
       }
       // The PaginationView will handle refreshing the data
     } catch (err) {
-      console.error('Error deleting category:', err);
+      // Handle network or other errors
+      handleCategoryError(err as Error, true);
     } finally {
       setDeletingId(null);
     }
@@ -73,23 +79,31 @@ export const CategoryList: React.FC<CategoryListProps> = ({
 
   // Fetch categories data for PaginationView
   const fetchCategories = useCallback(async (page: number, pageSize: number) => {
-    const response = await category.getCategoriesPaginated({
-      flat: showFlat,
-      page,
-      size: pageSize
-    });
-    
-    if ('error' in response) {
-      throw new Error(response.error);
+    try {
+      const response = await category.getCategoriesPaginated({
+        flat: showFlat,
+        page,
+        size: pageSize
+      });
+      
+      if ('error' in response) {
+        // Handle API error with errorCode
+        handleCategoryError(response, true);
+        throw new Error(response.error);
+      }
+      
+      return {
+        items: response.items,
+        total: response.total,
+        pages: response.pages,
+        page: response.page
+      };
+    } catch (err) {
+      // Handle network or other errors
+      handleCategoryError(err as Error, true);
+      throw err;
     }
-    
-    return {
-      items: response.items,
-      total: response.total,
-      pages: response.pages,
-      page: response.page
-    };
-  }, [category, showFlat]);
+  }, [category, showFlat, handleCategoryError]);
 
   // Render function for categories
   const renderCategories = (categories: Category[], loading: boolean) => {

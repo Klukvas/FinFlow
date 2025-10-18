@@ -1,0 +1,251 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Accounting App - Business Metrics",
+    "tags": ["accounting", "business", "metrics"],
+    "style": "dark",
+    "timezone": "browser",
+    "refresh": "1m",
+    "time": {
+      "from": "now-24h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "User Registrations",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate({service=\"user_service\"} | json | event_type=\"user_created\" [5m])",
+            "refId": "A",
+            "legendFormat": "Registrations/min"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "barAlignment": 0,
+              "lineWidth": 2,
+              "fillOpacity": 20,
+              "gradientMode": "none",
+              "spanNulls": false,
+              "insertNulls": false,
+              "showPoints": "never",
+              "pointSize": 5,
+              "stacking": {"mode": "none", "group": "A"},
+              "axisPlacement": "auto",
+              "axisLabel": "Registrations per minute",
+              "scaleDistribution": {"type": "linear"},
+              "hideFrom": {"tooltip": false, "vis": false, "legend": false}
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Expense Transactions",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate({service=\"expense_service\"} | json | event_type=\"expense_created\" [5m])",
+            "refId": "A",
+            "legendFormat": "Expenses/min"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "barAlignment": 0,
+              "lineWidth": 2,
+              "fillOpacity": 20,
+              "gradientMode": "none",
+              "spanNulls": false,
+              "insertNulls": false,
+              "showPoints": "never",
+              "pointSize": 5,
+              "stacking": {"mode": "none", "group": "A"},
+              "axisPlacement": "auto",
+              "axisLabel": "Expenses per minute",
+              "scaleDistribution": {"type": "linear"},
+              "hideFrom": {"tooltip": false, "vis": false, "legend": false}
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Authentication Events",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate({service=\"user_service\"} | json | event_type=\"auth_success\" [5m])",
+            "refId": "A",
+            "legendFormat": "Successful Logins"
+          },
+          {
+            "expr": "rate({service=\"user_service\"} | json | event_type=\"auth_failure\" [5m])",
+            "refId": "B",
+            "legendFormat": "Failed Logins"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "barAlignment": 0,
+              "lineWidth": 2,
+              "fillOpacity": 20,
+              "gradientMode": "none",
+              "spanNulls": false,
+              "insertNulls": false,
+              "showPoints": "never",
+              "pointSize": 5,
+              "stacking": {"mode": "none", "group": "A"},
+              "axisPlacement": "auto",
+              "axisLabel": "Events per minute",
+              "scaleDistribution": {"type": "linear"},
+              "hideFrom": {"tooltip": false, "vis": false, "legend": false}
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8}
+      },
+      {
+        "id": 4,
+        "title": "API Usage by Endpoint",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate({service=~\".*\"} | json | event_type=\"api_request\" [5m]) by (endpoint)",
+            "refId": "A",
+            "legendFormat": "{{endpoint}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "barAlignment": 0,
+              "lineWidth": 2,
+              "fillOpacity": 20,
+              "gradientMode": "none",
+              "spanNulls": false,
+              "insertNulls": false,
+              "showPoints": "never",
+              "pointSize": 5,
+              "stacking": {"mode": "none", "group": "A"},
+              "axisPlacement": "auto",
+              "axisLabel": "Requests per minute",
+              "scaleDistribution": {"type": "linear"},
+              "hideFrom": {"tooltip": false, "vis": false, "legend": false}
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}
+      },
+      {
+        "id": 5,
+        "title": "Error Rate by Category",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate({level=\"ERROR\"} [5m]) by (category)",
+            "refId": "A",
+            "legendFormat": "{{category}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "barAlignment": 0,
+              "lineWidth": 2,
+              "fillOpacity": 20,
+              "gradientMode": "none",
+              "spanNulls": false,
+              "insertNulls": false,
+              "showPoints": "never",
+              "pointSize": 5,
+              "stacking": {"mode": "none", "group": "A"},
+              "axisPlacement": "auto",
+              "axisLabel": "Errors per minute",
+              "scaleDistribution": {"type": "linear"},
+              "hideFrom": {"tooltip": false, "vis": false, "legend": false}
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}
+      },
+      {
+        "id": 6,
+        "title": "Top Users by Activity",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "topk(10, count by (user_id) ({service=~\".*\"} | json | user_id!=\"\"}))",
+            "refId": "A",
+            "format": "table",
+            "instant": true
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "align": "auto",
+              "displayMode": "auto"
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24}
+      },
+      {
+        "id": 7,
+        "title": "Security Events",
+        "type": "logs",
+        "targets": [
+          {
+            "expr": "{service=~\".*\"} | json | category=\"security\"",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "showTime": true,
+          "showLabels": true,
+          "showCommonLabels": false,
+          "wrapLogMessage": true,
+          "prettifyLogMessage": false,
+          "enableLogDetails": true,
+          "dedupStrategy": "none",
+          "sortOrder": "Descending"
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24}
+      }
+    ],
+    "templating": {
+      "list": [
+        {
+          "name": "time_range",
+          "type": "interval",
+          "query": "1m,5m,15m,30m,1h,3h,6h,12h,1d",
+          "current": {"text": "5m", "value": "5m"},
+          "hide": 0
+        }
+      ]
+    }
+  }
+}

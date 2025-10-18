@@ -37,6 +37,7 @@ class CategoryBase(BaseModel):
         
         return v
 
+
 class CategoryCreate(CategoryBase):
     """Schema for creating a new category"""
     model_config = ConfigDict(

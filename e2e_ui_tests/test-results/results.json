@@ -3,13 +3,13 @@
     "configFile": "/Users/andreypavlenko/Desktop/Projects/Python/accounting_app/e2e_ui_tests/playwright.config.ts",
     "rootDir": "/Users/andreypavlenko/Desktop/Projects/Python/accounting_app/e2e_ui_tests/specs",
     "forbidOnly": false,
-    "fullyParallel": true,
+    "fullyParallel": false,
     "globalSetup": "/Users/andreypavlenko/Desktop/Projects/Python/accounting_app/e2e_ui_tests/global-setup.ts",
     "globalTeardown": "/Users/andreypavlenko/Desktop/Projects/Python/accounting_app/e2e_ui_tests/global-teardown.ts",
     "globalTimeout": 0,
     "grep": {},
     "grepInvert": null,
-    "maxFailures": 1,
+    "maxFailures": 0,
     "metadata": {
       "actualWorkers": 1
     },
@@ -48,14 +48,14 @@
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
         ],
-        "timeout": 0
+        "timeout": 30000
       }
     ],
     "shard": null,
     "updateSnapshots": "missing",
     "updateSourceMethod": "patch",
     "version": "1.56.0",
-    "workers": 1,
+    "workers": 5,
     "webServer": null
   },
   "suites": [
@@ -69,30 +69,30 @@
         {
           "title": "Category Management",
           "file": "category.spec.ts",
-          "line": 56,
+          "line": 26,
           "column": 6,
           "specs": [],
           "suites": [
             {
-              "title": "Edit Category",
+              "title": "Create Category",
               "file": "category.spec.ts",
-              "line": 155,
+              "line": 57,
               "column": 8,
               "specs": [],
               "suites": [
                 {
                   "title": "Happy Path",
                   "file": "category.spec.ts",
-                  "line": 157,
+                  "line": 59,
                   "column": 10,
                   "specs": [
                     {
-                      "title": "should add parent category",
+                      "title": "should create a new expense category",
                       "ok": true,
                       "tags": [],
                       "tests": [
                         {
-                          "timeout": 0,
+                          "timeout": 30000,
                           "annotations": [],
                           "expectedStatus": "passed",
                           "projectId": "chromium",
@@ -102,12 +102,411 @@
                               "workerIndex": 0,
                               "parallelIndex": 0,
                               "status": "passed",
-                              "duration": 6097,
+                              "duration": 2370,
                               "errors": [],
                               "stdout": [],
                               "stderr": [],
                               "retry": 0,
-                              "startTime": "2025-10-16T20:34:57.706Z",
+                              "startTime": "2025-10-18T13:07:29.011Z",
+                              "annotations": [],
+                              "attachments": []
+                            }
+                          ],
+                          "status": "expected"
+                        }
+                      ],
+                      "id": "adbed821842d55a94d05-daef15f5b31756aaf134",
+                      "file": "category.spec.ts",
+                      "line": 60,
+                      "column": 7
+                    },
+                    {
+                      "title": "should create a new income category",
+                      "ok": true,
+                      "tags": [],
+                      "tests": [
+                        {
+                          "timeout": 30000,
+                          "annotations": [],
+                          "expectedStatus": "passed",
+                          "projectId": "chromium",
+                          "projectName": "chromium",
+                          "results": [
+                            {
+                              "workerIndex": 0,
+                              "parallelIndex": 0,
+                              "status": "passed",
+                              "duration": 2223,
+                              "errors": [],
+                              "stdout": [],
+                              "stderr": [],
+                              "retry": 0,
+                              "startTime": "2025-10-18T13:07:31.476Z",
+                              "annotations": [],
+                              "attachments": []
+                            }
+                          ],
+                          "status": "expected"
+                        }
+                      ],
+                      "id": "adbed821842d55a94d05-c6f885b3e07101c448eb",
+                      "file": "category.spec.ts",
+                      "line": 66,
+                      "column": 7
+                    },
+                    {
+                      "title": "should create a new expense category with parent category",
+                      "ok": true,
+                      "tags": [],
+                      "tests": [
+                        {
+                          "timeout": 30000,
+                          "annotations": [],
+                          "expectedStatus": "passed",
+                          "projectId": "chromium",
+                          "projectName": "chromium",
+                          "results": [
+                            {
+                              "workerIndex": 0,
+                              "parallelIndex": 0,
+                              "status": "passed",
+                              "duration": 2482,
+                              "errors": [],
+                              "stdout": [],
+                              "stderr": [],
+                              "retry": 0,
+                              "startTime": "2025-10-18T13:07:33.704Z",
+                              "annotations": [],
+                              "attachments": []
+                            }
+                          ],
+                          "status": "expected"
+                        }
+                      ],
+                      "id": "adbed821842d55a94d05-a3c5169aa61bb96f6b58",
+                      "file": "category.spec.ts",
+                      "line": 72,
+                      "column": 7
+                    },
+                    {
+                      "title": "should create a new income category with parent category",
+                      "ok": true,
+                      "tags": [],
+                      "tests": [
+                        {
+                          "timeout": 30000,
+                          "annotations": [],
+                          "expectedStatus": "passed",
+                          "projectId": "chromium",
+                          "projectName": "chromium",
+                          "results": [
+                            {
+                              "workerIndex": 0,
+                              "parallelIndex": 0,
+                              "status": "passed",
+                              "duration": 2328,
+                              "errors": [],
+                              "stdout": [],
+                              "stderr": [],
+                              "retry": 0,
+                              "startTime": "2025-10-18T13:07:36.192Z",
+                              "annotations": [],
+                              "attachments": []
+                            }
+                          ],
+                          "status": "expected"
+                        }
+                      ],
+                      "id": "adbed821842d55a94d05-fa1970ac4c72a6216ec2",
+                      "file": "category.spec.ts",
+                      "line": 83,
+                      "column": 7
+                    },
+                    {
+                      "title": "should show category statistics after creation",
+                      "ok": true,
+                      "tags": [],
+                      "tests": [
+                        {
+                          "timeout": 30000,
+                          "annotations": [],
+                          "expectedStatus": "passed",
+                          "projectId": "chromium",
+                          "projectName": "chromium",
+                          "results": [
+                            {
+                              "workerIndex": 0,
+                              "parallelIndex": 0,
+                              "status": "passed",
+                              "duration": 2241,
+                              "errors": [],
+                              "stdout": [],
+                              "stderr": [],
+                              "retry": 0,
+                              "startTime": "2025-10-18T13:07:38.525Z",
+                              "annotations": [],
+                              "attachments": []
+                            }
+                          ],
+                          "status": "expected"
+                        }
+                      ],
+                      "id": "adbed821842d55a94d05-4f52a4888d68b7064fca",
+                      "file": "category.spec.ts",
+                      "line": 94,
+                      "column": 7
+                    }
+                  ]
+                },
+                {
+                  "title": "Unhappy Path",
+                  "file": "category.spec.ts",
+                  "line": 113,
+                  "column": 10,
+                  "specs": [
+                    {
+                      "title": "should not create a category with the same name",
+                      "ok": true,
+                      "tags": [],
+                      "tests": [
+                        {
+                          "timeout": 30000,
+                          "annotations": [],
+                          "expectedStatus": "passed",
+                          "projectId": "chromium",
+                          "projectName": "chromium",
+                          "results": [
+                            {
+                              "workerIndex": 0,
+                              "parallelIndex": 0,
+                              "status": "passed",
+                              "duration": 2252,
+                              "errors": [],
+                              "stdout": [],
+                              "stderr": [],
+                              "retry": 0,
+                              "startTime": "2025-10-18T13:07:40.771Z",
+                              "annotations": [],
+                              "attachments": []
+                            }
+                          ],
+                          "status": "expected"
+                        }
+                      ],
+                      "id": "adbed821842d55a94d05-9ca423aa1a706ec6cc55",
+                      "file": "category.spec.ts",
+                      "line": 114,
+                      "column": 7
+                    },
+                    {
+                      "title": "should not create a category with the same name (different category type)",
+                      "ok": true,
+                      "tags": [],
+                      "tests": [
+                        {
+                          "timeout": 30000,
+                          "annotations": [],
+                          "expectedStatus": "passed",
+                          "projectId": "chromium",
+                          "projectName": "chromium",
+                          "results": [
+                            {
+                              "workerIndex": 0,
+                              "parallelIndex": 0,
+                              "status": "passed",
+                              "duration": 2397,
+                              "errors": [],
+                              "stdout": [],
+                              "stderr": [],
+                              "retry": 0,
+                              "startTime": "2025-10-18T13:07:43.028Z",
+                              "annotations": [],
+                              "attachments": []
+                            }
+                          ],
+                          "status": "expected"
+                        }
+                      ],
+                      "id": "adbed821842d55a94d05-6b555f4489ec5ea2f2c7",
+                      "file": "category.spec.ts",
+                      "line": 126,
+                      "column": 7
+                    },
+                    {
+                      "title": "should not create a category with an empty name",
+                      "ok": true,
+                      "tags": [],
+                      "tests": [
+                        {
+                          "timeout": 30000,
+                          "annotations": [],
+                          "expectedStatus": "passed",
+                          "projectId": "chromium",
+                          "projectName": "chromium",
+                          "results": [
+                            {
+                              "workerIndex": 0,
+                              "parallelIndex": 0,
+                              "status": "passed",
+                              "duration": 2207,
+                              "errors": [],
+                              "stdout": [],
+                              "stderr": [],
+                              "retry": 0,
+                              "startTime": "2025-10-18T13:07:45.430Z",
+                              "annotations": [],
+                              "attachments": []
+                            }
+                          ],
+                          "status": "expected"
+                        }
+                      ],
+                      "id": "adbed821842d55a94d05-a78117af9b571c55ad08",
+                      "file": "category.spec.ts",
+                      "line": 138,
+                      "column": 7
+                    },
+                    {
+                      "title": "should not create a category with a third parent category",
+                      "ok": true,
+                      "tags": [],
+                      "tests": [
+                        {
+                          "timeout": 30000,
+                          "annotations": [],
+                          "expectedStatus": "passed",
+                          "projectId": "chromium",
+                          "projectName": "chromium",
+                          "results": [
+                            {
+                              "workerIndex": 0,
+                              "parallelIndex": 0,
+                              "status": "passed",
+                              "duration": 2698,
+                              "errors": [],
+                              "stdout": [],
+                              "stderr": [],
+                              "retry": 0,
+                              "startTime": "2025-10-18T13:07:47.642Z",
+                              "annotations": [],
+                              "attachments": []
+                            }
+                          ],
+                          "status": "expected"
+                        }
+                      ],
+                      "id": "adbed821842d55a94d05-6c53181d29cc7e98d84e",
+                      "file": "category.spec.ts",
+                      "line": 147,
+                      "column": 7
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Edit Category",
+              "file": "category.spec.ts",
+              "line": 170,
+              "column": 8,
+              "specs": [],
+              "suites": [
+                {
+                  "title": "Happy Path",
+                  "file": "category.spec.ts",
+                  "line": 172,
+                  "column": 10,
+                  "specs": [
+                    {
+                      "title": "should edit an existing category (name only)",
+                      "ok": true,
+                      "tags": [],
+                      "tests": [
+                        {
+                          "timeout": 30000,
+                          "annotations": [],
+                          "expectedStatus": "passed",
+                          "projectId": "chromium",
+                          "projectName": "chromium",
+                          "results": [
+                            {
+                              "workerIndex": 0,
+                              "parallelIndex": 0,
+                              "status": "passed",
+                              "duration": 2285,
+                              "errors": [],
+                              "stdout": [],
+                              "stderr": [],
+                              "retry": 0,
+                              "startTime": "2025-10-18T13:07:50.344Z",
+                              "annotations": [],
+                              "attachments": []
+                            }
+                          ],
+                          "status": "expected"
+                        }
+                      ],
+                      "id": "adbed821842d55a94d05-ef3fcc373df192b698ea",
+                      "file": "category.spec.ts",
+                      "line": 173,
+                      "column": 7
+                    },
+                    {
+                      "title": "type should be read-only",
+                      "ok": true,
+                      "tags": [],
+                      "tests": [
+                        {
+                          "timeout": 30000,
+                          "annotations": [],
+                          "expectedStatus": "passed",
+                          "projectId": "chromium",
+                          "projectName": "chromium",
+                          "results": [
+                            {
+                              "workerIndex": 0,
+                              "parallelIndex": 0,
+                              "status": "passed",
+                              "duration": 2116,
+                              "errors": [],
+                              "stdout": [],
+                              "stderr": [],
+                              "retry": 0,
+                              "startTime": "2025-10-18T13:07:52.634Z",
+                              "annotations": [],
+                              "attachments": []
+                            }
+                          ],
+                          "status": "expected"
+                        }
+                      ],
+                      "id": "adbed821842d55a94d05-9f47cdaff748507748ee",
+                      "file": "category.spec.ts",
+                      "line": 185,
+                      "column": 7
+                    },
+                    {
+                      "title": "should add parent category",
+                      "ok": true,
+                      "tags": [],
+                      "tests": [
+                        {
+                          "timeout": 30000,
+                          "annotations": [],
+                          "expectedStatus": "passed",
+                          "projectId": "chromium",
+                          "projectName": "chromium",
+                          "results": [
+                            {
+                              "workerIndex": 0,
+                              "parallelIndex": 0,
+                              "status": "passed",
+                              "duration": 2390,
+                              "errors": [],
+                              "stdout": [],
+                              "stderr": [],
+                              "retry": 0,
+                              "startTime": "2025-10-18T13:07:54.754Z",
                               "annotations": [],
                               "attachments": []
                             }
@@ -117,7 +516,176 @@
                       ],
                       "id": "adbed821842d55a94d05-aa1443161fc455e3bb49",
                       "file": "category.spec.ts",
-                      "line": 176,
+                      "line": 193,
+                      "column": 7
+                    }
+                  ]
+                },
+                {
+                  "title": "Unhappy Path",
+                  "file": "category.spec.ts",
+                  "line": 210,
+                  "column": 10,
+                  "specs": [
+                    {
+                      "title": "should not edit a category with an empty name",
+                      "ok": true,
+                      "tags": [],
+                      "tests": [
+                        {
+                          "timeout": 30000,
+                          "annotations": [],
+                          "expectedStatus": "passed",
+                          "projectId": "chromium",
+                          "projectName": "chromium",
+                          "results": [
+                            {
+                              "workerIndex": 0,
+                              "parallelIndex": 0,
+                              "status": "passed",
+                              "duration": 2316,
+                              "errors": [],
+                              "stdout": [],
+                              "stderr": [],
+                              "retry": 0,
+                              "startTime": "2025-10-18T13:07:57.149Z",
+                              "annotations": [],
+                              "attachments": []
+                            }
+                          ],
+                          "status": "expected"
+                        }
+                      ],
+                      "id": "adbed821842d55a94d05-923b42a95c912e6d403f",
+                      "file": "category.spec.ts",
+                      "line": 211,
+                      "column": 7
+                    },
+                    {
+                      "title": "should not edit the category with third parent category",
+                      "ok": true,
+                      "tags": [],
+                      "tests": [
+                        {
+                          "timeout": 30000,
+                          "annotations": [],
+                          "expectedStatus": "passed",
+                          "projectId": "chromium",
+                          "projectName": "chromium",
+                          "results": [
+                            {
+                              "workerIndex": 0,
+                              "parallelIndex": 0,
+                              "status": "passed",
+                              "duration": 2853,
+                              "errors": [],
+                              "stdout": [],
+                              "stderr": [],
+                              "retry": 0,
+                              "startTime": "2025-10-18T13:07:59.469Z",
+                              "annotations": [],
+                              "attachments": []
+                            }
+                          ],
+                          "status": "expected"
+                        }
+                      ],
+                      "id": "adbed821842d55a94d05-5edb53f834d127724e82",
+                      "file": "category.spec.ts",
+                      "line": 223,
+                      "column": 7
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Delete Category",
+              "file": "category.spec.ts",
+              "line": 250,
+              "column": 8,
+              "specs": [],
+              "suites": [
+                {
+                  "title": "Happy Path",
+                  "file": "category.spec.ts",
+                  "line": 251,
+                  "column": 10,
+                  "specs": [
+                    {
+                      "title": "should delete a category",
+                      "ok": true,
+                      "tags": [],
+                      "tests": [
+                        {
+                          "timeout": 30000,
+                          "annotations": [],
+                          "expectedStatus": "passed",
+                          "projectId": "chromium",
+                          "projectName": "chromium",
+                          "results": [
+                            {
+                              "workerIndex": 0,
+                              "parallelIndex": 0,
+                              "status": "passed",
+                              "duration": 2184,
+                              "errors": [],
+                              "stdout": [],
+                              "stderr": [],
+                              "retry": 0,
+                              "startTime": "2025-10-18T13:08:02.327Z",
+                              "annotations": [],
+                              "attachments": []
+                            }
+                          ],
+                          "status": "expected"
+                        }
+                      ],
+                      "id": "adbed821842d55a94d05-e97b9713080182cc55df",
+                      "file": "category.spec.ts",
+                      "line": 252,
+                      "column": 7
+                    }
+                  ]
+                },
+                {
+                  "title": "Unhappy Path",
+                  "file": "category.spec.ts",
+                  "line": 278,
+                  "column": 10,
+                  "specs": [
+                    {
+                      "title": "should not delete a category with children",
+                      "ok": true,
+                      "tags": [],
+                      "tests": [
+                        {
+                          "timeout": 30000,
+                          "annotations": [],
+                          "expectedStatus": "passed",
+                          "projectId": "chromium",
+                          "projectName": "chromium",
+                          "results": [
+                            {
+                              "workerIndex": 0,
+                              "parallelIndex": 0,
+                              "status": "passed",
+                              "duration": 2510,
+                              "errors": [],
+                              "stdout": [],
+                              "stderr": [],
+                              "retry": 0,
+                              "startTime": "2025-10-18T13:08:04.515Z",
+                              "annotations": [],
+                              "attachments": []
+                            }
+                          ],
+                          "status": "expected"
+                        }
+                      ],
+                      "id": "adbed821842d55a94d05-c6fcce32f88767782702",
+                      "file": "category.spec.ts",
+                      "line": 279,
                       "column": 7
                     }
                   ]
@@ -131,9 +699,9 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2025-10-16T20:34:55.521Z",
-    "duration": 10203.274000000001,
-    "expected": 1,
+    "startTime": "2025-10-18T13:07:27.366Z",
+    "duration": 40550.764,
+    "expected": 16,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0

@@ -167,7 +167,7 @@ class HierarchyValidator(ABC):
         # Check if parent is a descendant of entity_id
         current_parent_id = parent_id
         depth = 0
-        max_depth = 20  # Configurable maximum depth
+        max_depth = 2  # Maximum depth for category hierarchy
         
         while current_parent_id and depth < max_depth:
             if current_parent_id == entity_id:

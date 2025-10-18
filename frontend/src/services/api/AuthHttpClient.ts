@@ -3,6 +3,7 @@ import { config } from '@/config/env';
 export interface ApiError {
   error: string;
   status?: number;
+  errorCode?: string;
 }
 
 export class AuthHttpClient {
@@ -74,6 +75,7 @@ export class AuthHttpClient {
         return {
           error: errorData.error || errorData.detail || errorData.message || `HTTP ${response.status}`,
           status: response.status,
+          errorCode: errorData.errorCode, // Preserve errorCode from backend
         };
       }
 

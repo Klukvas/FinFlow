@@ -135,12 +135,15 @@ class ExpenseService:
                 # Deduct amount from account balance with currency conversion
                 self.account_client.update_account_balance(data.account_id, user_id, -validated_amount, data.currency)
             
+            # Log currency value for debugging
+            self.logger.info(f"Currency value: {data.currency} (type: {type(data.currency)})")
+            
             expense = Expense(
                 amount=validated_amount,
                 description=validated_description,
                 category_id=data.category_id if data.category_id and data.category_id > 0 else None,
                 account_id=data.account_id,
-                currency=data.currency,
+                currency=data.currency or "USD",  # Default to USD if None
                 date=validated_date,
                 user_id=user_id
             )
@@ -148,11 +151,12 @@ class ExpenseService:
             try:
                 with self.db.begin():
                     self.db.add(expense)
-                log_operation(self.logger, "Expense created", user_id, expense.id, f"Amount: {validated_amount}, Category: {data.category_id}, Account: {data.account_id}, Date: {validated_date}")
+                log_operation(self.logger, "Expense created", user_id, f"ID: {expense.id}, Amount: {validated_amount}, Category: {data.category_id}, Account: {data.account_id}, Date: {validated_date}")
                 self.db.refresh(expense)
                 return expense
             except Exception as e:
                 self.db.rollback()
+                self.logger.error(f"Database error during expense creation: {e}")
                 raise ExpenseValidationError("Failed to create expense")
             
             
@@ -264,8 +268,7 @@ class ExpenseService:
                 self.logger,
                 "Expense updated",
                 user_id,
-                expense_id,
-                f"Changes: {', '.join(changes) if changes else 'No changes'}"
+                f"Expense ID: {expense_id}, Changes: {', '.join(changes) if changes else 'No changes'}"
             )
             
             return expense
@@ -305,8 +308,7 @@ class ExpenseService:
                 self.logger,
                 "Expense deleted",
                 user_id,
-                expense_id,
-                f"Amount: {amount}, Category: {category_id}, Account: {account_id}, Date: {expense_date}"
+                f"Expense ID: {expense_id}, Amount: {amount}, Category: {category_id}, Account: {account_id}, Date: {expense_date}"
             )
             
             return {"detail": "Expense deleted successfully"}

@@ -40,29 +40,6 @@
     "features": "Features",
     "pricing": "Pricing"
   },
-  "common": {
-    "loading": "Loading...",
-    "save": "Save",
-    "cancel": "Cancel",
-    "delete": "Delete",
-    "edit": "Edit",
-    "create": "Create",
-    "close": "Close",
-    "yes": "Yes",
-    "no": "No",
-    "confirm": "Confirm",
-    "search": "Search",
-    "filter": "Filter",
-    "sort": "Sort",
-    "name": "Name",
-    "description": "Description",
-    "amount": "Amount",
-    "date": "Date",
-    "category": "Category",
-    "type": "Type",
-    "menu": "Menu",
-    "openMenu": "Open menu"
-  },
   "header": {
     "appTitle": "Financial Accounting",
     "goToProfile": "Go to profile",
@@ -130,7 +107,18 @@
       "noCategoriesOnPage": "No categories on this page",
       "noCategoriesAtAll": "No categories created yet",
       "noCategoriesSubtitle": "Create your first category to organize your income and expenses",
-      "noCategoriesOnPageSubtitle": "Try going to another page or changing filters"
+      "noCategoriesOnPageSubtitle": "Try going to another page or changing filters",
+      "deleteError": "Error deleting category"
+    },
+    "errors": {
+      "depthExceeded": "Maximum category depth of 2 levels exceeded. Categories can only have 2 levels: Root → Level 1 → Level 2 (max)",
+      "hasChildren": "Cannot delete category with child categories. Delete children first.",
+      "nameConflict": "Category name already exists for this user",
+      "circularRelationship": "Cannot create circular relationship between categories",
+      "ownershipError": "You don't have permission to access this category",
+      "notFound": "Category not found",
+      "validationError": "Category validation error",
+      "genericError": "An error occurred while processing the category"
     },
     "statistics": {
       "title": "Category Statistics",

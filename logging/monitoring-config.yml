@@ -1,0 +1,255 @@
+# Monitoring Configuration for Accounting App
+# This file contains all monitoring settings and thresholds
+
+monitoring:
+  # Log retention policies
+  retention:
+    error_logs: "90d"
+    warning_logs: "30d"
+    info_logs: "7d"
+    debug_logs: "1d"
+    security_logs: "1y"
+
+  # Performance thresholds
+  performance:
+    api_response_time:
+      warning: 2000  # 2 seconds
+      critical: 5000  # 5 seconds
+    
+    database_query_time:
+      warning: 1000  # 1 second
+      critical: 3000  # 3 seconds
+    
+    frontend_load_time:
+      warning: 3000  # 3 seconds
+      critical: 5000  # 5 seconds
+
+  # Error rate thresholds
+  error_rates:
+    service_error_rate:
+      warning: 0.01  # 1%
+      critical: 0.05  # 5%
+    
+    authentication_failure_rate:
+      warning: 0.05  # 5%
+      critical: 0.1   # 10%
+    
+    frontend_error_rate:
+      warning: 0.01  # 1%
+      critical: 0.05  # 5%
+
+  # Resource usage thresholds
+  resources:
+    memory_usage:
+      warning: 0.8   # 80%
+      critical: 0.9  # 90%
+    
+    disk_usage:
+      warning: 0.8   # 80%
+      critical: 0.9  # 90%
+    
+    cpu_usage:
+      warning: 0.8   # 80%
+      critical: 0.9  # 90%
+
+  # Business metrics thresholds
+  business:
+    user_registration_rate:
+      minimum: 1  # per hour
+      maximum: 100  # per hour
+    
+    expense_transaction_rate:
+      minimum: 10  # per hour
+      maximum: 1000  # per hour
+    
+    api_request_rate:
+      minimum: 100  # per hour
+      maximum: 10000  # per hour
+
+  # Alerting configuration
+  alerting:
+    channels:
+      email:
+        enabled: true
+        recipients:
+          - "admin@accounting-app.com"
+          - "devops@accounting-app.com"
+        subject_template: "Accounting App Alert: {{ .GroupLabels.alertname }}"
+      
+      slack:
+        enabled: false
+        webhook_url: "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK"
+        channel: "#alerts"
+        username: "Accounting App Bot"
+      
+      webhook:
+        enabled: false
+        url: "https://your-webhook-endpoint.com/alerts"
+        headers:
+          Authorization: "Bearer your-token"
+
+    # Alert severity levels
+    severity_levels:
+      critical:
+        color: "red"
+        priority: 1
+        escalation_time: "5m"
+      
+      warning:
+        color: "yellow"
+        priority: 2
+        escalation_time: "15m"
+      
+      info:
+        color: "blue"
+        priority: 3
+        escalation_time: "1h"
+
+  # Dashboard configuration
+  dashboards:
+    refresh_intervals:
+      service_health: "30s"
+      business_metrics: "1m"
+      performance: "30s"
+      security: "1m"
+    
+    time_ranges:
+      default: "1h"
+      business_metrics: "24h"
+      performance: "1h"
+      security: "7d"
+
+  # Log parsing rules
+  parsing:
+    # Service-specific patterns
+    services:
+      user_service:
+        patterns:
+          - name: "user_created"
+            regex: "User created: (?P<user_id>\\d+)"
+            fields: ["user_id"]
+          - name: "auth_success"
+            regex: "Authentication SUCCESS: (?P<email>[^\\s]+)"
+            fields: ["email"]
+          - name: "auth_failure"
+            regex: "Authentication FAILED: (?P<email>[^\\s]+)"
+            fields: ["email"]
+      
+      expense_service:
+        patterns:
+          - name: "expense_created"
+            regex: "Expense created: (?P<expense_id>\\d+) amount: (?P<amount>[\\d.]+)"
+            fields: ["expense_id", "amount"]
+          - name: "expense_updated"
+            regex: "Expense updated: (?P<expense_id>\\d+) new_amount: (?P<amount>[\\d.]+)"
+            fields: ["expense_id", "amount"]
+      
+      frontend:
+        patterns:
+          - name: "frontend_error"
+            regex: "Frontend ERROR: (?P<message>[^\\n]+) source: (?P<source>[^\\s]+)"
+            fields: ["message", "source"]
+          - name: "user_action"
+            regex: "User Action: (?P<action>[^\\s]+) component: (?P<component>[^\\s]+)"
+            fields: ["action", "component"]
+
+  # Correlation rules
+  correlation:
+    # Request correlation
+    request_tracing:
+      enabled: true
+      correlation_id_field: "request_id"
+      time_window: "5m"
+      services: ["user_service", "expense_service", "category_service", "income_service", "account_service", "debt_service", "goals_service", "recurring_service"]
+    
+    # Session correlation
+    session_tracing:
+      enabled: true
+      correlation_id_field: "session_id"
+      time_window: "1h"
+      services: ["frontend", "user_service"]
+    
+    # Business transaction correlation
+    transaction_tracing:
+      enabled: true
+      correlation_id_field: "transaction_id"
+      time_window: "10m"
+      services: ["expense_service", "income_service", "account_service"]
+
+  # Health check configuration
+  health_checks:
+    services:
+      - name: "user_service"
+        endpoint: "http://user_service:8000/health"
+        interval: "30s"
+        timeout: "5s"
+      
+      - name: "expense_service"
+        endpoint: "http://expense_service:8000/health"
+        interval: "30s"
+        timeout: "5s"
+      
+      - name: "category_service"
+        endpoint: "http://category_service:8000/health"
+        interval: "30s"
+        timeout: "5s"
+      
+      - name: "income_service"
+        endpoint: "http://income_service:8000/health"
+        interval: "30s"
+        timeout: "5s"
+      
+      - name: "account_service"
+        endpoint: "http://account_service:8000/health"
+        interval: "30s"
+        timeout: "5s"
+      
+      - name: "debt_service"
+        endpoint: "http://debt_service:8000/health"
+        interval: "30s"
+        timeout: "5s"
+      
+      - name: "goals_service"
+        endpoint: "http://goals_service:8000/health"
+        interval: "30s"
+        timeout: "5s"
+      
+      - name: "recurring_service"
+        endpoint: "http://recurring_service:8000/health"
+        interval: "30s"
+        timeout: "5s"
+      
+      - name: "pdf_parser_service"
+        endpoint: "http://pdf_parser_service:8000/health"
+        interval: "30s"
+        timeout: "5s"
+      
+      - name: "currency_service"
+        endpoint: "http://currency_service:8000/health"
+        interval: "30s"
+        timeout: "5s"
+
+  # Integration settings
+  integrations:
+    # GitHub Actions integration
+    github_actions:
+      enabled: true
+      webhook_url: "https://api.github.com/repos/your-org/accounting-app/actions/workflows"
+      events: ["deployment", "deployment_status"]
+    
+    # CI/CD integration
+    cicd:
+      enabled: true
+      deployment_events: true
+      test_results: true
+      build_metrics: true
+    
+    # External monitoring
+    external:
+      uptime_robot:
+        enabled: false
+        api_key: "your-uptime-robot-api-key"
+      
+      pingdom:
+        enabled: false
+        api_key: "your-pingdom-api-key"

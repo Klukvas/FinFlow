@@ -1,5 +1,6 @@
-from fastapi import FastAPI, HTTPException
-from app.routers import auth
+from fastapi import FastAPI, HTTPException, Request
+from starlette.middleware.base import BaseHTTPMiddleware
+from app.routers import auth, logging
 from fastapi.exceptions import RequestValidationError
 from app.exception_handlers import (
     custom_validation_exception_handler,
@@ -27,11 +28,81 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database import Base, engine
 from app.config import settings
 from app.utils.logger import get_logger
+import time
+import uuid
 
 logger = get_logger(__name__)
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
+
+# Request logging middleware
+class RequestLoggingMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        # Generate request ID
+        request_id = str(uuid.uuid4())
+        
+        # Extract user ID from request if available
+        user_id = None
+        if hasattr(request.state, 'user_id'):
+            user_id = request.state.user_id
+        
+        # Set request context
+        from app.utils.logger import set_request_context
+        set_request_context(request_id, user_id, "user_service")
+        
+        # Log request start
+        start_time = time.time()
+        logger.log_api_request(
+            method=request.method,
+            endpoint=str(request.url.path),
+            status_code=0,  # Will be updated after response
+            user_id=user_id,
+            ip_address=request.client.host if request.client else None,
+            user_agent=request.headers.get("user-agent"),
+            request_id=request_id
+        )
+        
+        try:
+            # Process request
+            response = await call_next(request)
+            
+            # Calculate duration
+            duration_ms = (time.time() - start_time) * 1000
+            
+            # Log successful response
+            logger.log_api_request(
+                method=request.method,
+                endpoint=str(request.url.path),
+                status_code=response.status_code,
+                duration_ms=duration_ms,
+                user_id=user_id,
+                ip_address=request.client.host if request.client else None,
+                user_agent=request.headers.get("user-agent"),
+                request_id=request_id
+            )
+            
+            return response
+            
+        except Exception as e:
+            # Calculate duration
+            duration_ms = (time.time() - start_time) * 1000
+            
+            # Log error response
+            logger.error(
+                f"API request failed: {request.method} {request.url.path} - {str(e)}",
+                category="api",
+                operation="api_request_error",
+                method=request.method,
+                endpoint=str(request.url.path),
+                duration_ms=duration_ms,
+                user_id=user_id,
+                ip_address=request.client.host if request.client else None,
+                user_agent=request.headers.get("user-agent"),
+                request_id=request_id
+            )
+            
+            raise
 
 app = FastAPI(
     title="User Service",
@@ -53,8 +124,12 @@ app.add_exception_handler(AccountLockedError, account_locked_handler)
 app.add_exception_handler(RateLimitError, rate_limit_handler)
 app.add_exception_handler(HTTPException, http_exception_handler)
 
+# Add middleware
+app.add_middleware(RequestLoggingMiddleware)
+
 # Include routers
 app.include_router(auth.router)
+app.include_router(logging.router)
 
 # Configure CORS
 app.add_middleware(
@@ -73,9 +148,20 @@ async def health_check():
 @app.on_event("startup")
 async def startup_event():
     """Application startup event"""
-    logger.info("User Service starting up...")
+    logger.info(
+        "User Service starting up",
+        category="application",
+        operation="service_startup",
+        service_name="user_service",
+        version="1.0.0"
+    )
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Application shutdown event"""
-    logger.info("User Service shutting down...")
+    logger.info(
+        "User Service shutting down",
+        category="application",
+        operation="service_shutdown",
+        service_name="user_service"
+    )

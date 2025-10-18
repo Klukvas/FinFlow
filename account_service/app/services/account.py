@@ -60,9 +60,7 @@ class AccountService:
                 self.logger,
                 "CREATE_ACCOUNT",
                 user_id,
-                "account",
-                account.id,
-                {"name": account.name, "type": account.type.value, "currency": account.currency}
+                f"Account ID: {account.id}, Name: {account.name}, Type: {account.type.value}, Currency: {account.currency}"
             )
             
             return account
@@ -141,9 +139,7 @@ class AccountService:
                 self.logger,
                 "UPDATE_ACCOUNT",
                 user_id,
-                "account",
-                account.id,
-                {"name": account.name, "type": account.type.value}
+                f"Account ID: {account.id}, Name: {account.name}, Type: {account.type.value}"
             )
             
             return account
@@ -172,9 +168,7 @@ class AccountService:
                 self.logger,
                 "ARCHIVE_ACCOUNT",
                 user_id,
-                "account",
-                account.id,
-                {"name": account.name}
+                f"Account ID: {account.id}, Name: {account.name}"
             )
             
             return account
@@ -206,9 +200,7 @@ class AccountService:
                 self.logger,
                 "UPDATE_BALANCE",
                 user_id,
-                "account",
-                account.id,
-                {"old_balance": old_balance, "new_balance": new_balance}
+                f"Account ID: {account.id}, Old Balance: {old_balance}, New Balance: {new_balance}"
             )
             
             return account

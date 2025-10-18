@@ -13,7 +13,8 @@ from app.exceptions import (
     PasswordPolicyError,
     UsernamePolicyError,
     AccountLockedError,
-    RateLimitError
+    RateLimitError,
+    UserErrorCode
 )
 from app.config import settings
 
@@ -56,10 +57,7 @@ def register(
     except (UserRegistrationError, PasswordPolicyError, UsernamePolicyError, UserValidationError):
         raise
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Registration failed"
-        )
+        raise UserValidationError("Registration failed")
 
 @router.post(
     "/login",
@@ -97,10 +95,7 @@ def login(
     except (UserAuthenticationError, AccountLockedError, RateLimitError):
         raise
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Login failed"
-        )
+        raise UserAuthenticationError("Login failed")
 
 @router.get(
     "/me", 
@@ -127,10 +122,7 @@ def get_me(
     except UserNotFoundError:
         raise
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to retrieve user information"
-        )
+        raise UserValidationError("Failed to retrieve user information")
 
 @router.put(
     "/me",
@@ -164,7 +156,9 @@ def update_me(
             # Check if email is already taken by another user
             existing_user = service.get_user_by_email(user_update.email)
             if existing_user and existing_user.id != user_id:
-                raise UserValidationError("Email already registered")
+                error = UserValidationError("Email already registered")
+                error.error_code = UserErrorCode.EMAIL_ALREADY_TAKEN
+                raise error
             user.email = user_update.email.lower().strip()
         
         # Update username if provided
@@ -172,7 +166,9 @@ def update_me(
             # Check if username is already taken by another user
             existing_user = service.get_user_by_username(user_update.username)
             if existing_user and existing_user.id != user_id:
-                raise UserValidationError("Username already taken")
+                error = UserValidationError("Username already taken")
+                error.error_code = UserErrorCode.USERNAME_ALREADY_TAKEN
+                raise error
             user.username = user_update.username.strip()
         
         if user_update.base_currency is not None:
@@ -187,10 +183,7 @@ def update_me(
         raise
     except Exception as e:
         service.db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to update user information"
-        )
+        raise UserValidationError("Failed to update user information")
 
 @router.post(
     "/change-password",
@@ -223,10 +216,7 @@ def change_password(
     except (UserAuthenticationError, PasswordPolicyError):
         raise
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to change password"
-        )
+        raise UserValidationError("Failed to change password")
 
 @router.post(
     "/refresh",
@@ -259,7 +249,4 @@ def refresh_token(
     except UserAuthenticationError:
         raise
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to refresh token"
-        )
+        raise UserAuthenticationError("Failed to refresh token")

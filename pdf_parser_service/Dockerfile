@@ -9,11 +9,14 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install Python dependencies
-COPY requirements.txt .
+COPY pdf_parser_service/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY . .
+COPY pdf_parser_service/ .
+
+# Copy logging utilities
+COPY logging/ /app/logging
 
 # Create upload directory
 RUN mkdir -p uploads

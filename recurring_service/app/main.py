@@ -1,4 +1,5 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
@@ -20,8 +21,79 @@ from app.exceptions import (
 )
 from fastapi import HTTPException
 from app.utils.logger import get_logger
+import time
+import uuid
 
 logger = get_logger(__name__)
+# Request logging middleware
+class RequestLoggingMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        # Generate request ID
+        request_id = str(uuid.uuid4())
+        
+        # Extract user ID from request if available
+        user_id = None
+        if hasattr(request.state, 'user_id'):
+            user_id = request.state.user_id
+        
+        # Set request context
+        from logging_utils import set_request_context
+        set_request_context(request_id, user_id, "recurring_service")
+        
+        # Log request start
+        start_time = time.time()
+        logger.log_api_request(
+            method=request.method,
+            endpoint=str(request.url.path),
+            status_code=0,  # Will be updated after response
+            user_id=user_id,
+            ip_address=request.client.host if request.client else None,
+            user_agent=request.headers.get("user-agent"),
+            request_id=request_id
+        )
+        
+        try:
+            # Process request
+            response = await call_next(request)
+            
+            # Calculate duration
+            duration_ms = (time.time() - start_time) * 1000
+            
+            # Log successful response
+            logger.log_api_request(
+                method=request.method,
+                endpoint=str(request.url.path),
+                status_code=response.status_code,
+                duration_ms=duration_ms,
+                user_id=user_id,
+                ip_address=request.client.host if request.client else None,
+                user_agent=request.headers.get("user-agent"),
+                request_id=request_id
+            )
+            
+            return response
+            
+        except Exception as e:
+            # Calculate duration
+            duration_ms = (time.time() - start_time) * 1000
+            
+            # Log error response
+            logger.error(
+                f"API request failed: {request.method} {request.url.path} - {str(e)}",
+                category="api",
+                operation="api_request_error",
+                method=request.method,
+                endpoint=str(request.url.path),
+                duration_ms=duration_ms,
+                user_id=user_id,
+                ip_address=request.client.host if request.client else None,
+                user_agent=request.headers.get("user-agent"),
+                request_id=request_id
+            )
+            
+            raise
+
+
 
 
 @asynccontextmanager
@@ -71,7 +143,13 @@ app.add_exception_handler(HTTPException, http_exception_handler)
 app.add_exception_handler(Exception, general_exception_handler)
 
 # Подключить роутеры
+# Add middleware
+app.add_middleware(RequestLoggingMiddleware)
+
 app.include_router(recurring_router)
+# Add middleware
+app.add_middleware(RequestLoggingMiddleware)
+
 app.include_router(internal_router)
 
 

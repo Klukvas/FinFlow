@@ -46,58 +46,34 @@ async def custom_validation_exception_handler(request: Request, exc: RequestVali
         content={"error": message}
     )
 
-async def category_not_found_handler(request: Request, exc: CategoryNotFoundError):
-    """Handle category not found errors"""
-    logger.info(f"Category not found: {exc.detail}")
+async def category_exception_handler(request: Request, exc: HTTPException):
+    """Handle all category-related exceptions with errorCode preservation"""
+    # Log the error with the exception type name
+    logger.warning(f"Category exception ({exc.__class__.__name__}): {exc.detail}")
+    
+    # Preserve the errorCode if it exists in the detail
+    if isinstance(exc.detail, dict) and "errorCode" in exc.detail:
+        content = {
+            "error": exc.detail["error"],
+            "errorCode": exc.detail["errorCode"]
+        }
+    else:
+        content = {"error": exc.detail}
+    
     return JSONResponse(
         status_code=exc.status_code,
-        content={"error": exc.detail}
-    )
-
-async def category_validation_handler(request: Request, exc: CategoryValidationError):
-    """Handle category validation errors"""
-    logger.warning(f"Category validation error: {exc.detail}")
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"error": exc.detail}
-    )
-
-async def category_ownership_handler(request: Request, exc: CategoryOwnershipError):
-    """Handle category ownership errors"""
-    logger.warning(f"Category ownership error: {exc.detail}")
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"error": exc.detail}
-    )
-
-async def circular_relationship_handler(request: Request, exc: CircularRelationshipError):
-    """Handle circular relationship errors"""
-    logger.warning(f"Circular relationship error: {exc.detail}")
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"error": exc.detail}
-    )
-
-async def category_depth_handler(request: Request, exc: CategoryDepthExceededError):
-    """Handle category depth exceeded errors"""
-    logger.warning(f"Category depth exceeded: {exc.detail}")
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"error": exc.detail}
-    )
-
-async def category_name_conflict_handler(request: Request, exc: CategoryNameConflictError):
-    """Handle category name conflict errors"""
-    logger.warning(f"Category name conflict: {exc.detail}")
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"error": exc.detail}
+        content=content
     )
 
 async def http_exception_handler(request: Request, exc: HTTPException):
     """Handle general HTTP exceptions"""
     logger.warning(f"HTTP exception: {exc.status_code} - {exc.detail}")
+    # Preserve the errorCode if it exists in the detail
+    content = {"error": exc.detail}
+    if isinstance(exc.detail, dict) and "errorCode" in exc.detail:
+        content["errorCode"] = exc.detail["errorCode"]
+        content["error"] = exc.detail["error"]
     return JSONResponse(
         status_code=exc.status_code,
-        content={"error": exc.detail}
+        content=content
     )

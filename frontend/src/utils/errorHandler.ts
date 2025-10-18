@@ -1,15 +1,29 @@
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
+import { getErrorTranslationKey, BackendError } from './errorMapping';
 
 export interface ApiError {
   error: string;
+  errorCode?: string;
   status?: number;
   message?: string;
 }
 
 export class ErrorHandler {
-  private static getErrorMessage(error: unknown, fallbackMessage: string = 'Произошла ошибка'): string {
+  private static getErrorMessage(error: unknown, fallbackMessage: string = 'Произошла ошибка', service: 'category' | 'expense' | 'account' = 'category'): string {
     if (error && typeof error === 'object') {
       const apiError = error as ApiError;
+      
+      // If we have an errorCode, use translation
+      if (apiError.errorCode) {
+        try {
+          // We need to get the translation function, but this is a static method
+          // For now, we'll return the error message and let the component handle translation
+          return apiError.error || fallbackMessage;
+        } catch {
+          return apiError.error || fallbackMessage;
+        }
+      }
       
       // If we have a status code, provide user-friendly messages
       if (apiError.status) {

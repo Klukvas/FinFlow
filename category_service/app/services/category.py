@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session, joinedload, query
 from sqlalchemy.exc import IntegrityError
 from typing import List, Optional
+import time
 from app.models.category import Category
 from app.schemas.category import CategoryCreate, CategoryType
 from app.exceptions import (
@@ -26,7 +27,19 @@ class CategoryService:
 
     def create(self, data: CategoryCreate, user_id: int) -> Category:
         """Create a new category with proper validation and transaction management"""
+        start_time = time.time()
+        
         try:
+            self.logger.info(
+                f"Starting category creation for user {user_id}",
+                category="business",
+                operation="category_create_start",
+                user_id=user_id,
+                category_name=data.name,
+                parent_id=data.parent_id,
+                category_type=data.type
+            )
+            
             # Comprehensive validation using serializer
             self.serializer.validate_category_data(self.db, data, user_id)
             
@@ -39,34 +52,113 @@ class CategoryService:
             self.db.commit()
             self.db.refresh(category)
             
-            log_operation(
-                self.logger, 
-                "Category created", 
-                user_id, 
-                category.id, 
-                f"Name: {data.name}, Parent: {data.parent_id}, Type: {data.type}"
+            duration_ms = (time.time() - start_time) * 1000
+            
+            self.logger.info(
+                f"Category created successfully",
+                category="business",
+                operation="category_created",
+                user_id=user_id,
+                resource_id=str(category.id),
+                category_name=data.name,
+                parent_id=data.parent_id,
+                category_type=data.type,
+                duration_ms=duration_ms
             )
             
             return category
             
-        except (CategoryNotFoundError, CategoryValidationError, CategoryNameConflictError):
+        except (CategoryNotFoundError, CategoryValidationError, CategoryNameConflictError, 
+                CircularRelationshipError, CategoryOwnershipError, CategoryDepthExceededError) as e:
+            duration_ms = (time.time() - start_time) * 1000
             self.db.rollback()
+            
+            self.logger.error(
+                f"Category creation failed: {str(e)}",
+                category="business",
+                operation="category_create_failed",
+                user_id=user_id,
+                category_name=data.name,
+                parent_id=data.parent_id,
+                category_type=data.type,
+                duration_ms=duration_ms
+            )
             raise
         except IntegrityError as e:
+            duration_ms = (time.time() - start_time) * 1000
             self.db.rollback()
-            self.logger.error(f"Database integrity error during category creation: {e}")
+            
+            self.logger.error(
+                f"Category creation failed due to database constraint: {str(e)}",
+                category="database",
+                operation="category_create_integrity_error",
+                user_id=user_id,
+                category_name=data.name,
+                parent_id=data.parent_id,
+                category_type=data.type,
+                duration_ms=duration_ms
+            )
             raise CategoryValidationError("Database constraint violation")
         except Exception as e:
+            duration_ms = (time.time() - start_time) * 1000
             self.db.rollback()
-            self.logger.error(f"Unexpected error during category creation: {e}")
+            
+            self.logger.error(
+                f"Unexpected error during category creation: {str(e)}",
+                category="system",
+                operation="category_create_unexpected_error",
+                user_id=user_id,
+                category_name=data.name,
+                parent_id=data.parent_id,
+                category_type=data.type,
+                duration_ms=duration_ms
+            )
             raise CategoryValidationError("Failed to create category")
 
     def get_all(self, user_id: int, page: int = 1, size: int = 50) -> tuple[List[Category], int]:
         """Get root categories with their full hierarchy (paginated)"""
+        start_time = time.time()
+        
         try:
-            return self.serializer.get_categories_for_user(self.db, user_id, page, size, flat=False)
+            self.logger.info(
+                f"Retrieving categories for user {user_id}",
+                category="business",
+                operation="category_list_start",
+                user_id=user_id,
+                page=page,
+                size=size
+            )
+            
+            result = self.serializer.get_categories_for_user(self.db, user_id, page, size, flat=False)
+            
+            duration_ms = (time.time() - start_time) * 1000
+            
+            self.logger.info(
+                f"Categories retrieved successfully",
+                category="business",
+                operation="category_list_success",
+                user_id=user_id,
+                page=page,
+                size=size,
+                count=len(result[0]) if result[0] else 0,
+                total=result[1] if len(result) > 1 else 0,
+                duration_ms=duration_ms
+            )
+            
+            return result
+            
         except Exception as e:
-            self.logger.error(f"Error retrieving categories: {e}")
+            duration_ms = (time.time() - start_time) * 1000
+            
+            self.logger.error(
+                f"Error getting categories for user {user_id}: {str(e)}",
+                category="business",
+                operation="category_list_failed",
+                user_id=user_id,
+                page=page,
+                size=size,
+                duration_ms=duration_ms
+            )
             raise CategoryValidationError("Failed to retrieve categories")
 
     def get_all_flat(self, user_id: int, page: int = 1, size: int = 50) -> tuple[List[Category], int]:
@@ -115,14 +207,14 @@ class CategoryService:
                 self.logger, 
                 "Category updated", 
                 user_id, 
-                category_id, 
+                category_id,
                 f"Name: {old_name} -> {data.name}, Parent: {old_parent} -> {data.parent_id}"
             )
             
             return category
             
         except (CategoryNotFoundError, CategoryValidationError, CategoryNameConflictError, 
-                CircularRelationshipError, CategoryOwnershipError):
+                CircularRelationshipError, CategoryOwnershipError, CategoryDepthExceededError):
             self.db.rollback()
             raise
         except IntegrityError as e:
@@ -144,7 +236,8 @@ class CategoryService:
             children = self.serializer.get_category_children(self.db, category_id, user_id)
             if children:
                 raise CategoryValidationError(
-                    "Cannot delete category with children. Delete children first."
+                    "Cannot delete category with children. Delete children first.",
+                    "CATEGORY_HAS_CHILDREN"
                 )
             
             category_name = category.name
@@ -155,7 +248,7 @@ class CategoryService:
                 self.logger, 
                 "Category deleted", 
                 user_id, 
-                category_id, 
+                category_id,
                 f"Name: {category_name}"
             )
             

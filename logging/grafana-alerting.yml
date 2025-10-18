@@ -1,0 +1,144 @@
+apiVersion: 1
+
+alerting:
+  contactpoints:
+    - name: 'default-email'
+      type: 'email'
+      settings:
+        addresses: 'admin@accounting-app.com'
+        subject: 'Accounting App Alert: {{ .GroupLabels.alertname }}'
+        message: |
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Severity: {{ .Labels.severity }}
+          Service: {{ .Labels.service }}
+          Time: {{ .StartsAt }}
+          {{ end }}
+
+    - name: 'slack-alerts'
+      type: 'slack'
+      settings:
+        url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        title: 'Accounting App Alert'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Severity:* {{ .Labels.severity }}
+          *Service:* {{ .Labels.service }}
+          *Time:* {{ .StartsAt }}
+          {{ end }}
+
+  policies:
+    - receiver: 'default-email'
+      group_by: ['alertname', 'service']
+      group_wait: '10s'
+      group_interval: '10s'
+      repeat_interval: '1h'
+      routes:
+        - receiver: 'slack-alerts'
+          matchers:
+            - severity =~ 'critical|warning'
+
+  rules:
+    - name: 'accounting-app-alerts'
+      rules:
+        # High error rate alert
+        - alert: 'HighErrorRate'
+          expr: 'rate({level="ERROR"}[5m]) > 0.1'
+          for: '2m'
+          labels:
+            severity: 'warning'
+            service: '{{ $labels.service }}'
+          annotations:
+            summary: 'High error rate detected'
+            description: 'Service {{ $labels.service }} has error rate of {{ $value }} errors/second'
+
+        # Service down alert
+        - alert: 'ServiceDown'
+          expr: 'absent({service=~"user_service|expense_service|category_service|income_service|account_service|debt_service|goals_service|recurring_service|pdf_parser_service|currency_service"})'
+          for: '1m'
+          labels:
+            severity: 'critical'
+            service: '{{ $labels.service }}'
+          annotations:
+            summary: 'Service appears to be down'
+            description: 'Service {{ $labels.service }} has not sent logs for more than 1 minute'
+
+        # Database errors
+        - alert: 'DatabaseErrors'
+          expr: 'rate({service=~".*"} | json | event_type="db_error" [5m]) > 0'
+          for: '1m'
+          labels:
+            severity: 'error'
+            service: '{{ $labels.service }}'
+          annotations:
+            summary: 'Database errors detected'
+            description: 'Service {{ $labels.service }} is experiencing database errors'
+
+        # High response time
+        - alert: 'HighResponseTime'
+          expr: 'histogram_quantile(0.95, rate({service=~".*"} | json | event_type="api_request" | unwrap duration_ms [5m]) by (service, le)) > 5000'
+          for: '5m'
+          labels:
+            severity: 'warning'
+            service: '{{ $labels.service }}'
+          annotations:
+            summary: 'High response time detected'
+            description: 'Service {{ $labels.service }} has 95th percentile response time of {{ $value }}ms'
+
+        # Security events
+        - alert: 'SecurityEvents'
+          expr: 'rate({service=~".*"} | json | category="security" [5m]) > 0'
+          for: '0m'
+          labels:
+            severity: 'warning'
+            service: '{{ $labels.service }}'
+          annotations:
+            summary: 'Security event detected'
+            description: 'Security event detected in service {{ $labels.service }}'
+
+        # Authentication failures
+        - alert: 'HighAuthFailures'
+          expr: 'rate({service="user_service"} | json | event_type="auth_failure" [5m]) > 0.1'
+          for: '2m'
+          labels:
+            severity: 'warning'
+            service: 'user_service'
+          annotations:
+            summary: 'High authentication failure rate'
+            description: 'User service has authentication failure rate of {{ $value }} failures/second'
+
+        # Frontend errors
+        - alert: 'FrontendErrors'
+          expr: 'rate({service="frontend"} | json | event_type="frontend_error" [5m]) > 0.05'
+          for: '2m'
+          labels:
+            severity: 'warning'
+            service: 'frontend'
+          annotations:
+            summary: 'High frontend error rate'
+            description: 'Frontend has error rate of {{ $value }} errors/second'
+
+        # Memory usage (if available)
+        - alert: 'HighMemoryUsage'
+          expr: 'rate({service=~".*"} | json | memory_usage [5m]) > 0.8'
+          for: '5m'
+          labels:
+            severity: 'warning'
+            service: '{{ $labels.service }}'
+          annotations:
+            summary: 'High memory usage detected'
+            description: 'Service {{ $labels.service }} has memory usage of {{ $value }}%'
+
+        # Disk space (if available)
+        - alert: 'LowDiskSpace'
+          expr: 'rate({service=~".*"} | json | disk_usage [5m]) > 0.9'
+          for: '5m'
+          labels:
+            severity: 'critical'
+            service: '{{ $labels.service }}'
+          annotations:
+            summary: 'Low disk space'
+            description: 'Service {{ $labels.service }} has disk usage of {{ $value }}%'

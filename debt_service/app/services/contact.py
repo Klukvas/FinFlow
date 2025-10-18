@@ -38,7 +38,7 @@ class ContactService:
             self.db.commit()
             self.db.refresh(db_contact)
             
-            log_operation(self.logger, "Contact created", user_id, db_contact.id, f"Name: {contact.name}")
+            log_operation(self.logger, "Contact created", user_id, f"Contact ID: {db_contact.id}, Name: {contact.name}")
             return ContactResponse.model_validate(db_contact)
             
         except Exception as e:
@@ -84,7 +84,7 @@ class ContactService:
             self.db.commit()
             self.db.refresh(contact)
             
-            log_operation(self.logger, "Contact updated", user_id, contact.id, f"Fields: {list(update_data.keys())}")
+            log_operation(self.logger, "Contact updated", user_id, f"Contact ID: {contact.id}, Fields: {list(update_data.keys())}")
             return ContactResponse.model_validate(contact)
             
         except Exception as e:
@@ -112,7 +112,7 @@ class ContactService:
             self.db.delete(contact)
             self.db.commit()
             
-            log_operation(self.logger, "Contact deleted", user_id, contact_id, f"Name: {contact.name}")
+            log_operation(self.logger, "Contact deleted", user_id, f"Contact ID: {contact_id}, Name: {contact.name}")
             return True
             
         except Exception as e:

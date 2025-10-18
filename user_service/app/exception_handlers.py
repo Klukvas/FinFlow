@@ -10,7 +10,8 @@ from app.exceptions.user_errors import (
     PasswordPolicyError,
     UsernamePolicyError,
     AccountLockedError,
-    RateLimitError
+    RateLimitError,
+    UserErrorCode
 )
 from app.utils.logger import get_logger
 
@@ -22,7 +23,7 @@ async def custom_validation_exception_handler(request: Request, exc: RequestVali
     if not errors:
         return JSONResponse(
             status_code=HTTP_400_BAD_REQUEST,
-            content={"error": "Validation error", "details": "Invalid request data"}
+            content={"error": "Validation error", "errorCode": UserErrorCode.VALIDATION_ERROR}
         )
     
     # Get the first error for backward compatibility
@@ -47,7 +48,7 @@ async def custom_validation_exception_handler(request: Request, exc: RequestVali
     
     return JSONResponse(
         status_code=HTTP_400_BAD_REQUEST,
-        content={"error": message}
+        content={"error": message, "errorCode": UserErrorCode.VALIDATION_ERROR}
     )
 
 async def user_not_found_handler(request: Request, exc: UserNotFoundError):
@@ -55,7 +56,7 @@ async def user_not_found_handler(request: Request, exc: UserNotFoundError):
     logger.info(f"User not found: {exc.detail}")
     return JSONResponse(
         status_code=exc.status_code,
-        content={"error": exc.detail}
+        content={"error": exc.detail, "errorCode": exc.error_code}
     )
 
 async def user_validation_handler(request: Request, exc: UserValidationError):
@@ -63,7 +64,7 @@ async def user_validation_handler(request: Request, exc: UserValidationError):
     logger.warning(f"User validation error: {exc.detail}")
     return JSONResponse(
         status_code=exc.status_code,
-        content={"error": exc.detail}
+        content={"error": exc.detail, "errorCode": exc.error_code}
     )
 
 async def user_authentication_handler(request: Request, exc: UserAuthenticationError):
@@ -71,7 +72,7 @@ async def user_authentication_handler(request: Request, exc: UserAuthenticationE
     logger.warning(f"User authentication error: {exc.detail}")
     return JSONResponse(
         status_code=exc.status_code,
-        content={"error": exc.detail}
+        content={"error": exc.detail, "errorCode": exc.error_code}
     )
 
 async def user_registration_handler(request: Request, exc: UserRegistrationError):
@@ -79,7 +80,7 @@ async def user_registration_handler(request: Request, exc: UserRegistrationError
     logger.warning(f"User registration error: {exc.detail}")
     return JSONResponse(
         status_code=exc.status_code,
-        content={"error": exc.detail}
+        content={"error": exc.detail, "errorCode": exc.error_code}
     )
 
 async def password_policy_handler(request: Request, exc: PasswordPolicyError):
@@ -87,7 +88,7 @@ async def password_policy_handler(request: Request, exc: PasswordPolicyError):
     logger.warning(f"Password policy error: {exc.detail}")
     return JSONResponse(
         status_code=exc.status_code,
-        content={"error": exc.detail}
+        content={"error": exc.detail, "errorCode": exc.error_code}
     )
 
 async def username_policy_handler(request: Request, exc: UsernamePolicyError):
@@ -95,7 +96,7 @@ async def username_policy_handler(request: Request, exc: UsernamePolicyError):
     logger.warning(f"Username policy error: {exc.detail}")
     return JSONResponse(
         status_code=exc.status_code,
-        content={"error": exc.detail}
+        content={"error": exc.detail, "errorCode": exc.error_code}
     )
 
 async def account_locked_handler(request: Request, exc: AccountLockedError):
@@ -103,7 +104,7 @@ async def account_locked_handler(request: Request, exc: AccountLockedError):
     logger.warning(f"Account locked: {exc.detail}")
     return JSONResponse(
         status_code=exc.status_code,
-        content={"error": exc.detail}
+        content={"error": exc.detail, "errorCode": exc.error_code}
     )
 
 async def rate_limit_handler(request: Request, exc: RateLimitError):
@@ -111,7 +112,7 @@ async def rate_limit_handler(request: Request, exc: RateLimitError):
     logger.warning(f"Rate limit exceeded: {exc.detail}")
     return JSONResponse(
         status_code=exc.status_code,
-        content={"error": exc.detail}
+        content={"error": exc.detail, "errorCode": exc.error_code}
     )
 
 async def http_exception_handler(request: Request, exc: HTTPException):
@@ -119,5 +120,5 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     logger.warning(f"HTTP exception: {exc.status_code} - {exc.detail}")
     return JSONResponse(
         status_code=exc.status_code,
-        content={"error": exc.detail}
+        content={"error": exc.detail, "errorCode": UserErrorCode.INTERNAL_ERROR}
     )

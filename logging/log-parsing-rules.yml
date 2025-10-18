@@ -1,0 +1,228 @@
+# Log Parsing and Enrichment Rules for Loki/Promtail
+# This file contains advanced parsing rules for different log types
+
+# Service-specific parsing rules
+service_parsing_rules:
+  # User Service parsing
+  user_service:
+    patterns:
+      - name: "authentication_success"
+        regex: "Authentication SUCCESS: (?P<email>[^\s]+)"
+        labels:
+          event_type: "auth_success"
+          user_email: "$email"
+      
+      - name: "authentication_failure"
+        regex: "Authentication FAILED: (?P<email>[^\s]+)"
+        labels:
+          event_type: "auth_failure"
+          user_email: "$email"
+      
+      - name: "user_creation"
+        regex: "User created: (?P<user_id>\d+)"
+        labels:
+          event_type: "user_created"
+          user_id: "$user_id"
+      
+      - name: "password_change"
+        regex: "Password changed for user: (?P<user_id>\d+)"
+        labels:
+          event_type: "password_changed"
+          user_id: "$user_id"
+
+  # Expense Service parsing
+  expense_service:
+    patterns:
+      - name: "expense_created"
+        regex: "Expense created: (?P<expense_id>\d+) amount: (?P<amount>[\d.]+)"
+        labels:
+          event_type: "expense_created"
+          expense_id: "$expense_id"
+          amount: "$amount"
+      
+      - name: "expense_updated"
+        regex: "Expense updated: (?P<expense_id>\d+) new_amount: (?P<amount>[\d.]+)"
+        labels:
+          event_type: "expense_updated"
+          expense_id: "$expense_id"
+          amount: "$amount"
+      
+      - name: "expense_deleted"
+        regex: "Expense deleted: (?P<expense_id>\d+)"
+        labels:
+          event_type: "expense_deleted"
+          expense_id: "$expense_id"
+
+  # API Request parsing
+  api_requests:
+    patterns:
+      - name: "api_request"
+        regex: "API request: (?P<method>\w+) (?P<endpoint>[^\s]+) status: (?P<status>\d+) duration: (?P<duration>[\d.]+)ms"
+        labels:
+          event_type: "api_request"
+          method: "$method"
+          endpoint: "$endpoint"
+          status_code: "$status"
+          duration_ms: "$duration"
+      
+      - name: "api_error"
+        regex: "API Error: (?P<method>\w+) (?P<endpoint>[^\s]+) - (?P<status>\d+) (?P<error_message>[^\n]+)"
+        labels:
+          event_type: "api_error"
+          method: "$method"
+          endpoint: "$endpoint"
+          status_code: "$status"
+          error_message: "$error_message"
+
+  # Database operations
+  database_operations:
+    patterns:
+      - name: "db_query"
+        regex: "Database operation: (?P<operation>\w+) on (?P<table>\w+) duration: (?P<duration>[\d.]+)ms"
+        labels:
+          event_type: "db_operation"
+          operation: "$operation"
+          table: "$table"
+          duration_ms: "$duration"
+      
+      - name: "db_error"
+        regex: "Database error: (?P<operation>\w+) on (?P<table>\w+) - (?P<error_message>[^\n]+)"
+        labels:
+          event_type: "db_error"
+          operation: "$operation"
+          table: "$table"
+          error_message: "$error_message"
+
+  # Security events
+  security_events:
+    patterns:
+      - name: "security_event"
+        regex: "Security event: (?P<event_type>[^\s]+) user_id: (?P<user_id>\d+) ip: (?P<ip_address>[^\s]+)"
+        labels:
+          event_type: "security_event"
+          security_event_type: "$event_type"
+          user_id: "$user_id"
+          ip_address: "$ip_address"
+      
+      - name: "unauthorized_access"
+        regex: "Unauthorized access attempt: (?P<resource>[^\s]+) user_id: (?P<user_id>\d+) ip: (?P<ip_address>[^\s]+)"
+        labels:
+          event_type: "unauthorized_access"
+          resource: "$resource"
+          user_id: "$user_id"
+          ip_address: "$ip_address"
+
+  # Frontend events
+  frontend_events:
+    patterns:
+      - name: "frontend_error"
+        regex: "Frontend ERROR: (?P<message>[^\n]+) source: (?P<source>[^\s]+)"
+        labels:
+          event_type: "frontend_error"
+          error_message: "$message"
+          source: "$source"
+      
+      - name: "user_action"
+        regex: "User Action: (?P<action>[^\s]+) component: (?P<component>[^\s]+)"
+        labels:
+          event_type: "user_action"
+          action: "$action"
+          component: "$component"
+      
+      - name: "business_event"
+        regex: "Business Event: (?P<event>[^\s]+)"
+        labels:
+          event_type: "business_event"
+          business_event: "$event"
+
+# Log enrichment rules
+enrichment_rules:
+  # Add geographic information based on IP
+  ip_geolocation:
+    enabled: true
+    source_field: "ip_address"
+    target_field: "geo_info"
+    # Note: This would require a geolocation service integration
+  
+  # Add user context
+  user_context:
+    enabled: true
+    source_field: "user_id"
+    target_fields: ["user_email", "user_role", "user_status"]
+    # Note: This would require user service integration
+  
+  # Add service health status
+  service_health:
+    enabled: true
+    source_field: "service"
+    target_field: "health_status"
+    # Note: This would require health check integration
+
+# Log correlation rules
+correlation_rules:
+  # Correlate requests across services
+  request_correlation:
+    enabled: true
+    correlation_id_field: "request_id"
+    time_window: "5m"
+    
+  # Correlate user sessions
+  session_correlation:
+    enabled: true
+    correlation_id_field: "session_id"
+    time_window: "1h"
+    
+  # Correlate business transactions
+  transaction_correlation:
+    enabled: true
+    correlation_id_field: "transaction_id"
+    time_window: "10m"
+
+# Alert conditions
+alert_conditions:
+  # High error rate
+  high_error_rate:
+    condition: "rate({level=\"ERROR\"}[5m]) > 0.1"
+    severity: "warning"
+    description: "High error rate detected"
+    
+  # Service down
+  service_down:
+    condition: "absent({service=\"user_service\"})"
+    severity: "critical"
+    description: "Service appears to be down"
+    
+  # Security events
+  security_events:
+    condition: "{event_type=\"security_event\"}"
+    severity: "warning"
+    description: "Security event detected"
+    
+  # Database errors
+  database_errors:
+    condition: "{event_type=\"db_error\"}"
+    severity: "error"
+    description: "Database error detected"
+    
+  # Frontend errors
+  frontend_errors:
+    condition: "{event_type=\"frontend_error\"}"
+    severity: "warning"
+    description: "Frontend error detected"
+
+# Log retention policies
+retention_policies:
+  # High priority logs (errors, security)
+  high_priority:
+    condition: "{level=\"ERROR\"} or {event_type=\"security_event\"}"
+    retention: "90d"
+    
+  # Medium priority logs (warnings, business events)
+  medium_priority:
+    condition: "{level=\"WARNING\"} or {event_type=\"business_event\"}"
+    retention: "30d"
+    
+  # Low priority logs (info, debug)
+  low_priority:
+    condition: "{level=\"INFO\"} or {level=\"DEBUG\"}"
+    retention: "7d"

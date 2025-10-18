@@ -2,6 +2,7 @@ import React from 'react';
 import { CreateCategoryRequest, Category } from '@/types';
 import { useApiClients } from '@hooks';
 import CategoryForm from './CategoryForm';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 interface EditCategoryProps {
   category: Category;
@@ -15,11 +16,12 @@ export const EditCategory: React.FC<EditCategoryProps> = ({
   onCancel 
 }) => {
   const { category: categoryApi } = useApiClients();
-
+  const { handleCategoryError } = useErrorHandler();
   const handleSubmit = async (formData: CreateCategoryRequest) => {
     const response = await categoryApi.updateCategory(category.id, formData);
     if ('error' in response) {
-      throw new Error(response.error);
+      // Throw the error to prevent form closing - CategoryForm will handle the toast and form error
+      throw response;
     }
   };
 

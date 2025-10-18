@@ -13,16 +13,45 @@ export class CategoryActions {
     this.categoryPage = new CategoryPage(page);
     this.createCategoryModal = new CreateCategoryModal(page);
   }
-  async expectCategoryTypeSelectState(type: 'EXPENSE' | 'INCOME', state: 'disabled' | 'enabled'){
-    const categoryType = this.createCategoryModal.categoryTypeSelect
-    state === 'disabled' ? await expect(categoryType).toBeDisabled() : await expect(categoryType).toBeEnabled()
-    await expect(categoryType).toHaveValue(type)
+
+// Category Statistics Actions
+  async expectStatisticsVisible({
+    totalCategories,
+    expenseCategories,
+    incomeCategories,
+    parentCategories,
+    childCategories
+  }: {
+    totalCategories?: number,
+    expenseCategories?: number,
+    incomeCategories?: number,
+    parentCategories?: number,
+    childCategories?: number
+  }){
+    await expect(this.categoryPage.getByTestId('total-categories-stat')).toBeVisible()
+    await expect(this.categoryPage.getByTestId('expense-categories-stat')).toBeVisible()
+    await expect(this.categoryPage.getByTestId('income-categories-stat')).toBeVisible()
+    await expect(this.categoryPage.getByTestId('parent-categories-stat')).toBeVisible()
+    await expect(this.categoryPage.getByTestId('child-categories-stat')).toBeVisible()
+    if(totalCategories){
+      await expect(this.categoryPage.getByTestId('total-categories-stat-value')).toContainText(totalCategories.toString())
+    }
+    if(expenseCategories){
+      await expect(this.categoryPage.getByTestId('expense-categories-stat-value')).toContainText(expenseCategories.toString())
+    }
+    if(incomeCategories){
+      await expect(this.categoryPage.getByTestId('income-categories-stat-value')).toContainText(incomeCategories.toString())
+    }
+    if(parentCategories){
+      await expect(this.categoryPage.getByTestId('parent-categories-stat-value')).toContainText(parentCategories.toString())
+    }
+    if(childCategories){
+      await expect(this.categoryPage.getByTestId('child-categories-stat-value')).toContainText(childCategories.toString())
+    }
   }
 
-  async openCreateCategoryModal(){
-    await this.categoryPage.createCategoryButton.click()
-    await this.createCategoryModal.expectModal()
-  }
+
+// Create Category Actions
 
   async createCategory({name, type, parentCategoryName}:CategoryData){
     await this.openCreateCategoryModal()
@@ -47,21 +76,15 @@ export class CategoryActions {
     }
   }
 
-  async expectCreateModalState(state?: 'hidden' | 'visible'){
-    const exp =  expect(this.createCategoryModal.modal)
-    state === 'hidden' ?await exp.toBeHidden() : await exp.toBeVisible()
+  async expectCategoryTypeSelectState(type: 'EXPENSE' | 'INCOME', state: 'disabled' | 'enabled'){
+    const categoryType = this.createCategoryModal.categoryTypeSelect
+    state === 'disabled' ? await expect(categoryType).toBeDisabled() : await expect(categoryType).toBeEnabled()
+    await expect(categoryType).toHaveValue(type)
   }
 
-  async openEditCategoryModal(categoryName: string){
-    await this.categoryPage.getCategoryItem(categoryName).getByTestId('category-edit-button').click()
+  async openCreateCategoryModal(){
+    await this.categoryPage.createCategoryButton.click()
     await this.createCategoryModal.expectModal()
-  }
-
-  async editCategory(categoryName: string, updatedData: Partial<CategoryData>){
-    await this.openEditCategoryModal(categoryName)
-    await this.createCategoryModal.fillForm(updatedData)
-    await this.createCategoryModal.submitButton.click()
-    await this.expectCreateModalState('hidden')
   }
 
   async expectCategoryCreated(category: CategoryData){
@@ -78,4 +101,72 @@ export class CategoryActions {
     await expect(createdCategory.getByTestId('category-id')).not.toBeEmpty()
   }
 
+
+  // Edit Category Actions
+
+  async editCategory(categoryName: string, updatedData: Partial<CategoryData>){
+    await this.openEditCategoryModal(categoryName)
+    await this.createCategoryModal.fillForm(updatedData)
+    await this.createCategoryModal.submitButton.click()
+    await this.expectCreateModalState('hidden')
+  }
+
+  async editCategoryAndExpectFailure(
+    {categoryName, updatedData, toastErrorMessage, formErrorMessage, nameError}: {
+      categoryName: string, 
+      updatedData: Partial<CategoryData>,
+      toastErrorMessage?: string,
+      formErrorMessage?: string,
+      nameError?: string
+    }
+  ){
+    await this.openEditCategoryModal(categoryName)
+    await this.createCategoryModal.fillForm(updatedData)
+    await this.createCategoryModal.submitButton.click()
+    await this.expectCreateModalState('visible')
+    if(toastErrorMessage){
+      await this.createCategoryModal.expectErrorToast(toastErrorMessage)
+    }
+    if(formErrorMessage){
+      await this.createCategoryModal.expectFormError(formErrorMessage)
+    }
+    if(nameError){
+      await this.createCategoryModal.expectNameError(nameError)
+    }
+  }
+
+
+  async expectCreateModalState(state?: 'hidden' | 'visible'){
+    const exp =  expect(this.createCategoryModal.modal)
+    state === 'hidden' ?await exp.toBeHidden() : await exp.toBeVisible()
+  }
+
+  async openEditCategoryModal(categoryName: string){
+    await this.categoryPage.getCategoryItem(categoryName).getByTestId('category-edit-button').click()
+    await this.createCategoryModal.expectModal()
+  }
+
+
+
+// Delete Category Actions
+
+  async deleteCategory(categoryName: string){
+    const category = this.categoryPage.getCategoryItem(categoryName)
+    await category.getByTestId('delete-button').click()
+  }
+
+  async deleteCategoryAndExpectFailure(categoryName: string, toastErrorMessage: string, formErrorMessage: string, nameError: string){
+    const category = this.categoryPage.getCategoryItem(categoryName)
+    await category.getByTestId('delete-button').click()
+    if(toastErrorMessage){
+      await this.createCategoryModal.expectErrorToast(toastErrorMessage)
+    }
+    if(formErrorMessage){
+      await this.createCategoryModal.expectFormError(formErrorMessage)
+    }
+  }
+
+  async expectCategoryDeleted(categoryName: string){
+    await expect(this.categoryPage.getCategoryItem(categoryName)).toBeHidden()
+  }
 }

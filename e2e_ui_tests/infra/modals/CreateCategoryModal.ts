@@ -55,7 +55,7 @@ export class CreateCategoryModal extends BasePage {
   }
 
   async fillForm({name, type, parentCategoryName}: Partial<CategoryData>){
-    if(name){
+    if(name!==undefined){
       await this.nameInput.fill(name)
     }
     if(type){

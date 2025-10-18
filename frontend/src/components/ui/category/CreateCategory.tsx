@@ -13,7 +13,7 @@ export const CreateCategory: React.FC<CreateCategoryProps> = ({ onCategoryCreate
   const handleSubmit = async (formData: CreateCategoryRequest) => {
     const response = await category.createCategory(formData);
     if ('error' in response) {
-      throw new Error(response.error);
+      throw response; // Throw the entire error response object instead of just the message
     }
   };
 

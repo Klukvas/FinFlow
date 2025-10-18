@@ -9,6 +9,7 @@ from app.models.user import User
 from app.schemas.user import UserCreate, UserLogin
 from app.exceptions.user_errors import (
     UserServiceError,
+    UserErrorCode,
     UserNotFoundError,
     UserValidationError,
     UserAuthenticationError,
@@ -81,7 +82,9 @@ class AuthService:
                     "Registration attempt with existing email",
                     details=f"Email: {email}"
                 )
-                raise UserRegistrationError(UserServiceError.EMAIL_ALREADY_REGISTERED.value)
+                error = UserRegistrationError(UserServiceError.EMAIL_ALREADY_REGISTERED.value)
+                error.error_code = UserErrorCode.EMAIL_ALREADY_TAKEN
+                raise error
 
             if self.get_user_by_username(username):
                 log_security_event(
@@ -89,7 +92,9 @@ class AuthService:
                     "Registration attempt with existing username",
                     details=f"Username: {username}"
                 )
-                raise UserRegistrationError(UserServiceError.USERNAME_ALREADY_REGISTERED.value)
+                error = UserRegistrationError(UserServiceError.USERNAME_ALREADY_REGISTERED.value)
+                error.error_code = UserErrorCode.USERNAME_ALREADY_TAKEN
+                raise error
 
             # Hash password
             hashed_password = bcrypt.hash(password)

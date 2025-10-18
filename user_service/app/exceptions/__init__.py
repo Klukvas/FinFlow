@@ -1,5 +1,6 @@
 from .user_errors import (
     UserServiceError,
+    UserErrorCode,
     UserNotFoundError,
     UserValidationError,
     UserAuthenticationError,
@@ -12,6 +13,7 @@ from .user_errors import (
 
 __all__ = [
     "UserServiceError",
+    "UserErrorCode",
     "UserNotFoundError", 
     "UserValidationError",
     "UserAuthenticationError",

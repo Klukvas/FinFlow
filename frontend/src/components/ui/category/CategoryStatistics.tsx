@@ -122,35 +122,40 @@ export const CategoryStatistics: React.FC<CategoryStatisticsProps> = ({ refreshT
       value: stats.totalCategories, 
       color: 'from-blue-500 to-blue-600', 
       bgColor: 'theme-accent-light',
-      icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10'
+      icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10',
+      testId: 'total-categories-stat'
     },
     { 
       label: t('category.statistics.expenseCategories'), 
       value: stats.expenseCategories, 
       color: 'from-red-500 to-red-600', 
       bgColor: 'theme-error-light',
-      icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1'
+      icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1',
+      testId: 'expense-categories-stat'
     },
     { 
       label: t('category.statistics.incomeCategories'), 
       value: stats.incomeCategories, 
       color: 'from-green-500 to-green-600', 
       bgColor: 'theme-success-light',
-      icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1'
+      icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1',
+      testId: 'income-categories-stat'
     },
     { 
       label: t('category.statistics.parentCategories'), 
       value: stats.parentCategories, 
       color: 'from-purple-500 to-purple-600', 
       bgColor: 'theme-accent-light',
-      icon: 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z'
+      icon: 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z',
+      testId: 'parent-categories-stat'
     },
     { 
       label: t('category.statistics.childCategories'), 
       value: stats.childCategories, 
       color: 'from-orange-500 to-orange-600', 
       bgColor: 'theme-warning-light',
-      icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10'
+      icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10',
+      testId: 'child-categories-stat'
     }
   ];
 
@@ -168,6 +173,7 @@ export const CategoryStatistics: React.FC<CategoryStatisticsProps> = ({ refreshT
         {statItems.map((item, index) => (
           <div 
             key={index} 
+            data-testid={item.testId}
             className={`relative ${item.bgColor} rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-6 border theme-border hover:shadow-lg transition-all duration-200 hover:-translate-y-1 group`}
           >
             <div className="flex items-center justify-between mb-2 sm:mb-3">
@@ -177,10 +183,10 @@ export const CategoryStatistics: React.FC<CategoryStatisticsProps> = ({ refreshT
                 </svg>
               </div>
             </div>
-            <div className={`text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold bg-gradient-to-r ${item.color} bg-clip-text text-transparent mb-1 sm:mb-2`}>
+            <div data-testid={`${item.testId}-value`} className={`text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold bg-gradient-to-r ${item.color} bg-clip-text text-transparent mb-1 sm:mb-2`}>
               {item.value}
             </div>
-            <div className="text-xs sm:text-sm font-medium theme-text-secondary leading-tight">
+            <div data-testid={`${item.testId}-label`} className="text-xs sm:text-sm font-medium theme-text-secondary leading-tight">
               {item.label}
             </div>
           </div>

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { CreateCategoryRequest, Category } from '@/types';
 import { useApiClients } from '@hooks';
-import { ErrorHandler } from '@/utils/errorHandler';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 interface CategoryFormProps {
   mode: 'create' | 'edit';
@@ -22,6 +22,7 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
 }) => {
   const { t } = useTranslation();
   const { category } = useApiClients();
+  const { handleCategoryError } = useErrorHandler();
   const [formData, setFormData] = useState<CreateCategoryRequest>(() => {
     if (mode === 'edit' && initialData) {
       const baseData = {
@@ -115,13 +116,12 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
         onSuccess();
       }
     } catch (err) {
-      const errorMessage = mode === 'create' ? t('category.form.createError') : t('category.form.updateError');
+      const errorMessage = handleCategoryError(err as any);
       setError(errorMessage);
-      ErrorHandler.handleApiError(err, errorMessage);
     } finally {
       setIsLoading(false);
     }
-  }, [formData, onSubmit, onSuccess, mode, t]);
+  }, [formData, onSubmit, onSuccess, mode, t, handleCategoryError]);
 
   const submitButtonText = useMemo(() => 
     mode === 'create' ? t('category.form.createButton') : t('category.form.updateButton'), 

@@ -9,12 +9,13 @@ from typing import Optional, List, Any, Dict
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
-from app.models.category import Category, CategoryType
-from app.schemas.category import CategoryCreate
+from app.models.category import Category
+from app.schemas.category import CategoryCreate, CategoryType
 from app.exceptions import (
     CategoryNotFoundError,
     CategoryValidationError,
-    CategoryNameConflictError
+    CategoryNameConflictError,
+    CategoryDepthExceededError
 )
 from .validation_mixins import OwnershipValidator, UniquenessValidator, HierarchyValidator
 from app.utils.logger import get_logger
@@ -94,7 +95,7 @@ class CategorySerializer(OwnershipValidator, UniquenessValidator, HierarchyValid
     
     def validate_parent_category(self, db: Session, parent_id: int, user_id: int) -> Category:
         """
-        Validate that parent category exists and belongs to user.
+        Validate that parent category exists, belongs to user, and doesn't exceed max depth.
         
         Args:
             db: Database session
@@ -107,8 +108,17 @@ class CategorySerializer(OwnershipValidator, UniquenessValidator, HierarchyValid
         Raises:
             CategoryNotFoundError: If parent category doesn't exist
             CategoryOwnershipError: If parent category doesn't belong to user
+            CategoryDepthExceededError: If parent category is at maximum depth
         """
-        return self.validate_ownership(db, parent_id, user_id, "Parent category")
+        parent_category = self.validate_ownership(db, parent_id, user_id, "Parent category")
+        
+        # Check if parent category is at maximum depth (2)
+        # We need to check if adding a child would exceed the max depth of 2
+        parent_depth = self.get_entity_depth(db, parent_id, user_id)
+        if parent_depth >= 1:  # If parent is at depth 1 or more, we can't add another level
+            raise CategoryDepthExceededError(2)
+        
+        return parent_category
     
     def serialize_category_for_create(self, data: CategoryCreate, user_id: int) -> Dict[str, Any]:
         """

@@ -65,7 +65,7 @@ class DebtService:
             if db_debt.contact_id:
                 self.db.refresh(db_debt)
             
-            log_operation(self.logger, "Debt created", user_id, db_debt.id, f"Name: {debt.name}, Amount: {debt.initial_amount}")
+            log_operation(self.logger, "Debt created", user_id, f"Debt ID: {db_debt.id}, Name: {debt.name}, Amount: {debt.initial_amount}")
             return DebtResponse.model_validate(db_debt)
             
         except Exception as e:
@@ -131,7 +131,7 @@ class DebtService:
                 from app.models.debt import Contact
                 self.db.refresh(debt)
             
-            log_operation(self.logger, "Debt updated", user_id, debt.id, f"Fields: {list(update_data.keys())}")
+            log_operation(self.logger, "Debt updated", user_id, f"Debt ID: {debt.id}, Fields: {list(update_data.keys())}")
             return DebtResponse.model_validate(debt)
             
         except Exception as e:
@@ -155,7 +155,7 @@ class DebtService:
             self.db.delete(debt)
             self.db.commit()
             
-            log_operation(self.logger, "Debt deleted", user_id, debt_id, f"Name: {debt.name}")
+            log_operation(self.logger, "Debt deleted", user_id, f"Debt ID: {debt_id}, Name: {debt.name}")
             return True
             
         except Exception as e:
@@ -200,7 +200,7 @@ class DebtService:
             self.db.commit()
             self.db.refresh(db_payment)
             
-            log_operation(self.logger, "Payment created", user_id, db_payment.id, f"Amount: {payment.amount}, Debt: {debt.name}")
+            log_operation(self.logger, "Payment created", user_id, f"Payment ID: {db_payment.id}, Amount: {payment.amount}, Debt: {debt.name}")
             return DebtPaymentResponse.model_validate(db_payment)
             
         except Exception as e:
