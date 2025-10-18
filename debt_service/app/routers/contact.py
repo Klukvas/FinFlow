@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -7,10 +7,6 @@ from app.dependencies import get_current_user_id, get_contact_service
 from app.services.contact import ContactService
 from app.schemas.contact import (
     ContactCreate, ContactUpdate, ContactResponse, ContactSummary
-)
-from app.exceptions import (
-    ContactNotFoundError,
-    ContactValidationError
 )
 
 router = APIRouter()
@@ -24,10 +20,7 @@ async def create_contact(
     service: ContactService = Depends(get_contact_service)
 ):
     """Create a new contact"""
-    try:
-        return await service.create_contact(contact, user_id)
-    except ContactValidationError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    return await service.create_contact(contact, user_id)
 
 @router.get("/", response_model=List[ContactResponse])
 def get_contacts(
@@ -46,10 +39,7 @@ def get_contact(
     service: ContactService = Depends(get_contact_service)
 ):
     """Get a specific contact"""
-    try:
-        return service.get_contact(contact_id, user_id)
-    except ContactNotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    return service.get_contact(contact_id, user_id)
 
 @router.put("/{contact_id}", response_model=ContactResponse)
 async def update_contact(
@@ -59,12 +49,7 @@ async def update_contact(
     service: ContactService = Depends(get_contact_service)
 ):
     """Update a contact"""
-    try:
-        return await service.update_contact(contact_id, contact_update, user_id)
-    except ContactNotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-    except ContactValidationError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    return await service.update_contact(contact_id, contact_update, user_id)
 
 @router.delete("/{contact_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_contact(
@@ -73,12 +58,7 @@ def delete_contact(
     service: ContactService = Depends(get_contact_service)
 ):
     """Delete a contact"""
-    try:
-        service.delete_contact(contact_id, user_id)
-    except ContactNotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-    except ContactValidationError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    service.delete_contact(contact_id, user_id)
 
 @router.get("/summaries/", response_model=List[ContactSummary])
 def get_contact_summaries(

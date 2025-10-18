@@ -10,7 +10,8 @@ from app.exceptions import (
     IncomeAmountError,
     IncomeDateError,
     IncomeDescriptionError,
-    ExternalServiceError
+    ExternalServiceError,
+    IncomeErrorCodes
 )
 
 router = APIRouter(prefix="/incomes", tags=["Incomes"])

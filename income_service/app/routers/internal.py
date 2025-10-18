@@ -6,6 +6,7 @@ from app.services.income import IncomeService
 from app.dependencies import get_income_service
 from app.utils.logger import get_logger
 from app.models.income import Income
+from app.exceptions import IncomeErrorCodes
 
 # Create a separate router for internal endpoints
 router = APIRouter(prefix="/internal", tags=["Internal"])

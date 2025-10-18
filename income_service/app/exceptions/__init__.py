@@ -5,7 +5,8 @@ from .income_errors import (
     IncomeAmountError,
     IncomeDateError,
     IncomeDescriptionError,
-    ExternalServiceError
+    ExternalServiceError,
+    IncomeErrorCodes
 )
 
 __all__ = [
@@ -15,5 +16,6 @@ __all__ = [
     "IncomeAmountError",
     "IncomeDateError",
     "IncomeDescriptionError",
-    "ExternalServiceError"
+    "ExternalServiceError",
+    "IncomeErrorCodes"
 ]

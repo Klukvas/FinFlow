@@ -1,5 +1,5 @@
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
@@ -9,11 +9,6 @@ from app.services.debt import DebtService
 from app.schemas.debt import (
     DebtCreate, DebtUpdate, DebtResponse, DebtSummary,
     DebtPaymentCreate, DebtPaymentResponse
-)
-from app.exceptions import (
-    DebtNotFoundError,
-    DebtValidationError,
-    PaymentValidationError
 )
 
 router = APIRouter()
@@ -26,10 +21,7 @@ async def create_debt(
     service: DebtService = Depends(get_debt_service)
 ):
     """Create a new debt"""
-    try:
-        return await service.create_debt(debt, user_id)
-    except DebtValidationError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    return await service.create_debt(debt, user_id)
 
 @router.get("/", response_model=List[DebtResponse])
 def get_debts(
@@ -50,10 +42,7 @@ def get_debt(
     service: DebtService = Depends(get_debt_service)
 ):
     """Get a specific debt"""
-    try:
-        return service.get_debt(debt_id, user_id)
-    except DebtNotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    return service.get_debt(debt_id, user_id)
 
 @router.put("/{debt_id}", response_model=DebtResponse)
 async def update_debt(
@@ -63,12 +52,7 @@ async def update_debt(
     service: DebtService = Depends(get_debt_service)
 ):
     """Update a debt"""
-    try:
-        return await service.update_debt(debt_id, debt_update, user_id)
-    except DebtNotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-    except DebtValidationError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    return await service.update_debt(debt_id, debt_update, user_id)
 
 @router.delete("/{debt_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_debt(
@@ -77,12 +61,7 @@ def delete_debt(
     service: DebtService = Depends(get_debt_service)
 ):
     """Delete a debt"""
-    try:
-        service.delete_debt(debt_id, user_id)
-    except DebtNotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-    except DebtValidationError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    service.delete_debt(debt_id, user_id)
 
 # Payment Endpoints
 @router.post("/{debt_id}/payments/", response_model=DebtPaymentResponse, status_code=status.HTTP_201_CREATED)
@@ -93,12 +72,7 @@ async def create_payment(
     service: DebtService = Depends(get_debt_service)
 ):
     """Create a debt payment"""
-    try:
-        return await service.create_payment(debt_id, payment, user_id)
-    except DebtNotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-    except PaymentValidationError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    return await service.create_payment(debt_id, payment, user_id)
 
 @router.get("/{debt_id}/payments/", response_model=List[DebtPaymentResponse])
 def get_payments(
@@ -109,12 +83,9 @@ def get_payments(
     service: DebtService = Depends(get_debt_service)
 ):
     """Get all payments for a debt"""
-    try:
-        # Verify debt exists and belongs to user
-        service.get_debt(debt_id, user_id)
-        return service.get_payments(debt_id, user_id, skip, limit)
-    except DebtNotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    # Verify debt exists and belongs to user
+    service.get_debt(debt_id, user_id)
+    return service.get_payments(debt_id, user_id, skip, limit)
 
 # Summary Endpoints
 @router.get("/summary/", response_model=DebtSummary)

@@ -1,30 +1,59 @@
+# Error codes for unified error format
+class IncomeErrorCodes:
+    INCOME_NOT_FOUND = "INCOME_NOT_FOUND"
+    INCOME_VALIDATION_FAILED = "INCOME_VALIDATION_FAILED"
+    INCOME_AMOUNT_INVALID = "INCOME_AMOUNT_INVALID"
+    INCOME_AMOUNT_TOO_LARGE = "INCOME_AMOUNT_TOO_LARGE"
+    INCOME_AMOUNT_NEGATIVE = "INCOME_AMOUNT_NEGATIVE"
+    INCOME_DATE_INVALID_FORMAT = "INCOME_DATE_INVALID_FORMAT"
+    INCOME_DATE_FUTURE = "INCOME_DATE_FUTURE"
+    INCOME_DESCRIPTION_TOO_LONG = "INCOME_DESCRIPTION_TOO_LONG"
+    CATEGORY_VALIDATION_FAILED = "CATEGORY_VALIDATION_FAILED"
+    ACCOUNT_VALIDATION_FAILED = "ACCOUNT_VALIDATION_FAILED"
+    ACCOUNT_BALANCE_UPDATE_FAILED = "ACCOUNT_BALANCE_UPDATE_FAILED"
+    EXTERNAL_SERVICE_UNAVAILABLE = "EXTERNAL_SERVICE_UNAVAILABLE"
+    VALIDATION_ERROR = "VALIDATION_ERROR"
+
+
 class IncomeError(Exception):
     """Base exception for income-related errors"""
-    pass
+    def __init__(self, message: str, error_code: str):
+        self.error_code = error_code
+        super().__init__(message)
+
 
 class IncomeNotFoundError(IncomeError):
     """Raised when income is not found"""
-    pass
+    def __init__(self, message: str = "Income not found"):
+        super().__init__(message, IncomeErrorCodes.INCOME_NOT_FOUND)
+
 
 class IncomeValidationError(IncomeError):
     """Raised when income validation fails"""
-    pass
+    def __init__(self, message: str, error_code: str = IncomeErrorCodes.INCOME_VALIDATION_FAILED):
+        super().__init__(message, error_code)
+
 
 class IncomeAmountError(IncomeError):
     """Raised when income amount is invalid"""
-    pass
+    def __init__(self, message: str, error_code: str = IncomeErrorCodes.INCOME_AMOUNT_INVALID):
+        super().__init__(message, error_code)
+
 
 class IncomeDateError(IncomeError):
     """Raised when income date is invalid"""
-    pass
+    def __init__(self, message: str, error_code: str = IncomeErrorCodes.INCOME_DATE_INVALID_FORMAT):
+        super().__init__(message, error_code)
+
 
 class IncomeDescriptionError(IncomeError):
     """Raised when income description is invalid"""
-    pass
+    def __init__(self, message: str, error_code: str = IncomeErrorCodes.INCOME_DESCRIPTION_TOO_LONG):
+        super().__init__(message, error_code)
+
 
 class ExternalServiceError(IncomeError):
     """Raised when external service call fails"""
-    def __init__(self, service: str = None, detail: str = None):
+    def __init__(self, message: str, service: str = None, error_code: str = IncomeErrorCodes.EXTERNAL_SERVICE_UNAVAILABLE):
         self.service = service
-        self.detail = detail
-        super().__init__(f"External service error: {service} - {detail}")
+        super().__init__(message, error_code)

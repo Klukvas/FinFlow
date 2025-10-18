@@ -18,7 +18,8 @@ from app.exceptions import (
     IncomeAmountError,
     IncomeDateError,
     IncomeDescriptionError,
-    ExternalServiceError
+    ExternalServiceError,
+    IncomeErrorCodes
 )
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import Base, engine

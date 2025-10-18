@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 from app.clients.base import BaseHttpClient
 from starlette import status
-from app.exceptions import ExternalServiceError
+from app.exceptions import ExternalServiceError, IncomeErrorCodes
 from app.config import settings
 from app.utils.logger import get_logger, log_security_event
 from typing import Dict, Any
@@ -73,8 +73,9 @@ class AccountServiceClient(BaseHttpClient):
         except Exception as e:
             self.logger.error(f"Unexpected error during account validation: {e}")
             raise ExternalServiceError(
+                f"Failed to validate account: {str(e)}",
                 service="account-service",
-                detail=f"Failed to validate account: {str(e)}"
+                error_code=IncomeErrorCodes.EXTERNAL_SERVICE_UNAVAILABLE
             )
 
     async def update_account_balance(self, account_id: int, user_id: int, amount_change: float, transaction_currency: str = "USD") -> Dict[str, Any]:
@@ -146,6 +147,7 @@ class AccountServiceClient(BaseHttpClient):
         except Exception as e:
             self.logger.error(f"Unexpected error during account balance update: {e}")
             raise ExternalServiceError(
+                f"Failed to update account balance: {str(e)}",
                 service="account-service",
-                detail=f"Failed to update account balance: {str(e)}"
+                error_code=IncomeErrorCodes.EXTERNAL_SERVICE_UNAVAILABLE
             )

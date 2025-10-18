@@ -10,7 +10,8 @@ from app.exceptions import (
     IncomeAmountError,
     IncomeDateError,
     IncomeDescriptionError,
-    ExternalServiceError
+    ExternalServiceError,
+    IncomeErrorCodes
 )
 from app.clients.category_service_client import CategoryServiceClient
 from app.clients.account_service_client import AccountServiceClient
@@ -32,7 +33,7 @@ class IncomeService:
             return await self.category_client.validate_category(category_id, user_id)
         except Exception as e:
             logger.error(f"Category validation failed: {e}")
-            raise
+            raise ExternalServiceError(f"Category validation failed: {e}", "category_service", IncomeErrorCodes.CATEGORY_VALIDATION_FAILED)
 
     async def _validate_account(self, account_id: int, user_id: int) -> dict:
         """Validate account exists and belongs to user"""
@@ -40,7 +41,7 @@ class IncomeService:
             return await self.account_client.validate_account(account_id, user_id)
         except Exception as e:
             logger.error(f"Account validation failed: {e}")
-            raise
+            raise ExternalServiceError(f"Account validation failed: {e}", "account_service", IncomeErrorCodes.ACCOUNT_VALIDATION_FAILED)
 
     async def _handle_balance_updates(self, income: Income, old_amount: float, old_account_id: int, user_id: int) -> None:
         """Handle account balance updates when income amount or account changes"""
@@ -60,30 +61,30 @@ class IncomeService:
                     
         except Exception as e:
             logger.error(f"Failed to handle balance updates: {e}")
-            raise IncomeValidationError("Failed to update account balances")
+            raise IncomeValidationError("Failed to update account balances", IncomeErrorCodes.ACCOUNT_BALANCE_UPDATE_FAILED)
     
     async def create(self, income: IncomeCreate, user_id: int) -> IncomeOut:
         """Create a new income"""
         try:
             # Validate amount
             if income.amount <= 0:
-                raise IncomeAmountError("Income amount must be greater than 0")
+                raise IncomeAmountError("Income amount must be greater than 0", IncomeErrorCodes.INCOME_AMOUNT_NEGATIVE)
             
             if income.amount > 999999.99:
-                raise IncomeAmountError("Income amount cannot exceed 999,999.99")
+                raise IncomeAmountError("Income amount cannot exceed 999,999.99", IncomeErrorCodes.INCOME_AMOUNT_TOO_LARGE)
             
             # Validate date
             if income.date:
                 try:
                     income_date = date.fromisoformat(income.date)
                     if income_date > datetime.now().date():
-                        raise IncomeDateError("Income date cannot be in the future")
+                        raise IncomeDateError("Income date cannot be in the future", IncomeErrorCodes.INCOME_DATE_FUTURE)
                 except ValueError:
-                    raise IncomeDateError("Invalid date format. Use YYYY-MM-DD format")
+                    raise IncomeDateError("Invalid date format. Use YYYY-MM-DD format", IncomeErrorCodes.INCOME_DATE_INVALID_FORMAT)
             
             # Validate description
             if income.description and len(income.description) > 500:
-                raise IncomeDescriptionError("Description cannot exceed 500 characters")
+                raise IncomeDescriptionError("Description cannot exceed 500 characters", IncomeErrorCodes.INCOME_DESCRIPTION_TOO_LONG)
             
             # Validate category if provided
             if income.category_id:
@@ -101,7 +102,7 @@ class IncomeService:
                 try:
                     income_date = datetime.fromisoformat(income.date)
                 except ValueError:
-                    raise IncomeDateError("Invalid date format. Use YYYY-MM-DD format")
+                    raise IncomeDateError("Invalid date format. Use YYYY-MM-DD format", IncomeErrorCodes.INCOME_DATE_INVALID_FORMAT)
             
             db_income = Income(
                 user_id=user_id,
@@ -125,7 +126,7 @@ class IncomeService:
             if isinstance(e, (IncomeAmountError, IncomeDateError, IncomeDescriptionError, IncomeValidationError)):
                 raise
             logger.error(f"Error creating income: {e}")
-            raise IncomeValidationError("Failed to create income")
+            raise IncomeValidationError("Failed to create income", IncomeErrorCodes.INCOME_VALIDATION_FAILED)
     
     def get_by_id(self, income_id: int, user_id: int) -> IncomeOut:
         """Get income by ID"""
@@ -163,19 +164,19 @@ class IncomeService:
             # Update fields if provided
             if income_update.amount is not None:
                 if income_update.amount <= 0:
-                    raise IncomeAmountError("Income amount must be greater than 0")
+                    raise IncomeAmountError("Income amount must be greater than 0", IncomeErrorCodes.INCOME_AMOUNT_NEGATIVE)
                 if income_update.amount > 999999.99:
-                    raise IncomeAmountError("Income amount cannot exceed 999,999.99")
+                    raise IncomeAmountError("Income amount cannot exceed 999,999.99", IncomeErrorCodes.INCOME_AMOUNT_TOO_LARGE)
                 db_income.amount = round(income_update.amount, 2)
             
             if income_update.date is not None:
                 if income_update.date > datetime.now():
-                    raise IncomeDateError("Income date cannot be in the future")
+                    raise IncomeDateError("Income date cannot be in the future", IncomeErrorCodes.INCOME_DATE_FUTURE)
                 db_income.date = income_update.date
             
             if income_update.description is not None:
                 if len(income_update.description) > 500:
-                    raise IncomeDescriptionError("Description cannot exceed 500 characters")
+                    raise IncomeDescriptionError("Description cannot exceed 500 characters", IncomeErrorCodes.INCOME_DESCRIPTION_TOO_LONG)
                 db_income.description = income_update.description
             
             if income_update.category_id is not None:
@@ -186,7 +187,7 @@ class IncomeService:
                         pass  # await category_client.get(f"/internal/categories/{income_update.category_id}", {"user_id": user_id})
                     except Exception as e:
                         logger.warning(f"Category validation failed: {e}")
-                        raise IncomeValidationError("Invalid category ID")
+                        raise IncomeValidationError("Invalid category ID", IncomeErrorCodes.CATEGORY_VALIDATION_FAILED)
                 db_income.category_id = income_update.category_id
             
             if income_update.account_id is not None:
@@ -213,7 +214,7 @@ class IncomeService:
             if isinstance(e, (IncomeAmountError, IncomeDateError, IncomeDescriptionError, IncomeValidationError)):
                 raise
             logger.error(f"Error updating income: {e}")
-            raise IncomeValidationError("Failed to update income")
+            raise IncomeValidationError("Failed to update income", IncomeErrorCodes.INCOME_VALIDATION_FAILED)
     
     async def delete(self, income_id: int, user_id: int) -> bool:
         """Delete income"""

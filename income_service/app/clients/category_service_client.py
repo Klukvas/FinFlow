@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 from app.clients.base import BaseHttpClient
 from starlette import status
-from app.exceptions import IncomeValidationError, ExternalServiceError
+from app.exceptions import IncomeValidationError, ExternalServiceError, IncomeErrorCodes
 from app.config import settings
 from app.utils.logger import get_logger, log_security_event
 from typing import Dict, Any
@@ -43,7 +43,7 @@ class CategoryServiceClient(BaseHttpClient):
                     user_id,
                     f"Category ID: {category_id}"
                 )
-                raise IncomeValidationError("Category not found")
+                raise IncomeValidationError("Category not found", IncomeErrorCodes.CATEGORY_VALIDATION_FAILED)
             
             if response.status_code == status.HTTP_403_FORBIDDEN:
                 log_security_event(
@@ -52,11 +52,11 @@ class CategoryServiceClient(BaseHttpClient):
                     user_id,
                     f"Category ID: {category_id}"
                 )
-                raise IncomeValidationError("Category does not belong to user")
+                raise IncomeValidationError("Category does not belong to user", IncomeErrorCodes.CATEGORY_VALIDATION_FAILED)
             
             if response.status_code != status.HTTP_200_OK:
                 self.logger.error(f"Unexpected response from category service: {response.status_code}")
-                raise IncomeValidationError("Category validation service error")
+                raise IncomeValidationError("Category validation service error", IncomeErrorCodes.CATEGORY_VALIDATION_FAILED)
             
             # Parse and return category data
             category_data = response.json()
@@ -69,6 +69,7 @@ class CategoryServiceClient(BaseHttpClient):
         except Exception as e:
             self.logger.error(f"Unexpected error during category validation: {e}")
             raise ExternalServiceError(
+                f"Failed to validate category: {str(e)}",
                 service="category-service",
-                detail=f"Failed to validate category: {str(e)}"
+                error_code=IncomeErrorCodes.EXTERNAL_SERVICE_UNAVAILABLE
             )

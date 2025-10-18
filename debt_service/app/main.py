@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
@@ -10,6 +11,21 @@ from app.routers.dept_route import router as debt_router
 from app.routers.contact import router as contact_router
 from app.config import settings
 from app.utils.logger import get_logger
+from app.exceptions import (
+    DebtServiceException,
+    DebtNotFoundError,
+    ContactNotFoundError,
+    PaymentNotFoundError,
+    DebtValidationError,
+    ContactValidationError,
+    PaymentValidationError,
+    DebtAmountError,
+    PaymentAmountError,
+    DebtDateError,
+    ExternalServiceError,
+    DatabaseError
+)
+from app.schemas.error import ErrorResponse
 import time
 import uuid
 
@@ -138,22 +154,61 @@ async def root():
     }
 
 # Exception handlers
+@app.exception_handler(DebtServiceException)
+async def debt_service_exception_handler(request: Request, exc: DebtServiceException):
+    """Handle debt service exceptions with unified error format"""
+    logger.error(f"Debt service error: {exc.message}")
+    
+    # Determine status code based on error type
+    status_code = 400  # Default to bad request
+    if isinstance(exc, (DebtNotFoundError, ContactNotFoundError, PaymentNotFoundError)):
+        status_code = 404
+    elif isinstance(exc, (DebtValidationError, ContactValidationError, PaymentValidationError, 
+                         DebtAmountError, PaymentAmountError, DebtDateError)):
+        status_code = 400
+    elif isinstance(exc, (ExternalServiceError, DatabaseError)):
+        status_code = 500
+    
+    error_response = ErrorResponse(
+        error=exc.message,
+        errorCode=exc.error_code,
+        details=exc.details
+    )
+    
+    return JSONResponse(
+        status_code=status_code,
+        content=error_response.model_dump()
+    )
+
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request, exc):
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """Handle validation errors"""
     logger.warning(f"Validation error: {exc}")
-    return HTTPException(
+    
+    error_response = ErrorResponse(
+        error="Request validation failed",
+        errorCode="VALIDATION_ERROR",
+        details={"errors": exc.errors()}
+    )
+    
+    return JSONResponse(
         status_code=422,
-        detail=f"Validation error: {exc.errors()}"
+        content=error_response.model_dump()
     )
 
 @app.exception_handler(SQLAlchemyError)
-async def database_exception_handler(request, exc):
+async def database_exception_handler(request: Request, exc: SQLAlchemyError):
     """Handle database errors"""
     logger.error(f"Database error: {exc}")
-    return HTTPException(
+    
+    error_response = ErrorResponse(
+        error="Database operation failed",
+        errorCode="DATABASE_ERROR"
+    )
+    
+    return JSONResponse(
         status_code=500,
-        detail="Internal server error"
+        content=error_response.model_dump()
     )
 
 if __name__ == "__main__":

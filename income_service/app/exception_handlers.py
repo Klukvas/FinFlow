@@ -7,7 +7,8 @@ from app.exceptions import (
     IncomeAmountError,
     IncomeDateError,
     IncomeDescriptionError,
-    ExternalServiceError
+    ExternalServiceError,
+    IncomeErrorCodes
 )
 from app.utils.logger import get_logger
 
@@ -24,7 +25,11 @@ async def custom_validation_exception_handler(request: Request, exc: RequestVali
     logger.warning(f"Validation error: {errors}")
     return JSONResponse(
         status_code=422,
-        content={"error": "Validation error", "details": errors}
+        content={
+            "error": "Validation error",
+            "errorCode": IncomeErrorCodes.VALIDATION_ERROR,
+            "details": errors
+        }
     )
 
 async def income_not_found_handler(request: Request, exc: IncomeNotFoundError):
@@ -32,7 +37,10 @@ async def income_not_found_handler(request: Request, exc: IncomeNotFoundError):
     logger.warning(f"Income not found: {str(exc)}")
     return JSONResponse(
         status_code=404,
-        content={"error": "Income not found"}
+        content={
+            "error": str(exc),
+            "errorCode": exc.error_code
+        }
     )
 
 async def income_validation_handler(request: Request, exc: IncomeValidationError):
@@ -40,7 +48,10 @@ async def income_validation_handler(request: Request, exc: IncomeValidationError
     logger.warning(f"Income validation error: {str(exc)}")
     return JSONResponse(
         status_code=400,
-        content={"error": "Income validation error", "details": str(exc)}
+        content={
+            "error": str(exc),
+            "errorCode": exc.error_code
+        }
     )
 
 async def income_amount_handler(request: Request, exc: IncomeAmountError):
@@ -48,7 +59,10 @@ async def income_amount_handler(request: Request, exc: IncomeAmountError):
     logger.warning(f"Income amount error: {str(exc)}")
     return JSONResponse(
         status_code=400,
-        content={"error": "Invalid income amount", "details": str(exc)}
+        content={
+            "error": str(exc),
+            "errorCode": exc.error_code
+        }
     )
 
 async def income_date_handler(request: Request, exc: IncomeDateError):
@@ -56,7 +70,10 @@ async def income_date_handler(request: Request, exc: IncomeDateError):
     logger.warning(f"Income date error: {str(exc)}")
     return JSONResponse(
         status_code=400,
-        content={"error": "Invalid income date", "details": str(exc)}
+        content={
+            "error": str(exc),
+            "errorCode": exc.error_code
+        }
     )
 
 async def income_description_handler(request: Request, exc: IncomeDescriptionError):
@@ -64,7 +81,10 @@ async def income_description_handler(request: Request, exc: IncomeDescriptionErr
     logger.warning(f"Income description error: {str(exc)}")
     return JSONResponse(
         status_code=400,
-        content={"error": "Invalid income description", "details": str(exc)}
+        content={
+            "error": str(exc),
+            "errorCode": exc.error_code
+        }
     )
 
 async def external_service_handler(request: Request, exc: ExternalServiceError):
@@ -72,7 +92,10 @@ async def external_service_handler(request: Request, exc: ExternalServiceError):
     logger.error(f"External service error: {str(exc)}")
     return JSONResponse(
         status_code=503,
-        content={"error": "External service unavailable", "details": str(exc)}
+        content={
+            "error": str(exc),
+            "errorCode": exc.error_code
+        }
     )
 
 async def http_exception_handler(request: Request, exc: HTTPException):
@@ -80,5 +103,8 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     logger.warning(f"HTTP exception: {exc.status_code} - {exc.detail}")
     return JSONResponse(
         status_code=exc.status_code,
-        content={"error": exc.detail}
+        content={
+            "error": exc.detail,
+            "errorCode": f"HTTP_{exc.status_code}"
+        }
     )
