@@ -8,7 +8,8 @@ from app.exceptions import (
     AccountOwnershipError,
     AccountArchivedError,
     AccountBalanceError,
-    ExternalServiceError
+    ExternalServiceError,
+    AccountErrorCode
 )
 from app.utils.logger import get_logger
 
@@ -20,9 +21,8 @@ def custom_validation_exception_handler(request: Request, exc: RequestValidation
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={
-            "error": "Validation Error",
-            "detail": exc.errors(),
-            "message": "Invalid request data"
+            "error": "Invalid request data",
+            "errorCode": AccountErrorCode.VALIDATION_ERROR
         }
     )
 
@@ -32,9 +32,8 @@ def account_not_found_handler(request: Request, exc: AccountNotFoundError):
     return JSONResponse(
         status_code=status.HTTP_404_NOT_FOUND,
         content={
-            "error": "Account Not Found",
-            "message": exc.message,
-            "account_id": exc.account_id
+            "error": exc.message,
+            "errorCode": exc.error_code
         }
     )
 
@@ -44,9 +43,8 @@ def account_validation_handler(request: Request, exc: AccountValidationError):
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
         content={
-            "error": "Account Validation Error",
-            "message": exc.message,
-            "details": exc.details
+            "error": exc.message,
+            "errorCode": exc.error_code
         }
     )
 
@@ -56,10 +54,8 @@ def account_ownership_handler(request: Request, exc: AccountOwnershipError):
     return JSONResponse(
         status_code=status.HTTP_403_FORBIDDEN,
         content={
-            "error": "Account Ownership Error",
-            "message": exc.message,
-            "account_id": exc.account_id,
-            "user_id": exc.user_id
+            "error": exc.message,
+            "errorCode": exc.error_code
         }
     )
 
@@ -69,9 +65,8 @@ def account_archived_handler(request: Request, exc: AccountArchivedError):
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
         content={
-            "error": "Account Archived",
-            "message": exc.message,
-            "account_id": exc.account_id
+            "error": exc.message,
+            "errorCode": exc.error_code
         }
     )
 
@@ -81,9 +76,8 @@ def account_balance_handler(request: Request, exc: AccountBalanceError):
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
         content={
-            "error": "Account Balance Error",
-            "message": exc.message,
-            "details": exc.details
+            "error": exc.message,
+            "errorCode": exc.error_code
         }
     )
 
@@ -93,9 +87,8 @@ def external_service_handler(request: Request, exc: ExternalServiceError):
     return JSONResponse(
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
         content={
-            "error": "External Service Error",
-            "message": f"Service {exc.service} is currently unavailable",
-            "details": exc.details
+            "error": exc.message,
+            "errorCode": exc.error_code
         }
     )
 
@@ -105,8 +98,7 @@ def http_exception_handler(request: Request, exc: HTTPException):
     return JSONResponse(
         status_code=exc.status_code,
         content={
-            "error": "HTTP Error",
-            "message": exc.detail,
-            "status_code": exc.status_code
+            "error": str(exc.detail),
+            "errorCode": AccountErrorCode.UNKNOWN_ERROR
         }
     )

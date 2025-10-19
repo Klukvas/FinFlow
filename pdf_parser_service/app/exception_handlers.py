@@ -5,7 +5,9 @@ from app.exceptions import (
     UnsupportedBankError,
     FileProcessingError,
     InvalidPDFError,
-    ParsingTimeoutError
+    ParsingTimeoutError,
+    BankNotFoundError,
+    ErrorCodes
 )
 from app.utils.logger import get_logger
 
@@ -17,9 +19,8 @@ async def custom_validation_exception_handler(request: Request, exc):
     return JSONResponse(
         status_code=422,
         content={
-            "error": "Validation Error",
-            "message": "Invalid request data",
-            "details": exc.errors() if hasattr(exc, 'errors') else str(exc)
+            "error": "Invalid request data",
+            "errorCode": ErrorCodes.VALIDATION_ERROR
         }
     )
 
@@ -29,9 +30,8 @@ async def pdf_parsing_error_handler(request: Request, exc: PDFParsingError):
     return JSONResponse(
         status_code=400,
         content={
-            "error": "PDF Parsing Error",
-            "message": exc.message,
-            "details": exc.details
+            "error": exc.message,
+            "errorCode": exc.error_code
         }
     )
 
@@ -41,9 +41,8 @@ async def unsupported_bank_handler(request: Request, exc: UnsupportedBankError):
     return JSONResponse(
         status_code=400,
         content={
-            "error": "Unsupported Bank",
-            "message": exc.message,
-            "supported_banks": exc.supported_banks
+            "error": exc.message,
+            "errorCode": exc.error_code
         }
     )
 
@@ -53,9 +52,19 @@ async def file_processing_error_handler(request: Request, exc: FileProcessingErr
     return JSONResponse(
         status_code=400,
         content={
-            "error": "File Processing Error",
-            "message": exc.message,
-            "file_name": exc.file_name
+            "error": exc.message,
+            "errorCode": exc.error_code
+        }
+    )
+
+async def bank_not_found_handler(request: Request, exc: BankNotFoundError):
+    """Handle bank not found errors"""
+    logger.warning(f"Bank not found: {exc.bank_name}")
+    return JSONResponse(
+        status_code=404,
+        content={
+            "error": exc.message,
+            "errorCode": exc.error_code
         }
     )
 
@@ -65,7 +74,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     return JSONResponse(
         status_code=exc.status_code,
         content={
-            "error": "HTTP Error",
-            "message": exc.detail
+            "error": exc.detail,
+            "errorCode": ErrorCodes.INTERNAL_SERVER_ERROR
         }
     )

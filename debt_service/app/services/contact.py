@@ -8,7 +8,11 @@ from app.schemas.contact import ContactCreate, ContactUpdate, ContactResponse, C
 from app.exceptions import (
     ContactNotFoundError,
     ContactValidationError,
-    ExternalServiceError
+    ExternalServiceError,
+    ContactCreationFailedError,
+    ContactUpdateFailedError,
+    ContactDeletionFailedError,
+    ContactHasAssociatedDebtsError
 )
 from app.utils.logger import get_logger, log_operation
 
@@ -44,7 +48,7 @@ class ContactService:
         except Exception as e:
             self.db.rollback()
             self.logger.error(f"Error creating contact: {e}")
-            raise ContactValidationError("Failed to create contact")
+            raise ContactCreationFailedError("Failed to create contact")
 
     def get_contacts(self, user_id: int, skip: int = 0, limit: int = 100) -> List[ContactResponse]:
         """Get all contacts for a user"""
@@ -90,7 +94,7 @@ class ContactService:
         except Exception as e:
             self.db.rollback()
             self.logger.error(f"Error updating contact: {e}")
-            raise ContactValidationError("Failed to update contact")
+            raise ContactUpdateFailedError("Failed to update contact")
 
     def delete_contact(self, contact_id: int, user_id: int) -> bool:
         """Delete a contact"""
@@ -106,7 +110,7 @@ class ContactService:
         from app.models.debt import Debt
         debt_count = self.db.query(Debt).filter(Debt.contact_id == contact_id).count()
         if debt_count > 0:
-            raise ContactValidationError(f"Cannot delete contact with {debt_count} associated debts")
+            raise ContactHasAssociatedDebtsError(contact_id, debt_count)
         
         try:
             self.db.delete(contact)
@@ -118,7 +122,7 @@ class ContactService:
         except Exception as e:
             self.db.rollback()
             self.logger.error(f"Error deleting contact: {e}")
-            raise ContactValidationError("Failed to delete contact")
+            raise ContactDeletionFailedError("Failed to delete contact")
 
     def get_contact_summaries(self, user_id: int) -> List[ContactSummary]:
         """Get contact summaries with debt information"""

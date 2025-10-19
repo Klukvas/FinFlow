@@ -10,6 +10,11 @@ from app.config import settings
 from app.utils.logger import get_logger
 from app.config.bank_headers import BANK_HEADERS 
 from app.dependencies import get_current_user_id
+from app.exceptions import (
+    FileProcessingError,
+    BankNotFoundError,
+    ErrorCodes
+)
 logger = get_logger(__name__)
 router = APIRouter(prefix="/pdf", tags=["pdf-parser"])
 
@@ -31,16 +36,16 @@ async def parse_pdf(
         # Validate file type
         if file.content_type != "application/pdf":
             logger.warning(f"Invalid file type: {file.content_type}")
-            raise HTTPException(
-                status_code=400,
-                detail="Only PDF files are supported"
+            raise FileProcessingError(
+                "Only PDF files are supported",
+                ErrorCodes.INVALID_FILE_TYPE
             )
         
         # Validate file size
         if file.size > settings.max_file_size:
-            raise HTTPException(
-                status_code=400,
-                detail=f"File size exceeds maximum allowed size of {settings.max_file_size} bytes"
+            raise FileProcessingError(
+                f"File size exceeds maximum allowed size of {settings.max_file_size} bytes",
+                ErrorCodes.FILE_SIZE_EXCEEDED
             )
         
         # Create upload directory if it doesn't exist
@@ -77,7 +82,7 @@ async def parse_pdf(
     
     except Exception as e:
         logger.error(f"Error processing PDF upload: {e}")
-        if isinstance(e, HTTPException):
+        if isinstance(e, (FileProcessingError, BankNotFoundError)):
             raise
         raise HTTPException(status_code=500, detail=f"Failed to process PDF: {str(e)}")
 
@@ -105,10 +110,7 @@ async def get_available_languages(bank_name: str, user_id: int = Depends(get_cur
     
     # Check if bank is supported
     if bank_name_upper not in [bank.upper() for bank in BANK_HEADERS.keys()]:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Bank '{bank_name}' is not supported"
-        )
+        raise BankNotFoundError(bank_name)
     available_languages = list(BANK_HEADERS.get(bank_name_upper, {}).keys())
     
     return {

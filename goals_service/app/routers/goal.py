@@ -10,7 +10,10 @@ from app.schemas.goal import (
 )
 from app.models.goal import GoalStatus, GoalType, GoalPriority
 from app.exceptions.goal_exceptions import (
-    GoalNotFoundError, GoalValidationError, MilestoneNotFoundError
+    GoalNotFoundError, GoalValidationError, GoalCreationError, GoalUpdateError,
+    GoalDeletionError, GoalRetrievalError, GoalStatisticsError, GoalProgressError,
+    MilestoneNotFoundError, MilestoneValidationError, MilestoneCreationError,
+    MilestoneRetrievalError, MilestoneProgressUpdateError
 )
 from app.utils.logger import get_logger
 
@@ -25,12 +28,9 @@ async def create_goal(
     db: Session = Depends(get_db)
 ):
     """Create a new financial goal"""
-    try:
-        service = GoalService(db)
-        goal = service.create_goal(user_id, goal_data)
-        return goal
-    except GoalValidationError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+    service = GoalService(db)
+    goal = service.create_goal(user_id, goal_data)
+    return goal
 
 
 @router.get("/", response_model=GoalListResponse)
@@ -44,23 +44,20 @@ async def get_goals(
     db: Session = Depends(get_db)
 ):
     """Get user's financial goals with optional filtering"""
-    try:
-        service = GoalService(db)
-        goals = service.get_goals(user_id, skip, limit, status, goal_type, priority)
-        
-        # Get total count for pagination
-        total = len(goals)
-        pages = (total + limit - 1) // limit
-        
-        return GoalListResponse(
-            items=goals,
-            total=total,
-            page=(skip // limit) + 1,
-            size=limit,
-            pages=pages
-        )
-    except GoalValidationError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+    service = GoalService(db)
+    goals = service.get_goals(user_id, skip, limit, status, goal_type, priority)
+    
+    # Get total count for pagination
+    total = len(goals)
+    pages = (total + limit - 1) // limit
+    
+    return GoalListResponse(
+        items=goals,
+        total=total,
+        page=(skip // limit) + 1,
+        size=limit,
+        pages=pages
+    )
 
 
 @router.get("/{goal_id}", response_model=GoalResponse)
@@ -70,12 +67,9 @@ async def get_goal(
     db: Session = Depends(get_db)
 ):
     """Get a specific financial goal"""
-    try:
-        service = GoalService(db)
-        goal = service.get_goal(user_id, goal_id)
-        return goal
-    except GoalNotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    service = GoalService(db)
+    goal = service.get_goal(user_id, goal_id)
+    return goal
 
 
 @router.put("/{goal_id}", response_model=GoalResponse)
@@ -86,14 +80,9 @@ async def update_goal(
     db: Session = Depends(get_db)
 ):
     """Update a financial goal"""
-    try:
-        service = GoalService(db)
-        goal = service.update_goal(user_id, goal_id, goal_data)
-        return goal
-    except GoalNotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except GoalValidationError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+    service = GoalService(db)
+    goal = service.update_goal(user_id, goal_id, goal_data)
+    return goal
 
 
 @router.patch("/{goal_id}/progress", response_model=GoalResponse)
@@ -104,14 +93,9 @@ async def update_goal_progress(
     db: Session = Depends(get_db)
 ):
     """Update goal progress"""
-    try:
-        service = GoalService(db)
-        goal = service.update_goal_progress(user_id, goal_id, progress_data)
-        return goal
-    except GoalNotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except GoalValidationError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+    service = GoalService(db)
+    goal = service.update_goal_progress(user_id, goal_id, progress_data)
+    return goal
 
 
 @router.delete("/{goal_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -121,13 +105,8 @@ async def delete_goal(
     db: Session = Depends(get_db)
 ):
     """Delete a financial goal"""
-    try:
-        service = GoalService(db)
-        service.delete_goal(user_id, goal_id)
-    except GoalNotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except GoalValidationError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+    service = GoalService(db)
+    service.delete_goal(user_id, goal_id)
 
 
 @router.get("/statistics/overview", response_model=GoalStatistics)
@@ -136,12 +115,9 @@ async def get_goal_statistics(
     db: Session = Depends(get_db)
 ):
     """Get goal statistics for the user"""
-    try:
-        service = GoalService(db)
-        stats = service.get_goal_statistics(user_id)
-        return stats
-    except GoalValidationError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+    service = GoalService(db)
+    stats = service.get_goal_statistics(user_id)
+    return stats
 
 
 # Milestone endpoints
@@ -153,14 +129,9 @@ async def create_milestone(
     db: Session = Depends(get_db)
 ):
     """Create a milestone for a goal"""
-    try:
-        service = GoalService(db)
-        milestone = service.create_milestone(user_id, goal_id, milestone_data)
-        return milestone
-    except GoalNotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except GoalValidationError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+    service = GoalService(db)
+    milestone = service.create_milestone(user_id, goal_id, milestone_data)
+    return milestone
 
 
 @router.get("/{goal_id}/milestones", response_model=List[MilestoneResponse])
@@ -170,14 +141,9 @@ async def get_milestones(
     db: Session = Depends(get_db)
 ):
     """Get milestones for a goal"""
-    try:
-        service = GoalService(db)
-        milestones = service.get_milestones(user_id, goal_id)
-        return milestones
-    except GoalNotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except GoalValidationError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+    service = GoalService(db)
+    milestones = service.get_milestones(user_id, goal_id)
+    return milestones
 
 
 @router.patch("/{goal_id}/milestones/{milestone_id}/progress", response_model=MilestoneResponse)
@@ -189,11 +155,6 @@ async def update_milestone_progress(
     db: Session = Depends(get_db)
 ):
     """Update milestone progress"""
-    try:
-        service = GoalService(db)
-        milestone = service.update_milestone_progress(user_id, goal_id, milestone_id, progress_data)
-        return milestone
-    except (GoalNotFoundError, MilestoneNotFoundError) as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except GoalValidationError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+    service = GoalService(db)
+    milestone = service.update_milestone_progress(user_id, goal_id, milestone_id, progress_data)
+    return milestone

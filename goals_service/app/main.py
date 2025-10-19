@@ -5,12 +5,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routers import goal, internal
 from app.exception_handlers import (
     goal_not_found_handler, goal_validation_handler, goal_ownership_handler,
-    milestone_not_found_handler, milestone_validation_handler, goal_progress_handler,
+    goal_creation_handler, goal_update_handler, goal_deletion_handler,
+    goal_retrieval_handler, goal_statistics_handler, goal_progress_handler,
+    milestone_not_found_handler, milestone_validation_handler, milestone_creation_handler,
+    milestone_retrieval_handler, milestone_progress_update_handler,
     http_exception_handler, general_exception_handler
 )
 from app.exceptions.goal_exceptions import (
-    GoalNotFoundError, GoalValidationError, GoalOwnershipError,
-    MilestoneNotFoundError, MilestoneValidationError, GoalProgressError
+    GoalNotFoundError, GoalValidationError, GoalOwnershipError, GoalCreationError,
+    GoalUpdateError, GoalDeletionError, GoalRetrievalError, GoalStatisticsError,
+    GoalProgressError, MilestoneNotFoundError, MilestoneValidationError,
+    MilestoneCreationError, MilestoneRetrievalError, MilestoneProgressUpdateError
 )
 from app.database import Base, engine
 from app.config import settings
@@ -104,9 +109,17 @@ app = FastAPI(
 app.add_exception_handler(GoalNotFoundError, goal_not_found_handler)
 app.add_exception_handler(GoalValidationError, goal_validation_handler)
 app.add_exception_handler(GoalOwnershipError, goal_ownership_handler)
+app.add_exception_handler(GoalCreationError, goal_creation_handler)
+app.add_exception_handler(GoalUpdateError, goal_update_handler)
+app.add_exception_handler(GoalDeletionError, goal_deletion_handler)
+app.add_exception_handler(GoalRetrievalError, goal_retrieval_handler)
+app.add_exception_handler(GoalStatisticsError, goal_statistics_handler)
+app.add_exception_handler(GoalProgressError, goal_progress_handler)
 app.add_exception_handler(MilestoneNotFoundError, milestone_not_found_handler)
 app.add_exception_handler(MilestoneValidationError, milestone_validation_handler)
-app.add_exception_handler(GoalProgressError, goal_progress_handler)
+app.add_exception_handler(MilestoneCreationError, milestone_creation_handler)
+app.add_exception_handler(MilestoneRetrievalError, milestone_retrieval_handler)
+app.add_exception_handler(MilestoneProgressUpdateError, milestone_progress_update_handler)
 app.add_exception_handler(HTTPException, http_exception_handler)
 app.add_exception_handler(Exception, general_exception_handler)
 

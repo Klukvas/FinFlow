@@ -9,6 +9,13 @@ from app.schemas.currency import (
     SupportedCurrenciesResponse,
     HealthResponse
 )
+from app.exceptions import (
+    UnsupportedCurrencyError,
+    CurrencyServiceUnavailableError,
+    CurrencyConversionFailedError,
+    CurrencyRatesFetchFailedError,
+    CurrencyValidationError
+)
 
 router = APIRouter(prefix="/api/v1", tags=["currency"])
 
@@ -28,10 +35,7 @@ async def get_supported_currencies(
             total_count=len(currencies)
         )
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch supported currencies: {str(e)}"
-        )
+        raise CurrencyServiceUnavailableError("fetching supported currencies")
 
 @router.get("/rates", response_model=CurrencyRatesResponse)
 async def get_currency_rates(
@@ -42,18 +46,12 @@ async def get_currency_rates(
     try:
         rates_response = await service.get_currency_rates(base_currency)
         if rates_response is None:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Unable to fetch currency rates at this time"
-            )
+            raise CurrencyRatesFetchFailedError(base_currency)
         return rates_response
-    except HTTPException:
-        raise
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch currency rates: {str(e)}"
-        )
+        if isinstance(e, (CurrencyRatesFetchFailedError,)):
+            raise
+        raise CurrencyRatesFetchFailedError(base_currency)
 
 @router.post("/convert", response_model=ConversionResponse)
 async def convert_currency(
@@ -62,21 +60,19 @@ async def convert_currency(
 ) -> ConversionResponse:
     """Convert amount from one currency to another"""
     try:
+        # Validate amount
+        if request.amount < 0:
+            raise CurrencyValidationError("amount", request.amount, "Amount cannot be negative")
+        
         # Validate currencies are supported
         supported_currencies = await service.get_supported_currencies()
         supported_codes = {curr.code for curr in supported_currencies}
         
         if request.from_currency not in supported_codes:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Unsupported source currency: {request.from_currency}"
-            )
+            raise UnsupportedCurrencyError(request.from_currency, is_source=True)
         
         if request.to_currency not in supported_codes:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Unsupported target currency: {request.to_currency}"
-            )
+            raise UnsupportedCurrencyError(request.to_currency, is_source=False)
         
         conversion_result = await service.convert_amount(
             request.amount,
@@ -85,20 +81,18 @@ async def convert_currency(
         )
         
         if conversion_result is None:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail=f"Unable to convert {request.from_currency} to {request.to_currency} at this time"
+            raise CurrencyConversionFailedError(
+                request.from_currency, 
+                request.to_currency, 
+                request.amount
             )
         
         return conversion_result
         
-    except HTTPException:
-        raise
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to convert currency: {str(e)}"
-        )
+        if isinstance(e, (UnsupportedCurrencyError, CurrencyValidationError, CurrencyConversionFailedError)):
+            raise
+        raise CurrencyConversionFailedError(request.from_currency, request.to_currency, request.amount)
 
 @router.post("/currencies/refresh", response_model=SupportedCurrenciesResponse)
 async def refresh_currencies(
@@ -120,10 +114,7 @@ async def refresh_currencies(
             total_count=len(currencies)
         )
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to refresh currencies: {str(e)}"
-        )
+        raise CurrencyServiceUnavailableError("refreshing currencies")
 
 @router.get("/health", response_model=HealthResponse)
 async def health_check(

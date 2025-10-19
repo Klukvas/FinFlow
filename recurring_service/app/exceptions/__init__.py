@@ -1,11 +1,33 @@
 from .recurring_exceptions import (
+    BaseRecurringError,
     RecurringPaymentNotFoundError,
     InvalidScheduleConfigError,
-    PaymentExecutionError
+    PaymentExecutionError,
+    CategoryNotFoundError,
+    InvalidPaymentStatusError,
+    PaymentAlreadyPausedError,
+    PaymentNotPausedError,
+    ScheduleNotFoundError,
+    InvalidScheduleStatusError,
+    ServiceClientError,
+    DatabaseError,
+    ValidationError,
+    InternalServerError
 )
 
 __all__ = [
+    "BaseRecurringError",
     "RecurringPaymentNotFoundError",
     "InvalidScheduleConfigError", 
-    "PaymentExecutionError"
+    "PaymentExecutionError",
+    "CategoryNotFoundError",
+    "InvalidPaymentStatusError",
+    "PaymentAlreadyPausedError",
+    "PaymentNotPausedError",
+    "ScheduleNotFoundError",
+    "InvalidScheduleStatusError",
+    "ServiceClientError",
+    "DatabaseError",
+    "ValidationError",
+    "InternalServerError"
 ]

@@ -12,7 +12,8 @@ from app.exceptions import (
     UnsupportedBankError,
     FileProcessingError,
     InvalidPDFError,
-    ParsingTimeoutError
+    ParsingTimeoutError,
+    ErrorCodes
 )
 from app.utils.logger import get_logger
 from app.services.parsers import MonobankParser
@@ -30,7 +31,7 @@ class PDFParserService:
         try:
             # Validate file exists
             if not os.path.exists(file_path):
-                raise FileProcessingError(f"File not found: {file_path}")
+                raise FileProcessingError(f"File not found: {file_path}", ErrorCodes.FILE_NOT_FOUND)
             
             # Only support Monobank for now
             if bank_type and bank_type != BankType.MONOBANK:
@@ -62,4 +63,4 @@ class PDFParserService:
             if isinstance(e, (PDFParsingError, UnsupportedBankError, FileProcessingError, ParsingTimeoutError)):
                 raise
             logger.error(f"Unexpected error parsing PDF: {e}")
-            raise PDFParsingError(f"Failed to parse PDF: {str(e)}")
+            raise PDFParsingError(f"Failed to parse PDF: {str(e)}", ErrorCodes.PDF_PARSING_FAILED)

@@ -10,6 +10,11 @@ from app.services.scheduler_service import scheduler_service
 from app.clients.expense_client import ExpenseServiceClient
 from app.clients.income_client import IncomeServiceClient
 from app.clients.category_client import CategoryServiceClient
+from app.exceptions import (
+    PaymentExecutionError,
+    ScheduleNotFoundError,
+    InternalServerError
+)
 from app.utils.logger import get_logger
 from app.dependencies import verify_internal_token
 
@@ -34,18 +39,14 @@ async def execute_recurring_payments(
     _: None = Depends(verify_internal_token)
 ):
     """Execute all recurring payments on the specified date (for cron job)"""
-    try:
-        executed_count = await executor.execute_pending_payments(db, execution_date)
-        
-        logger.info(f"Executed {executed_count} recurring payments for date {execution_date or date.today()}")
-        return {
-            "message": f"Successfully executed {executed_count} recurring payments",
-            "executed_count": executed_count,
-            "execution_date": execution_date or date.today()
-        }
-    except Exception as e:
-        logger.error(f"Failed to execute recurring payments: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to execute recurring payments: {str(e)}")
+    executed_count = await executor.execute_pending_payments(db, execution_date)
+    
+    logger.info(f"Executed {executed_count} recurring payments for date {execution_date or date.today()}")
+    return {
+        "message": f"Successfully executed {executed_count} recurring payments",
+        "executed_count": executed_count,
+        "execution_date": execution_date or date.today()
+    }
 
 
 @router.get("/pending-payments")
@@ -71,18 +72,13 @@ async def retry_failed_payment(
     _: None = Depends(verify_internal_token)
 ):
     """Retry failed payment"""
-    try:
-        success = await executor.retry_failed_payment(db, schedule_id)
-        
-        if success:
-            logger.info(f"Successfully retried failed payment {schedule_id}")
-            return {"message": "Payment retry successful"}
-        else:
-            raise HTTPException(status_code=404, detail="Failed payment not found or cannot be retried")
-            
-    except Exception as e:
-        logger.error(f"Failed to retry payment {schedule_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to retry payment: {str(e)}")
+    success = await executor.retry_failed_payment(db, schedule_id)
+    
+    if success:
+        logger.info(f"Successfully retried failed payment {schedule_id}")
+        return {"message": "Payment retry successful"}
+    else:
+        raise ScheduleNotFoundError("Failed payment not found or cannot be retried")
 
 
 @router.get("/scheduler/status")
@@ -90,15 +86,11 @@ async def get_scheduler_status(
     _: None = Depends(verify_internal_token)
 ):
     """Get status of the built-in scheduler"""
-    try:
-        status = scheduler_service.get_scheduler_status()
-        return {
-            "status": "success",
-            "scheduler": status
-        }
-    except Exception as e:
-        logger.error(f"Failed to get scheduler status: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to get scheduler status: {str(e)}")
+    status = scheduler_service.get_scheduler_status()
+    return {
+        "status": "success",
+        "scheduler": status
+    }
 
 
 @router.post("/scheduler/execute-now")
@@ -106,15 +98,11 @@ async def execute_payments_now(
     _: None = Depends(verify_internal_token)
 ):
     """Execute payments now"""
-    try:
-        scheduler_service.execute_now()
-        return {
-            "message": "Manual execution triggered",
-            "status": "success"
-        }
-    except Exception as e:
-        logger.error(f"Failed to trigger manual execution: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to trigger manual execution: {str(e)}")
+    scheduler_service.execute_now()
+    return {
+        "message": "Manual execution triggered",
+        "status": "success"
+    }
 
 
 @router.get("/health")

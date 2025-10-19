@@ -9,6 +9,11 @@ from app.services.payment_calculator import PaymentCalculator
 from app.clients.expense_client import ExpenseServiceClient
 from app.clients.income_client import IncomeServiceClient
 from app.clients.category_client import CategoryServiceClient
+from app.exceptions import (
+    PaymentExecutionError,
+    ScheduleNotFoundError,
+    ServiceClientError
+)
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -49,6 +54,7 @@ class PaymentExecutor:
             except Exception as e:
                 logger.error(f"Failed to execute recurring payment {recurring_payment.id}: {str(e)}")
                 await self._create_failed_schedule(db, recurring_payment, execution_date, str(e))
+                raise PaymentExecutionError(f"Failed to execute payment {recurring_payment.id}: {str(e)}")
 
         return executed_count
 
@@ -111,7 +117,7 @@ class PaymentExecutor:
             schedule.status = "failed"
             schedule.error_message = str(e)
             db.commit()
-            raise
+            raise PaymentExecutionError(f"Payment execution failed: {str(e)}")
 
     async def _create_failed_schedule(
         self, 
@@ -138,7 +144,7 @@ class PaymentExecutor:
         ).first()
 
         if not schedule:
-            return False
+            raise ScheduleNotFoundError("Failed payment schedule not found")
 
         recurring_payment = db.query(RecurringPayment).filter(
             RecurringPayment.id == schedule.recurring_payment_id

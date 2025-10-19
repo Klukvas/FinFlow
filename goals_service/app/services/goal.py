@@ -8,8 +8,10 @@ from app.schemas.goal import (
     MilestoneCreate, MilestoneUpdate, MilestoneProgressUpdate
 )
 from app.exceptions.goal_exceptions import (
-    GoalNotFoundError, GoalValidationError, 
-    MilestoneNotFoundError, MilestoneValidationError
+    GoalNotFoundError, GoalValidationError, GoalCreationError, GoalUpdateError,
+    GoalDeletionError, GoalRetrievalError, GoalStatisticsError, GoalProgressError,
+    MilestoneNotFoundError, MilestoneValidationError, MilestoneCreationError,
+    MilestoneRetrievalError, MilestoneProgressUpdateError
 )
 from app.utils.logger import get_logger
 
@@ -38,7 +40,7 @@ class GoalService:
         except Exception as e:
             self.db.rollback()
             logger.error(f"Error creating goal for user {user_id}: {str(e)}")
-            raise GoalValidationError(f"Failed to create goal: {str(e)}")
+            raise GoalCreationError(f"Failed to create goal: {str(e)}")
 
     def get_goals(
         self, 
@@ -65,7 +67,7 @@ class GoalService:
             
         except Exception as e:
             logger.error(f"Error fetching goals for user {user_id}: {str(e)}")
-            raise GoalValidationError(f"Failed to fetch goals: {str(e)}")
+            raise GoalRetrievalError(f"Failed to fetch goals: {str(e)}")
 
     def get_goal(self, user_id: int, goal_id: int) -> Goal:
         """Get a specific goal by ID"""
@@ -99,7 +101,7 @@ class GoalService:
         except Exception as e:
             self.db.rollback()
             logger.error(f"Error updating goal {goal_id} for user {user_id}: {str(e)}")
-            raise GoalValidationError(f"Failed to update goal: {str(e)}")
+            raise GoalUpdateError(f"Failed to update goal: {str(e)}")
 
     def update_goal_progress(self, user_id: int, goal_id: int, progress_data: GoalProgressUpdate) -> Goal:
         """Update goal progress"""
@@ -120,7 +122,7 @@ class GoalService:
         except Exception as e:
             self.db.rollback()
             logger.error(f"Error updating progress for goal {goal_id}: {str(e)}")
-            raise GoalValidationError(f"Failed to update goal progress: {str(e)}")
+            raise GoalProgressError(f"Failed to update goal progress: {str(e)}")
 
     def delete_goal(self, user_id: int, goal_id: int) -> bool:
         """Delete a goal"""
@@ -138,7 +140,7 @@ class GoalService:
         except Exception as e:
             self.db.rollback()
             logger.error(f"Error deleting goal {goal_id} for user {user_id}: {str(e)}")
-            raise GoalValidationError(f"Failed to delete goal: {str(e)}")
+            raise GoalDeletionError(f"Failed to delete goal: {str(e)}")
 
     def get_goal_statistics(self, user_id: int) -> Dict[str, Any]:
         """Get goal statistics for a user"""
@@ -192,7 +194,7 @@ class GoalService:
             
         except Exception as e:
             logger.error(f"Error getting goal statistics for user {user_id}: {str(e)}")
-            raise GoalValidationError(f"Failed to get goal statistics: {str(e)}")
+            raise GoalStatisticsError(f"Failed to get goal statistics: {str(e)}")
 
     # Milestone methods
     def create_milestone(self, user_id: int, goal_id: int, milestone_data: MilestoneCreate) -> Milestone:
@@ -218,7 +220,7 @@ class GoalService:
         except Exception as e:
             self.db.rollback()
             logger.error(f"Error creating milestone for goal {goal_id}: {str(e)}")
-            raise MilestoneValidationError(f"Failed to create milestone: {str(e)}")
+            raise MilestoneCreationError(f"Failed to create milestone: {str(e)}")
 
     def get_milestones(self, user_id: int, goal_id: int) -> List[Milestone]:
         """Get milestones for a goal"""
@@ -236,7 +238,7 @@ class GoalService:
             raise
         except Exception as e:
             logger.error(f"Error fetching milestones for goal {goal_id}: {str(e)}")
-            raise MilestoneValidationError(f"Failed to fetch milestones: {str(e)}")
+            raise MilestoneRetrievalError(f"Failed to fetch milestones: {str(e)}")
 
     def update_milestone_progress(self, user_id: int, goal_id: int, milestone_id: int, progress_data: MilestoneProgressUpdate) -> Milestone:
         """Update milestone progress"""
@@ -265,4 +267,4 @@ class GoalService:
         except Exception as e:
             self.db.rollback()
             logger.error(f"Error updating milestone progress: {str(e)}")
-            raise MilestoneValidationError(f"Failed to update milestone progress: {str(e)}")
+            raise MilestoneProgressUpdateError(f"Failed to update milestone progress: {str(e)}")

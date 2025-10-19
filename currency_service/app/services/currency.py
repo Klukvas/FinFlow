@@ -6,6 +6,11 @@ from typing import Dict, Optional, List
 from datetime import datetime, timedelta
 from app.config import settings
 from app.schemas.currency import CurrencyInfo, ExchangeRate, ConversionResponse, CurrencyRatesResponse
+from app.exceptions import (
+    CurrencyCacheError,
+    ExternalApiError,
+    RedisConnectionError
+)
 
 logger = logging.getLogger(__name__)
 
@@ -191,9 +196,12 @@ class CurrencyService:
             logger.info(f"Fetched and cached rates for {base_currency}")
             return rates
             
+        except httpx.HTTPStatusError as e:
+            logger.error(f"HTTP error fetching exchange rates for {base_currency}: {e}")
+            raise ExternalApiError(url, e.response.status_code, e.response.text)
         except Exception as e:
             logger.error(f"Error fetching exchange rates for {base_currency}: {e}")
-            return None
+            raise ExternalApiError(url, response_text=str(e))
     
     async def _get_cached_rate(self, from_currency: str, to_currency: str) -> Optional[float]:
         """Get rate from cache"""
@@ -206,9 +214,12 @@ class CurrencyService:
                 return self._calculate_rate(rates, from_currency, to_currency)
             
             return None
+        except redis.RedisError as e:
+            logger.error(f"Redis error getting cached rate: {e}")
+            raise CurrencyCacheError("get", cache_key)
         except Exception as e:
             logger.error(f"Error getting cached rate: {e}")
-            return None
+            raise CurrencyCacheError("get", cache_key)
     
     def _calculate_rate(self, rates: Dict[str, float], from_currency: str, to_currency: str) -> Optional[float]:
         """Calculate exchange rate from rates dictionary"""
@@ -245,8 +256,12 @@ class CurrencyService:
         try:
             cache_key = f"{self.cache_key_prefix}rate:{from_currency}:{to_currency}"
             self.redis_client.setex(cache_key, settings.currency_cache_ttl, str(rate))
+        except redis.RedisError as e:
+            logger.error(f"Redis error caching rate: {e}")
+            raise CurrencyCacheError("set", cache_key)
         except Exception as e:
             logger.error(f"Error caching rate: {e}")
+            raise CurrencyCacheError("set", cache_key)
     
     async def _get_fallback_rate(self, from_currency: str, to_currency: str) -> Optional[float]:
         """Get fallback rate from cache (last known rate)"""
@@ -256,9 +271,12 @@ class CurrencyService:
             if cached_rate:
                 return float(cached_rate)
             return None
+        except redis.RedisError as e:
+            logger.error(f"Redis error getting fallback rate: {e}")
+            raise CurrencyCacheError("get", cache_key)
         except Exception as e:
             logger.error(f"Error getting fallback rate: {e}")
-            return None
+            raise CurrencyCacheError("get", cache_key)
     
     async def _cache_fallback_rate(self, from_currency: str, to_currency: str, rate: float):
         """Cache fallback rate (longer TTL)"""
@@ -266,8 +284,12 @@ class CurrencyService:
             cache_key = f"{self.cache_key_prefix}fallback:{from_currency}:{to_currency}"
             # Cache fallback for 24 hours
             self.redis_client.setex(cache_key, settings.fallback_cache_ttl, str(rate))
+        except redis.RedisError as e:
+            logger.error(f"Redis error caching fallback rate: {e}")
+            raise CurrencyCacheError("set", cache_key)
         except Exception as e:
             logger.error(f"Error caching fallback rate: {e}")
+            raise CurrencyCacheError("set", cache_key)
     
     async def health_check(self) -> Dict[str, bool]:
         """Check service health"""
@@ -280,8 +302,12 @@ class CurrencyService:
         try:
             self.redis_client.ping()
             health["redis_connected"] = True
+        except redis.RedisError as e:
+            logger.error(f"Redis health check failed: {e}")
+            health["redis_connected"] = False
         except Exception as e:
             logger.error(f"Redis health check failed: {e}")
+            health["redis_connected"] = False
         
         # Check external API
         try:
@@ -302,9 +328,12 @@ class CurrencyService:
                 return [CurrencyInfo(**currency) for currency in currencies_data]
             
             return None
+        except redis.RedisError as e:
+            logger.error(f"Redis error getting cached currencies: {e}")
+            raise CurrencyCacheError("get", cache_key)
         except Exception as e:
             logger.error(f"Error getting cached currencies: {e}")
-            return None
+            raise CurrencyCacheError("get", cache_key)
     
     async def _cache_currencies(self, currencies: List[CurrencyInfo], cache_key: str):
         """Cache currencies list"""
@@ -312,8 +341,12 @@ class CurrencyService:
             currencies_data = [currency.model_dump() for currency in currencies]
             # Cache for 24 hours
             self.redis_client.setex(cache_key, 86400, json.dumps(currencies_data))
+        except redis.RedisError as e:
+            logger.error(f"Redis error caching currencies: {e}")
+            raise CurrencyCacheError("set", cache_key)
         except Exception as e:
             logger.error(f"Error caching currencies: {e}")
+            raise CurrencyCacheError("set", cache_key)
     
     async def _fetch_currencies_from_api(self) -> Optional[List[CurrencyInfo]]:
         """Fetch top 10 currencies from external API"""

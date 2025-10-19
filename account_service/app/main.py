@@ -18,7 +18,8 @@ from app.exceptions import (
     AccountOwnershipError,
     AccountArchivedError,
     AccountBalanceError,
-    ExternalServiceError
+    ExternalServiceError,
+    AccountErrorCode
 )
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import Base, engine

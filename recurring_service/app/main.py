@@ -8,16 +8,22 @@ from app.database import engine, Base
 from app.routers import recurring_router, internal_router
 from app.services.scheduler_service import scheduler_service
 from app.exception_handlers import (
+    base_recurring_error_handler,
     recurring_payment_not_found_handler,
     invalid_schedule_config_handler,
     payment_execution_error_handler,
+    category_not_found_handler,
+    validation_error_handler,
     http_exception_handler,
     general_exception_handler
 )
 from app.exceptions import (
+    BaseRecurringError,
     RecurringPaymentNotFoundError,
     InvalidScheduleConfigError,
-    PaymentExecutionError
+    PaymentExecutionError,
+    CategoryNotFoundError,
+    ValidationError
 )
 from fastapi import HTTPException
 from app.utils.logger import get_logger
@@ -136,9 +142,12 @@ app.add_middleware(
 )
 
 # Добавить обработчики исключений
+app.add_exception_handler(BaseRecurringError, base_recurring_error_handler)
 app.add_exception_handler(RecurringPaymentNotFoundError, recurring_payment_not_found_handler)
 app.add_exception_handler(InvalidScheduleConfigError, invalid_schedule_config_handler)
 app.add_exception_handler(PaymentExecutionError, payment_execution_error_handler)
+app.add_exception_handler(CategoryNotFoundError, category_not_found_handler)
+app.add_exception_handler(ValidationError, validation_error_handler)
 app.add_exception_handler(HTTPException, http_exception_handler)
 app.add_exception_handler(Exception, general_exception_handler)
 

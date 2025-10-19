@@ -30,17 +30,17 @@ class PaymentNotFoundError(DebtServiceException):
 class DebtValidationError(DebtServiceException):
     """Raised when debt validation fails"""
     def __init__(self, message: str):
-        super().__init__(message, "DEBT_VALIDATION_ERROR")
+        super().__init__(message, "DEBT_VALIDATION_FAILED")
 
 class ContactValidationError(DebtServiceException):
     """Raised when contact validation fails"""
     def __init__(self, message: str):
-        super().__init__(message, "CONTACT_VALIDATION_ERROR")
+        super().__init__(message, "CONTACT_VALIDATION_FAILED")
 
 class PaymentValidationError(DebtServiceException):
     """Raised when payment validation fails"""
     def __init__(self, message: str):
-        super().__init__(message, "PAYMENT_VALIDATION_ERROR")
+        super().__init__(message, "PAYMENT_VALIDATION_FAILED")
 
 class DebtAmountError(DebtServiceException):
     """Raised when debt amount is invalid"""
@@ -72,3 +72,57 @@ class DatabaseError(DebtServiceException):
     def __init__(self, message: str, operation: str):
         super().__init__(f"Database error during {operation}: {message}", "DATABASE_ERROR")
         self.operation = operation
+
+class ContactHasAssociatedDebtsError(DebtServiceException):
+    """Raised when trying to delete a contact that has associated debts"""
+    def __init__(self, contact_id: int, debt_count: int):
+        super().__init__(f"Cannot delete contact with {debt_count} associated debts", "CONTACT_HAS_ASSOCIATED_DEBTS")
+        self.contact_id = contact_id
+        self.debt_count = debt_count
+
+class DebtCreationFailedError(DebtServiceException):
+    """Raised when debt creation fails"""
+    def __init__(self, message: str = "Failed to create debt"):
+        super().__init__(message, "DEBT_CREATION_FAILED")
+
+class DebtUpdateFailedError(DebtServiceException):
+    """Raised when debt update fails"""
+    def __init__(self, message: str = "Failed to update debt"):
+        super().__init__(message, "DEBT_UPDATE_FAILED")
+
+class DebtDeletionFailedError(DebtServiceException):
+    """Raised when debt deletion fails"""
+    def __init__(self, message: str = "Failed to delete debt"):
+        super().__init__(message, "DEBT_DELETION_FAILED")
+
+class ContactCreationFailedError(DebtServiceException):
+    """Raised when contact creation fails"""
+    def __init__(self, message: str = "Failed to create contact"):
+        super().__init__(message, "CONTACT_CREATION_FAILED")
+
+class ContactUpdateFailedError(DebtServiceException):
+    """Raised when contact update fails"""
+    def __init__(self, message: str = "Failed to update contact"):
+        super().__init__(message, "CONTACT_UPDATE_FAILED")
+
+class ContactDeletionFailedError(DebtServiceException):
+    """Raised when contact deletion fails"""
+    def __init__(self, message: str = "Failed to delete contact"):
+        super().__init__(message, "CONTACT_DELETION_FAILED")
+
+class PaymentCreationFailedError(DebtServiceException):
+    """Raised when payment creation fails"""
+    def __init__(self, message: str = "Failed to create payment"):
+        super().__init__(message, "PAYMENT_CREATION_FAILED")
+
+class InvalidDebtTypeError(DebtServiceException):
+    """Raised when an invalid debt type is provided"""
+    def __init__(self, debt_type: str):
+        super().__init__(f"Invalid debt type: {debt_type}", "INVALID_DEBT_TYPE")
+        self.debt_type = debt_type
+
+class InvalidPaymentMethodError(DebtServiceException):
+    """Raised when an invalid payment method is provided"""
+    def __init__(self, payment_method: str):
+        super().__init__(f"Invalid payment method: {payment_method}", "INVALID_PAYMENT_METHOD")
+        self.payment_method = payment_method

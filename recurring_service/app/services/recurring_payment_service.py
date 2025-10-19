@@ -21,6 +21,14 @@ from app.services.payment_calculator import PaymentCalculator
 from app.clients.expense_client import ExpenseServiceClient
 from app.clients.income_client import IncomeServiceClient
 from app.clients.category_client import CategoryServiceClient
+from app.exceptions import (
+    RecurringPaymentNotFoundError,
+    CategoryNotFoundError,
+    InvalidPaymentStatusError,
+    PaymentAlreadyPausedError,
+    PaymentNotPausedError,
+    ValidationError
+)
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -43,7 +51,7 @@ class RecurringPaymentService:
         """Создать новый повторяющийся платеж"""
         # Валидировать существование категории
         if not await self.category_client.validate_category_exists(payment_data.category_id, user_id):
-            raise ValueError("Category not found")
+            raise CategoryNotFoundError("Category not found")
 
         # Создать модель
         recurring_payment = RecurringPayment(
@@ -113,7 +121,7 @@ class RecurringPaymentService:
         ).first()
 
         if not payment:
-            raise ValueError("Recurring payment not found")
+            raise RecurringPaymentNotFoundError("Recurring payment not found")
 
         return payment
     
@@ -131,12 +139,12 @@ class RecurringPaymentService:
         ).first()
 
         if not payment:
-            raise ValueError("Recurring payment not found")
+            raise RecurringPaymentNotFoundError("Recurring payment not found")
 
         # Валидировать категорию если она изменилась
         if payment_data.category_id and payment_data.category_id != payment.category_id:
             if not await self.category_client.validate_category_exists(payment_data.category_id, user_id):
-                raise ValueError("Category not found")
+                raise CategoryNotFoundError("Category not found")
 
         # Обновить поля
         update_data = payment_data.dict(exclude_unset=True)
@@ -170,7 +178,7 @@ class RecurringPaymentService:
         ).first()
 
         if not payment:
-            raise ValueError("Recurring payment not found")
+            raise RecurringPaymentNotFoundError("Recurring payment not found")
 
         db.delete(payment)
         db.commit()
@@ -190,10 +198,10 @@ class RecurringPaymentService:
         ).first()
         
         if not payment:
-            raise ValueError("Recurring payment not found")
+            raise RecurringPaymentNotFoundError("Recurring payment not found")
         
         if payment.status != 'active':
-            raise ValueError("Only active payments can be paused")
+            raise InvalidPaymentStatusError("Only active payments can be paused")
         
         payment.status = 'paused'
         db.commit()
@@ -214,10 +222,10 @@ class RecurringPaymentService:
         ).first()
         
         if not payment:
-            raise ValueError("Recurring payment not found")
+            raise RecurringPaymentNotFoundError("Recurring payment not found")
         
         if payment.status != 'paused':
-            raise ValueError("Only paused payments can be resumed")
+            raise InvalidPaymentStatusError("Only paused payments can be resumed")
         
         payment.status = 'active'
         db.commit()
@@ -244,7 +252,7 @@ class RecurringPaymentService:
         ).first()
 
         if not payment:
-            raise ValueError("Recurring payment not found")
+            raise RecurringPaymentNotFoundError("Recurring payment not found")
 
         # Построить запрос для получения расписаний
         query = db.query(PaymentSchedule).filter(

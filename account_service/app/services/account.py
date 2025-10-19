@@ -10,7 +10,8 @@ from app.exceptions import (
     AccountValidationError,
     AccountOwnershipError,
     AccountArchivedError,
-    AccountBalanceError
+    AccountBalanceError,
+    AccountErrorCode
 )
 from app.utils.logger import get_logger, log_operation
 from app.utils.validation import validate_currency_code, validate_balance, validate_account_name, validate_account_description, sanitize_input
@@ -31,16 +32,16 @@ class AccountService:
         try:
             # Validate input
             if not validate_account_name(account_data.name):
-                raise AccountValidationError("Invalid account name")
+                raise AccountValidationError("Invalid account name", AccountErrorCode.INVALID_ACCOUNT_NAME)
             
             if not validate_currency_code(account_data.currency):
-                raise AccountValidationError("Invalid currency code")
+                raise AccountValidationError("Invalid currency code", AccountErrorCode.INVALID_CURRENCY)
             
             if not validate_balance(account_data.balance):
-                raise AccountValidationError("Invalid balance amount")
+                raise AccountValidationError("Invalid balance amount", AccountErrorCode.INVALID_BALANCE)
             
             if not validate_account_description(account_data.description):
-                raise AccountValidationError("Invalid description length")
+                raise AccountValidationError("Invalid description length", AccountErrorCode.INVALID_ACCOUNT_DESCRIPTION)
 
             # Create account
             account = Account(
@@ -68,11 +69,11 @@ class AccountService:
         except IntegrityError as e:
             self.db.rollback()
             self.logger.error(f"Database integrity error creating account: {e}")
-            raise AccountValidationError("Account creation failed due to data constraints")
+            raise AccountValidationError("Account creation failed due to data constraints", AccountErrorCode.DATABASE_ERROR)
         except Exception as e:
             self.db.rollback()
             self.logger.error(f"Unexpected error creating account: {e}")
-            raise AccountValidationError(f"Failed to create account: {str(e)}")
+            raise AccountValidationError(f"Failed to create account: {str(e)}", AccountErrorCode.UNKNOWN_ERROR)
 
     def get_account(self, account_id: int, user_id: int) -> Account:
         """Get a specific account by ID, ensuring user ownership"""
@@ -104,16 +105,16 @@ class AccountService:
         
         # Validate updates
         if account_data.name is not None and not validate_account_name(account_data.name):
-            raise AccountValidationError("Invalid account name")
+            raise AccountValidationError("Invalid account name", AccountErrorCode.INVALID_ACCOUNT_NAME)
         
         if account_data.currency is not None and not validate_currency_code(account_data.currency):
-            raise AccountValidationError("Invalid currency code")
+            raise AccountValidationError("Invalid currency code", AccountErrorCode.INVALID_CURRENCY)
         
         if account_data.balance is not None and not validate_balance(account_data.balance):
-            raise AccountValidationError("Invalid balance amount")
+            raise AccountValidationError("Invalid balance amount", AccountErrorCode.INVALID_BALANCE)
         
         if account_data.description is not None and not validate_account_description(account_data.description):
-            raise AccountValidationError("Invalid description length")
+            raise AccountValidationError("Invalid description length", AccountErrorCode.INVALID_ACCOUNT_DESCRIPTION)
 
         try:
             # Update fields
@@ -147,7 +148,7 @@ class AccountService:
         except Exception as e:
             self.db.rollback()
             self.logger.error(f"Unexpected error updating account: {e}")
-            raise AccountValidationError(f"Failed to update account: {str(e)}")
+            raise AccountValidationError(f"Failed to update account: {str(e)}", AccountErrorCode.UNKNOWN_ERROR)
 
     def archive_account(self, account_id: int, user_id: int) -> Account:
         """Archive an account (soft delete)"""
@@ -176,7 +177,7 @@ class AccountService:
         except Exception as e:
             self.db.rollback()
             self.logger.error(f"Unexpected error archiving account: {e}")
-            raise AccountValidationError(f"Failed to archive account: {str(e)}")
+            raise AccountValidationError(f"Failed to archive account: {str(e)}", AccountErrorCode.UNKNOWN_ERROR)
 
     def update_balance(self, account_id: int, new_balance: float, user_id: int) -> Account:
         """Update account balance"""
@@ -186,7 +187,7 @@ class AccountService:
             raise AccountArchivedError(account_id)
         
         if not validate_balance(new_balance):
-            raise AccountBalanceError("Invalid balance amount")
+            raise AccountBalanceError("Invalid balance amount", AccountErrorCode.INVALID_BALANCE)
         
         try:
             old_balance = account.balance
@@ -208,7 +209,7 @@ class AccountService:
         except Exception as e:
             self.db.rollback()
             self.logger.error(f"Unexpected error updating balance: {e}")
-            raise AccountBalanceError(f"Failed to update balance: {str(e)}")
+            raise AccountBalanceError(f"Failed to update balance: {str(e)}", AccountErrorCode.UNKNOWN_ERROR)
 
     async def update_balance_with_conversion(
         self, 
@@ -235,14 +236,14 @@ class AccountService:
             raise AccountArchivedError(account_id)
         
         if not validate_balance(abs(amount_change)):
-            raise AccountBalanceError("Invalid amount")
+            raise AccountBalanceError("Invalid amount", AccountErrorCode.INVALID_BALANCE)
         
         try:
             # If currencies are the same, no conversion needed
             if transaction_currency.upper() == account.currency.upper():
                 new_balance = account.balance + amount_change
                 if new_balance < 0:
-                    raise AccountBalanceError("Insufficient funds in account")
+                    raise AccountBalanceError("Insufficient funds in account", AccountErrorCode.INSUFFICIENT_FUNDS)
                 
                 return self.update_balance(account_id, new_balance, user_id)
             
@@ -255,13 +256,13 @@ class AccountService:
             
             if converted_amount is None:
                 self.logger.error(f"Failed to convert {amount_change} {transaction_currency} to {account.currency}")
-                raise AccountBalanceError(f"Currency conversion failed: {transaction_currency} to {account.currency}")
+                raise AccountBalanceError(f"Currency conversion failed: {transaction_currency} to {account.currency}", AccountErrorCode.CURRENCY_CONVERSION_FAILED)
             
             # Restore the original sign after conversion
             final_amount = converted_amount if amount_change >= 0 else -converted_amount
             new_balance = account.balance + final_amount
             if new_balance < 0:
-                raise AccountBalanceError("Insufficient funds in account")
+                raise AccountBalanceError("Insufficient funds in account", AccountErrorCode.INSUFFICIENT_FUNDS)
             
             self.logger.info(
                 f"Converted {amount_change} {transaction_currency} to {final_amount} {account.currency} "
@@ -274,7 +275,7 @@ class AccountService:
             raise
         except Exception as e:
             self.logger.error(f"Unexpected error in balance update with conversion: {e}")
-            raise AccountBalanceError(f"Failed to update balance with conversion: {str(e)}")
+            raise AccountBalanceError(f"Failed to update balance with conversion: {str(e)}", AccountErrorCode.UNKNOWN_ERROR)
 
     def get_account_summary(self, account_id: int, user_id: int) -> AccountSummary:
         """Get account summary with transaction counts"""
@@ -379,7 +380,7 @@ class AccountService:
             
         except Exception as e:
             self.logger.error(f"Failed to fetch account transactions: {e}")
-            raise AccountValidationError(f"Failed to fetch transactions: {str(e)}")
+            raise AccountValidationError(f"Failed to fetch transactions: {str(e)}", AccountErrorCode.EXTERNAL_SERVICE_ERROR)
 
     def get_user_account_summaries(self, user_id: int) -> List[AccountSummary]:
         """Get summaries for all user accounts"""
@@ -435,7 +436,7 @@ class AccountService:
             
         except Exception as e:
             self.logger.error(f"Failed to get user account summaries: {e}")
-            raise AccountValidationError(f"Failed to fetch account summaries: {str(e)}")
+            raise AccountValidationError(f"Failed to fetch account summaries: {str(e)}", AccountErrorCode.EXTERNAL_SERVICE_ERROR)
 
     def validate_account_ownership(self, account_id: int, user_id: int) -> bool:
         """Validate that an account exists and belongs to the user"""

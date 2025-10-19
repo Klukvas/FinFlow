@@ -30,13 +30,7 @@ async def create_recurring_payment(
     db: Session = Depends(get_db)
 ):
     """Create a new recurring payment"""
-    try:
-        return await recurring_payment_service.create_recurring_payment(payment_data, user_id, db)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        logger.error(f"Failed to create recurring payment: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to create recurring payment")
+    return await recurring_payment_service.create_recurring_payment(payment_data, user_id, db)
 
 
 @router.get("/", response_model=RecurringPaymentListResponse)
@@ -61,10 +55,7 @@ async def get_recurring_payment(
     db: Session = Depends(get_db)
 ):
     """Get recurring payment by ID"""
-    try:
-        return recurring_payment_service.get_recurring_payment(payment_id, user_id, db)
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    return recurring_payment_service.get_recurring_payment(payment_id, user_id, db)
 
 
 @router.put("/{payment_id}", response_model=RecurringPaymentResponse)
@@ -75,18 +66,9 @@ async def update_recurring_payment(
     db: Session = Depends(get_db)
 ):
     """Update recurring payment"""
-    try:
-        return await recurring_payment_service.update_recurring_payment(
-            payment_id, payment_data, user_id, db
-        )
-    except ValueError as e:
-        if "not found" in str(e).lower():
-            raise HTTPException(status_code=404, detail=str(e))
-        else:
-            raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        logger.error(f"Failed to update recurring payment: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to update recurring payment")
+    return await recurring_payment_service.update_recurring_payment(
+        payment_id, payment_data, user_id, db
+    )
 
 
 @router.delete("/{payment_id}")
@@ -96,14 +78,8 @@ async def delete_recurring_payment(
     db: Session = Depends(get_db)
 ):
     """Delete recurring payment"""
-    try:
-        recurring_payment_service.delete_recurring_payment(payment_id, user_id, db)
-        return {"message": "Recurring payment deleted successfully"}
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
-        logger.error(f"Failed to delete recurring payment: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to delete recurring payment")
+    recurring_payment_service.delete_recurring_payment(payment_id, user_id, db)
+    return {"message": "Recurring payment deleted successfully"}
 
 
 @router.post("/{payment_id}/pause")
@@ -113,17 +89,8 @@ async def pause_recurring_payment(
     db: Session = Depends(get_db),
 ):
     """Pause recurring payment"""
-    try:
-        recurring_payment_service.pause_recurring_payment(payment_id, user_id, db)
-        return {"message": "Recurring payment paused successfully"}
-    except ValueError as e:
-        if "not found" in str(e).lower():
-            raise HTTPException(status_code=404, detail=str(e))
-        else:
-            raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        logger.error(f"Failed to pause recurring payment: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to pause recurring payment")
+    recurring_payment_service.pause_recurring_payment(payment_id, user_id, db)
+    return {"message": "Recurring payment paused successfully"}
 
 
 @router.post("/{payment_id}/resume")
@@ -133,17 +100,8 @@ async def resume_recurring_payment(
     db: Session = Depends(get_db)
 ):
     """Resume recurring payment"""
-    try:
-        recurring_payment_service.resume_recurring_payment(payment_id, user_id, db)
-        return {"message": "Recurring payment resumed successfully"}
-    except ValueError as e:
-        if "not found" in str(e).lower():
-            raise HTTPException(status_code=404, detail=str(e))
-        else:
-            raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        logger.error(f"Failed to resume recurring payment: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to resume recurring payment")
+    recurring_payment_service.resume_recurring_payment(payment_id, user_id, db)
+    return {"message": "Recurring payment resumed successfully"}
 
 
 @router.get("/{payment_id}/schedules", response_model=PaymentScheduleListResponse)
@@ -158,22 +116,16 @@ async def get_payment_schedules(
     db: Session = Depends(get_db)
 ):
     """Get schedule of execution for recurring payment"""
-    try:
-        return recurring_payment_service.get_payment_schedules(
-            payment_id, 
-            user_id, 
-            db, 
-            status, 
-            execution_date_from, 
-            execution_date_to, 
-            page, 
-            size
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
-        logger.error(f"Failed to get payment schedules: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to get payment schedules")
+    return recurring_payment_service.get_payment_schedules(
+        payment_id, 
+        user_id, 
+        db, 
+        status, 
+        execution_date_from, 
+        execution_date_to, 
+        page, 
+        size
+    )
 
 
 @router.get("/statistics/summary")
@@ -182,8 +134,4 @@ async def get_payment_statistics(
     db: Session = Depends(get_db)
 ):
     """Get statistics of recurring payments"""
-    try:
-        return recurring_payment_service.get_payment_statistics(user_id, db)
-    except Exception as e:
-        logger.error(f"Failed to get payment statistics: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to get payment statistics")
+    return recurring_payment_service.get_payment_statistics(user_id, db)

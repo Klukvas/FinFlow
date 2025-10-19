@@ -10,7 +10,17 @@ from .debt_exceptions import (
     PaymentAmountError,
     DebtDateError,
     ExternalServiceError,
-    DatabaseError
+    DatabaseError,
+    ContactHasAssociatedDebtsError,
+    DebtCreationFailedError,
+    DebtUpdateFailedError,
+    DebtDeletionFailedError,
+    ContactCreationFailedError,
+    ContactUpdateFailedError,
+    ContactDeletionFailedError,
+    PaymentCreationFailedError,
+    InvalidDebtTypeError,
+    InvalidPaymentMethodError
 )
 
 __all__ = [
@@ -25,5 +35,15 @@ __all__ = [
     "PaymentAmountError",
     "DebtDateError",
     "ExternalServiceError",
-    "DatabaseError"
+    "DatabaseError",
+    "ContactHasAssociatedDebtsError",
+    "DebtCreationFailedError",
+    "DebtUpdateFailedError",
+    "DebtDeletionFailedError",
+    "ContactCreationFailedError",
+    "ContactUpdateFailedError",
+    "ContactDeletionFailedError",
+    "PaymentCreationFailedError",
+    "InvalidDebtTypeError",
+    "InvalidPaymentMethodError"
 ]

@@ -3,7 +3,9 @@ from .pdf_parsing_exceptions import (
     UnsupportedBankError,
     FileProcessingError,
     InvalidPDFError,
-    ParsingTimeoutError
+    ParsingTimeoutError,
+    BankNotFoundError,
+    ErrorCodes
 )
 
 __all__ = [
@@ -11,5 +13,7 @@ __all__ = [
     "UnsupportedBankError", 
     "FileProcessingError",
     "InvalidPDFError",
-    "ParsingTimeoutError"
+    "ParsingTimeoutError",
+    "BankNotFoundError",
+    "ErrorCodes"
 ]

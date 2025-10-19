@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
@@ -11,7 +11,6 @@ from app.schemas.account import (
     AccountSummary,
     AccountTransactionSummary
 )
-from app.exceptions import AccountNotFoundError, AccountValidationError, AccountArchivedError
 
 router = APIRouter(prefix="/accounts", tags=["accounts"])
 
@@ -22,14 +21,8 @@ async def create_account(
     service: AccountService = Depends(get_account_service)
 ) -> AccountResponse:
     """Create a new account"""
-    try:
-        account = service.create_account(account_data, user_id)
-        return AccountResponse.model_validate(account)
-    except AccountValidationError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=e.message
-        )
+    account = service.create_account(account_data, user_id)
+    return AccountResponse.model_validate(account)
 
 @router.get("/", response_model=List[AccountResponse])
 async def list_accounts(
@@ -47,13 +40,7 @@ async def get_account_summaries(
     service: AccountService = Depends(get_account_service)
 ) -> List[AccountSummary]:
     """Get summaries for all user accounts"""
-    try:
-        return service.get_user_account_summaries(user_id)
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch account summaries: {str(e)}"
-        )
+    return service.get_user_account_summaries(user_id)
 
 @router.get("/{account_id}", response_model=AccountResponse)
 async def get_account(
@@ -62,14 +49,8 @@ async def get_account(
     service: AccountService = Depends(get_account_service)
 ) -> AccountResponse:
     """Get a specific account by ID"""
-    try:
-        account = service.get_account(account_id, user_id)
-        return AccountResponse.model_validate(account)
-    except AccountNotFoundError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=e.message
-        )
+    account = service.get_account(account_id, user_id)
+    return AccountResponse.model_validate(account)
 
 @router.put("/{account_id}", response_model=AccountResponse)
 async def update_account(
@@ -79,24 +60,8 @@ async def update_account(
     service: AccountService = Depends(get_account_service)
 ) -> AccountResponse:
     """Update an existing account"""
-    try:
-        account = service.update_account(account_id, account_data, user_id)
-        return AccountResponse.model_validate(account)
-    except AccountNotFoundError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=e.message
-        )
-    except AccountArchivedError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=e.message
-        )
-    except AccountValidationError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=e.message
-        )
+    account = service.update_account(account_id, account_data, user_id)
+    return AccountResponse.model_validate(account)
 
 @router.patch("/{account_id}/archive", response_model=AccountResponse)
 async def archive_account(
@@ -105,19 +70,8 @@ async def archive_account(
     service: AccountService = Depends(get_account_service)
 ) -> AccountResponse:
     """Archive an account (soft delete)"""
-    try:
-        account = service.archive_account(account_id, user_id)
-        return AccountResponse.model_validate(account)
-    except AccountNotFoundError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=e.message
-        )
-    except AccountArchivedError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=e.message
-        )
+    account = service.archive_account(account_id, user_id)
+    return AccountResponse.model_validate(account)
 
 @router.get("/{account_id}/summary", response_model=AccountSummary)
 async def get_account_summary(
@@ -126,13 +80,7 @@ async def get_account_summary(
     service: AccountService = Depends(get_account_service)
 ) -> AccountSummary:
     """Get account summary with transaction counts"""
-    try:
-        return service.get_account_summary(account_id, user_id)
-    except AccountNotFoundError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=e.message
-        )
+    return service.get_account_summary(account_id, user_id)
 
 @router.get("/{account_id}/transactions", response_model=AccountTransactionSummary)
 async def get_account_transactions(
@@ -143,18 +91,7 @@ async def get_account_transactions(
     service: AccountService = Depends(get_account_service)
 ) -> AccountTransactionSummary:
     """Get account transactions from expense and income services"""
-    try:
-        return service.get_account_transactions(account_id, user_id, limit, offset)
-    except AccountNotFoundError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=e.message
-        )
-    except AccountValidationError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=e.message
-        )
+    return service.get_account_transactions(account_id, user_id, limit, offset)
 
 @router.patch("/{account_id}/balance", response_model=AccountResponse)
 async def update_balance(
@@ -164,21 +101,5 @@ async def update_balance(
     service: AccountService = Depends(get_account_service)
 ) -> AccountResponse:
     """Update account balance"""
-    try:
-        account = service.update_balance(account_id, balance, user_id)
-        return AccountResponse.model_validate(account)
-    except AccountNotFoundError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=e.message
-        )
-    except AccountArchivedError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=e.message
-        )
-    except AccountValidationError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=e.message
-        )
+    account = service.update_balance(account_id, balance, user_id)
+    return AccountResponse.model_validate(account)

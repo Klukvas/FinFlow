@@ -1,9 +1,15 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.routers import currency
 from app.utils.logger import get_logger, set_request_context
+from app.exception_handlers import (
+    currency_error_handler,
+    http_exception_handler,
+    general_exception_handler
+)
+from app.exceptions import CurrencyError
 import time
 import uuid
 
@@ -93,6 +99,11 @@ app.add_middleware(
 
 # Add middleware
 app.add_middleware(RequestLoggingMiddleware)
+
+# Register exception handlers
+app.add_exception_handler(CurrencyError, currency_error_handler)
+app.add_exception_handler(HTTPException, http_exception_handler)
+app.add_exception_handler(Exception, general_exception_handler)
 
 # Include routers
 app.include_router(currency.router)

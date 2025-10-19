@@ -8,12 +8,14 @@ from app.exception_handlers import (
     pdf_parsing_error_handler,
     unsupported_bank_handler,
     file_processing_error_handler,
+    bank_not_found_handler,
     http_exception_handler
 )
 from app.exceptions import (
     PDFParsingError,
     UnsupportedBankError,
-    FileProcessingError
+    FileProcessingError,
+    BankNotFoundError
 )
 from app.config import settings
 from app.utils.logger import get_logger
@@ -104,6 +106,7 @@ app.add_exception_handler(RequestValidationError, custom_validation_exception_ha
 app.add_exception_handler(PDFParsingError, pdf_parsing_error_handler)
 app.add_exception_handler(UnsupportedBankError, unsupported_bank_handler)
 app.add_exception_handler(FileProcessingError, file_processing_error_handler)
+app.add_exception_handler(BankNotFoundError, bank_not_found_handler)
 app.add_exception_handler(HTTPException, http_exception_handler)
 
 # Add middleware

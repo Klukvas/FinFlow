@@ -16,7 +16,11 @@ from app.exceptions import (
     DebtValidationError,
     ContactNotFoundError,
     PaymentValidationError,
-    ExternalServiceError
+    ExternalServiceError,
+    DebtCreationFailedError,
+    DebtUpdateFailedError,
+    DebtDeletionFailedError,
+    PaymentCreationFailedError
 )
 from app.utils.logger import get_logger, log_operation
 from app.config import settings
@@ -71,7 +75,7 @@ class DebtService:
         except Exception as e:
             self.db.rollback()
             self.logger.error(f"Error creating debt: {e}")
-            raise DebtValidationError("Failed to create debt")
+            raise DebtCreationFailedError("Failed to create debt")
 
     def get_debts(self, user_id: int, skip: int = 0, limit: int = 100, 
                   active_only: bool = False, paid_off_only: bool = False) -> List[DebtResponse]:
@@ -137,7 +141,7 @@ class DebtService:
         except Exception as e:
             self.db.rollback()
             self.logger.error(f"Error updating debt: {e}")
-            raise DebtValidationError("Failed to update debt")
+            raise DebtUpdateFailedError("Failed to update debt")
 
     def delete_debt(self, debt_id: int, user_id: int) -> bool:
         """Delete a debt"""
@@ -161,7 +165,7 @@ class DebtService:
         except Exception as e:
             self.db.rollback()
             self.logger.error(f"Error deleting debt: {e}")
-            raise DebtValidationError("Failed to delete debt")
+            raise DebtDeletionFailedError("Failed to delete debt")
 
     # Payment Management
     async def create_payment(self, debt_id: int, payment: DebtPaymentCreate, user_id: int) -> DebtPaymentResponse:
@@ -206,7 +210,7 @@ class DebtService:
         except Exception as e:
             self.db.rollback()
             self.logger.error(f"Error creating payment: {e}")
-            raise PaymentValidationError("Failed to create payment")
+            raise PaymentCreationFailedError("Failed to create payment")
 
     def get_payments(self, debt_id: int, user_id: int, skip: int = 0, limit: int = 100) -> List[DebtPaymentResponse]:
         """Get all payments for a debt"""
