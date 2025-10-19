@@ -4,6 +4,7 @@ import { CurrencySelect } from '@/components/ui/forms/CurrencySelect';
 import { MoneyInput } from '@/components/ui/forms/MoneyInput';
 
 import { useApiClients } from '@/hooks';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 interface CreateExpenseProps {
     onExpenseCreated: () => void;
@@ -11,6 +12,7 @@ interface CreateExpenseProps {
 
 export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }) => {
     const {category, expense, account, currency} = useApiClients();
+    const { handleExpenseError } = useErrorHandler();
     
     const [formData, setFormData] = useState<CreateExpenseRequest>({
         amount: 0,
@@ -39,8 +41,10 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                 size: 100 // Максимальный размер страницы
             });
             
-            if ('error' in response) {
-                setError(response.error);
+            if ('error' in response && 'errorCode' in response) {
+                // Handle API error with errorCode
+                handleExpenseError(response);
+                return;
             } else {
                 const paginatedResponse = response as CategoryListResponse;
                 const allCategories = paginatedResponse.items || [];
@@ -51,8 +55,8 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                 // Категория остается пустой по умолчанию (необязательная)
             }
         } catch (err) {
-            setError('Ошибка при загрузке категорий');
-            console.error('Error fetching categories:', err);
+            // Handle network or other errors
+            handleExpenseError(err as Error);
         } finally {
             setIsLoadingCategories(false);
         }
@@ -62,14 +66,16 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
         setIsLoadingAccounts(true);
         try {
             const response = await account.getAccounts();
-            if ('error' in response) {
-                setError(response.error);
+            if ('error' in response && 'errorCode' in response) {
+                // Handle API error with errorCode
+                handleExpenseError(response);
+                return;
             } else {
                 setAccounts(response);
             }
         } catch (err) {
-            setError('Ошибка при загрузке аккаунтов');
-            console.error('Error fetching accounts:', err);
+            // Handle network or other errors
+            handleExpenseError(err as Error);
         } finally {
             setIsLoadingAccounts(false);
         }
@@ -122,8 +128,10 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
             }
             
             const response = await expense.createExpense(expenseData);
-            if ('error' in response) {
-                setError(response.error);
+            if ('error' in response && 'errorCode' in response) {
+                // Handle API error with errorCode
+                handleExpenseError(response);
+                return;
             } else {
                 setFormData({
                     amount: 0,
@@ -136,8 +144,8 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                 onExpenseCreated();
             }
         } catch (err) {
-            setError('Ошибка при создании расхода');
-            console.error('Error creating expense:', err);
+            // Handle network or other errors
+            handleExpenseError(err as Error);
         } finally {
             setIsLoading(false);
         }

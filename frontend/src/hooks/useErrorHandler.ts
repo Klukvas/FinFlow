@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { getErrorTranslationKey, BackendError } from '@/utils/errorMapping';
+import { getErrorTranslationKey, BackendError, ServiceType } from '@/utils/errorMapping';
 
 interface UseErrorHandlerOptions {
   showToast?: boolean;
@@ -15,7 +15,7 @@ export const useErrorHandler = (options: UseErrorHandlerOptions = {}) => {
 
   const handleError = (
     error: ErrorType,
-    service: 'category' | 'expense' | 'account' = 'category',
+    service: ServiceType = 'category',
     showToast: boolean = true,
   ) => {
     if (logError) {
@@ -59,10 +59,40 @@ export const useErrorHandler = (options: UseErrorHandlerOptions = {}) => {
     return handleError(error, 'account', showToast);
   };
 
+  const handleIncomeError = (error: ErrorType, showToast: boolean = true) => {
+    return handleError(error, 'income', showToast);
+  };
+
+  const handleDebtError = (error: ErrorType, showToast: boolean = true) => {
+    return handleError(error, 'debt', showToast);
+  };
+
+  const handleGoalsError = (error: ErrorType, showToast: boolean = true) => {
+    return handleError(error, 'goals', showToast);
+  };
+
+  const handleCurrencyError = (error: ErrorType, showToast: boolean = true) => {
+    return handleError(error, 'currency', showToast);
+  };
+
+  const handleRecurringError = (error: ErrorType, showToast: boolean = true) => {
+    return handleError(error, 'recurring', showToast);
+  };
+
+  const handleUserError = (error: ErrorType, showToast: boolean = true) => {
+    return handleError(error, 'user', showToast);
+  };
+
   return {
     handleError,
     handleCategoryError,
     handleExpenseError,
     handleAccountError,
+    handleIncomeError,
+    handleDebtError,
+    handleGoalsError,
+    handleCurrencyError,
+    handleRecurringError,
+    handleUserError,
   };
 };

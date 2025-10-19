@@ -4,6 +4,7 @@ const TOKEN_KEY = 'access_token';
 
 export interface ApiError {
   error: string;
+  errorCode?: string;
   status?: number;
   message?: string;
 }
@@ -104,6 +105,7 @@ export class HttpClient {
       return {
         ...errorData,
         status: response.status,
+        errorCode: errorData.errorCode, // Preserve errorCode from backend
       };
     } catch (e) {
       console.error('Error parsing error response:', e);

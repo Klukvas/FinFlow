@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApiClients } from '@/hooks/useApiClients';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { Category, IncomeCreate, AccountResponse, CategoryListResponse } from '@/types';
 import { Button } from '@/components/ui/shared/Button';
 import { MoneyInput } from '@/components/ui/forms/MoneyInput';
 import { CurrencySelect } from '@/components/ui/forms/CurrencySelect';
-import { ErrorHandler } from '@/utils/errorHandler';
 // removed unused icon and config imports
 
 interface CreateIncomeProps {
@@ -15,6 +15,7 @@ interface CreateIncomeProps {
 export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) => {
   const { t } = useTranslation();
   const { income, category, account } = useApiClients();
+  const { handleIncomeError } = useErrorHandler();
   const [formData, setFormData] = useState<IncomeCreate>({
     amount: 0,
     category_id: null,
@@ -98,8 +99,10 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) =
 
       const response = await income.createIncome(formData);
 
-      if ('error' in response) {
-        throw response;
+      if ('error' in response && 'errorCode' in response) {
+        // Handle API error with errorCode
+        handleIncomeError(response);
+        return;
       } else {
         onIncomeCreated();
         setFormData({
@@ -112,9 +115,8 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) =
         });
       }
     } catch (err) {
-      const errorMessage = t('income.form.createError');
-      setError(errorMessage);
-      ErrorHandler.handleApiError(err, errorMessage);
+      // Handle network or other errors
+      handleIncomeError(err as Error);
     } finally {
       setIsLoading(false);
     }

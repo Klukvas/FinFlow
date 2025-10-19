@@ -5,6 +5,7 @@ import { EmailInput } from '../inputs/EmailInput';
 import { PasswordInput } from '../inputs/PasswordInput';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthForm } from '@/hooks';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { LoginRequest } from '@/services/api/userApiClient';
 import { config } from '@/config/env';
 import { validateEmail } from '@/utils';
@@ -22,6 +23,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const { login } = useAuth();
+  const { handleUserError } = useErrorHandler();
   const [emailError, setEmailError] = useState<string>('');
   
   const {
@@ -60,6 +62,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         if (config.debug) {
           console.error('Login error:', result.error);
         }
+        // Handle login error with standardized error handling
+        const mockErrorResponse = {
+          error: result.error || t('auth.loginError'),
+          errorCode: 'INVALID_CREDENTIALS' // Default error code for login failures
+        };
+        handleUserError(mockErrorResponse);
         setError(result.error || t('auth.loginError'));
       }
     },
