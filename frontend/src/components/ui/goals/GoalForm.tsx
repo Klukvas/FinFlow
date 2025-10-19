@@ -97,10 +97,10 @@ export const GoalForm: React.FC<GoalFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
       {/* Title */}
       <div>
-        <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+        <label htmlFor="title" className="block text-sm font-medium theme-text-primary mb-1 sm:mb-2">
           Название цели *
         </label>
         <input
@@ -108,8 +108,8 @@ export const GoalForm: React.FC<GoalFormProps> = ({
           id="title"
           value={formData.title}
           onChange={(e) => handleInputChange('title', e.target.value)}
-          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-            errors.title ? 'border-red-500' : 'border-gray-300'
+          className={`w-full px-3 py-3 sm:py-2 text-base sm:text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 theme-transition touch-manipulation ${
+            errors.title ? 'border-red-500' : 'theme-border'
           }`}
           placeholder="Например: Накопить на отпуск"
         />
@@ -118,7 +118,7 @@ export const GoalForm: React.FC<GoalFormProps> = ({
 
       {/* Description */}
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+        <label htmlFor="description" className="block text-sm font-medium theme-text-primary mb-1 sm:mb-2">
           Описание
         </label>
         <textarea
@@ -126,22 +126,22 @@ export const GoalForm: React.FC<GoalFormProps> = ({
           value={formData.description}
           onChange={(e) => handleInputChange('description', e.target.value)}
           rows={3}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-3 sm:py-2 text-base sm:text-sm theme-border border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 theme-transition touch-manipulation"
           placeholder="Дополнительная информация о цели"
         />
       </div>
 
       {/* Goal Type and Priority */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         <div>
-          <label htmlFor="goal_type" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="goal_type" className="block text-sm font-medium theme-text-primary mb-1 sm:mb-2">
             Тип цели
           </label>
           <select
             id="goal_type"
             value={formData.goal_type}
             onChange={(e) => handleInputChange('goal_type', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-3 sm:py-2 text-base sm:text-sm theme-border border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 theme-transition touch-manipulation"
           >
             {Object.entries(GOAL_TYPE_LABELS).map(([value, label]) => (
               <option key={value} value={value}>{label}</option>
@@ -150,14 +150,14 @@ export const GoalForm: React.FC<GoalFormProps> = ({
         </div>
 
         <div>
-          <label htmlFor="priority" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="priority" className="block text-sm font-medium theme-text-primary mb-1 sm:mb-2">
             Приоритет
           </label>
           <select
             id="priority"
             value={formData.priority}
             onChange={(e) => handleInputChange('priority', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-3 sm:py-2 text-base sm:text-sm theme-border border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 theme-transition touch-manipulation"
           >
             {Object.entries(GOAL_PRIORITY_LABELS).map(([value, label]) => (
               <option key={value} value={value}>{label}</option>
@@ -167,8 +167,8 @@ export const GoalForm: React.FC<GoalFormProps> = ({
       </div>
 
       {/* Target Amount and Currency */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="md:col-span-2">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+        <div className="sm:col-span-2">
           <MoneyInput
             label="Целевая сумма"
             value={formData.target_amount}
@@ -181,14 +181,14 @@ export const GoalForm: React.FC<GoalFormProps> = ({
         </div>
 
         <div>
-          <label htmlFor="currency" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="currency" className="block text-sm font-medium theme-text-primary mb-1 sm:mb-2">
             Валюта
           </label>
           <select
             id="currency"
             value={formData.currency}
             onChange={(e) => handleInputChange('currency', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-3 sm:py-2 text-base sm:text-sm theme-border border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 theme-transition touch-manipulation"
           >
             <option value="USD">USD</option>
             <option value="EUR">EUR</option>
@@ -200,7 +200,7 @@ export const GoalForm: React.FC<GoalFormProps> = ({
 
       {/* Target Date */}
       <div>
-        <label htmlFor="target_date" className="block text-sm font-medium text-gray-700 mb-2">
+        <label htmlFor="target_date" className="block text-sm font-medium theme-text-primary mb-1 sm:mb-2">
           Целевая дата
         </label>
         <input
@@ -208,40 +208,42 @@ export const GoalForm: React.FC<GoalFormProps> = ({
           id="target_date"
           value={formData.target_date}
           onChange={(e) => handleInputChange('target_date', e.target.value)}
-          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-            errors.target_date ? 'border-red-500' : 'border-gray-300'
+          className={`w-full px-3 py-3 sm:py-2 text-base sm:text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 theme-transition touch-manipulation ${
+            errors.target_date ? 'border-red-500' : 'theme-border'
           }`}
         />
         {errors.target_date && <p className="mt-1 text-sm text-red-600">{errors.target_date}</p>}
       </div>
 
       {/* Milestone Based */}
-      <div className="flex items-center">
+      <div className="flex items-start sm:items-center gap-3">
         <input
           type="checkbox"
           id="is_milestone_based"
           checked={formData.is_milestone_based}
           onChange={(e) => handleInputChange('is_milestone_based', e.target.checked)}
-          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+          className="h-5 w-5 mt-0.5 sm:mt-0 text-blue-600 focus:ring-blue-500 theme-border border rounded touch-manipulation"
         />
-        <label htmlFor="is_milestone_based" className="ml-2 block text-sm text-gray-700">
+        <label htmlFor="is_milestone_based" className="block text-sm theme-text-primary leading-relaxed">
           Использовать вехи для отслеживания прогресса
         </label>
       </div>
 
       {/* Actions */}
-      <div className="flex justify-end gap-3">
+      <div className="flex flex-col sm:flex-row justify-end gap-3 pt-2">
         <Button
           type="button"
           variant="secondary"
           onClick={onCancel}
           disabled={isLoading}
+          className="w-full sm:w-auto min-h-[44px] touch-manipulation"
         >
           Отмена
         </Button>
         <Button
           type="submit"
           disabled={isLoading}
+          className="w-full sm:w-auto min-h-[44px] touch-manipulation"
         >
           {isLoading ? 'Сохранение...' : (goal ? 'Обновить' : 'Создать')}
         </Button>

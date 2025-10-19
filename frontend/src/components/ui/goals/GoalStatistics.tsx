@@ -16,55 +16,55 @@ export const GoalStatistics: React.FC<GoalStatisticsProps> = ({ statistics }) =>
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
       {/* Total Goals */}
-      <div className="theme-surface theme-shadow rounded-lg border theme-border p-6 theme-transition">
+      <div className="theme-surface theme-shadow rounded-lg border theme-border p-4 sm:p-6 theme-transition">
         <div className="flex items-center">
           <div className="flex-shrink-0">
-            <FaBullseye className="h-8 w-8 theme-accent" />
+            <FaBullseye className="h-6 w-6 sm:h-8 sm:w-8 theme-accent" />
           </div>
-          <div className="ml-4">
-            <p className="text-sm font-medium theme-text-secondary">Всего целей</p>
-            <p className="text-2xl font-bold theme-text-primary">{statistics.total_goals}</p>
+          <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+            <p className="text-xs sm:text-sm font-medium theme-text-secondary truncate">Всего целей</p>
+            <p className="text-xl sm:text-2xl font-bold theme-text-primary">{statistics.total_goals}</p>
           </div>
         </div>
       </div>
 
       {/* Active Goals */}
-      <div className="theme-surface theme-shadow rounded-lg border theme-border p-6 theme-transition">
+      <div className="theme-surface theme-shadow rounded-lg border theme-border p-4 sm:p-6 theme-transition">
         <div className="flex items-center">
           <div className="flex-shrink-0">
-            <FaPlay className="h-8 w-8 theme-success" />
+            <FaPlay className="h-6 w-6 sm:h-8 sm:w-8 theme-success" />
           </div>
-          <div className="ml-4">
-            <p className="text-sm font-medium theme-text-secondary">Активные</p>
-            <p className="text-2xl font-bold theme-text-primary">{statistics.active_goals}</p>
+          <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+            <p className="text-xs sm:text-sm font-medium theme-text-secondary truncate">Активные</p>
+            <p className="text-xl sm:text-2xl font-bold theme-text-primary">{statistics.active_goals}</p>
           </div>
         </div>
       </div>
 
       {/* Completed Goals */}
-      <div className="theme-surface theme-shadow rounded-lg border theme-border p-6 theme-transition">
+      <div className="theme-surface theme-shadow rounded-lg border theme-border p-4 sm:p-6 theme-transition">
         <div className="flex items-center">
           <div className="flex-shrink-0">
-            <FaCheckCircle className="h-8 w-8 theme-accent" />
+            <FaCheckCircle className="h-6 w-6 sm:h-8 sm:w-8 theme-accent" />
           </div>
-          <div className="ml-4">
-            <p className="text-sm font-medium theme-text-secondary">Завершенные</p>
-            <p className="text-2xl font-bold theme-text-primary">{statistics.completed_goals}</p>
+          <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+            <p className="text-xs sm:text-sm font-medium theme-text-secondary truncate">Завершенные</p>
+            <p className="text-xl sm:text-2xl font-bold theme-text-primary">{statistics.completed_goals}</p>
           </div>
         </div>
       </div>
 
       {/* Overall Progress */}
-      <div className="theme-surface theme-shadow rounded-lg border theme-border p-6 theme-transition">
+      <div className="theme-surface theme-shadow rounded-lg border theme-border p-4 sm:p-6 theme-transition">
         <div className="flex items-center">
           <div className="flex-shrink-0">
-            <FaChartPie className="h-8 w-8 theme-accent" />
+            <FaChartPie className="h-6 w-6 sm:h-8 sm:w-8 theme-accent" />
           </div>
-          <div className="ml-4">
-            <p className="text-sm font-medium theme-text-secondary">Общий прогресс</p>
-            <p className={`text-2xl font-bold ${getProgressColor(statistics.overall_progress)}`}>
+          <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+            <p className="text-xs sm:text-sm font-medium theme-text-secondary truncate">Общий прогресс</p>
+            <p className={`text-xl sm:text-2xl font-bold ${getProgressColor(statistics.overall_progress)}`}>
               {statistics.overall_progress.toFixed(1)}%
             </p>
           </div>
@@ -72,26 +72,26 @@ export const GoalStatistics: React.FC<GoalStatisticsProps> = ({ statistics }) =>
       </div>
 
       {/* Financial Summary */}
-      <div className="md:col-span-2 theme-surface theme-shadow rounded-lg border theme-border p-6 theme-transition">
-        <div className="flex items-center mb-4">
-          <FaDollarSign className="h-6 w-6 theme-success mr-2" />
-          <h3 className="text-lg font-semibold theme-text-primary">Финансовая сводка</h3>
+      <div className="sm:col-span-2 lg:col-span-2 theme-surface theme-shadow rounded-lg border theme-border p-4 sm:p-6 theme-transition">
+        <div className="flex items-center mb-3 sm:mb-4">
+          <FaDollarSign className="h-5 w-5 sm:h-6 sm:w-6 theme-success mr-2 flex-shrink-0" />
+          <h3 className="text-base sm:text-lg font-semibold theme-text-primary truncate">Финансовая сводка</h3>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <div>
-            <p className="text-sm theme-text-secondary">Накоплено</p>
-            <p className="text-xl font-bold theme-success">
+            <p className="text-xs sm:text-sm theme-text-secondary">Накоплено</p>
+            <p className="text-lg sm:text-xl font-bold theme-success truncate">
               {statistics.total_current_amount.toLocaleString()} USD
             </p>
           </div>
           <div>
-            <p className="text-sm theme-text-secondary">Целевая сумма</p>
-            <p className="text-xl font-bold theme-text-primary">
+            <p className="text-xs sm:text-sm theme-text-secondary">Целевая сумма</p>
+            <p className="text-lg sm:text-xl font-bold theme-text-primary truncate">
               {statistics.total_target_amount.toLocaleString()} USD
             </p>
           </div>
         </div>
-        <div className="mt-4">
+        <div className="mt-3 sm:mt-4">
           <div className="w-full theme-bg-tertiary rounded-full h-2">
             <div
               className={`h-2 rounded-full transition-all duration-300 ${
@@ -107,32 +107,32 @@ export const GoalStatistics: React.FC<GoalStatisticsProps> = ({ statistics }) =>
       </div>
 
       {/* Goals by Type */}
-      <div className="theme-surface theme-shadow rounded-lg border theme-border p-6 theme-transition">
-        <div className="flex items-center mb-4">
-          <FaTrophy className="h-6 w-6 theme-warning mr-2" />
-          <h3 className="text-lg font-semibold theme-text-primary">По типам</h3>
+      <div className="theme-surface theme-shadow rounded-lg border theme-border p-4 sm:p-6 theme-transition">
+        <div className="flex items-center mb-3 sm:mb-4">
+          <FaTrophy className="h-5 w-5 sm:h-6 sm:w-6 theme-warning mr-2 flex-shrink-0" />
+          <h3 className="text-base sm:text-lg font-semibold theme-text-primary truncate">По типам</h3>
         </div>
         <div className="space-y-2">
           {Object.entries(statistics.goals_by_type).map(([type, count]) => (
             <div key={type} className="flex justify-between items-center">
-              <span className="text-sm theme-text-secondary">{type}</span>
-              <span className="text-sm font-semibold theme-text-primary">{count}</span>
+              <span className="text-xs sm:text-sm theme-text-secondary truncate">{type}</span>
+              <span className="text-xs sm:text-sm font-semibold theme-text-primary ml-2">{count}</span>
             </div>
           ))}
         </div>
       </div>
 
       {/* Goals by Priority */}
-      <div className="theme-surface theme-shadow rounded-lg border theme-border p-6 theme-transition">
-        <div className="flex items-center mb-4">
-          <FaBullseye className="h-6 w-6 theme-error mr-2" />
-          <h3 className="text-lg font-semibold theme-text-primary">По приоритету</h3>
+      <div className="theme-surface theme-shadow rounded-lg border theme-border p-4 sm:p-6 theme-transition">
+        <div className="flex items-center mb-3 sm:mb-4">
+          <FaBullseye className="h-5 w-5 sm:h-6 sm:w-6 theme-error mr-2 flex-shrink-0" />
+          <h3 className="text-base sm:text-lg font-semibold theme-text-primary truncate">По приоритету</h3>
         </div>
         <div className="space-y-2">
           {Object.entries(statistics.goals_by_priority).map(([priority, count]) => (
             <div key={priority} className="flex justify-between items-center">
-              <span className="text-sm theme-text-secondary">{priority}</span>
-              <span className="text-sm font-semibold theme-text-primary">{count}</span>
+              <span className="text-xs sm:text-sm theme-text-secondary truncate">{priority}</span>
+              <span className="text-xs sm:text-sm font-semibold theme-text-primary ml-2">{count}</span>
             </div>
           ))}
         </div>

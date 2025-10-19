@@ -51,10 +51,10 @@ export const Modal = React.memo<ModalProps>(({
   if (!isOpen) return null;
 
   const sizeClasses = {
-    sm: 'max-w-sm',
-    md: 'max-w-md',
-    lg: 'max-w-lg',
-    xl: 'max-w-xl',
+    sm: 'max-w-sm mx-4',
+    md: 'max-w-md mx-4',
+    lg: 'max-w-lg mx-4',
+    xl: 'max-w-xl mx-4',
   };
 
   return (
@@ -80,11 +80,11 @@ export const Modal = React.memo<ModalProps>(({
         >
           {/* Header */}
           <div 
-            className="flex items-center justify-between theme-border border-b px-4 sm:px-6 py-4"
+            className="flex items-center justify-between theme-border border-b px-4 sm:px-6 py-3 sm:py-4"
             data-testid={testId ? `${testId}-header` : 'modal-header'}
           >
             <h3 
-              className="text-lg font-semibold theme-text-primary"
+              className="text-base sm:text-lg font-semibold theme-text-primary truncate pr-2"
               data-testid={testId ? `${testId}-title` : 'modal-title'}
             >
               {title}
@@ -92,7 +92,7 @@ export const Modal = React.memo<ModalProps>(({
             {showCloseButton && (
               <button
                 onClick={onClose}
-                className="rounded-md p-2 theme-text-tertiary hover:theme-surface-hover hover:theme-text-primary theme-transition touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
+                className="rounded-md p-2 theme-text-tertiary hover:theme-surface-hover hover:theme-text-primary theme-transition touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center flex-shrink-0"
                 aria-label="Закрыть"
                 data-testid='modal-close-button'
               >
@@ -103,7 +103,7 @@ export const Modal = React.memo<ModalProps>(({
           
           {/* Content */}
           <div 
-            className="px-4 sm:px-6 py-4 max-h-[70vh] overflow-y-auto"
+            className="px-4 sm:px-6 py-4 max-h-[70vh] sm:max-h-[80vh] overflow-y-auto"
             data-testid={testId ? `${testId}-content` : 'modal-content'}
           >
             {children}

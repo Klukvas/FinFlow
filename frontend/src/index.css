@@ -478,6 +478,10 @@ body::after {
   border-color: var(--color-gold-border);
 }
 
+.border-l-theme-accent {
+  border-left-color: var(--color-accent);
+}
+
 .theme-champagne-bg {
   background-color: var(--color-champagne);
 }

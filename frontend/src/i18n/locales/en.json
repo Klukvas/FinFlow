@@ -228,7 +228,8 @@
   "language": {
     "select": "Select Language",
     "english": "English",
-    "russian": "Russian"
+    "russian": "Russian",
+    "ukrainian": "Ukrainian"
   },
   "homepage": {
     "hero": {

@@ -97,16 +97,18 @@ export const Goals: React.FC = () => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 mobile-padding">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <FaBullseye className="text-2xl theme-text-primary" />
-        <h1 className="text-2xl font-bold theme-text-primary">{t('goalsPage.title')}</h1>
+      <div className="flex items-center gap-2 sm:gap-3">
+        <FaBullseye className="text-xl sm:text-2xl theme-text-primary flex-shrink-0" />
+        <h1 className="text-xl sm:text-2xl font-bold theme-text-primary truncate">{t('goalsPage.title')}</h1>
       </div>
 
       {/* Statistics */}
       {statistics && (
-        <GoalStatsComponent statistics={statistics} />
+        <div className="overflow-x-auto">
+          <GoalStatsComponent statistics={statistics} />
+        </div>
       )}
 
       {/* Search and Actions */}

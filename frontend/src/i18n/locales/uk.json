@@ -1,0 +1,347 @@
+{
+  "common": {
+    "loading": "Завантаження...",
+    "save": "Зберегти",
+    "cancel": "Скасувати",
+    "delete": "Видалити",
+    "edit": "Редагувати",
+    "create": "Створити",
+    "close": "Закрити",
+    "yes": "Так",
+    "no": "Ні",
+    "confirm": "Підтвердити",
+    "search": "Пошук",
+    "filter": "Фільтр",
+    "sort": "Сортування",
+    "name": "Назва",
+    "description": "Опис",
+    "amount": "Сума",
+    "date": "Дата",
+    "category": "Категорія",
+    "type": "Тип"
+  },
+  "navigation": {
+    "home": "Головна",
+    "categories": "Категорії",
+    "expenses": "Витрати",
+    "income": "Доходи",
+    "recurring": "Повторювані",
+    "accounts": "Акаунти",
+    "debts": "Борги",
+    "goals": "Цілі",
+    "pdfParser": "PDF Парсер",
+    "profile": "Профіль",
+    "logout": "Вийти",
+    "login": "Увійти",
+    "register": "Реєстрація"
+  },
+  "publicNav": {
+    "howItWorks": "Як це працює",
+    "features": "Що ви отримуєте",
+    "pricing": "Ціни"
+  },
+  "header": {
+    "appTitle": "Фінансовий облік",
+    "goToProfile": "Перейти до профілю",
+    "user": "Користувач"
+  },
+  "auth": {
+    "username": "Ім'я користувача",
+    "email": "Email",
+    "password": "Пароль",
+    "confirmPassword": "Підтвердіть пароль",
+    "loginTitle": "Вхід",
+    "registerTitle": "Реєстрація",
+    "loginButton": "Увійти",
+    "registerButton": "Зареєструватися",
+    "logoutConfirm": "Ви впевнені, що хочете вийти?",
+    "loginSuccess": "Успішний вхід",
+    "registerSuccess": "Успішна реєстрація",
+    "logoutSuccess": "Успішний вихід",
+    "loginError": "Помилка входу",
+    "registerError": "Помилка реєстрації",
+    "invalidEmail": "Введіть коректну email адресу",
+    "genericError": "Щось пішло не так. Спробуйте ще раз."
+  },
+  "category": {
+    "title": "Категорії",
+    "createTitle": "Створити категорію",
+    "editTitle": "Редагувати категорію",
+    "deleteTitle": "Видалити категорію",
+    "deleteConfirm": "Ви впевнені, що хочете видалити цю категорію?",
+    "noCategories": "Категорії не знайдені",
+    "categoryCreated": "Категорія успішно створена",
+    "categoryUpdated": "Категорія успішно оновлена",
+    "categoryDeleted": "Категорія успішно видалена",
+    "categoryType": "Тип категорії",
+    "income": "Дохід",
+    "expense": "Витрата",
+    "form": {
+      "name": "Назва категорії",
+      "namePlaceholder": "Введіть назву категорії",
+      "nameRequired": "Назва категорії обов'язкова",
+      "type": "Тип категорії",
+      "parentCategory": "Батьківська категорія",
+      "noParentCategory": "Без батьківської категорії",
+      "optional": "(необов'язково)",
+      "required": "*",
+      "readOnly": "(тільки читання)",
+      "createButton": "Створити категорію",
+      "updateButton": "Зберегти зміни",
+      "creating": "Створення...",
+      "updating": "Збереження...",
+      "createError": "Помилка при створенні категорії",
+      "updateError": "Помилка при оновленні категорії"
+    },
+    "list": {
+      "loading": "Завантаження категорій...",
+      "loadingSubtitle": "Будь ласка, зачекайте",
+      "hierarchicalView": "Ієрархія",
+      "flatView": "Список",
+      "name": "Назва",
+      "type": "Тип",
+      "parentCategory": "Батьківська категорія",
+      "id": "ID",
+      "actions": "Дії",
+      "rootCategory": "Коренева категорія",
+      "noCategoriesOnPage": "Немає категорій на цій сторінці",
+      "noCategoriesAtAll": "Категорії поки не створені",
+      "noCategoriesSubtitle": "Створіть першу категорію для організації ваших доходів та витрат",
+      "noCategoriesOnPageSubtitle": "Спробуйте перейти на іншу сторінку або змінити фільтри",
+      "deleteError": "Помилка при видаленні категорії"
+    },
+    "errors": {
+      "depthExceeded": "Перевищено максимальну глибину категорій в 2 рівні. Категорії можуть мати тільки 2 рівні: Корінь → Рівень 1 → Рівень 2 (максимум)",
+      "hasChildren": "Не можна видалити категорію з дочірніми категоріями. Спочатку видаліть дочірні категорії.",
+      "nameConflict": "Назва категорії вже існує для цього користувача",
+      "circularRelationship": "Не можна створити циклічний зв'язок між категоріями",
+      "ownershipError": "У вас немає прав доступу до цієї категорії",
+      "notFound": "Категорія не знайдена",
+      "validationError": "Помилка валідації категорії",
+      "genericError": "Сталася помилка при обробці категорії"
+    },
+    "statistics": {
+      "title": "Статистика категорій",
+      "totalCategories": "Всього категорій",
+      "expenseCategories": "Категорії витрат",
+      "incomeCategories": "Категорії доходів",
+      "parentCategories": "Батьківські",
+      "childCategories": "Дочірні",
+      "loadError": "Помилка при завантаженні статистики"
+    }
+  },
+  "expense": {
+    "title": "Витрати",
+    "createTitle": "Створити витрату",
+    "editTitle": "Редагувати витрату",
+    "deleteTitle": "Видалити витрату",
+    "deleteConfirm": "Ви впевнені, що хочете видалити цю витрату?",
+    "noExpenses": "Витрати не знайдені",
+    "expenseCreated": "Витрата успішно створена",
+    "expenseUpdated": "Витрата успішно оновлена",
+    "expenseDeleted": "Витрата успішно видалена",
+    "list": {
+      "title": "Список витрат",
+      "loading": "Завантаження витрат...",
+      "loadingSubtitle": "Будь ласка, зачекайте",
+      "date": "Дата",
+      "amount": "Сума",
+      "category": "Категорія",
+      "description": "Опис",
+      "actions": "Дії",
+      "noDate": "Не вказана",
+      "unknownCategory": "Невідомо",
+      "noDescription": "Без опису",
+      "noExpensesOnPage": "Немає витрат на цій сторінці",
+      "noExpensesAtAll": "Витрати поки не додані",
+      "noExpensesSubtitle": "Додайте першу витрату для початку відстеження ваших трат",
+      "noExpensesOnPageSubtitle": "Спробуйте перейти на іншу сторінку або змінити фільтри"
+    },
+    "form": {
+      "amount": "Сума",
+      "amountPlaceholder": "0.00",
+      "amountMustBePositive": "Сума повинна бути більше 0",
+      "currency": "Валюта",
+      "category": "Категорія",
+      "noCategory": "Без категорії",
+      "loadingCategories": "Завантаження категорій...",
+      "noCategoriesAvailable": "Немає доступних категорій",
+      "account": "Акаунт",
+      "noAccount": "Без акаунту",
+      "loadingAccounts": "Завантаження акаунтів...",
+      "noAccountsAvailable": "Немає доступних акаунтів",
+      "date": "Дата",
+      "description": "Опис",
+      "descriptionPlaceholder": "Додайте опис витрати...",
+      "optional": "(необов'язково)",
+      "required": "*",
+      "creating": "Створення...",
+      "createButton": "Додати витрату",
+      "createError": "Помилка при створенні витрати",
+      "loadCategoriesError": "Помилка при завантаженні категорій",
+      "loadAccountsError": "Помилка при завантаженні акаунтів"
+    },
+    "dashboard": {
+      "loading": "Завантаження аналітики...",
+      "loadError": "Помилка при завантаженні даних"
+    }
+  },
+  "income": {
+    "title": "Доходи",
+    "createTitle": "Створити дохід",
+    "editTitle": "Редагувати дохід",
+    "deleteTitle": "Видалити дохід",
+    "deleteConfirm": "Ви впевнені, що хочете видалити цей дохід?",
+    "noIncome": "Доходи не знайдені",
+    "incomeCreated": "Дохід успішно створений",
+    "incomeUpdated": "Дохід успішно оновлений",
+    "incomeDeleted": "Дохід успішно видалений",
+    "form": {
+      "amount": "Сума",
+      "amountPlaceholder": "Введіть суму доходу",
+      "amountMustBePositive": "Сума повинна бути більше 0",
+      "currency": "Валюта",
+      "category": "Категорія",
+      "optional": "(необов'язково)",
+      "selectCategoryOptional": "Виберіть категорію (необов'язково)",
+      "account": "Акаунт",
+      "noAccount": "Без акаунту",
+      "description": "Опис",
+      "descriptionPlaceholder": "Опис доходу (необов'язково)",
+      "date": "Дата",
+      "creating": "Створення...",
+      "createIncome": "Створити дохід",
+      "createError": "Помилка при створенні доходу"
+    }
+  },
+  "recurring": {
+    "title": "Повторювані транзакції",
+    "createTitle": "Створити повторювану транзакцію",
+    "editTitle": "Редагувати повторювану транзакцію",
+    "deleteTitle": "Видалити повторювану транзакцію",
+    "deleteConfirm": "Ви впевнені, що хочете видалити цю повторювану транзакцію?",
+    "noRecurring": "Повторювані транзакції не знайдені",
+    "recurringCreated": "Повторювана транзакція успішно створена",
+    "recurringUpdated": "Повторювана транзакція успішно оновлена",
+    "recurringDeleted": "Повторювана транзакція успішно видалена"
+  },
+  "language": {
+    "select": "Оберіть мову",
+    "english": "Англійська",
+    "russian": "Російська",
+    "ukrainian": "Українська"
+  },
+  "homepage": {
+    "hero": {
+      "title": "Керуйте бюджетом просто",
+      "subtitle": "Потужні інструменти для контролю ваших фінансів.",
+      "cta": "Почати"
+    },
+    "trustBar": {
+      "text": "Довіряють",
+      "users": "12,000+ користувачів",
+      "and": "і інтегровані з провідними інститутами"
+    },
+    "metrics": {
+      "expenses": {
+        "amount": "$2,500",
+        "period": "цього місяця",
+        "label": "Витрати"
+      },
+      "budget": {
+        "percentage": "70%",
+        "amount": "$3,000",
+        "label": "Огляд бюджету"
+      },
+      "income": {
+        "amount": "$7,200",
+        "period": "цього місяця",
+        "label": "Доходи"
+      }
+    },
+    "benefits": {
+      "clarity": {
+        "title": "Ясність",
+        "subtitle": "Знайте, куди йде кожна копійка.",
+        "description": "Чисті дашборди показують точно, як рухаються ваші гроші."
+      },
+      "control": {
+        "title": "Контроль",
+        "subtitle": "Бюджети, які адаптуються в реальному часі.",
+        "description": "Розумна категоризація та миттєві перерахунки тримають вас у балансі."
+      },
+      "automation": {
+        "title": "Автоматизація",
+        "subtitle": "Правила, які працюють, поки ви спите.",
+        "description": "Створюйте тригери для заощаджень, інвестицій або сповіщень одним кліком."
+      }
+    },
+    "testimonials": {
+      "elena": {
+        "quote": "Ця платформа замінила весь мій робочий процес з таблицями — і виглядає приголомшливо.",
+        "author": "Олена, Фінансовий аналітик"
+      },
+      "tomas": {
+        "quote": "Нарешті, додаток для бюджету, який створений для майбутнього.",
+        "author": "Томас, Криптоінвестор"
+      }
+    },
+    "footer": {
+      "text": "Відстежуйте витрати, контролюйте доходи та досягайте фінансових цілей."
+    }
+  },
+  "goalsPage": {
+    "title": "Цілі",
+    "createModalTitle": "Створити ціль",
+    "editModalTitle": "Редагувати ціль",
+    "progressModalTitle": "Оновити прогрес",
+    "messages": {
+      "goalCreated": "Ціль успішно створена",
+      "goalUpdated": "Ціль успішно оновлена",
+      "goalDeleted": "Ціль успішно видалена",
+      "progressUpdated": "Прогрес оновлено"
+    }
+  },
+  "footer": {
+    "brand": {
+      "title": "Фінансовий облік",
+      "description": "Просте та ефективне управління особистими фінансами. Відстежуйте доходи, витрати та плануйте бюджет."
+    },
+    "sections": {
+      "product": "Продукт",
+      "company": "Компанія",
+      "support": "Підтримка",
+      "legal": "Правова інформація"
+    },
+    "links": {
+      "product": {
+        "features": "Можливості",
+        "pricing": "Тарифи",
+        "api": "API",
+        "integrations": "Інтеграції"
+      },
+      "company": {
+        "about": "Про нас",
+        "blog": "Блог",
+        "careers": "Кар'єра",
+        "contact": "Контакти"
+      },
+      "support": {
+        "help": "Допомога",
+        "docs": "Документація",
+        "status": "Статус",
+        "community": "Спільнота"
+      },
+      "legal": {
+        "privacy": "Політика конфіденційності",
+        "terms": "Умови використання",
+        "cookies": "Cookie",
+        "gdpr": "GDPR"
+      }
+    },
+    "bottom": {
+      "copyright": "© {{year}} Фінансовий облік. Всі права захищені.",
+      "madeWith": "Зроблено з ❤️ для управління фінансами"
+    }
+  }
+}

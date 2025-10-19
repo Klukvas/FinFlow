@@ -23,10 +23,10 @@ export const GoalsFilters = React.memo<GoalsFiltersProps>(({
   };
 
   return (
-    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg mb-6 space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="theme-bg-secondary p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 space-y-3 sm:space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <div>
-          <label className="block text-sm font-medium theme-text-primary mb-2">
+          <label className="block text-sm font-medium theme-text-primary mb-1 sm:mb-2">
             Статус
           </label>
           <Select
@@ -43,7 +43,7 @@ export const GoalsFilters = React.memo<GoalsFiltersProps>(({
         </div>
 
         <div>
-          <label className="block text-sm font-medium theme-text-primary mb-2">
+          <label className="block text-sm font-medium theme-text-primary mb-1 sm:mb-2">
             Тип
           </label>
           <Select
@@ -62,7 +62,7 @@ export const GoalsFilters = React.memo<GoalsFiltersProps>(({
         </div>
 
         <div>
-          <label className="block text-sm font-medium theme-text-primary mb-2">
+          <label className="block text-sm font-medium theme-text-primary mb-1 sm:mb-2">
             Приоритет
           </label>
           <Select
@@ -79,7 +79,7 @@ export const GoalsFilters = React.memo<GoalsFiltersProps>(({
         </div>
 
         <div>
-          <label className="block text-sm font-medium theme-text-primary mb-2">
+          <label className="block text-sm font-medium theme-text-primary mb-1 sm:mb-2">
             Поиск
           </label>
           <input
@@ -87,7 +87,7 @@ export const GoalsFilters = React.memo<GoalsFiltersProps>(({
             value={filters.search || ''}
             onChange={(e) => handleFilterChange('search', e.target.value)}
             placeholder="Поиск по названию..."
-            className="w-full px-3 py-2 theme-surface border theme-border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition"
+            className="w-full px-3 py-2 text-base sm:text-sm theme-surface border theme-border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition touch-manipulation"
             data-testid="goals-search-filter"
           />
         </div>
