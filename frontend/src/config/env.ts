@@ -13,7 +13,7 @@ export const config = {
     debtServiceUrl: import.meta.env.VITE_DEBT_SERVICE_URL || (import.meta.env.PROD ? '/api/debts' : 'http://localhost:8008'),
     accountServiceUrl: import.meta.env.VITE_ACCOUNT_SERVICE_URL || (import.meta.env.PROD ? '/api/accounts' : 'http://localhost:8009'),
     currencyServiceUrl: import.meta.env.VITE_CURRENCY_SERVICE_URL || (import.meta.env.PROD ? '/api/currencies' : 'http://localhost:8010'),
-    subscriptionServiceUrl: import.meta.env.VITE_SUBSCRIPTION_SERVICE_URL || (import.meta.env.PROD ? '/api/subscription' : 'http://localhost:8011'),
+    subscriptionServiceUrl: import.meta.env.VITE_SUBSCRIPTION_SERVICE_URL || (import.meta.env.PROD ? '/api/subscription' : 'http://localhost:8080'),
   },
   app: {
     name: import.meta.env.VITE_APP_NAME || 'Financial Accounting',
