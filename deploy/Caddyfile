@@ -60,6 +60,11 @@ finflow.ltd {
     reverse_proxy subscription_service:8080
   }
 
+  # Direct subscription service routing to match local development
+  handle_path /v1/subscriptions/* {
+    reverse_proxy subscription_service:8080
+  }
+
   # Frontend - SPA routing with fallback to index.html
   handle /* {
     reverse_proxy frontend:80 {
