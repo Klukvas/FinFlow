@@ -249,7 +249,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./account_service
+          context: .
           file: ./account_service/Dockerfile
           push: true
           tags: |
@@ -281,7 +281,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./category_service
+          context: .
           file: ./category_service/dockerfile
           push: true
           tags: |
@@ -313,7 +313,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./currency_service
+          context: .
           file: ./currency_service/Dockerfile
           push: true
           tags: |
@@ -345,7 +345,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./debt_service
+          context: .
           file: ./debt_service/dockerfile
           push: true
           tags: |
@@ -377,7 +377,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./expense_service
+          context: .
           file: ./expense_service/dockerfile
           push: true
           tags: |
@@ -409,7 +409,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./goals_service
+          context: .
           file: ./goals_service/Dockerfile
           push: true
           tags: |
@@ -441,7 +441,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./income_service
+          context: .
           file: ./income_service/Dockerfile
           push: true
           tags: |
@@ -473,7 +473,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./pdf_parser_service
+          context: .
           file: ./pdf_parser_service/Dockerfile
           push: true
           tags: |
@@ -505,7 +505,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./recurring_service
+          context: .
           file: ./recurring_service/Dockerfile
           push: true
           tags: |
@@ -537,7 +537,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./user_service
+          context: .
           file: ./user_service/dockerfile
           push: true
           tags: |
@@ -569,7 +569,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./subscription_service
+          context: .
           file: ./subscription_service/Dockerfile
           push: true
           tags: |
