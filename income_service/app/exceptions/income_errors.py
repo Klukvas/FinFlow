@@ -13,6 +13,7 @@ class IncomeErrorCodes:
     ACCOUNT_BALANCE_UPDATE_FAILED = "ACCOUNT_BALANCE_UPDATE_FAILED"
     EXTERNAL_SERVICE_UNAVAILABLE = "EXTERNAL_SERVICE_UNAVAILABLE"
     VALIDATION_ERROR = "VALIDATION_ERROR"
+    INCOME_LIMIT_EXCEEDED = "INCOME_LIMIT_EXCEEDED"
 
 
 class IncomeError(Exception):
@@ -57,3 +58,11 @@ class ExternalServiceError(IncomeError):
     def __init__(self, message: str, service: str = None, error_code: str = IncomeErrorCodes.EXTERNAL_SERVICE_UNAVAILABLE):
         self.service = service
         super().__init__(message, error_code)
+
+class IncomeLimitExceededError(IncomeValidationError):
+    """Raised when user exceeds income limit"""
+    def __init__(self, current_count: int, limit: int):
+        super().__init__(
+            f"Income limit exceeded. You have {current_count} incomes but your plan allows only {limit} incomes.",
+            IncomeErrorCodes.INCOME_LIMIT_EXCEEDED
+        )

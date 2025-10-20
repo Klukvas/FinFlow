@@ -8,6 +8,7 @@ from app.models.expense import Expense
 from app.schemas.expense import ExpenseCreate, ExpenseUpdate
 from app.clients.category_service_client import CategoryServiceClient
 from app.clients.account_service_client import AccountServiceClient
+from app.clients.subscription import SubscriptionClient
 from app.exceptions import (
     ErrorCode,
     ExpenseNotFoundError,
@@ -15,7 +16,8 @@ from app.exceptions import (
     ExpenseAmountError,
     ExpenseDateError,
     ExpenseDescriptionError,
-    ExternalServiceError
+    ExternalServiceError,
+    ExpenseLimitExceededError
 )
 from app.utils.logger import get_logger, log_operation, log_security_event
 from app.config import settings
@@ -26,6 +28,7 @@ class ExpenseService:
         self.category_client = category_client
         self.account_client = account_client
         self.logger = get_logger(__name__)
+        self.subscription_client = SubscriptionClient()
 
     def _validate_expense_ownership(self, expense_id: int, user_id: int) -> Expense:
         """Validate that expense exists and belongs to user"""
@@ -121,6 +124,14 @@ class ExpenseService:
     def create(self, data: ExpenseCreate, user_id: int) -> Expense:
         """Create a new expense with proper validation and transaction management"""
         try:
+            # Check subscription limits before creating
+            current_count = self.db.query(Expense).filter(Expense.user_id == user_id).count()
+            if not self.subscription_client.check_expense_limit(user_id, current_count):
+                features = self.subscription_client.get_user_features(user_id)
+                expense_feature = features.get("expenses", {})
+                limit = expense_feature.get("limit_value", 0)
+                raise ExpenseLimitExceededError(current_count, limit)
+            
             # Validate amount
             validated_amount = self._validate_amount(data.amount)
             

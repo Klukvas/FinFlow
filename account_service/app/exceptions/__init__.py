@@ -6,6 +6,7 @@ from .account_errors import (
     AccountArchivedError,
     AccountBalanceError,
     ExternalServiceError,
+    AccountLimitExceededError,
     AccountErrorCode
 )
 
@@ -17,5 +18,6 @@ __all__ = [
     "AccountArchivedError",
     "AccountBalanceError",
     "ExternalServiceError",
+    "AccountLimitExceededError",
     "AccountErrorCode"
 ]

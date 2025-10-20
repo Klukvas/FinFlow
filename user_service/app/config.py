@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     # Username settings
     MIN_USERNAME_LENGTH: int = 3
     MAX_USERNAME_LENGTH: int = 50
+
+    # Internal services
+    SUBSCRIPTION_SERVICE_URL: str = "http://subscription_service:8080"
     
     model_config = {
         "env_file": ".env",

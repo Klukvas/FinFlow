@@ -12,7 +12,8 @@ from .recurring_exceptions import (
     ServiceClientError,
     DatabaseError,
     ValidationError,
-    InternalServerError
+    InternalServerError,
+    RecurringLimitExceededError
 )
 
 __all__ = [
@@ -29,5 +30,6 @@ __all__ = [
     "ServiceClientError",
     "DatabaseError",
     "ValidationError",
-    "InternalServerError"
+    "InternalServerError",
+    "RecurringLimitExceededError"
 ]

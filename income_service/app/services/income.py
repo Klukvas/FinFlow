@@ -11,10 +11,12 @@ from app.exceptions import (
     IncomeDateError,
     IncomeDescriptionError,
     ExternalServiceError,
+    IncomeLimitExceededError,
     IncomeErrorCodes
 )
 from app.clients.category_service_client import CategoryServiceClient
 from app.clients.account_service_client import AccountServiceClient
+from app.clients.subscription import SubscriptionClient
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -26,6 +28,7 @@ class IncomeService:
         self.db = db
         self.category_client = CategoryServiceClient()
         self.account_client = account_client or AccountServiceClient()
+        self.subscription_client = SubscriptionClient()
     
     async def _validate_category(self, category_id: int, user_id: int) -> dict:
         """Validate category exists and belongs to user"""
@@ -66,6 +69,14 @@ class IncomeService:
     async def create(self, income: IncomeCreate, user_id: int) -> IncomeOut:
         """Create a new income"""
         try:
+            # Check subscription limits before creating
+            current_count = self.db.query(Income).filter(Income.user_id == user_id).count()
+            if not self.subscription_client.check_income_limit(user_id, current_count):
+                features = self.subscription_client.get_user_features(user_id)
+                income_feature = features.get("incomes", {})
+                limit = income_feature.get("limit_value", 0)
+                raise IncomeLimitExceededError(current_count, limit)
+            
             # Validate amount
             if income.amount <= 0:
                 raise IncomeAmountError("Income amount must be greater than 0", IncomeErrorCodes.INCOME_AMOUNT_NEGATIVE)

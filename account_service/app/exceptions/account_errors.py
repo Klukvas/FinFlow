@@ -15,6 +15,7 @@ class AccountErrorCode(str, Enum):
     CURRENCY_CONVERSION_FAILED = "CURRENCY_CONVERSION_FAILED"
     DATABASE_ERROR = "DATABASE_ERROR"
     UNKNOWN_ERROR = "UNKNOWN_ERROR"
+    ACCOUNT_LIMIT_EXCEEDED = "ACCOUNT_LIMIT_EXCEEDED"
 
 class AccountServiceError(Exception):
     """Base exception for account service errors"""
@@ -70,4 +71,12 @@ class ExternalServiceError(AccountServiceError):
             f"External service error: {service}",
             AccountErrorCode.EXTERNAL_SERVICE_ERROR,
             detail
+        )
+
+class AccountLimitExceededError(AccountValidationError):
+    """Raised when user exceeds account limit"""
+    def __init__(self, current_count: int, limit: int):
+        super().__init__(
+            f"Account limit exceeded. You have {current_count} accounts but your plan allows only {limit} accounts.",
+            AccountErrorCode.ACCOUNT_LIMIT_EXCEEDED
         )

@@ -592,5 +592,41 @@
       "copyright": "© {{year}} Financial Accounting. All rights reserved.",
       "madeWith": "Made with ❤️ for managing finances"
     }
+  },
+  "subscription": {
+    "title": "Subscription Limits",
+    "subtitle": "Your current plan and limits",
+    "features": {
+      "categories": "Categories",
+      "accounts": "Accounts", 
+      "expenses": "Expenses",
+      "incomes": "Incomes",
+      "debts": "Debts",
+      "recurring": "Recurring Payments",
+      "goals": "Goals"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "used": "Used",
+    "limit": "Limit",
+    "unlimited": "Unlimited",
+    "noData": "Subscription information unavailable",
+    "errors": {
+      "loadFailed": "Failed to load subscription limits"
+    }
+  },
+  "profile": {
+    "title": "User Profile",
+    "subtitle": "Manage your personal data and account settings",
+    "editButton": "Edit Profile",
+    "defaultUsername": "User",
+    "username": "Username",
+    "baseCurrency": "Base Currency",
+    "userId": "User ID",
+    "subscription": "Subscription",
+    "notSpecified": "Not specified",
+    "noSubscription": "No subscription"
   }
 }

@@ -54,3 +54,10 @@ class CategoryOwnershipError(HTTPException):
             }
         )
 
+class CategoryLimitExceededError(CategoryValidationError):
+    def __init__(self, current_count: int, limit: int):
+        super().__init__(
+            detail=f"Category limit exceeded. You have {current_count} categories but your plan allows only {limit} categories.",
+            error_code="CATEGORY_LIMIT_EXCEEDED"
+        )
+

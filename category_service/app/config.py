@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     MAX_CATEGORY_DEPTH: int = 2
     CORS_ORIGINS: str = "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.21.159.67,https://65.21.159.67"
     
+    # Internal services
+    SUBSCRIPTION_SERVICE_URL: str = "http://subscription_service:8080"
+    
     model_config = {
         "env_file": ".env",
         "env_file_encoding": "utf-8",

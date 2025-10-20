@@ -1,0 +1,116 @@
+import { AuthHttpClient, ApiError } from './AuthHttpClient';
+import { config } from '@/config/env';
+import { UserFeature, UserEntitlements, PlanResponse, SubscriptionResponse } from '@/types/subscription';
+import { AccountApiClient } from './accountApiClient';
+import { CategoryApiClient } from './categoryApiClient';
+import { ExpenseApiClient } from './expenseApiClient';
+import { IncomeApiClient } from './incomeApiClient';
+import { DebtApiClient } from './debtApiClient';
+import { GoalsApiClient } from './goalsApi';
+
+export class SubscriptionApiClient {
+  private httpClient: AuthHttpClient;
+  private accountApi: AccountApiClient;
+  private categoryApi: CategoryApiClient;
+  private expenseApi: ExpenseApiClient;
+  private incomeApi: IncomeApiClient;
+  private debtApi: DebtApiClient;
+  private goalsApi: GoalsApiClient;
+
+  constructor(
+    getToken: () => string | null,
+    refreshToken: () => Promise<boolean>
+  ) {
+    this.httpClient = new AuthHttpClient(
+      `${config.api.subscriptionServiceUrl}`,
+      getToken,
+      refreshToken
+    );
+    
+    // Initialize other API clients
+    this.accountApi = new AccountApiClient(getToken, refreshToken);
+    this.categoryApi = new CategoryApiClient(getToken, refreshToken);
+    this.expenseApi = new ExpenseApiClient(getToken, refreshToken);
+    this.incomeApi = new IncomeApiClient(getToken, refreshToken);
+    this.debtApi = new DebtApiClient(getToken, refreshToken);
+    this.goalsApi = new GoalsApiClient(getToken, refreshToken);
+  }
+
+  async getUserEntitlements(userId: number): Promise<UserEntitlements | ApiError> {
+    return this.httpClient.get<UserEntitlements>(`/v1/entitlements/${userId}`);
+  }
+
+  async getUserFeatures(userId: number): Promise<UserFeature[] | ApiError> {
+    // Use entitlements endpoint instead of internal features endpoint
+    const entitlements = await this.getUserEntitlements(userId);
+    if ('error' in entitlements) {
+      return entitlements;
+    }
+    
+    // Transform the backend response format to match frontend expectations
+    const features: UserFeature[] = Object.entries(entitlements.entitlements).map(([feature_code, data]) => ({
+      feature_code,
+      enabled: Boolean(data.enabled),
+      limit_value: data.limit_value
+    }));
+    
+    return features;
+  }
+
+  async getPlans(): Promise<PlanResponse[] | ApiError> {
+    return this.httpClient.get<PlanResponse[]>('/v1/plans');
+  }
+
+  async getUserSubscription(userId: number): Promise<SubscriptionResponse | ApiError> {
+    return this.httpClient.get<SubscriptionResponse>(`/v1/subscriptions/${userId}`);
+  }
+
+  // Methods to get current counts for each feature type
+  async getCurrentCounts(userId: number): Promise<Record<string, number> | ApiError> {
+    try {
+      const counts: Record<string, number> = {};
+      
+      // Get counts from each service in parallel
+      const [accounts, categories, expenses, incomes, debts, goals] = await Promise.allSettled([
+        this.accountApi.getAccounts(),
+        this.categoryApi.getCategories(),
+        this.expenseApi.getExpenses(),
+        this.incomeApi.getIncomes(),
+        this.debtApi.getDebts(),
+        this.goalsApi.getGoals()
+      ]);
+
+      // Process results
+      if (accounts.status === 'fulfilled' && !('error' in accounts.value)) {
+        counts.accounts = accounts.value.length;
+      }
+      
+      if (categories.status === 'fulfilled' && !('error' in categories.value)) {
+        counts.categories = categories.value.length;
+      }
+      
+      if (expenses.status === 'fulfilled' && !('error' in expenses.value)) {
+        counts.expenses = expenses.value.length;
+      }
+      
+      if (incomes.status === 'fulfilled' && !('error' in incomes.value)) {
+        counts.incomes = incomes.value.length;
+      }
+      
+      if (debts.status === 'fulfilled' && !('error' in debts.value)) {
+        counts.debts = debts.value.length;
+      }
+      
+      if (goals.status === 'fulfilled' && !('error' in goals.value)) {
+        counts.goals = goals.value.items.length;
+      }
+
+      // For recurring, we'll need to implement this when recurring API is available
+      counts.recurring = 0; // Placeholder
+
+      return counts;
+    } catch (error) {
+      return { error: 'Failed to get current counts' };
+    }
+  }
+}

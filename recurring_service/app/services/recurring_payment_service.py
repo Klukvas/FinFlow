@@ -21,13 +21,15 @@ from app.services.payment_calculator import PaymentCalculator
 from app.clients.expense_client import ExpenseServiceClient
 from app.clients.income_client import IncomeServiceClient
 from app.clients.category_client import CategoryServiceClient
+from app.clients.subscription import SubscriptionClient
 from app.exceptions import (
     RecurringPaymentNotFoundError,
     CategoryNotFoundError,
     InvalidPaymentStatusError,
     PaymentAlreadyPausedError,
     PaymentNotPausedError,
-    ValidationError
+    ValidationError,
+    RecurringLimitExceededError
 )
 from app.utils.logger import get_logger
 
@@ -41,6 +43,7 @@ class RecurringPaymentService:
         self.expense_client = ExpenseServiceClient()
         self.income_client = IncomeServiceClient()
         self.category_client = CategoryServiceClient()
+        self.subscription_client = SubscriptionClient()
     
     async def create_recurring_payment(
         self, 
@@ -49,6 +52,14 @@ class RecurringPaymentService:
         db: Session
     ) -> RecurringPayment:
         """Создать новый повторяющийся платеж"""
+        # Check subscription limits before creating
+        current_count = db.query(RecurringPayment).filter(RecurringPayment.user_id == user_id).count()
+        if not self.subscription_client.check_recurring_limit(user_id, current_count):
+            features = self.subscription_client.get_user_features(user_id)
+            recurring_feature = features.get("recurring", {})
+            limit = recurring_feature.get("limit_value", 0)
+            raise RecurringLimitExceededError(current_count, limit)
+        
         # Валидировать существование категории
         if not await self.category_client.validate_category_exists(payment_data.category_id, user_id):
             raise CategoryNotFoundError("Category not found")

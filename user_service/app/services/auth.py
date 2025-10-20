@@ -4,6 +4,7 @@ from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from typing import Optional
+from app.clients.subscription import SubscriptionClient
 
 from app.models.user import User
 from app.schemas.user import UserCreate, UserLogin
@@ -110,6 +111,23 @@ class AuthService:
             self.db.add(user)
             self.db.commit()
             self.db.refresh(user)
+
+            # Bootstrap basic subscription (best-effort, non-blocking)
+            try:
+                self.logger.info(
+                    "Bootstrapping basic subscription",
+                    extra={"operation": "subscription_bootstrap", "user_id": user.id, "plan_code": "basic"}
+                )
+                SubscriptionClient().set_basic_plan(user.id, "basic")
+                self.logger.info(
+                    "Subscription bootstrap request sent",
+                    extra={"operation": "subscription_bootstrap", "user_id": user.id, "plan_code": "basic"}
+                )
+            except Exception as e:
+                self.logger.warning(
+                    f"Subscription bootstrap failed: {e}",
+                    extra={"operation": "subscription_bootstrap", "user_id": user.id, "plan_code": "basic"}
+                )
 
             log_operation(
                 self.logger,

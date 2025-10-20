@@ -11,6 +11,7 @@ from app.exceptions import (
     AccountOwnershipError,
     AccountArchivedError,
     AccountBalanceError,
+    AccountLimitExceededError,
     AccountErrorCode
 )
 from app.utils.logger import get_logger, log_operation
@@ -18,6 +19,7 @@ from app.utils.validation import validate_currency_code, validate_balance, valid
 from app.clients.expense_service_client import ExpenseServiceClient
 from app.clients.income_service_client import IncomeServiceClient
 from app.clients.currency_service_client import CurrencyServiceClient
+from app.clients.subscription import SubscriptionClient
 
 class AccountService:
     def __init__(self, db: Session, expense_client: ExpenseServiceClient = None, income_client: IncomeServiceClient = None, currency_client: CurrencyServiceClient = None):
@@ -26,10 +28,19 @@ class AccountService:
         self.expense_client = expense_client or ExpenseServiceClient()
         self.income_client = income_client or IncomeServiceClient()
         self.currency_client = currency_client or CurrencyServiceClient()
+        self.subscription_client = SubscriptionClient()
 
     def create_account(self, account_data: AccountCreate, user_id: int) -> Account:
         """Create a new account for a user"""
         try:
+            # Check subscription limits before creating
+            current_count = self.db.query(Account).filter(Account.owner_id == user_id).count()
+            if not self.subscription_client.check_account_limit(user_id, current_count):
+                features = self.subscription_client.get_user_features(user_id)
+                account_feature = features.get("accounts", {})
+                limit = account_feature.get("limit_value", 0)
+                raise AccountLimitExceededError(current_count, limit)
+            
             # Validate input
             if not validate_account_name(account_data.name):
                 raise AccountValidationError("Invalid account name", AccountErrorCode.INVALID_ACCOUNT_NAME)

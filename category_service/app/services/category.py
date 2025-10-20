@@ -10,17 +10,20 @@ from app.exceptions import (
     CircularRelationshipError,
     CategoryDepthExceededError,
     CategoryNameConflictError,
-    CategoryOwnershipError
+    CategoryOwnershipError,
+    CategoryLimitExceededError
 )
 from app.utils.logger import get_logger, log_operation, log_security_event
 from app.config import settings
 from app.serializers import CategorySerializer
+from app.clients.subscription import SubscriptionClient
 
 class CategoryService:
     def __init__(self, db: Session):
         self.db = db
         self.logger = get_logger(__name__)
         self.serializer = CategorySerializer()
+        self.subscription_client = SubscriptionClient()
 
     # Validation methods are now handled directly by the serializer
     # No need for wrapper methods
@@ -39,6 +42,14 @@ class CategoryService:
                 parent_id=data.parent_id,
                 category_type=data.type
             )
+            
+            # Check subscription limits before creating
+            current_count = self.db.query(Category).filter(Category.user_id == user_id).count()
+            if not self.subscription_client.check_category_limit(user_id, current_count):
+                features = self.subscription_client.get_user_features(user_id)
+                category_feature = features.get("categories", {})
+                limit = category_feature.get("limit_value", 0)
+                raise CategoryLimitExceededError(current_count, limit)
             
             # Comprehensive validation using serializer
             self.serializer.validate_category_data(self.db, data, user_id)

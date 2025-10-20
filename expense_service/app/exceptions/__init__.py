@@ -7,7 +7,8 @@ from .expense_exceptions import (
     ExpenseDateError,
     ExpenseDescriptionError,
     CategoryValidationError,
-    ExternalServiceError
+    ExternalServiceError,
+    ExpenseLimitExceededError
 )
 
 __all__ = [
@@ -19,6 +20,7 @@ __all__ = [
     "ExpenseDateError",
     "ExpenseDescriptionError",
     "CategoryValidationError",
-    "ExternalServiceError"
+    "ExternalServiceError",
+    "ExpenseLimitExceededError"
 ]
 

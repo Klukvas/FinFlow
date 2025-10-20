@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     HTTP_TIMEOUT: float = 5.0
     HTTP_RETRY_ATTEMPTS: int = 3
     CORS_ORIGINS: str = "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.21.159.67,https://65.21.159.67"
+    SUBSCRIPTION_SERVICE_URL: str = "http://subscription_service:8080"
     
     model_config = {
         "env_file": ".env",

@@ -126,3 +126,8 @@ class InvalidPaymentMethodError(DebtServiceException):
     def __init__(self, payment_method: str):
         super().__init__(f"Invalid payment method: {payment_method}", "INVALID_PAYMENT_METHOD")
         self.payment_method = payment_method
+
+class DebtLimitExceededError(DebtValidationError):
+    """Raised when user exceeds debt limit"""
+    def __init__(self, current_count: int, limit: int):
+        super().__init__(f"Debt limit exceeded. You have {current_count} debts but your plan allows only {limit} debts.")

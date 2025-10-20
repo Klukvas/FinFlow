@@ -4,7 +4,8 @@ from .category_exceptions import (
     CircularRelationshipError,
     CategoryDepthExceededError,
     CategoryNameConflictError,
-    CategoryOwnershipError
+    CategoryOwnershipError,
+    CategoryLimitExceededError
 )
 
 __all__ = [
@@ -13,6 +14,7 @@ __all__ = [
     "CircularRelationshipError",
     "CategoryDepthExceededError",
     "CategoryNameConflictError",
-    "CategoryOwnershipError"
+    "CategoryOwnershipError",
+    "CategoryLimitExceededError"
 ]
 

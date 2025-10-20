@@ -82,3 +82,11 @@ class InternalServerError(BaseRecurringError):
     """Исключение при внутренней ошибке сервера"""
     def __init__(self, message: str = "Internal server error"):
         super().__init__(message, "INTERNAL_SERVER_ERROR")
+
+class RecurringLimitExceededError(BaseRecurringError):
+    """Исключение когда превышен лимит повторяющихся платежей"""
+    def __init__(self, current_count: int, limit: int):
+        super().__init__(
+            f"Recurring payment limit exceeded. You have {current_count} recurring payments but your plan allows only {limit} recurring payments.",
+            "RECURRING_LIMIT_EXCEEDED"
+        )

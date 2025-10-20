@@ -20,7 +20,8 @@ from .debt_exceptions import (
     ContactDeletionFailedError,
     PaymentCreationFailedError,
     InvalidDebtTypeError,
-    InvalidPaymentMethodError
+    InvalidPaymentMethodError,
+    DebtLimitExceededError
 )
 
 __all__ = [
@@ -45,5 +46,6 @@ __all__ = [
     "ContactDeletionFailedError",
     "PaymentCreationFailedError",
     "InvalidDebtTypeError",
-    "InvalidPaymentMethodError"
+    "InvalidPaymentMethodError",
+    "DebtLimitExceededError"
 ]

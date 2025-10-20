@@ -7,11 +7,12 @@ from app.schemas.goal import (
     GoalCreate, GoalUpdate, GoalProgressUpdate,
     MilestoneCreate, MilestoneUpdate, MilestoneProgressUpdate
 )
+from app.clients.subscription import SubscriptionClient
 from app.exceptions.goal_exceptions import (
     GoalNotFoundError, GoalValidationError, GoalCreationError, GoalUpdateError,
     GoalDeletionError, GoalRetrievalError, GoalStatisticsError, GoalProgressError,
     MilestoneNotFoundError, MilestoneValidationError, MilestoneCreationError,
-    MilestoneRetrievalError, MilestoneProgressUpdateError
+    MilestoneRetrievalError, MilestoneProgressUpdateError, GoalLimitExceededError
 )
 from app.utils.logger import get_logger
 
@@ -21,10 +22,19 @@ logger = get_logger(__name__)
 class GoalService:
     def __init__(self, db: Session):
         self.db = db
+        self.subscription_client = SubscriptionClient()
 
     def create_goal(self, user_id: int, goal_data: GoalCreate) -> Goal:
         """Create a new financial goal"""
         try:
+            # Check subscription limits before creating
+            current_count = self.db.query(Goal).filter(Goal.user_id == user_id).count()
+            if not self.subscription_client.check_goal_limit(user_id, current_count):
+                features = self.subscription_client.get_user_features(user_id)
+                goal_feature = features.get("goals", {})
+                limit = goal_feature.get("limit_value", 0)
+                raise GoalLimitExceededError(current_count, limit)
+            
             goal = Goal(
                 user_id=user_id,
                 **goal_data.dict()

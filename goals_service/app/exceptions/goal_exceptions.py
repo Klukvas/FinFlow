@@ -91,3 +91,10 @@ class MilestoneProgressUpdateError(GoalServiceError):
     """Raised when milestone progress update fails"""
     def __init__(self, detail: str = "Failed to update milestone progress"):
         super().__init__(detail=detail, status_code=422, error_code="MILESTONE_PROGRESS_UPDATE_FAILED")
+
+class GoalLimitExceededError(GoalValidationError):
+    """Raised when user exceeds goal limit"""
+    def __init__(self, current_count: int, limit: int):
+        super().__init__(
+            detail=f"Goal limit exceeded. You have {current_count} goals but your plan allows only {limit} goals."
+        )

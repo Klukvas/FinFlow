@@ -11,6 +11,7 @@ from app.schemas.debt import (
     DebtPaymentCreate, DebtPaymentResponse
 )
 from app.services.contact import ContactService
+from app.clients.subscription import SubscriptionClient
 from app.exceptions import (
     DebtNotFoundError,
     DebtValidationError,
@@ -20,7 +21,8 @@ from app.exceptions import (
     DebtCreationFailedError,
     DebtUpdateFailedError,
     DebtDeletionFailedError,
-    PaymentCreationFailedError
+    PaymentCreationFailedError,
+    DebtLimitExceededError
 )
 from app.utils.logger import get_logger, log_operation
 from app.config import settings
@@ -34,11 +36,20 @@ class DebtService:
         self.db = db
         self.logger = get_logger(__name__)
         self.contact_service = ContactService(db)
+        self.subscription_client = SubscriptionClient()
 
     # Debt Management
     async def create_debt(self, debt: DebtCreate, user_id: int) -> DebtResponse:
         """Create a new debt"""
         try:
+            # Check subscription limits before creating
+            current_count = self.db.query(Debt).filter(Debt.user_id == user_id).count()
+            if not self.subscription_client.check_debt_limit(user_id, current_count):
+                features = self.subscription_client.get_user_features(user_id)
+                debt_feature = features.get("debts", {})
+                limit = debt_feature.get("limit_value", 0)
+                raise DebtLimitExceededError(current_count, limit)
+            
             # Validate contact if provided
             if debt.contact_id:
                 self.contact_service.get_contact(debt.contact_id, user_id)  # This will raise if not found

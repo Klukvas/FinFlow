@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     # External Services
     CATEGORY_SERVICE_URL: str = "http://category_service:8000"
     USER_SERVICE_URL: str = "http://user_service:8000"
+    SUBSCRIPTION_SERVICE_URL: str = "http://subscription_service:8080"
     
     # Security
     SECRET_KEY: str

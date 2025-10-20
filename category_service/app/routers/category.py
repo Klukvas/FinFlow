@@ -10,7 +10,8 @@ from app.exceptions import (
     CategoryOwnershipError,
     CircularRelationshipError,
     CategoryDepthExceededError,
-    CategoryNameConflictError
+    CategoryNameConflictError,
+    CategoryLimitExceededError
 )
 
 router = APIRouter(prefix="/categories", tags=["Categories"])

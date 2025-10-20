@@ -40,6 +40,9 @@ class ErrorCode(str, Enum):
     # Database errors
     DATABASE_CONSTRAINT_VIOLATION = "DATABASE_CONSTRAINT_VIOLATION"
     DATABASE_ERROR = "DATABASE_ERROR"
+    
+    # Subscription errors
+    EXPENSE_LIMIT_EXCEEDED = "EXPENSE_LIMIT_EXCEEDED"
 
 class StandardizedError(HTTPException):
     """Base class for standardized error responses with error and errorCode keys"""
@@ -129,4 +132,12 @@ class ExternalServiceError(StandardizedError):
             error=f"External service {service} error: {detail}",
             error_code=error_code,
             details={"service": service, "original_error": detail}
+        )
+
+class ExpenseLimitExceededError(ExpenseValidationError):
+    def __init__(self, current_count: int, limit: int):
+        super().__init__(
+            error=f"Expense limit exceeded. You have {current_count} expenses but your plan allows only {limit} expenses.",
+            error_code=ErrorCode.EXPENSE_LIMIT_EXCEEDED,
+            details={"current_count": current_count, "limit": limit}
         )

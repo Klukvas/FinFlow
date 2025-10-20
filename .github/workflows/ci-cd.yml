@@ -52,6 +52,7 @@ jobs:
       pdf_parser_service: ${{ steps.detect.outputs.pdf_parser_service }}
       recurring_service: ${{ steps.detect.outputs.recurring_service }}
       user_service: ${{ steps.detect.outputs.user_service }}
+      subscription_service: ${{ steps.detect.outputs.subscription_service }}
       services_list: ${{ steps.detect.outputs.services_list }}
     steps:
       - name: Checkout
@@ -74,6 +75,7 @@ jobs:
           PDF_PARSER_SERVICE="false"
           RECURRING_SERVICE="false"
           USER_SERVICE="false"
+          SUBSCRIPTION_SERVICE="false"
           
           # If manual dispatch with specific services
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]] && [[ -n "${{ inputs.services }}" ]]; then
@@ -128,6 +130,9 @@ jobs:
             if git diff --name-only HEAD^..HEAD | grep -q "^user_service/"; then
               USER_SERVICE="true"
             fi
+            if git diff --name-only HEAD^..HEAD | grep -q "^subscription_service/"; then
+              SUBSCRIPTION_SERVICE="true"
+            fi
             
             # If nothing changed, build all
             if [[ "$FRONTEND" == "false" ]] && \
@@ -153,6 +158,7 @@ jobs:
               PDF_PARSER_SERVICE="true"
               RECURRING_SERVICE="true"
               USER_SERVICE="true"
+              SUBSCRIPTION_SERVICE="true"
             fi
           fi
           
@@ -168,6 +174,7 @@ jobs:
           echo "pdf_parser_service=$PDF_PARSER_SERVICE" >> $GITHUB_OUTPUT
           echo "recurring_service=$RECURRING_SERVICE" >> $GITHUB_OUTPUT
           echo "user_service=$USER_SERVICE" >> $GITHUB_OUTPUT
+          echo "subscription_service=$SUBSCRIPTION_SERVICE" >> $GITHUB_OUTPUT
           
           # Build list for deployment
           SERVICES_LIST=""
@@ -182,6 +189,7 @@ jobs:
           [[ "$PDF_PARSER_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST pdf_parser_service"
           [[ "$RECURRING_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST recurring_service"
           [[ "$USER_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST user_service"
+          [[ "$SUBSCRIPTION_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST subscription_service"
           
           echo "services_list=$SERVICES_LIST" >> $GITHUB_OUTPUT
           echo "Services to build/deploy:$SERVICES_LIST"
@@ -538,6 +546,38 @@ jobs:
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/user_service:latest
           cache-to: type=inline
 
+  # Stage 12: Subscription Service Build
+  stage12-subscription-service:
+    name: "Stage 12: Build Subscription Service"
+    needs: detect-changes
+    if: needs.detect-changes.outputs.subscription_service == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./subscription_service
+          file: ./subscription_service/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/subscription_service:latest
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/subscription_service:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/subscription_service:latest
+          cache-to: type=inline
+
   # Final Stage: Deploy
   deploy:
     name: Deploy to ${{ github.event.inputs.environment || 'production' }}
@@ -554,6 +594,7 @@ jobs:
       - stage9-pdf-parser-service
       - stage10-recurring-service
       - stage11-user-service
+      - stage12-subscription-service
     # Deploy only after ALL builds complete successfully (or skip if no changes)
     # This ensures we don't deploy while builds are still running
     # Run if: on main/manual dispatch, no failures/cancellations, and at least one service built
@@ -604,6 +645,7 @@ jobs:
           [[ "${{ needs.stage9-pdf-parser-service.result }}" == "success" ]] && echo "- ✅ PDF Parser Service" >> $GITHUB_STEP_SUMMARY
           [[ "${{ needs.stage10-recurring-service.result }}" == "success" ]] && echo "- ✅ Recurring Service" >> $GITHUB_STEP_SUMMARY
           [[ "${{ needs.stage11-user-service.result }}" == "success" ]] && echo "- ✅ User Service" >> $GITHUB_STEP_SUMMARY
+          [[ "${{ needs.stage12-subscription-service.result }}" == "success" ]] && echo "- ✅ Subscription Service" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Environment**: ${{ github.event.inputs.environment || 'production' }}" >> $GITHUB_STEP_SUMMARY
           echo "**Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY

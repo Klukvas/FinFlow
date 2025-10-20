@@ -144,6 +144,25 @@ services:
         max-file: "3"
         labels: "service=income_service,logging=promtail"
 
+  subscription_service:
+    image: ${REGISTRY}/${IMAGE_PREFIX}/subscription_service:latest
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=${ALGORITHM}
+      - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122
+    depends_on:
+      - redis
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service=subscription_service,logging=promtail"
+
   pdf_parser_service:
     image: ${REGISTRY}/${IMAGE_PREFIX}/pdf_parser_service:latest
     environment:
@@ -182,6 +201,7 @@ services:
       - ALGORITHM=${ALGORITHM}
       - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
       - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122
+      - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
     restart: unless-stopped
     logging:
       driver: "json-file"

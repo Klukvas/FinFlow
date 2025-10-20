@@ -8,6 +8,7 @@ import { IncomeApiClient } from '@/services/api/incomeApiClient';
 import { UserApiClient } from '@/services/api/userApiClient';
 import { GoalsApiClient } from '@/services/api/goalsApi';
 import { PDFParserApiClient } from '@/services/api/pdfParserApiClient';
+import { SubscriptionApiClient } from '@/services/api/subscriptionApiClient';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMemo } from 'react';
 
@@ -26,6 +27,7 @@ export const useApiClients = () => {
   const income = useMemo(() => new IncomeApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
   const goals = useMemo(() => new GoalsApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
   const pdfParser = useMemo(() => new PDFParserApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
+  const subscription = useMemo(() => new SubscriptionApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
   
   return {
     account,
@@ -37,6 +39,7 @@ export const useApiClients = () => {
     expense,
     income,
     goals,
-    pdfParser
+    pdfParser,
+    subscription
   };
 }; 

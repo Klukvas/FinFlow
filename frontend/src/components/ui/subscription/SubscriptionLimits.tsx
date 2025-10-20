@@ -1,0 +1,224 @@
+import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useApiClients } from '@/hooks/useApiClients';
+import { useAuth } from '@/contexts/AuthContext';
+import { UserFeature } from '@/types/subscription';
+import { Card } from '@/components/ui/shared/Card';
+import { LoadingSpinner } from '@/components/ui/shared/LoadingSpinner';
+import { 
+  FaFolder, 
+  FaWallet, 
+  FaReceipt, 
+  FaArrowUp, 
+  FaCreditCard, 
+  FaRedo, 
+  FaBullseye,
+  FaCrown,
+  FaCheckCircle,
+  FaTimesCircle
+} from 'react-icons/fa';
+
+interface SubscriptionLimitsProps {
+  className?: string;
+}
+
+const featureIcons: Record<string, React.ReactNode> = {
+  categories: <FaFolder className="w-4 h-4" />,
+  accounts: <FaWallet className="w-4 h-4" />,
+  expenses: <FaReceipt className="w-4 h-4" />,
+  incomes: <FaArrowUp className="w-4 h-4" />,
+  debts: <FaCreditCard className="w-4 h-4" />,
+  recurring: <FaRedo className="w-4 h-4" />,
+  goals: <FaBullseye className="w-4 h-4" />,
+};
+
+const featureNames: Record<string, string> = {
+  categories: 'subscription.features.categories',
+  accounts: 'subscription.features.accounts',
+  expenses: 'subscription.features.expenses',
+  incomes: 'subscription.features.incomes',
+  debts: 'subscription.features.debts',
+  recurring: 'subscription.features.recurring',
+  goals: 'subscription.features.goals',
+};
+
+export const SubscriptionLimits: React.FC<SubscriptionLimitsProps> = ({ className = '' }) => {
+  const { t } = useTranslation();
+  const { subscription: subscriptionApi } = useApiClients();
+  const { user } = useAuth();
+  const [features, setFeatures] = useState<UserFeature[]>([]);
+  const [currentCounts, setCurrentCounts] = useState<Record<string, number>>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadSubscriptionLimits = async () => {
+      if (!user?.id) return;
+
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Load features and current counts in parallel
+        const [featuresResponse, countsResponse] = await Promise.all([
+          subscriptionApi.getUserFeatures(user.id),
+          subscriptionApi.getCurrentCounts(user.id)
+        ]);
+        
+        if ('error' in featuresResponse) {
+          setError(t('subscription.errors.loadFailed'));
+          return;
+        }
+
+        if ('error' in countsResponse) {
+          console.warn('Failed to load current counts:', countsResponse.error);
+          // Don't fail the whole component if counts fail
+        } else {
+          setCurrentCounts(countsResponse);
+        }
+
+        setFeatures(featuresResponse);
+      } catch (err) {
+        setError(t('subscription.errors.loadFailed'));
+        console.error('Failed to load subscription limits:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSubscriptionLimits();
+  }, [user?.id, subscriptionApi]);
+
+  if (loading) {
+    return (
+      <Card className={`p-6 ${className}`}>
+        <div className="flex items-center justify-center py-8">
+          <LoadingSpinner size="md" />
+        </div>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className={`p-6 ${className}`}>
+        <div className="text-center py-8">
+          <FaTimesCircle className="w-8 h-8 text-red-500 mx-auto mb-2" />
+          <p className="text-red-600">{error}</p>
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className={`p-6 ${className}`}>
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+          <FaCrown className="w-5 h-5 text-white" />
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold theme-text-primary">{t('subscription.title')}</h3>
+          <p className="text-sm theme-text-secondary">{t('subscription.subtitle')}</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {features.map((feature) => {
+          const icon = featureIcons[feature.feature_code] || <FaCheckCircle className="w-4 h-4" />;
+          const name = t(featureNames[feature.feature_code] || feature.feature_code);
+          const currentCount = currentCounts[feature.feature_code] || 0;
+          const limit = feature.limit_value;
+          const isNearLimit = limit !== null && currentCount >= limit * 0.8; // 80% of limit
+          const isAtLimit = limit !== null && currentCount >= limit;
+          
+          return (
+            <div
+              key={feature.feature_code}
+              className={`p-4 rounded-lg border transition-colors ${
+                feature.enabled 
+                  ? 'theme-surface theme-border' 
+                  : 'theme-bg-tertiary theme-border opacity-60'
+              }`}
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                  feature.enabled 
+                    ? 'theme-accent-light' 
+                    : 'theme-bg-tertiary'
+                }`}>
+                  <div className={feature.enabled ? 'theme-accent' : 'theme-text-tertiary'}>
+                    {icon}
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h4 className={`font-medium ${
+                    feature.enabled ? 'theme-text-primary' : 'theme-text-tertiary'
+                  }`}>
+                    {name}
+                  </h4>
+                </div>
+                <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  feature.enabled 
+                    ? 'theme-success-light theme-success' 
+                    : 'theme-bg-tertiary theme-text-tertiary'
+                }`}>
+                  {feature.enabled ? t('subscription.status.active') : t('subscription.status.inactive')}
+                </div>
+              </div>
+              
+              {feature.enabled && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="theme-text-secondary">{t('subscription.used')}:</span>
+                    <span className={`font-medium ${
+                      isAtLimit ? 'theme-error' :
+                      isNearLimit ? 'theme-warning' :
+                      'theme-text-primary'
+                    }`}>
+                      {currentCount}
+                    </span>
+                  </div>
+                  
+                  {limit !== null && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="theme-text-secondary">{t('subscription.limit')}:</span>
+                      <span className="theme-text-primary font-medium">{limit}</span>
+                    </div>
+                  )}
+                  
+                  {limit !== null && (
+                    <div className="w-full theme-bg-tertiary rounded-full h-2">
+                      <div 
+                        className={`h-2 rounded-full transition-all ${
+                          isAtLimit ? 'theme-error-bg' :
+                          isNearLimit ? 'theme-warning-bg' :
+                          'theme-success-bg'
+                        }`}
+                        style={{ 
+                          width: `${Math.min((currentCount / limit) * 100, 100)}%` 
+                        }}
+                      />
+                    </div>
+                  )}
+                  
+                  {limit === null && (
+                    <div className="text-sm theme-success">
+                      {t('subscription.unlimited')}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {features.length === 0 && (
+        <div className="text-center py-8">
+          <FaCrown className="w-8 h-8 theme-text-tertiary mx-auto mb-2" />
+          <p className="theme-text-secondary">{t('subscription.noData')}</p>
+        </div>
+      )}
+    </Card>
+  );
+};

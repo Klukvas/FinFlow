@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     CATEGORY_SERVICE_URL: str = "http://category_service:8000"
     ACCOUNT_SERVICE_URL: str = "http://account_service:8000"
     INTERNAL_SECRET_TOKEN: str
+    SUBSCRIPTION_SERVICE_URL: str = "http://subscription_service:8080"
     
     # CORS
     CORS_ORIGINS: str = "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.21.159.67,https://65.21.159.67"

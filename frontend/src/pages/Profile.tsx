@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApiClients } from '@/hooks/useApiClients';
 import { UserUpdate } from '@/services/api/userApiClient';
@@ -6,14 +7,17 @@ import { Modal } from '@/components/ui/shared/Modal';
 import { Button } from '@/components/ui/shared/Button';
 import { FormField } from '@/components/ui/forms/FormField';
 import { Input } from '@/components/ui/forms/Input';
-import { FaUser, FaEdit, FaSave, FaTimes, FaEnvelope, FaCalendarAlt, FaWallet } from 'react-icons/fa';
+import { FaUser, FaEdit, FaSave, FaTimes, FaEnvelope, FaCalendarAlt, FaWallet, FaCrown } from 'react-icons/fa';
 import { config } from '@/config/env';
 import { CurrencySelect } from '@/components/ui/forms/CurrencySelect';
 import { ProfileSkeleton } from '@/components/ui/profile/ProfileSkeleton';
+import { SubscriptionLimits } from '@/components/ui/subscription/SubscriptionLimits';
+import { SubscriptionResponse } from '@/types/subscription';
 
 export const Profile = () => {
+  const { t } = useTranslation();
   const { user, isLoading, refreshUserProfile } = useAuth();
-  const { user: userApi } = useApiClients();
+  const { user: userApi, subscription: subscriptionApi } = useApiClients();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -23,6 +27,8 @@ export const Profile = () => {
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [subscription, setSubscription] = useState<SubscriptionResponse | null>(null);
+  const [subscriptionLoading, setSubscriptionLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
@@ -33,6 +39,27 @@ export const Profile = () => {
       });
     }
   }, [user]);
+
+  useEffect(() => {
+    const loadSubscription = async () => {
+      if (!user?.id) return;
+
+      try {
+        setSubscriptionLoading(true);
+        const response = await subscriptionApi.getUserSubscription(user.id);
+        
+        if (!('error' in response)) {
+          setSubscription(response);
+        }
+      } catch (err) {
+        console.error('Failed to load subscription:', err);
+      } finally {
+        setSubscriptionLoading(false);
+      }
+    };
+
+    loadSubscription();
+  }, [user?.id, subscriptionApi]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -119,9 +146,9 @@ export const Profile = () => {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold theme-text-primary">Профиль пользователя</h1>
+          <h1 className="text-2xl font-bold theme-text-primary">{t('profile.title')}</h1>
           <p className="theme-text-secondary mt-1">
-            Управление личными данными и настройками аккаунта
+            {t('profile.subtitle')}
           </p>
         </div>
         
@@ -130,7 +157,7 @@ export const Profile = () => {
           className="flex items-center gap-2"
         >
           <FaEdit className="w-4 h-4" />
-          Редактировать профиль
+          {t('profile.editButton')}
         </Button>
       </div>
 
@@ -148,7 +175,7 @@ export const Profile = () => {
           <div className="flex-1 space-y-4">
             <div>
               <h2 className="text-xl font-semibold theme-text-primary">
-                {user?.username || 'Пользователь'}
+                {user?.username || t('profile.defaultUsername')}
               </h2>
               <p className="theme-text-secondary">{user?.email}</p>
             </div>
@@ -158,16 +185,16 @@ export const Profile = () => {
                 <div className="flex items-center space-x-3">
                   <FaUser className="w-5 h-5 theme-text-tertiary" />
                   <div>
-                    <p className="text-sm font-medium theme-text-tertiary">Имя пользователя</p>
-                    <p className="theme-text-primary">{user?.username || 'Не указано'}</p>
+                    <p className="text-sm font-medium theme-text-tertiary">{t('profile.username')}</p>
+                    <p className="theme-text-primary">{user?.username || t('profile.notSpecified')}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center space-x-3">
                   <FaWallet className="w-5 h-5 theme-text-tertiary" />
                   <div>
-                    <p className="text-sm font-medium theme-text-tertiary">Базовая валюта</p>
-                    <p className="theme-text-primary">{user?.base_currency || 'Не указано'}</p>
+                    <p className="text-sm font-medium theme-text-tertiary">{t('profile.baseCurrency')}</p>
+                    <p className="theme-text-primary">{user?.base_currency || t('profile.notSpecified')}</p>
                   </div>
                 </div>
               
@@ -186,8 +213,31 @@ export const Profile = () => {
                 <div className="flex items-center space-x-3">
                   <FaCalendarAlt className="w-5 h-5 theme-text-tertiary" />
                   <div>
-                    <p className="text-sm font-medium theme-text-tertiary">ID пользователя</p>
+                    <p className="text-sm font-medium theme-text-tertiary">{t('profile.userId')}</p>
                     <p className="theme-text-primary">#{user?.id}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-3">
+                  <FaCrown className="w-5 h-5 theme-text-tertiary" />
+                  <div>
+                    <p className="text-sm font-medium theme-text-tertiary">{t('profile.subscription')}</p>
+                    {subscriptionLoading ? (
+                      <p className="theme-text-secondary">{t('common.loading')}</p>
+                    ) : subscription ? (
+                      <div className="flex items-center gap-2">
+                        <span className="theme-text-primary font-medium capitalize">{subscription.plan_code}</span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          subscription.status === 'active' 
+                            ? 'theme-success-light theme-success' 
+                            : 'theme-error-light theme-error'
+                        }`}>
+                          {subscription.status}
+                        </span>
+                      </div>
+                    ) : (
+                      <p className="theme-text-secondary">{t('profile.noSubscription')}</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -243,6 +293,9 @@ export const Profile = () => {
           </div>
         </div>
       </div>
+
+      {/* Subscription Limits */}
+      <SubscriptionLimits />
 
       {/* Edit Profile Modal */}
       <Modal
