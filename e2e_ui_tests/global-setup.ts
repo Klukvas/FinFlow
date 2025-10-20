@@ -1,4 +1,13 @@
 import { chromium, FullConfig } from '@playwright/test';
+import { UserApiActions } from './interface/api/UserApiActions';
+import { UserApiClient } from './infra/api/UserApiClient';
+import { users } from './users';
+
+async function createTestUsers(){
+  const userApi = new UserApiActions(new UserApiClient('http://localhost:8001'));
+  await userApi.registerMultipleUsers(users);
+}
+
 
 async function globalSetup(config: FullConfig) {
   const browser = await chromium.launch();
@@ -15,6 +24,9 @@ async function globalSetup(config: FullConfig) {
   if (!isAppReady) {
     throw new Error('Application is not ready');
   }
+
+
+  await createTestUsers();
 
 
   // You can add additional setup here:

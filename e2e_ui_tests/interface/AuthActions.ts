@@ -24,6 +24,9 @@ export class AuthActions {
         await this.openLoginModal()
         await this.loginModal.fillForm(email, password);
         await this.loginModal.loginButton.click()
+    }
+
+    async expectUserAuthorized(): Promise<void> {
         await this.header.expectUserAuthorized();
         await this.sideBar.expectComponent()
     }
@@ -32,8 +35,6 @@ export class AuthActions {
         await this.openRegisterModal()
         await this.registerModal.fillForm(username, email, password);
         await this.registerModal.submitButton.click()
-        await this.header.expectUserAuthorized();
-        await this.sideBar.expectComponent()
     }
 
     async registerAndExpectValidationFailure(username: string, email: string, password: string, errorMessage?: string): Promise<void> {

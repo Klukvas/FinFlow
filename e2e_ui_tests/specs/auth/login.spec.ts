@@ -40,6 +40,7 @@ test.describe('Authentication', () => {
 
   test('should login with valid credentials', async ({ page }) => {
     await auth.login(validUser.email, validUser.password);
+    await auth.expectUserAuthorized();
   });
 
   test('should show error with invalid credentials', async ({ page }) => {

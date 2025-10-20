@@ -1,0 +1,299 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Accounting App - Service Overview",
+    "tags": ["accounting", "services", "overview"],
+    "style": "dark",
+    "timezone": "browser",
+    "refresh": "30s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Service Status",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "count by (service) (count_over_time({service=~\"user_service|expense_service|category_service|income_service|account_service|debt_service|goals_service|recurring_service|pdf_parser_service|currency_service|subscription_service\"}[5m]))",
+            "refId": "A",
+            "legendFormat": "{{service}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "yellow", "value": 1},
+                {"color": "green", "value": 2}
+              ]
+            },
+            "mappings": [],
+            "unit": "short",
+            "displayName": "Active Services"
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto"
+        }
+      },
+      {
+        "id": 2,
+        "title": "Error Rate by Service",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate({level=\"ERROR\"}[5m]) by (service)",
+            "refId": "A",
+            "legendFormat": "{{service}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "barAlignment": 0,
+              "lineWidth": 2,
+              "fillOpacity": 10,
+              "gradientMode": "none",
+              "spanNulls": false,
+              "insertNulls": false,
+              "showPoints": "never",
+              "pointSize": 5,
+              "stacking": {"mode": "none", "group": "A"},
+              "axisPlacement": "auto",
+              "axisLabel": "Errors/sec",
+              "scaleDistribution": {"type": "linear"}
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Log Volume by Service",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate({service=~\".*\"}[5m]) by (service)",
+            "refId": "A",
+            "legendFormat": "{{service}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "barAlignment": 0,
+              "lineWidth": 2,
+              "fillOpacity": 20,
+              "gradientMode": "none",
+              "spanNulls": false,
+              "insertNulls": false,
+              "showPoints": "never",
+              "pointSize": 5,
+              "stacking": {"mode": "none", "group": "A"},
+              "axisPlacement": "auto",
+              "axisLabel": "Logs/sec",
+              "scaleDistribution": {"type": "linear"}
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8}
+      },
+      {
+        "id": 4,
+        "title": "Recent Errors",
+        "type": "logs",
+        "targets": [
+          {
+            "expr": "{level=\"ERROR\"}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "showTime": true,
+          "showLabels": true,
+          "showCommonLabels": false,
+          "wrapLogMessage": true,
+          "prettifyLogMessage": false,
+          "enableLogDetails": true,
+          "dedupStrategy": "none",
+          "sortOrder": "Descending"
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}
+      },
+      {
+        "id": 5,
+        "title": "API Response Times",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate({category=\"api\"} | json | __error__=\"\" | unwrap duration_ms [5m]) by (service, le))",
+            "refId": "A",
+            "legendFormat": "{{service}} p95"
+          },
+          {
+            "expr": "histogram_quantile(0.50, rate({category=\"api\"} | json | __error__=\"\" | unwrap duration_ms [5m]) by (service, le))",
+            "refId": "B",
+            "legendFormat": "{{service}} p50"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "barAlignment": 0,
+              "lineWidth": 2,
+              "fillOpacity": 10,
+              "gradientMode": "none",
+              "spanNulls": false,
+              "insertNulls": false,
+              "showPoints": "never",
+              "pointSize": 5,
+              "stacking": {"mode": "none", "group": "A"},
+              "axisPlacement": "auto",
+              "axisLabel": "Duration (ms)",
+              "scaleDistribution": {"type": "linear"}
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}
+      },
+      {
+        "id": 6,
+        "title": "HTTP Status Codes",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate({category=\"api\"} | json | status_code=~\"2..\"[5m]) by (service)",
+            "refId": "A",
+            "legendFormat": "{{service}} 2xx"
+          },
+          {
+            "expr": "rate({category=\"api\"} | json | status_code=~\"4..\"[5m]) by (service)",
+            "refId": "B",
+            "legendFormat": "{{service}} 4xx"
+          },
+          {
+            "expr": "rate({category=\"api\"} | json | status_code=~\"5..\"[5m]) by (service)",
+            "refId": "C",
+            "legendFormat": "{{service}} 5xx"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "barAlignment": 0,
+              "lineWidth": 2,
+              "fillOpacity": 10,
+              "gradientMode": "none",
+              "spanNulls": false,
+              "insertNulls": false,
+              "showPoints": "never",
+              "pointSize": 5,
+              "stacking": {"mode": "none", "group": "A"},
+              "axisPlacement": "auto",
+              "axisLabel": "Requests/sec",
+              "scaleDistribution": {"type": "linear"}
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 24}
+      },
+      {
+        "id": 7,
+        "title": "Business Operations",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate({category=\"business\"}[5m]) by (service, operation)",
+            "refId": "A",
+            "legendFormat": "{{service}} - {{operation}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "barAlignment": 0,
+              "lineWidth": 2,
+              "fillOpacity": 10,
+              "gradientMode": "none",
+              "spanNulls": false,
+              "insertNulls": false,
+              "showPoints": "never",
+              "pointSize": 5,
+              "stacking": {"mode": "none", "group": "A"},
+              "axisPlacement": "auto",
+              "axisLabel": "Operations/sec",
+              "scaleDistribution": {"type": "linear"}
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 32}
+      }
+    ],
+    "templating": {
+      "list": [
+        {
+          "name": "service",
+          "type": "query",
+          "query": "label_values(service)",
+          "refresh": 1,
+          "includeAll": true,
+          "multi": true,
+          "allValue": ".*"
+        },
+        {
+          "name": "level",
+          "type": "query",
+          "query": "label_values(level)",
+          "refresh": 1,
+          "includeAll": true,
+          "multi": true,
+          "allValue": ".*"
+        }
+      ]
+    },
+    "annotations": {
+      "list": [
+        {
+          "name": "Deployments",
+          "datasource": "Loki",
+          "expr": "{service=~\".*\"} |= \"deployment\"",
+          "enable": true,
+          "iconColor": "blue"
+        },
+        {
+          "name": "Errors",
+          "datasource": "Loki",
+          "expr": "{level=\"ERROR\"}",
+          "enable": true,
+          "iconColor": "red"
+        }
+      ]
+    }
+  }
+}

@@ -9,7 +9,7 @@ clients:
   - url: http://loki:3100/loki/api/v1/push
 
 scrape_configs:
-  # Docker container logs (excluding frontend)
+  # Docker container logs with JSON parsing for application services
   - job_name: docker-containers
     static_configs:
       - targets:
@@ -23,6 +23,7 @@ scrape_configs:
             output: log
             stream: stream
             attrs:
+            time: time
       - json:
           expressions:
             tag:
@@ -39,6 +40,34 @@ scrape_configs:
       - match:
           selector: '{container_name=~".*frontend.*"}'
           action: drop  # Исключить логи фронтенда
+      # Try to parse JSON logs from application services
+      - match:
+          selector: '{container_name=~".*service.*"}'
+          stages:
+            - json:
+                expressions:
+                  timestamp: timestamp
+                  level: level
+                  service: service
+                  message: message
+                  user_id: user_id
+                  request_id: request_id
+                  endpoint: endpoint
+                  method: method
+                  status_code: status_code
+                  duration_ms: duration_ms
+                  ip_address: ip_address
+                  user_agent: user_agent
+            - labels:
+                level:
+                service:
+                user_id:
+                request_id:
+                endpoint:
+                method:
+                status_code:
+            - output:
+                source: message
       - output:
           source: output
 
@@ -67,6 +96,9 @@ scrape_configs:
             message: message
             user_id: user_id
             request_id: request_id
+            endpoint: endpoint
+            method: method
+            status_code: status_code
       - timestamp:
           format: RFC3339
           source: timestamp
@@ -75,6 +107,9 @@ scrape_configs:
           service:
           user_id:
           request_id:
+          endpoint:
+          method:
+          status_code:
       - match:
           selector: '{service=~".*frontend.*"}'
           action: drop  # Исключить логи фронтенда

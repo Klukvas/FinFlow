@@ -104,11 +104,12 @@ export class BaseApiClient {
       const data = await requestFn();
       return { data };
     } catch (error: any) {
-      const errorMessage = error.response?.data?.detail || 
+      console.log()
+      const errorMessage = error.response?.data?.error ||  error.response?.error || error.response?.data?.detail || 
                           error.response?.data?.message || 
                           error.message || 
                           'Unknown error occurred';
-      return { error: errorMessage };
+      return { error: errorMessage, errorCode: error.response?.data?.errorCode };
     }
   }
 }

@@ -14,7 +14,7 @@ export class UserApiClient extends BaseApiClient {
 
   async register(data: CreateUserRequest): Promise<ApiResponse<User>> {
     return this.makeRequest(async () => {
-      return await this.post<User>('/users/register', data);
+      return await this.post<User>('/auth/register', data);
     });
   }
 

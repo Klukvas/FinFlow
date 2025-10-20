@@ -63,6 +63,27 @@
     "invalidEmail": "Please enter a valid email address",
     "genericError": "Something went wrong. Please try again."
   },
+  "user": {
+    "errors": {
+      "genericError": "Something went wrong. Please try again.",
+      "emailAlreadyTaken": "This email is already registered",
+      "usernameAlreadyTaken": "This username is already taken",
+      "invalidCredentials": "Invalid email or password",
+      "notFound": "User not found",
+      "unauthorized": "You are not authorized to perform this action",
+      "invalidToken": "Invalid or expired token",
+      "accountLocked": "Your account has been locked",
+      "weakPassword": "Password is too weak",
+      "invalidUsername": "Invalid username format",
+      "invalidEmail": "Invalid email format",
+      "rateLimitExceeded": "Too many requests. Please try again later",
+      "validationError": "Validation error occurred",
+      "registrationError": "Registration failed",
+      "passwordPolicyError": "Password does not meet requirements",
+      "usernamePolicyError": "Username does not meet requirements",
+      "internalError": "Internal server error"
+    }
+  },
   "category": {
     "title": "Categories",
     "createTitle": "Create Category",
@@ -118,6 +139,7 @@
       "ownershipError": "You don't have permission to access this category",
       "notFound": "Category not found",
       "validationError": "Category validation error",
+      "limitExceeded": "You have reached the maximum number of categories for your subscription",
       "genericError": "An error occurred while processing the category"
     },
     "statistics": {

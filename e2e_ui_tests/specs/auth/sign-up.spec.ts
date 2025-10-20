@@ -41,7 +41,7 @@ test.describe('Sign Up Flow', () => {
 
   test('should register new user', async ({ page }) => {
     await auth.register(newUser.username, newUser.email, newUser.password);
-    await page.waitForURL('**/category**');
+    await auth.expectUserAuthorized();
   });
 
   test.describe('Validation', () => {

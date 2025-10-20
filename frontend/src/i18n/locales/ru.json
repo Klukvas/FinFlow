@@ -63,6 +63,27 @@
     "invalidEmail": "Введите корректный email адрес",
     "genericError": "Что-то пошло не так. Попробуйте еще раз."
   },
+  "user": {
+    "errors": {
+      "genericError": "Что-то пошло не так. Попробуйте еще раз.",
+      "emailAlreadyTaken": "Этот email уже зарегистрирован",
+      "usernameAlreadyTaken": "Это имя пользователя уже занято",
+      "invalidCredentials": "Неверный email или пароль",
+      "notFound": "Пользователь не найден",
+      "unauthorized": "У вас нет прав для выполнения этого действия",
+      "invalidToken": "Неверный или истекший токен",
+      "accountLocked": "Ваш аккаунт заблокирован",
+      "weakPassword": "Пароль слишком слабый",
+      "invalidUsername": "Неверный формат имени пользователя",
+      "invalidEmail": "Неверный формат email",
+      "rateLimitExceeded": "Слишком много запросов. Попробуйте позже",
+      "validationError": "Ошибка валидации",
+      "registrationError": "Ошибка регистрации",
+      "passwordPolicyError": "Пароль не соответствует требованиям",
+      "usernamePolicyError": "Имя пользователя не соответствует требованиям",
+      "internalError": "Внутренняя ошибка сервера"
+    }
+  },
   "category": {
     "title": "Категории",
     "createTitle": "Создать категорию",
@@ -118,6 +139,7 @@
       "ownershipError": "У вас нет прав доступа к этой категории",
       "notFound": "Категория не найдена",
       "validationError": "Ошибка валидации категории",
+      "limitExceeded": "Вы достигли максимального количества категорий для вашей подписки",
       "genericError": "Произошла ошибка при обработке категории"
     },
     "statistics": {

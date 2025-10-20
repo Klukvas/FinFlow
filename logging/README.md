@@ -1,128 +1,238 @@
-# Logging Configuration
+# Accounting App Logging Infrastructure
 
-This directory contains all configuration files for the centralized logging infrastructure using Loki, Promtail, and Grafana.
+This directory contains the complete logging infrastructure for the Accounting App, using Grafana, Loki, and Promtail for centralized log collection, storage, and visualization.
 
-## 🚀 Quick Start
+## Architecture
 
-### Start Monitoring Services
-```bash
-# Start just the logging infrastructure
-docker-compose up -d loki promtail grafana
-
-# Or start all services including logging
-docker-compose up -d
+```
+Services → Docker Logs → Promtail → Loki → Grafana
 ```
 
-### Access Grafana
+- **Promtail**: Log collector that scrapes Docker container logs and forwards them to Loki
+- **Loki**: Log aggregation system that stores and indexes logs
+- **Grafana**: Visualization platform that displays logs and metrics
+
+## Components
+
+### 1. Promtail Configuration
+- **File**: `promtail-config-working.yml`
+- **Purpose**: Collects logs from Docker containers and parses structured JSON logs
+- **Features**:
+  - Automatic container discovery
+  - JSON log parsing for application services
+  - Label extraction for filtering and querying
+  - Support for various log formats
+
+### 2. Loki Configuration
+- **File**: `loki-config.yml`
+- **Purpose**: Stores and indexes logs from Promtail
+- **Features**:
+  - 30-day log retention
+  - Efficient compression and storage
+  - Query optimization
+  - Multi-tenant support (disabled for simplicity)
+
+### 3. Grafana Configuration
+- **Files**: 
+  - `grafana-datasources.yml`: Auto-configures Loki as a data source
+  - `grafana-dashboards.yml`: Auto-loads dashboards
+- **Features**:
+  - Automatic datasource configuration
+  - Pre-built dashboards for service monitoring
+  - Real-time log visualization
+
+### 4. Dashboards
+- **Service Overview**: High-level service health and performance metrics
+- **Service Health**: Detailed service monitoring and error tracking
+- **Performance**: API response times and throughput metrics
+- **Business Metrics**: Business operation tracking and analytics
+
+## Quick Start
+
+### 1. Start the Logging Infrastructure
+
+```bash
+# Start all services including logging infrastructure
+docker-compose up -d
+
+# Or start just the logging services
+docker-compose up -d loki promtail grafana
+```
+
+### 2. Access Grafana
+
 - **URL**: http://localhost:3001
 - **Username**: admin
 - **Password**: admin123
 
-### Access Loki
-- **URL**: http://localhost:3100
+### 3. View Logs
 
-## 📁 Files Overview
+1. Open Grafana dashboard
+2. Navigate to "Dashboards" → "Accounting App" → "Service Overview"
+3. Verify that logs are flowing from your services
 
-### Core Configuration
-- **`loki-config.yml`** - Loki server configuration
-- **`promtail-config.yml`** - Promtail log agent configuration
-- **`grafana-datasources.yml`** - Grafana data source configuration
-- **`grafana-dashboards.yml`** - Dashboard provisioning
-- **`grafana-alerting.yml`** - Alerting configuration
+## Service Logging
 
-### Dashboards
-- **`dashboards/service-health.json`** - Service health monitoring
-- **`dashboards/business-metrics.json`** - Business metrics and KPIs
-- **`dashboards/performance.json`** - Performance monitoring
+All services are configured to output structured JSON logs with the following format:
 
-### Utilities
-- **`logging_utils.py`** - Enhanced Python logging utilities
-- **`log_enrichment.py`** - Log enrichment and correlation service
-- **`log-parsing-rules.yml`** - Advanced log parsing rules
-- **`monitoring-config.yml`** - Comprehensive monitoring configuration
+```json
+{
+  "timestamp": "2024-01-15T10:30:00Z",
+  "level": "INFO",
+  "service": "user_service",
+  "message": "API request: GET /api/users",
+  "category": "api",
+  "operation": "api_request",
+  "method": "GET",
+  "endpoint": "/api/users",
+  "status_code": 200,
+  "duration_ms": 150,
+  "user_id": 123,
+  "request_id": "uuid-here",
+  "ip_address": "192.168.1.100",
+  "user_agent": "Mozilla/5.0..."
+}
+```
 
-## 📊 Available Dashboards
+## Log Categories
 
-1. **Service Health Dashboard**
-   - Service status overview
-   - Error rates by service
-   - Log volume trends
-   - Recent errors
+The logging system supports the following categories:
 
-2. **Business Metrics Dashboard**
-   - User registrations
-   - Expense transactions
-   - Authentication events
-   - API usage by endpoint
+- **api**: API request/response logs
+- **business**: Business operation logs
+- **authentication**: Authentication and authorization logs
+- **database**: Database operation logs
+- **external_service**: External service call logs
+- **security**: Security-related events
+- **frontend**: Frontend application logs
 
-3. **Performance Monitoring Dashboard**
-   - API response times
-   - Database query performance
-   - Request rate by service
-   - Error rate trends
+## Querying Logs
 
-## 🔍 Useful Log Queries
+### Basic Queries
 
 ```logql
 # All logs from a specific service
 {service="user_service"}
 
-# Error logs only
+# Error logs across all services
 {level="ERROR"}
 
-# API requests with response time >1s
-{service=~".*"} | json | event_type="api_request" | duration_ms > 1000
+# API logs with specific status codes
+{category="api"} | json | status_code="200"
 
-# Authentication failures
-{service="user_service"} | json | event_type="auth_failure"
-
-# Business events by user
-{service=~".*"} | json | category="business" | user_id="123"
+# Business operations for a specific user
+{category="business"} | json | user_id="123"
 ```
 
-## 🔧 Configuration
+### Advanced Queries
 
-### Environment Variables
+```logql
+# Error rate by service
+rate({level="ERROR"}[5m]) by (service)
+
+# API response time percentiles
+histogram_quantile(0.95, rate({category="api"} | json | unwrap duration_ms [5m]) by (service, le))
+
+# Most active users
+topk(10, sum by (user_id) (rate({user_id!=""}[5m])))
+```
+
+## Testing the Logging Pipeline
+
+Use the provided test script to verify the logging infrastructure:
+
 ```bash
-LOG_LEVEL=INFO
-LOG_FORMAT=json
-SERVICE_NAME=your_service_name
-GRAFANA_ADMIN_PASSWORD=your_secure_password
+# Run the test script
+python3 logging/test-logging.py
 ```
 
-### Docker Compose
-The logging services are automatically configured in the main `docker-compose.yml` files:
-- **Development**: `docker-compose.yml`
-- **Production**: `deploy/docker-compose.yml`
+This will generate test logs for all services and scenarios.
 
-## 📚 Documentation
+## Troubleshooting
 
-- **Quick Start**: See `LOGGING_QUICK_START.md` in the project root
-- **Migration Guide**: See `MIGRATION_GUIDE.md` in the project root
-- **Monitoring Guide**: See `MONITORING_GUIDE.md` in the project root
+### No Logs Appearing in Grafana
 
-## 🛠️ Troubleshooting
+1. **Check Promtail Status**:
+   ```bash
+   docker logs promtail
+   ```
 
-### Check Service Status
+2. **Check Loki Status**:
+   ```bash
+   docker logs loki
+   ```
+
+3. **Verify Service Logs**:
+   ```bash
+   docker logs user_service
+   ```
+
+4. **Check Network Connectivity**:
+   ```bash
+   docker network ls
+   docker network inspect accounting_app_logging
+   ```
+
+### Common Issues
+
+1. **Services not on logging network**: Ensure all services have `networks: - logging` in docker-compose.yml
+2. **Promtail not collecting logs**: Check that containers have the `logging=promtail` label
+3. **JSON parsing errors**: Verify services are outputting valid JSON logs
+4. **Permission issues**: Ensure Promtail has access to `/var/lib/docker/containers`
+
+## Monitoring and Alerting
+
+### Health Checks
+
+All logging components have health checks configured:
+
+- **Loki**: `http://localhost:3100/ready`
+- **Promtail**: `http://localhost:9080/ready`
+- **Grafana**: `http://localhost:3000/api/health`
+
+### Alerting (Optional)
+
+To set up alerting, configure alert rules in `grafana-alerting.yml` and enable the alerting module in Grafana.
+
+## Performance Considerations
+
+- **Log Retention**: Default 30 days, configurable in `loki-config.yml`
+- **Log Volume**: Monitor disk usage for Loki storage
+- **Query Performance**: Use label filters for better query performance
+- **Resource Usage**: Adjust resource limits based on log volume
+
+## Security
+
+- **Authentication**: Grafana admin password should be changed in production
+- **Network**: Logging network is isolated from external access
+- **Data**: Logs may contain sensitive information - ensure proper access controls
+
+## Maintenance
+
+### Log Rotation
+
+Logs are automatically rotated by Docker with the following settings:
+- Max size: 10MB per file
+- Max files: 3 per container
+
+### Backup
+
+To backup logs:
+
 ```bash
-docker-compose ps
+# Backup Loki data
+docker run --rm -v accounting_app_loki_data:/data -v $(pwd):/backup alpine tar czf /backup/loki-backup.tar.gz -C /data .
+
+# Restore Loki data
+docker run --rm -v accounting_app_loki_data:/data -v $(pwd):/backup alpine tar xzf /backup/loki-backup.tar.gz -C /data
 ```
 
-### View Service Logs
-```bash
-docker-compose logs loki
-docker-compose logs promtail
-docker-compose logs grafana
-```
+## Support
 
-### Restart Services
-```bash
-docker-compose restart loki promtail grafana
-```
+For issues with the logging infrastructure:
 
-### Check Health
-```bash
-curl http://localhost:3100/ready  # Loki
-curl http://localhost:9080/ready  # Promtail
-curl http://localhost:3001/api/health  # Grafana
-```
+1. Check the troubleshooting section above
+2. Review container logs for errors
+3. Verify network connectivity between components
+4. Check Grafana datasource configuration
+5. Ensure all services are properly labeled for log collection

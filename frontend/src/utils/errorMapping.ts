@@ -30,6 +30,7 @@ export const getCategoryErrorTranslationKey = (error: BackendError | string): st
     'CATEGORY_OWNERSHIP_ERROR': 'category.errors.ownershipError',
     'CATEGORY_NOT_FOUND': 'category.errors.notFound',
     'CATEGORY_VALIDATION_ERROR': 'category.errors.validationError',
+    'CATEGORY_LIMIT_EXCEEDED': 'category.errors.limitExceeded',
   };
 
   return errorMap[errorCode] || 'category.errors.genericError';

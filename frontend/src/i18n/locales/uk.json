@@ -63,6 +63,27 @@
     "invalidEmail": "Введіть коректну email адресу",
     "genericError": "Щось пішло не так. Спробуйте ще раз."
   },
+  "user": {
+    "errors": {
+      "genericError": "Щось пішло не так. Спробуйте ще раз.",
+      "emailAlreadyTaken": "Цей email вже зареєстрований",
+      "usernameAlreadyTaken": "Це ім'я користувача вже зайняте",
+      "invalidCredentials": "Невірний email або пароль",
+      "notFound": "Користувач не знайдений",
+      "unauthorized": "У вас немає прав для виконання цієї дії",
+      "invalidToken": "Невірний або прострочений токен",
+      "accountLocked": "Ваш акаунт заблокований",
+      "weakPassword": "Пароль занадто слабкий",
+      "invalidUsername": "Невірний формат імені користувача",
+      "invalidEmail": "Невірний формат email",
+      "rateLimitExceeded": "Занадто багато запитів. Спробуйте пізніше",
+      "validationError": "Помилка валідації",
+      "registrationError": "Помилка реєстрації",
+      "passwordPolicyError": "Пароль не відповідає вимогам",
+      "usernamePolicyError": "Ім'я користувача не відповідає вимогам",
+      "internalError": "Внутрішня помилка сервера"
+    }
+  },
   "category": {
     "title": "Категорії",
     "createTitle": "Створити категорію",
@@ -118,6 +139,7 @@
       "ownershipError": "У вас немає прав доступу до цієї категорії",
       "notFound": "Категорія не знайдена",
       "validationError": "Помилка валідації категорії",
+      "limitExceeded": "Ви досягли максимальної кількості категорій для вашої підписки",
       "genericError": "Сталася помилка при обробці категорії"
     },
     "statistics": {

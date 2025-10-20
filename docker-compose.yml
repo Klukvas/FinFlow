@@ -52,6 +52,9 @@ services:
         max-size: "10m"
         max-file: "3"
         labels: "service=user_service,logging=promtail"
+    networks:
+      - default
+      - logging
 
   category_service:
     build:
@@ -74,6 +77,9 @@ services:
         max-size: "10m"
         max-file: "3"
         labels: "service=category_service,logging=promtail"
+    networks:
+      - default
+      - logging
 
   expense_service:
     build:
@@ -98,6 +104,9 @@ services:
         max-size: "10m"
         max-file: "3"
         labels: "service=expense_service,logging=promtail"
+    networks:
+      - default
+      - logging
 
   income_service:
     build:
@@ -128,6 +137,9 @@ services:
         max-size: "10m"
         max-file: "3"
         labels: "service=income_service,logging=promtail"
+    networks:
+      - default
+      - logging
 
   recurring_service:
     build:
@@ -156,6 +168,9 @@ services:
         max-size: "10m"
         max-file: "3"
         labels: "service=recurring_service,logging=promtail"
+    networks:
+      - default
+      - logging
 
   goals_service:
     build:
@@ -180,6 +195,9 @@ services:
         max-size: "10m"
         max-file: "3"
         labels: "service=goals_service,logging=promtail"
+    networks:
+      - default
+      - logging
 
   pdf_parser_service:
     build:
@@ -199,6 +217,9 @@ services:
         max-size: "10m"
         max-file: "3"
         labels: "service=pdf_parser_service,logging=promtail"
+    networks:
+      - default
+      - logging
 
   debt_service:
     build:
@@ -224,6 +245,9 @@ services:
         max-size: "10m"
         max-file: "3"
         labels: "service=debt_service,logging=promtail"
+    networks:
+      - default
+      - logging
 
   account_service:
     build:
@@ -253,6 +277,9 @@ services:
         max-size: "10m"
         max-file: "3"
         labels: "service=account_service,logging=promtail"
+    networks:
+      - default
+      - logging
 
   currency_service:
     build:
@@ -272,6 +299,9 @@ services:
         max-size: "10m"
         max-file: "3"
         labels: "service=currency_service,logging=promtail"
+    networks:
+      - default
+      - logging
 
   subscription_service:
     build:
@@ -307,6 +337,9 @@ services:
         max-size: "10m"
         max-file: "3"
         labels: "service=subscription_service,logging=promtail"
+    networks:
+      - default
+      - logging
 
   # Logging Infrastructure
   loki:
@@ -335,7 +368,7 @@ services:
       - /var/log:/var/log:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./logging/promtail-config.yml:/etc/promtail/config.yml:ro
+      - ./logging/promtail-config-working.yml:/etc/promtail/config.yml:ro
     command: -config.file=/etc/promtail/config.yml
     depends_on:
       - loki
@@ -357,8 +390,12 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin123
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_INSTALL_PLUGINS=grafana-piechart-panel
+      - GF_PROVISIONING_PATH=/etc/grafana/provisioning
     volumes:
       - grafana_data:/var/lib/grafana
+      - ./logging/grafana-datasources.yml:/etc/grafana/provisioning/datasources/loki.yml:ro
+      - ./logging/grafana-dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:ro
+      - ./logging/dashboards:/var/lib/grafana/dashboards:ro
     depends_on:
       - loki
     networks:
