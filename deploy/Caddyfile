@@ -2,9 +2,18 @@
   auto_https disable_redirects
 }
 
+# HTTP redirect to HTTPS
 :80 {
+  redir https://finflow.ltd{uri} permanent
+}
+
+# HTTPS with custom certificates
+finflow.ltd {
   encode zstd gzip
   log
+
+  # Use custom SSL certificates
+  tls /etc/ssl/cf-origin/finflow.crt /etc/ssl/cf-origin/finflow.key
 
   # API routes - proxy to backend services
   handle_path /api/users/* {
@@ -45,6 +54,10 @@
 
   handle_path /api/pdf/* {
     reverse_proxy pdf_parser_service:8000
+  }
+
+  handle_path /api/subscriptions/* {
+    reverse_proxy subscription_service:8080
   }
 
   # Frontend - SPA routing with fallback to index.html
