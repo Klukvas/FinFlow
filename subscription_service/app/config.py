@@ -5,11 +5,7 @@ from pydantic import Field
 class Settings(BaseSettings):
     app_name: str = Field(default="subscription_service")
 
-    db_host: str = Field(default="localhost")
-    db_port: int = Field(default=5432)
-    db_user: str = Field(default="postgres")
-    db_password: str = Field(default="postgres")
-    db_name: str = Field(default="subscription_db")
+    DATABASE_URL: str
 
     redis_url: str = Field(default="redis://localhost:6379/0")
 
@@ -23,7 +19,6 @@ class Settings(BaseSettings):
     internal_secret_token: str = Field(default="my-secret-token")
 
     class Config:
-        env_prefix = "SUBS_"
         env_file = ".env"
 
 
