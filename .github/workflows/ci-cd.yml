@@ -620,6 +620,7 @@ jobs:
           registry: ${{ env.REGISTRY }}
           image-prefix: ${{ env.IMAGE_PREFIX }}
           db-host: ${{ secrets.DB_HOST }}
+          db-server-host: ${{ secrets.DB_SERVER_HOST }}
           db-port: ${{ secrets.DB_PORT || '5432' }}
           db-name: ${{ secrets.DB_NAME }}
           db-user: ${{ secrets.DB_USER }}
