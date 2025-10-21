@@ -1,13 +1,14 @@
 -- Create databases for all services
-CREATE DATABASE user_db;
-CREATE DATABASE category_db;
-CREATE DATABASE expense_db;
-CREATE DATABASE income_db;
-CREATE DATABASE recurring_db;
-CREATE DATABASE goals_db;
-CREATE DATABASE debt_db;
-CREATE DATABASE account_db;
-CREATE DATABASE subscription_db;
+CREATE DATABASE IF NOT EXISTS user_db;
+CREATE DATABASE IF NOT EXISTS category_db;
+CREATE DATABASE IF NOT EXISTS expense_db;
+CREATE DATABASE IF NOT EXISTS income_db;
+CREATE DATABASE IF NOT EXISTS recurring_db;
+CREATE DATABASE IF NOT EXISTS goals_db;
+CREATE DATABASE IF NOT EXISTS debt_db;
+CREATE DATABASE IF NOT EXISTS account_db;
+CREATE DATABASE IF NOT EXISTS subscription_db;
+CREATE DATABASE IF NOT EXISTS currency_db;
 
 -- Grant permissions to postgres user
 GRANT ALL PRIVILEGES ON DATABASE user_db TO postgres;
@@ -19,3 +20,4 @@ GRANT ALL PRIVILEGES ON DATABASE goals_db TO postgres;
 GRANT ALL PRIVILEGES ON DATABASE debt_db TO postgres;
 GRANT ALL PRIVILEGES ON DATABASE account_db TO postgres;
 GRANT ALL PRIVILEGES ON DATABASE subscription_db TO postgres;
+GRANT ALL PRIVILEGES ON DATABASE currency_db TO postgres;

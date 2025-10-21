@@ -25,7 +25,7 @@ services:
   account_service:
     image: ${REGISTRY}/${IMAGE_PREFIX}/account_service:latest
     environment:
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD_ENCODED}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD_ENCODED}@${DB_HOST}:${DB_PORT}/account_db
       - REDIS_URL=redis://redis:6379/0
       - SECRET_KEY=${SECRET_KEY}
       - ALGORITHM=${ALGORITHM}
@@ -48,7 +48,7 @@ services:
   category_service:
     image: ${REGISTRY}/${IMAGE_PREFIX}/category_service:latest
     environment:
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/category_db
       - SECRET_KEY=${SECRET_KEY}
       - ALGORITHM=${ALGORITHM}
       - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
@@ -76,7 +76,7 @@ services:
   debt_service:
     image: ${REGISTRY}/${IMAGE_PREFIX}/debt_service:latest
     environment:
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/debt_db
       - SECRET_KEY=${SECRET_KEY}
       - ALGORITHM=${ALGORITHM}
       - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
@@ -92,7 +92,7 @@ services:
   expense_service:
     image: ${REGISTRY}/${IMAGE_PREFIX}/expense_service:latest
     environment:
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/expense_db
       - REDIS_URL=redis://redis:6379/0
       - SECRET_KEY=${SECRET_KEY}
       - ALGORITHM=${ALGORITHM}
@@ -113,7 +113,7 @@ services:
   goals_service:
     image: ${REGISTRY}/${IMAGE_PREFIX}/goals_service:latest
     environment:
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/goals_db
       - SECRET_KEY=${SECRET_KEY}
       - ALGORITHM=${ALGORITHM}
       - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
@@ -129,7 +129,7 @@ services:
   income_service:
     image: ${REGISTRY}/${IMAGE_PREFIX}/income_service:latest
     environment:
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/income_db
       - REDIS_URL=redis://redis:6379/0
       - SECRET_KEY=${SECRET_KEY}
       - ALGORITHM=${ALGORITHM}
@@ -148,7 +148,7 @@ services:
   subscription_service:
     image: ${REGISTRY}/${IMAGE_PREFIX}/subscription_service:latest
     environment:
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/subscription_db
       - REDIS_URL=redis://redis:6379/0
       - SECRET_KEY=${SECRET_KEY}
       - ALGORITHM=${ALGORITHM}
@@ -181,7 +181,7 @@ services:
   recurring_service:
     image: ${REGISTRY}/${IMAGE_PREFIX}/recurring_service:latest
     environment:
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/recurring_db
       - SECRET_KEY=${SECRET_KEY}
       - ALGORITHM=${ALGORITHM}
       - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
@@ -197,7 +197,7 @@ services:
   user_service:
     image: ${REGISTRY}/${IMAGE_PREFIX}/user_service:latest
     environment:
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/user_db
       - SECRET_KEY=${SECRET_KEY}
       - ALGORITHM=${ALGORITHM}
       - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}

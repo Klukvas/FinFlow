@@ -103,6 +103,34 @@ runs:
         INTERNAL_SECRET_TOKEN=$INTERNAL_SECRET_TOKEN
         ENVEOF
 
+        # Create separate databases for each service
+        echo "🗄️ Creating separate databases for each service..."
+        
+        # Create databases using init.sql
+        if [ -f init/init.sql ]; then
+          echo "📄 Found init.sql, creating databases..."
+          PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d postgres -f init/init.sql
+          if [ $? -eq 0 ]; then
+            echo "✅ Databases created successfully"
+          else
+            echo "⚠️ Database creation completed (some databases may already exist)"
+          fi
+        else
+          echo "⚠️ init.sql not found, creating databases manually..."
+          PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d postgres -c "
+            CREATE DATABASE IF NOT EXISTS user_db;
+            CREATE DATABASE IF NOT EXISTS category_db;
+            CREATE DATABASE IF NOT EXISTS expense_db;
+            CREATE DATABASE IF NOT EXISTS income_db;
+            CREATE DATABASE IF NOT EXISTS recurring_db;
+            CREATE DATABASE IF NOT EXISTS goals_db;
+            CREATE DATABASE IF NOT EXISTS debt_db;
+            CREATE DATABASE IF NOT EXISTS account_db;
+            CREATE DATABASE IF NOT EXISTS subscription_db;
+            CREATE DATABASE IF NOT EXISTS currency_db;
+          "
+        fi
+
         # Use the docker-compose.yml from the deploy folder (already copied)
         # This ensures we use the standardized configuration from the repository
         echo "📋 Using docker-compose.yml from deploy folder..."
@@ -253,8 +281,9 @@ runs:
         echo "📦 Services to deploy: $SERVICES"
         echo ""
 
-        # Transfer deployment script and docker-compose.yml
+        # Transfer deployment script, docker-compose.yml, and init.sql
         scp /tmp/deploy.sh "$USER@$HOST:/tmp/deploy.sh"
         scp deploy/docker-compose.yml "$USER@$HOST:~/app/docker-compose.yml"
         scp deploy/Caddyfile "$USER@$HOST:~/app/Caddyfile"
+        scp init/init.sql "$USER@$HOST:~/app/init/init.sql"
         ssh -o StrictHostKeyChecking=no "$USER@$HOST" "export REGISTRY='$REGISTRY' IMAGE_PREFIX='$IMAGE_PREFIX' DB_HOST='$DB_HOST' DB_PORT='$DB_PORT' DB_NAME='$DB_NAME' DB_USER='$DB_USER' DB_PASSWORD='$DB_PASSWORD' CORS_ORIGINS='$CORS_ORIGINS' SERVICES='$SERVICES' && bash /tmp/deploy.sh"
