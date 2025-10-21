@@ -93,23 +93,27 @@ runs:
           INTERNAL_SECRET_TOKEN=$(openssl rand -hex 32)
         fi
         
+        # Escape special characters for .env file
+        DB_SERVER_HOST_ESCAPED=$(printf '%s\n' "${{ inputs['db-server-host'] }}" | sed 's/[[\.*^$()+?{|]/\\&/g')
+        DB_SERVER_SSH_KEY_ESCAPED=$(printf '%s\n' "${{ inputs['db-server-ssh-key'] }}" | sed 's/[[\.*^$()+?{|]/\\&/g')
+        
         cat > .env <<ENVEOF
         REGISTRY=$REGISTRY
         IMAGE_PREFIX=$IMAGE_PREFIX
         DB_HOST=$DB_HOST
-        DB_SERVER_HOST=${{ inputs['db-server-host'] }}
-        DB_SERVER_SSH_KEY=${{ inputs['db-server-ssh-key'] }}
+        DB_SERVER_HOST="$DB_SERVER_HOST_ESCAPED"
+        DB_SERVER_SSH_KEY="$DB_SERVER_SSH_KEY_ESCAPED"
         DB_PORT=$DB_PORT
         DB_NAME=$DB_NAME
         DB_USER=$DB_USER
-        DB_PASSWORD=$DB_PASSWORD
-        DB_PASSWORD_ENCODED=$DB_PASSWORD_ENCODED
-        CORS_ORIGINS=$CORS_ORIGINS
-        cors_origins=$CORS_ORIGINS
+        DB_PASSWORD="$DB_PASSWORD"
+        DB_PASSWORD_ENCODED="$DB_PASSWORD_ENCODED"
+        CORS_ORIGINS="$CORS_ORIGINS"
+        cors_origins="$CORS_ORIGINS"
         NODE_ENV=production
-        SECRET_KEY=$SECRET_KEY
-        ALGORITHM=$ALGORITHM
-        INTERNAL_SECRET_TOKEN=$INTERNAL_SECRET_TOKEN
+        SECRET_KEY="$SECRET_KEY"
+        ALGORITHM="$ALGORITHM"
+        INTERNAL_SECRET_TOKEN="$INTERNAL_SECRET_TOKEN"
         ENVEOF
 
         # Create separate databases for each service
@@ -333,8 +337,9 @@ runs:
         echo "📦 Services to deploy: $SERVICES"
         echo ""
 
-        # Transfer deployment script, docker-compose.yml, and init.sql
+        # Transfer deployment script, docker-compose.yml, init.sql, and Caddyfile
         scp /tmp/deploy.sh "$USER@$HOST:/tmp/deploy.sh"
         scp deploy/docker-compose.yml "$USER@$HOST:~/app/docker-compose.yml"
         scp deploy/Caddyfile "$USER@$HOST:~/app/Caddyfile"
+        scp init/init.sql "$USER@$HOST:~/app/init/init.sql"
         ssh -o StrictHostKeyChecking=no "$USER@$HOST" "export REGISTRY='$REGISTRY' IMAGE_PREFIX='$IMAGE_PREFIX' DB_HOST='$DB_HOST' DB_SERVER_HOST='$DB_SERVER_HOST' DB_SERVER_SSH_KEY='$DB_SERVER_SSH_KEY' DB_PORT='$DB_PORT' DB_NAME='$DB_NAME' DB_USER='$DB_USER' DB_PASSWORD='$DB_PASSWORD' CORS_ORIGINS='$CORS_ORIGINS' SERVICES='$SERVICES' && bash /tmp/deploy.sh"
