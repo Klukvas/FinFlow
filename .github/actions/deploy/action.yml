@@ -313,4 +313,4 @@ runs:
         scp /tmp/deploy.sh "$USER@$HOST:/tmp/deploy.sh"
         scp deploy/docker-compose.yml "$USER@$HOST:~/app/docker-compose.yml"
         scp deploy/Caddyfile "$USER@$HOST:~/app/Caddyfile"
-        ssh -o StrictHostKeyChecking=no "$USER@$HOST" "export REGISTRY='$REGISTRY' IMAGE_PREFIX='$IMAGE_PREFIX' DB_HOST='$DB_HOST' DB_SERVER_HOST='$DB_SERVER_HOST' DB_PORT='$DB_PORT' DB_NAME='$DB_NAME' DB_USER='$DB_USER' DB_PASSWORD='$DB_PASSWORD' CORS_ORIGINS='$CORS_ORIGINS' SERVICES='$SERVICES' && bash /tmp/deploy.sh"
+        ssh -o StrictHostKeyChecking=no "$USER@$HOST" "export REGISTRY='$REGISTRY' IMAGE_PREFIX='$IMAGE_PREFIX' DB_HOST='$DB_HOST' DB_SERVER_HOST='$DB_SERVER_HOST' DB_SERVER_SSH_KEY='$DB_SERVER_SSH_KEY' DB_PORT='$DB_PORT' DB_NAME='$DB_NAME' DB_USER='$DB_USER' DB_PASSWORD='$DB_PASSWORD' CORS_ORIGINS='$CORS_ORIGINS' SERVICES='$SERVICES' && bash /tmp/deploy.sh"
