@@ -41,7 +41,7 @@ inputs:
   services:
     description: Space-separated services to deploy
     required: true
-    default: "caddy redis frontend account_service category_service currency_service debt_service expense_service goals_service income_service pdf_parser_service recurring_service user_service"
+    default: "caddy redis frontend account_service category_service currency_service debt_service expense_service goals_service income_service pdf_parser_service recurring_service subscription_service user_service"
 
 runs:
   using: "composite"
@@ -51,12 +51,13 @@ runs:
       with:
         ssh-private-key: ${{ inputs['ssh-private-key'] }}
 
-    - name: Add host key
+    - name: Add host keys
       shell: bash
       run: |
         set -euo pipefail
         mkdir -p ~/.ssh
         ssh-keyscan -H "${{ inputs.host }}" >> ~/.ssh/known_hosts
+        ssh-keyscan -H "${{ secrets.DB_SERVER_HOST }}" >> ~/.ssh/known_hosts
 
     - name: Create deployment script
       shell: bash
@@ -90,6 +91,7 @@ runs:
         REGISTRY=$REGISTRY
         IMAGE_PREFIX=$IMAGE_PREFIX
         DB_HOST=$DB_HOST
+        DB_SERVER_HOST=${{ secrets.DB_SERVER_HOST }}
         DB_PORT=$DB_PORT
         DB_NAME=$DB_NAME
         DB_USER=$DB_USER
@@ -106,18 +108,20 @@ runs:
         # Create separate databases for each service
         echo "🗄️ Creating separate databases for each service..."
         
-        # Create databases using init.sql
+        # Create databases by SSH to DB server
         if [ -f init/init.sql ]; then
-          echo "📄 Found init.sql, creating databases..."
-          PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d postgres -f init/init.sql
+          echo "📄 Found init.sql, creating databases on DB server..."
+          ssh -o StrictHostKeyChecking=no "$USER@$DB_SERVER_HOST" "mkdir -p ~/init"
+          scp init/init.sql "$USER@$DB_SERVER_HOST:~/init/init.sql"
+          ssh -o StrictHostKeyChecking=no "$USER@$DB_SERVER_HOST" "PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d postgres -f ~/init/init.sql"
           if [ $? -eq 0 ]; then
             echo "✅ Databases created successfully"
           else
             echo "⚠️ Database creation completed (some databases may already exist)"
           fi
         else
-          echo "⚠️ init.sql not found, creating databases manually..."
-          PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d postgres -c "
+          echo "⚠️ init.sql not found, creating databases manually on DB server..."
+          ssh -o StrictHostKeyChecking=no "$USER@$DB_SERVER_HOST" "PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d postgres -c \"
             CREATE DATABASE IF NOT EXISTS user_db;
             CREATE DATABASE IF NOT EXISTS category_db;
             CREATE DATABASE IF NOT EXISTS expense_db;
@@ -128,7 +132,7 @@ runs:
             CREATE DATABASE IF NOT EXISTS account_db;
             CREATE DATABASE IF NOT EXISTS subscription_db;
             CREATE DATABASE IF NOT EXISTS currency_db;
-          "
+          \""
         fi
 
         # Use the docker-compose.yml from the deploy folder (already copied)
@@ -255,6 +259,7 @@ runs:
         REGISTRY: ${{ inputs.registry }}
         IMAGE_PREFIX: ${{ inputs['image-prefix'] }}
         DB_HOST: ${{ inputs['db-host'] }}
+        DB_SERVER_HOST: ${{ secrets.DB_SERVER_HOST }}
         DB_PORT: ${{ inputs['db-port'] }}
         DB_NAME: ${{ inputs['db-name'] }}
         DB_USER: ${{ inputs['db-user'] }}
@@ -273,7 +278,7 @@ runs:
 
         # Use default services if empty
         if [ -z "${SERVICES:-}" ]; then
-          SERVICES="caddy redis frontend account_service category_service currency_service debt_service expense_service goals_service income_service pdf_parser_service recurring_service user_service"
+          SERVICES="caddy redis frontend account_service category_service currency_service debt_service expense_service goals_service income_service pdf_parser_service recurring_service subscription_service user_service"
           echo "Using default services: $SERVICES"
         fi
 
@@ -285,8 +290,4 @@ runs:
         scp /tmp/deploy.sh "$USER@$HOST:/tmp/deploy.sh"
         scp deploy/docker-compose.yml "$USER@$HOST:~/app/docker-compose.yml"
         scp deploy/Caddyfile "$USER@$HOST:~/app/Caddyfile"
-        
-        # Create init directory and copy init.sql
-        ssh -o StrictHostKeyChecking=no "$USER@$HOST" "mkdir -p ~/app/init"
-        scp init/init.sql "$USER@$HOST:~/app/init/init.sql"
-        ssh -o StrictHostKeyChecking=no "$USER@$HOST" "export REGISTRY='$REGISTRY' IMAGE_PREFIX='$IMAGE_PREFIX' DB_HOST='$DB_HOST' DB_PORT='$DB_PORT' DB_NAME='$DB_NAME' DB_USER='$DB_USER' DB_PASSWORD='$DB_PASSWORD' CORS_ORIGINS='$CORS_ORIGINS' SERVICES='$SERVICES' && bash /tmp/deploy.sh"
+        ssh -o StrictHostKeyChecking=no "$USER@$HOST" "export REGISTRY='$REGISTRY' IMAGE_PREFIX='$IMAGE_PREFIX' DB_HOST='$DB_HOST' DB_SERVER_HOST='$DB_SERVER_HOST' DB_PORT='$DB_PORT' DB_NAME='$DB_NAME' DB_USER='$DB_USER' DB_PASSWORD='$DB_PASSWORD' CORS_ORIGINS='$CORS_ORIGINS' SERVICES='$SERVICES' && bash /tmp/deploy.sh"
