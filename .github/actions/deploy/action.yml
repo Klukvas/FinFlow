@@ -12,6 +12,9 @@ inputs:
   ssh-private-key:
     description: SSH private key
     required: true
+  db-server-ssh-key:
+    description: SSH private key for DB server
+    required: true
   registry:
     description: Registry for images
     required: true
@@ -95,6 +98,7 @@ runs:
         IMAGE_PREFIX=$IMAGE_PREFIX
         DB_HOST=$DB_HOST
         DB_SERVER_HOST=${{ inputs['db-server-host'] }}
+        DB_SERVER_SSH_KEY=${{ inputs['db-server-ssh-key'] }}
         DB_PORT=$DB_PORT
         DB_NAME=$DB_NAME
         DB_USER=$DB_USER
@@ -117,15 +121,18 @@ runs:
         echo "  DB_PORT: $DB_PORT"
         echo "  DB_USER: $DB_USER"
         
-        # Create databases by SSH to DB server
-        echo "🔍 Testing SSH connection to DB server..."
-        ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 "$USER@$DB_SERVER_HOST" "echo 'SSH connection to DB server successful'"
+        # Create databases by SSH to DB server using dedicated key
+        echo "🔍 Creating databases directly on DB server using dedicated SSH key..."
+        
+        # Write the DB server SSH key to a temporary file
+        echo "$DB_SERVER_SSH_KEY" > /tmp/db_server_key
+        chmod 600 /tmp/db_server_key
         
         if [ -f init/init.sql ]; then
           echo "📄 Found init.sql, creating databases on DB server..."
-          ssh -o StrictHostKeyChecking=no "$USER@$DB_SERVER_HOST" "mkdir -p ~/init"
-          scp init/init.sql "$USER@$DB_SERVER_HOST:~/init/init.sql"
-          ssh -o StrictHostKeyChecking=no "$USER@$DB_SERVER_HOST" "PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d postgres -f ~/init/init.sql"
+          ssh -i /tmp/db_server_key -o StrictHostKeyChecking=no "$USER@$DB_SERVER_HOST" "mkdir -p ~/init"
+          scp -i /tmp/db_server_key -o StrictHostKeyChecking=no init/init.sql "$USER@$DB_SERVER_HOST:~/init/init.sql"
+          ssh -i /tmp/db_server_key -o StrictHostKeyChecking=no "$USER@$DB_SERVER_HOST" "PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d postgres -f ~/init/init.sql"
           if [ $? -eq 0 ]; then
             echo "✅ Databases created successfully"
           else
@@ -133,7 +140,7 @@ runs:
           fi
         else
           echo "⚠️ init.sql not found, creating databases manually on DB server..."
-          ssh -o StrictHostKeyChecking=no "$USER@$DB_SERVER_HOST" "PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d postgres -c \"
+          ssh -i /tmp/db_server_key -o StrictHostKeyChecking=no "$USER@$DB_SERVER_HOST" "PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d postgres -c \"
             CREATE DATABASE IF NOT EXISTS user_db;
             CREATE DATABASE IF NOT EXISTS category_db;
             CREATE DATABASE IF NOT EXISTS expense_db;
@@ -146,6 +153,9 @@ runs:
             CREATE DATABASE IF NOT EXISTS currency_db;
           \""
         fi
+        
+        # Clean up the temporary key file
+        rm -f /tmp/db_server_key
 
         # Use the docker-compose.yml from the deploy folder (already copied)
         # This ensures we use the standardized configuration from the repository
@@ -272,6 +282,7 @@ runs:
         IMAGE_PREFIX: ${{ inputs['image-prefix'] }}
         DB_HOST: ${{ inputs['db-host'] }}
         DB_SERVER_HOST: ${{ inputs['db-server-host'] }}
+        DB_SERVER_SSH_KEY: ${{ inputs['db-server-ssh-key'] }}
         DB_PORT: ${{ inputs['db-port'] }}
         DB_NAME: ${{ inputs['db-name'] }}
         DB_USER: ${{ inputs['db-user'] }}

@@ -617,6 +617,7 @@ jobs:
           host: ${{ secrets.HZ_HOST }}
           user: ${{ secrets.HZ_USER || 'root' }}
           ssh-private-key: ${{ secrets.HZ_SSH_KEY }}
+          db-server-ssh-key: ${{ secrets.DB_SERVER_SSH_KEY }}
           registry: ${{ env.REGISTRY }}
           image-prefix: ${{ env.IMAGE_PREFIX }}
           db-host: ${{ secrets.DB_HOST }}
