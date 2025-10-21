@@ -15,12 +15,13 @@ if config.config_file_name is not None:
 
 
 def get_url() -> str:
-    user = os.getenv("DB_USER", "postgres")
-    password = os.getenv("DB_PASSWORD", "postgres")
-    host = os.getenv("DB_HOST", "localhost")
-    port = os.getenv("DB_PORT", "5432")
-    name = os.getenv("DB_NAME", "subscription_db")
-    return f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{name}"
+    # First try to use DATABASE_URL if it's set
+    database_url = os.getenv("DATABASE_URL")
+    if database_url:
+        return database_url
+    else:
+        raise ValueError("DATABASE_URL is not set")
+    
 
 
 def run_migrations_offline() -> None:
