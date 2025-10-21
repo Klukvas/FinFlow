@@ -1,14 +1,39 @@
 -- Create databases for all services
-CREATE DATABASE IF NOT EXISTS user_db;
-CREATE DATABASE IF NOT EXISTS category_db;
-CREATE DATABASE IF NOT EXISTS expense_db;
-CREATE DATABASE IF NOT EXISTS income_db;
-CREATE DATABASE IF NOT EXISTS recurring_db;
-CREATE DATABASE IF NOT EXISTS goals_db;
-CREATE DATABASE IF NOT EXISTS debt_db;
-CREATE DATABASE IF NOT EXISTS account_db;
-CREATE DATABASE IF NOT EXISTS subscription_db;
-CREATE DATABASE IF NOT EXISTS currency_db;
+-- Use DO block to handle IF NOT EXISTS logic for older PostgreSQL versions
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'user_db') THEN
+        CREATE DATABASE user_db;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'category_db') THEN
+        CREATE DATABASE category_db;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'expense_db') THEN
+        CREATE DATABASE expense_db;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'income_db') THEN
+        CREATE DATABASE income_db;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'recurring_db') THEN
+        CREATE DATABASE recurring_db;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'goals_db') THEN
+        CREATE DATABASE goals_db;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'debt_db') THEN
+        CREATE DATABASE debt_db;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'account_db') THEN
+        CREATE DATABASE account_db;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'subscription_db') THEN
+        CREATE DATABASE subscription_db;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'currency_db') THEN
+        CREATE DATABASE currency_db;
+    END IF;
+END
+$$;
 
 -- Grant permissions to postgres user
 GRANT ALL PRIVILEGES ON DATABASE user_db TO postgres;
