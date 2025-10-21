@@ -110,8 +110,17 @@ runs:
 
         # Create separate databases for each service
         echo "🗄️ Creating separate databases for each service..."
+        echo "🔍 Debug info:"
+        echo "  USER: $USER"
+        echo "  DB_SERVER_HOST: $DB_SERVER_HOST"
+        echo "  DB_HOST: $DB_HOST"
+        echo "  DB_PORT: $DB_PORT"
+        echo "  DB_USER: $DB_USER"
         
         # Create databases by SSH to DB server
+        echo "🔍 Testing SSH connection to DB server..."
+        ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 "$USER@$DB_SERVER_HOST" "echo 'SSH connection to DB server successful'"
+        
         if [ -f init/init.sql ]; then
           echo "📄 Found init.sql, creating databases on DB server..."
           ssh -o StrictHostKeyChecking=no "$USER@$DB_SERVER_HOST" "mkdir -p ~/init"
