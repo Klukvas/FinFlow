@@ -94,8 +94,8 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
 
 
-# Create database tables
-Base.metadata.create_all(bind=engine)
+# Database tables are created via alembic migrations
+# Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
