@@ -132,7 +132,7 @@ runs:
           echo "📄 Found init.sql, creating databases on DB server..."
           ssh -i /tmp/db_server_key -o StrictHostKeyChecking=no "$USER@$DB_SERVER_HOST" "mkdir -p ~/init"
           scp -i /tmp/db_server_key -o StrictHostKeyChecking=no init/init.sql "$USER@$DB_SERVER_HOST:~/init/init.sql"
-          ssh -i /tmp/db_server_key -o StrictHostKeyChecking=no "$USER@$DB_SERVER_HOST" "PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d postgres -f ~/init/init.sql"
+          ssh -i /tmp/db_server_key -o StrictHostKeyChecking=no "$USER@$DB_SERVER_HOST" "PGPASSWORD=$DB_PASSWORD psql -h localhost -p $DB_PORT -U $DB_USER -d postgres -f ~/init/init.sql"
           if [ $? -eq 0 ]; then
             echo "✅ Databases created successfully"
           else
@@ -140,7 +140,7 @@ runs:
           fi
         else
           echo "⚠️ init.sql not found, creating databases manually on DB server..."
-          ssh -i /tmp/db_server_key -o StrictHostKeyChecking=no "$USER@$DB_SERVER_HOST" "PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d postgres -c \"
+          ssh -i /tmp/db_server_key -o StrictHostKeyChecking=no "$USER@$DB_SERVER_HOST" "PGPASSWORD=$DB_PASSWORD psql -h localhost -p $DB_PORT -U $DB_USER -d postgres -c \"
             CREATE DATABASE IF NOT EXISTS user_db;
             CREATE DATABASE IF NOT EXISTS category_db;
             CREATE DATABASE IF NOT EXISTS expense_db;
