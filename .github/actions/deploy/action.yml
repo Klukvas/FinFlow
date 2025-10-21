@@ -21,6 +21,9 @@ inputs:
   db-host:
     description: Database host
     required: true
+  db-server-host:
+    description: Database server host (for SSH access)
+    required: true
   db-port:
     description: Database port
     required: true
@@ -57,7 +60,7 @@ runs:
         set -euo pipefail
         mkdir -p ~/.ssh
         ssh-keyscan -H "${{ inputs.host }}" >> ~/.ssh/known_hosts
-        ssh-keyscan -H "${{ secrets.DB_SERVER_HOST }}" >> ~/.ssh/known_hosts
+        ssh-keyscan -H "${{ inputs['db-server-host'] }}" >> ~/.ssh/known_hosts
 
     - name: Create deployment script
       shell: bash
@@ -91,7 +94,7 @@ runs:
         REGISTRY=$REGISTRY
         IMAGE_PREFIX=$IMAGE_PREFIX
         DB_HOST=$DB_HOST
-        DB_SERVER_HOST=${{ secrets.DB_SERVER_HOST }}
+        DB_SERVER_HOST=${{ inputs['db-server-host'] }}
         DB_PORT=$DB_PORT
         DB_NAME=$DB_NAME
         DB_USER=$DB_USER
@@ -259,7 +262,7 @@ runs:
         REGISTRY: ${{ inputs.registry }}
         IMAGE_PREFIX: ${{ inputs['image-prefix'] }}
         DB_HOST: ${{ inputs['db-host'] }}
-        DB_SERVER_HOST: ${{ secrets.DB_SERVER_HOST }}
+        DB_SERVER_HOST: ${{ inputs['db-server-host'] }}
         DB_PORT: ${{ inputs['db-port'] }}
         DB_NAME: ${{ inputs['db-name'] }}
         DB_USER: ${{ inputs['db-user'] }}
