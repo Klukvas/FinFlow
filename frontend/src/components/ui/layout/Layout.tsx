@@ -1,5 +1,6 @@
-import React, { useState, useLayoutEffect } from 'react';
+import React, { useState, useLayoutEffect, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Sidebar } from './Sidebar';
 import { AppHeader } from './MobileHeader';
 import { PublicFooter } from './PublicFooter';
@@ -13,6 +14,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const location = useLocation();
+  const { t } = useTranslation();
 
   useLayoutEffect(() => {
     const checkMobile = () => {
@@ -32,24 +34,30 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Update document title when location or language changes
+  useEffect(() => {
+    const pageTitle = getPageTitle();
+    document.title = pageTitle;
+  }, [location.pathname, t]);
+
   const getPageTitle = () => {
     switch (location.pathname) {
       case '/category':
-        return 'Категории';
+        return t('navigation.categories');
       case '/account':
-        return 'Аккаунты';
+        return t('navigation.accounts');
       case '/expense':
-        return 'Расходы';
+        return t('navigation.expenses');
       case '/income':
-        return 'Доходы';
+        return t('navigation.income');
       case '/recurring':
-        return 'Повторяющиеся';
+        return t('navigation.recurring');
       case '/goals':
-        return 'Цели';
+        return t('navigation.goals');
       case '/profile':
-        return 'Профиль';
+        return t('navigation.profile');
       default:
-        return 'Финансовый учет';
+        return t('header.appTitle');
     }
   };
 
