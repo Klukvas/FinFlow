@@ -169,10 +169,10 @@ class ExpenseService:
             )
 
             try:
-                with self.db.begin():
-                    self.db.add(expense)
-                log_operation(self.logger, "Expense created", user_id, f"ID: {expense.id}, Amount: {validated_amount}, Category: {data.category_id}, Account: {data.account_id}, Date: {validated_date}")
+                self.db.add(expense)
+                self.db.commit()
                 self.db.refresh(expense)
+                log_operation(self.logger, "Expense created", user_id, f"ID: {expense.id}, Amount: {validated_amount}, Category: {data.category_id}, Account: {data.account_id}, Date: {validated_date}")
                 return expense
             except Exception as e:
                 self.db.rollback()
