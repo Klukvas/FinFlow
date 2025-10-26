@@ -8,7 +8,6 @@ import {
   GoalStatistics as GoalStatsComponent 
 } from '@/components/ui/goals';
 import { GoalsHeader } from '@/components/goals/GoalsHeader';
-import { GoalsFilters } from '@/components/goals/GoalsFilters';
 import { GoalsList } from '@/components/goals/GoalsList';
 import { Modal } from '@/components/ui/shared/Modal';
 import { FaBullseye } from 'react-icons/fa';
@@ -20,14 +19,12 @@ export const Goals: React.FC = () => {
     goals,
     statistics,
     loading,
-    filters,
     currentPage,
     totalPages,
     createGoal,
     updateGoal,
     deleteGoal,
     updateProgress,
-    handleFiltersChange,
     handlePageChange,
   } = useGoals();
 
@@ -35,15 +32,15 @@ export const Goals: React.FC = () => {
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
-  const [showFilters, setShowFilters] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
 
-  const handleCreateGoal = async (goalData: CreateGoalRequest) => {
-    const success = await createGoal(goalData);
-    if (success) {
-      setShowCreateModal(false);
-      toast.success(t('goalsPage.messages.goalCreated'));
-    }
+  const handleCreateGoal = (goalData: CreateGoalRequest | UpdateGoalRequest) => {
+    (async () => {
+      const success = await createGoal(goalData as CreateGoalRequest);
+      if (success) {
+        setShowCreateModal(false);
+        toast.success(t('goalsPage.messages.goalCreated'));
+      }
+    })();
   };
 
   const handleEditGoal = (goal: Goal) => {
@@ -51,15 +48,17 @@ export const Goals: React.FC = () => {
     setShowEditModal(true);
   };
 
-  const handleUpdateGoal = async (goalData: UpdateGoalRequest) => {
+  const handleUpdateGoal = (goalData: CreateGoalRequest | UpdateGoalRequest) => {
     if (!selectedGoal) return;
     
-    const success = await updateGoal(selectedGoal.id, goalData);
-    if (success) {
-      setShowEditModal(false);
-      setSelectedGoal(null);
-      toast.success(t('goalsPage.messages.goalUpdated'));
-    }
+    (async () => {
+      const success = await updateGoal(selectedGoal.id, goalData as UpdateGoalRequest);
+      if (success) {
+        setShowEditModal(false);
+        setSelectedGoal(null);
+        toast.success(t('goalsPage.messages.goalUpdated'));
+      }
+    })();
   };
 
   const handleDeleteGoal = async (goalId: number) => {
@@ -74,15 +73,15 @@ export const Goals: React.FC = () => {
     setShowProgressModal(true);
   };
 
-  const handleProgressUpdate = async (progressData: GoalProgressUpdate) => {
-    if (!selectedGoal) return;
-    
-    const success = await updateProgress(selectedGoal.id, progressData);
-    if (success) {
-      setShowProgressModal(false);
-      setSelectedGoal(null);
-      toast.success(t('goalsPage.messages.progressUpdated'));
-    }
+  const handleProgressUpdate = (goalId: number, progressData: GoalProgressUpdate) => {
+    (async () => {
+      const success = await updateProgress(goalId, progressData);
+      if (success) {
+        setShowProgressModal(false);
+        setSelectedGoal(null);
+        toast.success(t('goalsPage.messages.progressUpdated'));
+      }
+    })();
   };
 
   const handleToggleStatus = async (goalId: number) => {
@@ -90,11 +89,6 @@ export const Goals: React.FC = () => {
     // For now, just log or show a message
     console.log('Toggle status for goal:', goalId);
   };
-
-  const filteredGoals = goals.filter(goal =>
-    goal.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    goal.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   return (
     <div className="space-y-4 sm:space-y-6 mobile-padding">
@@ -111,25 +105,14 @@ export const Goals: React.FC = () => {
         </div>
       )}
 
-      {/* Search and Actions */}
+      {/* Actions */}
       <GoalsHeader
         onShowCreateModal={() => setShowCreateModal(true)}
-        onToggleFilters={() => setShowFilters(!showFilters)}
-        showFilters={showFilters}
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-      />
-
-      {/* Filters */}
-      <GoalsFilters
-        filters={filters}
-        onFiltersChange={handleFiltersChange}
-        isVisible={showFilters}
       />
 
       {/* Goals List */}
       <GoalsList
-        goals={filteredGoals}
+        goals={goals}
         loading={loading}
         onEditGoal={handleEditGoal}
         onUpdateProgress={handleUpdateProgress}
@@ -167,7 +150,7 @@ export const Goals: React.FC = () => {
       >
         {selectedGoal && (
           <GoalForm
-            initialData={selectedGoal}
+            goal={selectedGoal}
             onSubmit={handleUpdateGoal}
             onCancel={() => {
               setShowEditModal(false);
@@ -178,26 +161,17 @@ export const Goals: React.FC = () => {
       </Modal>
 
       {/* Progress Update Modal */}
-      <Modal
-        isOpen={showProgressModal}
-        onClose={() => {
-          setShowProgressModal(false);
-          setSelectedGoal(null);
-        }}
-        title={t('goalsPage.progressModalTitle')}
-        data-testid="progress-modal"
-      >
-        {selectedGoal && (
-          <GoalProgressModal
-            goal={selectedGoal}
-            onSubmit={handleProgressUpdate}
-            onCancel={() => {
-              setShowProgressModal(false);
-              setSelectedGoal(null);
-            }}
-          />
-        )}
-      </Modal>
+      {selectedGoal && (
+        <GoalProgressModal
+          goal={selectedGoal}
+          isOpen={showProgressModal}
+          onClose={() => {
+            setShowProgressModal(false);
+            setSelectedGoal(null);
+          }}
+          onUpdate={handleProgressUpdate}
+        />
+      )}
     </div>
   );
 };

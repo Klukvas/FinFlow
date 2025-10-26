@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Goal, CreateGoalRequest, UpdateGoalRequest, GOAL_TYPE_LABELS, GOAL_PRIORITY_LABELS, GoalFormData } from '@/types';
 import { Button } from '../shared/Button';
 import { MoneyInput } from '../forms/MoneyInput';
@@ -16,6 +17,7 @@ export const GoalForm: React.FC<GoalFormProps> = ({
   onCancel,
   isLoading = false
 }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<GoalFormData>({
     title: '',
     description: '',
@@ -48,18 +50,18 @@ export const GoalForm: React.FC<GoalFormProps> = ({
     const newErrors: Partial<GoalFormData> = {};
 
     if (!formData.title.trim()) {
-      newErrors.title = 'Название обязательно';
+      newErrors.title = t('goalsPage.form.titleRequired');
     }
 
     if (!formData.target_amount || parseFloat(formData.target_amount) <= 0) {
-      newErrors.target_amount = 'Целевая сумма должна быть больше 0';
+      newErrors.target_amount = t('goalsPage.form.targetAmountRequired');
     }
 
     if (formData.target_date) {
       const targetDate = new Date(formData.target_date);
       const today = new Date();
       if (targetDate <= today) {
-        newErrors.target_date = 'Целевая дата должна быть в будущем';
+        newErrors.target_date = t('goalsPage.form.targetDateMustBeFuture');
       }
     }
 
@@ -101,7 +103,7 @@ export const GoalForm: React.FC<GoalFormProps> = ({
       {/* Title */}
       <div>
         <label htmlFor="title" className="block text-sm font-medium theme-text-primary mb-1 sm:mb-2">
-          Название цели *
+          {t('goalsPage.form.title')} *
         </label>
         <input
           type="text"
@@ -111,7 +113,7 @@ export const GoalForm: React.FC<GoalFormProps> = ({
           className={`w-full px-3 py-3 sm:py-2 text-base sm:text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 theme-transition touch-manipulation ${
             errors.title ? 'border-red-500' : 'theme-border'
           }`}
-          placeholder="Например: Накопить на отпуск"
+          placeholder={t('goalsPage.form.titlePlaceholder')}
         />
         {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
       </div>
@@ -119,7 +121,7 @@ export const GoalForm: React.FC<GoalFormProps> = ({
       {/* Description */}
       <div>
         <label htmlFor="description" className="block text-sm font-medium theme-text-primary mb-1 sm:mb-2">
-          Описание
+          {t('goalsPage.form.description')}
         </label>
         <textarea
           id="description"
@@ -127,7 +129,7 @@ export const GoalForm: React.FC<GoalFormProps> = ({
           onChange={(e) => handleInputChange('description', e.target.value)}
           rows={3}
           className="w-full px-3 py-3 sm:py-2 text-base sm:text-sm theme-border border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 theme-transition touch-manipulation"
-          placeholder="Дополнительная информация о цели"
+          placeholder={t('goalsPage.form.descriptionPlaceholder')}
         />
       </div>
 
@@ -135,7 +137,7 @@ export const GoalForm: React.FC<GoalFormProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         <div>
           <label htmlFor="goal_type" className="block text-sm font-medium theme-text-primary mb-1 sm:mb-2">
-            Тип цели
+            {t('goalsPage.form.goalType')}
           </label>
           <select
             id="goal_type"
@@ -151,7 +153,7 @@ export const GoalForm: React.FC<GoalFormProps> = ({
 
         <div>
           <label htmlFor="priority" className="block text-sm font-medium theme-text-primary mb-1 sm:mb-2">
-            Приоритет
+            {t('goalsPage.form.priority')}
           </label>
           <select
             id="priority"
@@ -170,7 +172,7 @@ export const GoalForm: React.FC<GoalFormProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         <div className="sm:col-span-2">
           <MoneyInput
-            label="Целевая сумма"
+            label={t('goalsPage.form.targetAmount')}
             value={formData.target_amount}
             onChange={(value) => handleInputChange('target_amount', value)}
             placeholder="10000"
@@ -182,7 +184,7 @@ export const GoalForm: React.FC<GoalFormProps> = ({
 
         <div>
           <label htmlFor="currency" className="block text-sm font-medium theme-text-primary mb-1 sm:mb-2">
-            Валюта
+            {t('goalsPage.form.currency')}
           </label>
           <select
             id="currency"
@@ -201,7 +203,7 @@ export const GoalForm: React.FC<GoalFormProps> = ({
       {/* Target Date */}
       <div>
         <label htmlFor="target_date" className="block text-sm font-medium theme-text-primary mb-1 sm:mb-2">
-          Целевая дата
+          {t('goalsPage.form.targetDate')}
         </label>
         <input
           type="date"
@@ -225,7 +227,7 @@ export const GoalForm: React.FC<GoalFormProps> = ({
           className="h-5 w-5 mt-0.5 sm:mt-0 text-blue-600 focus:ring-blue-500 theme-border border rounded touch-manipulation"
         />
         <label htmlFor="is_milestone_based" className="block text-sm theme-text-primary leading-relaxed">
-          Использовать вехи для отслеживания прогресса
+          {t('goalsPage.form.useMilestones')}
         </label>
       </div>
 
@@ -238,14 +240,14 @@ export const GoalForm: React.FC<GoalFormProps> = ({
           disabled={isLoading}
           className="w-full sm:w-auto min-h-[44px] touch-manipulation"
         >
-          Отмена
+          {t('common.cancel')}
         </Button>
         <Button
           type="submit"
           disabled={isLoading}
           className="w-full sm:w-auto min-h-[44px] touch-manipulation"
         >
-          {isLoading ? 'Сохранение...' : (goal ? 'Обновить' : 'Создать')}
+          {isLoading ? t('goalsPage.form.saving') : (goal ? t('goalsPage.form.update') : t('goalsPage.form.create'))}
         </Button>
       </div>
     </form>

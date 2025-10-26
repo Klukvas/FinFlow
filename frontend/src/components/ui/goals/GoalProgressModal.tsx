@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Goal, GoalProgressUpdate } from '@/types';
 import { Modal } from '../shared/Modal';
 import { Button } from '../shared/Button';
@@ -19,6 +20,7 @@ export const GoalProgressModal: React.FC<GoalProgressModalProps> = ({
   onUpdate,
   isLoading = false
 }) => {
+  const { t } = useTranslation();
   const [currentAmount, setCurrentAmount] = useState(goal.current_amount.toString());
   const [error, setError] = useState('');
 
@@ -28,12 +30,12 @@ export const GoalProgressModal: React.FC<GoalProgressModalProps> = ({
     const amount = parseFloat(currentAmount);
     
     if (isNaN(amount) || amount < 0) {
-      setError('Введите корректную сумму');
+      setError(t('goalsPage.progressModal.enterValidAmount'));
       return;
     }
 
     if (amount > goal.target_amount) {
-      setError('Текущая сумма не может превышать целевую');
+      setError(t('goalsPage.progressModal.exceedsTarget'));
       return;
     }
 
@@ -56,7 +58,7 @@ export const GoalProgressModal: React.FC<GoalProgressModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Обновить прогресс цели"
+      title={t('goalsPage.progressModalTitle')}
       size="md"
     >
       <div className="space-y-6">
@@ -65,11 +67,11 @@ export const GoalProgressModal: React.FC<GoalProgressModalProps> = ({
           <h3 className="font-semibold text-gray-900 mb-2">{goal.title}</h3>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="text-gray-500">Текущая сумма:</span>
+              <span className="text-gray-500">{t('goalsPage.progressModal.currentAmount')}:</span>
               <p className="font-medium">{goal.current_amount.toLocaleString()} {goal.currency}</p>
             </div>
             <div>
-              <span className="text-gray-500">Целевая сумма:</span>
+              <span className="text-gray-500">{t('goalsPage.progressModal.targetAmount')}:</span>
               <p className="font-medium">{goal.target_amount.toLocaleString()} {goal.currency}</p>
             </div>
           </div>
@@ -79,7 +81,7 @@ export const GoalProgressModal: React.FC<GoalProgressModalProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="current_amount" className="block text-sm font-medium text-gray-700 mb-2">
-              Новая текущая сумма
+              {t('goalsPage.progressModal.newCurrentAmount')}
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -108,7 +110,7 @@ export const GoalProgressModal: React.FC<GoalProgressModalProps> = ({
           {/* Progress Preview */}
           <div className="bg-blue-50 rounded-lg p-4">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-medium text-gray-700">Новый прогресс</span>
+              <span className="text-sm font-medium text-gray-700">{t('goalsPage.progressModal.newProgress')}</span>
               <span className="text-sm font-bold text-blue-600">
                 {getProgressPercentage().toFixed(1)}%
               </span>
@@ -120,7 +122,7 @@ export const GoalProgressModal: React.FC<GoalProgressModalProps> = ({
               />
             </div>
             <p className="text-xs text-gray-500 mt-2">
-              Осталось: {(goal.target_amount - parseFloat(currentAmount || '0')).toLocaleString()} {goal.currency}
+              {t('goalsPage.progressModal.remaining')}: {(goal.target_amount - parseFloat(currentAmount || '0')).toLocaleString()} {goal.currency}
             </p>
           </div>
 
@@ -132,13 +134,13 @@ export const GoalProgressModal: React.FC<GoalProgressModalProps> = ({
               onClick={handleClose}
               disabled={isLoading}
             >
-              Отмена
+              {t('common.cancel')}
             </Button>
             <Button
               type="submit"
               disabled={isLoading || !!error}
             >
-              {isLoading ? 'Обновление...' : 'Обновить прогресс'}
+              {isLoading ? t('goalsPage.progressModal.updating') : t('goalsPage.progressModal.updateProgress')}
             </Button>
           </div>
         </form>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useApiClients } from '@/hooks/useApiClients';
 import { PdfUploader, TransactionReview } from '@/components/ui/pdf';
 import { ParsedTransaction, TransactionValidation } from '@/services/api/pdfParserApiClient';
@@ -8,6 +9,7 @@ import { MccBatchResponse } from '@/services/api/categoryApiClient';
 import { normalizeLanguageCode } from '@/utils';
 
 export const PdfParser: React.FC = () => {
+  const { t } = useTranslation();
   const { income, expense, category } = useApiClients();
   const { actualTheme } = useTheme();
   const [showUploader, setShowUploader] = useState(false);
@@ -34,19 +36,19 @@ export const PdfParser: React.FC = () => {
   // Translate error codes to user-friendly messages
   const translateErrorCode = (errorCode: string): string => {
     const errorTranslations: Record<string, string> = {
-      'CATEGORY_LIMIT_EXCEEDED': 'Category limit exceeded. Please upgrade your plan or delete some existing categories.',
-      'CATEGORY_ALREADY_EXISTS': 'Category already exists for this MCC code.',
-      'MCC_CODE_NOT_FOUND': 'MCC code not found in the system.',
-      'VALIDATION_ERROR': 'Invalid category data provided.',
-      'SUBSCRIPTION_ERROR': 'Subscription service error. Please try again later.',
-      'DATABASE_ERROR': 'Database error. Please try again later.',
-      'UNAUTHORIZED': 'You are not authorized to perform this action.',
-      'FORBIDDEN': 'Access denied. Please check your permissions.',
-      'NOT_FOUND': 'Requested resource not found.',
-      'INTERNAL_ERROR': 'Internal server error. Please try again later.'
+      'CATEGORY_LIMIT_EXCEEDED': t('pdfParserPage.errors.categoryLimitExceeded'),
+      'CATEGORY_ALREADY_EXISTS': t('pdfParserPage.errors.categoryAlreadyExists'),
+      'MCC_CODE_NOT_FOUND': t('pdfParserPage.errors.mccCodeNotFound'),
+      'VALIDATION_ERROR': t('pdfParserPage.errors.validationError'),
+      'SUBSCRIPTION_ERROR': t('pdfParserPage.errors.subscriptionError'),
+      'DATABASE_ERROR': t('pdfParserPage.errors.databaseError'),
+      'UNAUTHORIZED': t('pdfParserPage.errors.unauthorized'),
+      'FORBIDDEN': t('pdfParserPage.errors.forbidden'),
+      'NOT_FOUND': t('pdfParserPage.errors.notFound'),
+      'INTERNAL_ERROR': t('pdfParserPage.errors.internalError')
     };
     
-    return errorTranslations[errorCode] || 'An unexpected error occurred. Please try again.';
+    return errorTranslations[errorCode] || t('pdfParserPage.errors.unexpectedError');
   };
 
   // Extract user-friendly error message from API response
@@ -85,7 +87,7 @@ export const PdfParser: React.FC = () => {
     
     try {
       setIsCreating(true);
-      setMccProcessingStatus('Retrying failed MCC category creations...');
+      setMccProcessingStatus(t('pdfParserPage.mccProcessing.retrying'));
       
       const retryCategories = failedMccCodes.map(failed => ({
         mcc_code: failed.mcc_code,
@@ -95,7 +97,7 @@ export const PdfParser: React.FC = () => {
       const batchResponse = await category.createCategoriesFromMccBatch(retryCategories, normalizeLanguageCode(i18n.language));
       
       if ('error' in batchResponse) {
-        setMccProcessingStatus(`Retry failed: ${batchResponse.error}`);
+        setMccProcessingStatus(`${t('pdfParserPage.messages.retryFailed')}: ${batchResponse.error}`);
         return;
       }
       
@@ -123,14 +125,14 @@ export const PdfParser: React.FC = () => {
           .filter(result => !result.success)
           .map(result => `MCC ${result.mcc_code}: ${getUserFriendlyError(result.error || 'Unknown error')}`)
           .join(', ');
-        setMccProcessingStatus(`Retry failed - Errors: ${errorDetails}`);
+        setMccProcessingStatus(`${t('pdfParserPage.messages.retryFailed')} - Errors: ${errorDetails}`);
       } else {
-        setMccProcessingStatus(`Retry completed: ${response.successful} successful, ${response.failed} still failed`);
+        setMccProcessingStatus(t('pdfParserPage.messages.retryCompleted', { successful: response.successful, failed: response.failed }));
       }
       
     } catch (err) {
       console.error('Error retrying MCC codes:', err);
-      setMccProcessingStatus(`Retry error: ${err}`);
+      setMccProcessingStatus(`${t('pdfParserPage.messages.retryFailed')}: ${err}`);
     } finally {
       setIsCreating(false);
     }
@@ -145,7 +147,7 @@ export const PdfParser: React.FC = () => {
       const validTransactions = validatedTransactions.filter(txn => txn.is_valid);
       
       if (validTransactions.length === 0) {
-        setError('No valid transactions to create');
+        setError(t('pdfParserPage.messages.noValidTransactions'));
         return;
       }
 
@@ -223,7 +225,7 @@ export const PdfParser: React.FC = () => {
       if (mccCategoriesToCreate.length > 0) {
         try {
           // Set up progress tracking
-          setMccProcessingStatus(`Creating ${mccCategoriesToCreate.length} categories from MCC codes...`);
+          setMccProcessingStatus(t('pdfParserPage.mccProcessing.creatingCategories', { count: mccCategoriesToCreate.length }));
           setMccProcessingProgress({
             total: mccCategoriesToCreate.length,
             processed: 0,
@@ -283,23 +285,23 @@ export const PdfParser: React.FC = () => {
             // If all MCC codes failed, we should stop processing
             if (response.failed === response.total_requested) {
               console.error('All MCC category creations failed. Cannot proceed with transaction creation.');
-              setMccProcessingStatus('All MCC category creations failed. Please select categories manually.');
-              errors.push('All MCC category creations failed. Please select categories manually for transactions.');
+              setMccProcessingStatus(t('pdfParserPage.messages.allMccFailed'));
+              errors.push(t('pdfParserPage.messages.allMccFailed'));
               return;
             }
             
             // Update status based on results
             if (response.failed > 0) {
-              setMccProcessingStatus(`${response.successful} categories created successfully, ${response.failed} failed. Continuing with successful ones.`);
+              setMccProcessingStatus(t('pdfParserPage.messages.categoriesPartiallyCreated', { successful: response.successful, failed: response.failed }));
               console.warn(`${response.failed} MCC codes failed to create categories. Continuing with ${response.successful} successful ones.`);
             } else {
-              setMccProcessingStatus(`Successfully created ${response.successful} categories from MCC codes!`);
+              setMccProcessingStatus(t('pdfParserPage.messages.categoriesCreated', { count: response.successful }));
             }
           }
         } catch (err) {
           console.error('Error creating categories from MCC batch:', err);
-          setMccProcessingStatus(`Error creating categories: ${err}`);
-          errors.push(`Error creating categories from MCC batch: ${err}`);
+          setMccProcessingStatus(`${t('pdfParserPage.messages.failedToCreateCategories')}: ${err}`);
+          errors.push(`${t('pdfParserPage.messages.failedToCreateCategories')}: ${err}`);
           return;
         }
       }
@@ -388,18 +390,18 @@ export const PdfParser: React.FC = () => {
 
       if (errors.length > 0) {
         console.error('PdfParser: Errors occurred:', errors);
-        setError(`Some transactions failed to create: ${errors.join(', ')}`);
+        setError(`${t('pdfParserPage.messages.someTransactionsFailed')}: ${errors.join(', ')}`);
       }
 
       const totalSuccessful = successfulIncomeCount + successfulExpenseCount + successfulDebtCount;
       const totalAttempted = incomeCount + expenseCount + debtCount;
       
-      let successMessage = `Successfully created ${totalSuccessful} out of ${totalAttempted} transactions: `;
+      let successMessage = t('pdfParserPage.messages.transactionsCreated', { count: totalSuccessful, total: totalAttempted });
       const parts = [];
-      if (successfulIncomeCount > 0) parts.push(`${successfulIncomeCount} income`);
-      if (successfulExpenseCount > 0) parts.push(`${successfulExpenseCount} expense`);
-      if (successfulDebtCount > 0) parts.push(`${successfulDebtCount} debt`);
-      successMessage += parts.join(', ');
+      if (successfulIncomeCount > 0) parts.push(t('pdfParserPage.mccProcessing.incomeCreated', { count: successfulIncomeCount }));
+      if (successfulExpenseCount > 0) parts.push(t('pdfParserPage.mccProcessing.expenseCreated', { count: successfulExpenseCount }));
+      if (successfulDebtCount > 0) parts.push(t('pdfParserPage.mccProcessing.debtCreated', { count: successfulDebtCount }));
+      successMessage += ': ' + parts.join(', ');
       
       setSuccess(successMessage);
       setShowReview(false);
@@ -407,7 +409,7 @@ export const PdfParser: React.FC = () => {
 
     } catch (err) {
       console.error('PdfParser: Error in handleTransactionsValidated:', err);
-      setError('Failed to create transactions');
+      setError(t('pdfParserPage.messages.failedToCreateTransactions'));
     } finally {
       setIsCreating(false);
     }
@@ -432,9 +434,9 @@ export const PdfParser: React.FC = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold theme-text-primary mb-4">PDF Parser</h1>
+          <h1 className="text-3xl font-bold theme-text-primary mb-4">{t('pdfParserPage.title')}</h1>
           <p className="theme-text-secondary">
-            Upload bank PDF statements to automatically extract and import transactions.
+            {t('pdfParserPage.description')}
           </p>
         </div>
 
@@ -550,11 +552,11 @@ export const PdfParser: React.FC = () => {
               </svg>
             </div>
             <h3 className="text-lg font-medium theme-text-primary mb-2">
-              Upload Bank PDF
+              {t('pdfParserPage.uploadSectionTitle')}
             </h3>
             <p className="theme-text-secondary mb-6">
-              Upload a PDF statement from your bank to automatically extract transactions.
-              Currently supported: Monobank (Ukrainian and English).
+              {t('pdfParserPage.description')}<br />
+              {t('pdfParserPage.supportedBanks')}
             </p>
             <button
               onClick={() => setShowUploader(true)}
@@ -565,23 +567,23 @@ export const PdfParser: React.FC = () => {
                   : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-300 disabled:to-gray-400'
               } text-white disabled:cursor-not-allowed theme-shadow hover:theme-shadow-hover disabled:shadow-none`}
             >
-              {isCreating ? 'Creating Transactions...' : 'Upload PDF'}
+              {isCreating ? t('pdfParserPage.creatingTransactions') : t('pdfParserPage.uploadButton')}
             </button>
           </div>
         </div>
 
         <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="theme-surface rounded-lg theme-shadow p-6">
-            <h3 className="text-lg font-semibold theme-text-primary mb-2">Step 1</h3>
-            <p className="theme-text-secondary">Upload your bank PDF statement</p>
+            <h3 className="text-lg font-semibold theme-text-primary mb-2">{t('pdfParserPage.steps.step1Title')}</h3>
+            <p className="theme-text-secondary">{t('pdfParserPage.steps.step1Description')}</p>
           </div>
           <div className="theme-surface rounded-lg theme-shadow p-6">
-            <h3 className="text-lg font-semibold theme-text-primary mb-2">Step 2</h3>
-            <p className="theme-text-secondary">Review and edit parsed transactions</p>
+            <h3 className="text-lg font-semibold theme-text-primary mb-2">{t('pdfParserPage.steps.step2Title')}</h3>
+            <p className="theme-text-secondary">{t('pdfParserPage.steps.step2Description')}</p>
           </div>
           <div className="theme-surface rounded-lg theme-shadow p-6">
-            <h3 className="text-lg font-semibold theme-text-primary mb-2">Step 3</h3>
-            <p className="theme-text-secondary">Create income and expense records</p>
+            <h3 className="text-lg font-semibold theme-text-primary mb-2">{t('pdfParserPage.steps.step3Title')}</h3>
+            <p className="theme-text-secondary">{t('pdfParserPage.steps.step3Description')}</p>
           </div>
         </div>
       </div>

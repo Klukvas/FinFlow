@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DebtCreate, DebtUpdate, DebtType } from '@/types/debt';
 import { ContactResponse } from '@/types/contact';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -49,6 +50,7 @@ export const DebtForm: React.FC<DebtFormProps> = ({
   isLoading = false,
   mode
 }) => {
+  const { t } = useTranslation();
   const { actualTheme } = useTheme();
   
   // Debug: log contacts data
@@ -74,25 +76,25 @@ export const DebtForm: React.FC<DebtFormProps> = ({
     const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Debt name is required';
+      newErrors.name = t('debtPage.form.errors.nameRequired');
     }
 
     // Category is optional for debts
 
     if (!formData.initial_amount || formData.initial_amount === 0) {
-      newErrors.initial_amount = 'Initial amount cannot be zero';
+      newErrors.initial_amount = t('debtPage.form.errors.initialAmountCannotBeZero');
     }
 
     if (formData.interest_rate !== null && formData.interest_rate !== undefined && (formData.interest_rate < 0 || formData.interest_rate > 100)) {
-      newErrors.interest_rate = 'Interest rate must be between 0 and 100';
+      newErrors.interest_rate = t('debtPage.form.errors.interestRateRange');
     }
 
     if (formData.minimum_payment !== null && formData.minimum_payment !== undefined && formData.minimum_payment <= 0) {
-      newErrors.minimum_payment = 'Minimum payment must be greater than 0';
+      newErrors.minimum_payment = t('debtPage.form.errors.minimumPaymentMustBeGreater');
     }
 
     if (!formData.start_date) {
-      newErrors.start_date = 'Start date is required';
+      newErrors.start_date = t('debtPage.form.errors.startDateRequired');
     }
 
     setErrors(newErrors);
@@ -135,7 +137,7 @@ export const DebtForm: React.FC<DebtFormProps> = ({
           actualTheme === 'dark' ? 'text-white' : 'text-gray-900'
         }`}>
           <DollarSign className="w-5 h-5" />
-          <span>{mode === 'create' ? 'Create New Debt' : 'Edit Debt'}</span>
+          <span>{mode === 'create' ? t('debtPage.form.title') : t('debtPage.form.editTitle')}</span>
         </CardTitle>
       </CardHeader>
 
@@ -144,13 +146,13 @@ export const DebtForm: React.FC<DebtFormProps> = ({
           {/* Debt Name */}
           <div className="space-y-2">
             <Label htmlFor="name" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
-              Debt Name *
+              {t('debtPage.form.name')} *
             </Label>
             <Input
               id="name"
               value={formData.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
-              placeholder="e.g., Credit Card - Visa, Car Loan"
+              placeholder={t('debtPage.form.namePlaceholder')}
               className={`${
                 actualTheme === 'dark' 
                   ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
@@ -165,7 +167,7 @@ export const DebtForm: React.FC<DebtFormProps> = ({
           {/* Debt Type */}
           <div className="space-y-2">
             <Label className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
-              Debt Type *
+              {t('debtPage.form.debtType')} *
             </Label>
             <Select
               value={formData.debt_type}
@@ -205,13 +207,13 @@ export const DebtForm: React.FC<DebtFormProps> = ({
           {/* Description */}
           <div className="space-y-2">
             <Label htmlFor="description" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
-              Description
+              {t('debtPage.form.description')}
             </Label>
             <Textarea
               id="description"
               value={formData.description || ''}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange('description', e.target.value)}
-              placeholder="Additional details about this debt..."
+              placeholder={t('debtPage.form.descriptionPlaceholder')}
               rows={3}
               className={`${
                 actualTheme === 'dark' 
@@ -225,13 +227,13 @@ export const DebtForm: React.FC<DebtFormProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <MoneyInput
-                label="Initial Amount"
+                label={t('debtPage.form.initialAmount')}
                 value={formData.initial_amount}
                 onChange={(value) => {
                   const numValue = value ? Math.round(parseFloat(value) * 100) / 100 : 0;
                   handleInputChange('initial_amount', numValue);
                 }}
-                placeholder="0.00 (positive = they owe me, negative = I owe them)"
+                placeholder={t('debtPage.form.initialAmountPlaceholder')}
                 required
                 error={errors.initial_amount}
                 className="w-full"
@@ -239,13 +241,13 @@ export const DebtForm: React.FC<DebtFormProps> = ({
               <div className={`text-xs ${
                 actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'
               }`}>
-                💡 <strong>Tip:</strong> Positive amount = they owe you, Negative amount = you owe them
+                💡 <strong>{t('debtPage.form.tip')}</strong> {t('debtPage.form.amountTip')}
               </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="interest_rate" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
-                Interest Rate (%)
+                {t('debtPage.form.interestRate')}
               </Label>
               <Input
                 id="interest_rate"
@@ -274,7 +276,7 @@ export const DebtForm: React.FC<DebtFormProps> = ({
 
             <div className="space-y-2">
               <Label htmlFor="minimum_payment" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
-                Minimum Payment
+                {t('debtPage.form.minimumPayment')}
               </Label>
               <div className="relative">
                 <DollarSign className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
@@ -307,7 +309,7 @@ export const DebtForm: React.FC<DebtFormProps> = ({
 
             <div className="space-y-2">
               <Label htmlFor="category_id" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
-                Category (Optional)
+                {t('debtPage.form.category')}
               </Label>
               <Select
                 value={formData.category_id?.toString() || ''}
@@ -318,14 +320,14 @@ export const DebtForm: React.FC<DebtFormProps> = ({
                     ? 'bg-gray-700 border-gray-600 text-white' 
                     : 'bg-white border-gray-300 text-gray-900'
                 }`}>
-                  <SelectValue placeholder="Select a category (optional)" />
+                  <SelectValue placeholder={t('debtPage.form.selectCategory')} />
                 </SelectTrigger>
                 <SelectContent className={actualTheme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'}>
                   <SelectItem 
                     value=""
                     className={actualTheme === 'dark' ? 'text-white hover:bg-gray-600' : 'text-gray-900 hover:bg-gray-100'}
                   >
-                    No category
+                    {t('debtPage.form.noCategory')}
                   </SelectItem>
                   {categories.map((category) => (
                     <SelectItem 
@@ -345,7 +347,7 @@ export const DebtForm: React.FC<DebtFormProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="start_date" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
-                Start Date *
+                {t('debtPage.form.startDate')} *
               </Label>
               <div className="relative">
                 <Calendar className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
@@ -370,7 +372,7 @@ export const DebtForm: React.FC<DebtFormProps> = ({
 
             <div className="space-y-2">
               <Label htmlFor="due_date" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
-                Due Date
+                {t('debtPage.form.dueDate')}
               </Label>
               <div className="relative">
                 <Calendar className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
@@ -395,7 +397,7 @@ export const DebtForm: React.FC<DebtFormProps> = ({
           <div className="space-y-2">
             <Label className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
               <User className="w-4 h-4 inline mr-2" />
-              Contact Information
+              {t('debtPage.form.contactInformation')}
             </Label>
             <div className={`p-4 rounded-lg border ${
               actualTheme === 'dark' 
@@ -405,7 +407,7 @@ export const DebtForm: React.FC<DebtFormProps> = ({
               <p className={`text-sm mb-3 ${
                 actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-600'
               }`}>
-                Select who this debt involves (optional):
+                {t('debtPage.form.selectContact')}
               </p>
               {contacts.length === 0 ? (
                 <div className={`p-3 rounded-lg border ${
@@ -416,7 +418,7 @@ export const DebtForm: React.FC<DebtFormProps> = ({
                   <p className={`text-sm ${
                     actualTheme === 'dark' ? 'text-gray-300' : 'text-yellow-700'
                   }`}>
-                    ⚠️ No contacts available. You can create contacts in the Contacts tab.
+                    ⚠️ {t('debtPage.form.noContactsAvailable')}
                   </p>
                 </div>
               ) : (
@@ -432,7 +434,7 @@ export const DebtForm: React.FC<DebtFormProps> = ({
                         ? 'bg-gray-800 border-gray-600 text-white' 
                         : 'bg-white border-gray-300 text-gray-900'
                     }`}>
-                      <SelectValue placeholder="Choose contact or leave blank">
+                      <SelectValue placeholder={t('debtPage.form.chooseContact')}>
                         {formData.contact_id ? (() => {
                           const selectedContact = contacts.find(c => c.id === formData.contact_id);
                           return selectedContact ? (
@@ -457,7 +459,7 @@ export const DebtForm: React.FC<DebtFormProps> = ({
                       >
                         <span className="flex items-center space-x-2">
                           <span>👤</span>
-                          <span>No specific contact</span>
+                          <span>{t('debtPage.form.noSpecificContact')}</span>
                         </span>
                       </SelectItem>
                       {contacts.map((contact) => (
@@ -485,10 +487,10 @@ export const DebtForm: React.FC<DebtFormProps> = ({
               <div className={`mt-3 text-xs ${
                 actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'
               }`}>
-                💡 <strong>Tip:</strong> 
-                <br />• <strong>Positive amount</strong> = They owe you money (💰 incoming)
-                <br />• <strong>Negative amount</strong> = You owe them money (💸 outgoing)
-                <br />• Use contacts to track specific people or organizations
+                💡 <strong>{t('debtPage.form.tip')}</strong> 
+                <br />• <strong>{t('debtPage.form.positiveAmount')}</strong> {t('debtPage.form.theyOweYou')}
+                <br />• <strong>{t('debtPage.form.negativeAmount')}</strong> {t('debtPage.form.youOweThem')}
+                <br />• {t('debtPage.form.useContacts')}
               </div>
             </div>
           </div>
@@ -500,7 +502,7 @@ export const DebtForm: React.FC<DebtFormProps> = ({
               disabled={isLoading}
               className="flex-1"
             >
-              {isLoading ? 'Saving...' : mode === 'create' ? 'Create Debt' : 'Update Debt'}
+              {isLoading ? t('debtPage.form.saving') : mode === 'create' ? t('debtPage.form.create') : t('debtPage.form.update')}
             </Button>
             <Button
               type="button"
@@ -509,7 +511,7 @@ export const DebtForm: React.FC<DebtFormProps> = ({
               disabled={isLoading}
               className="flex-1"
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
           </div>
         </form>

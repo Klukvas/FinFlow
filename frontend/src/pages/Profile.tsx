@@ -76,7 +76,7 @@ export const Profile = () => {
 
     try {
       if (!user) {
-        setError('Пользователь не найден');
+        setError(t('user.errors.notFound'));
         return;
       }
 
@@ -109,7 +109,7 @@ export const Profile = () => {
           console.error('Profile update error:', response.error);
         }
       } else {
-        setSuccess('Профиль успешно обновлен!');
+        setSuccess(t('profile.profileUpdated'));
         
         // Refresh user profile data
         await refreshUserProfile();
@@ -117,7 +117,7 @@ export const Profile = () => {
         setIsEditModalOpen(false);
       }
     } catch (err) {
-      setError('Ошибка при обновлении профиля');
+      setError(t('profile.profileUpdateError'));
       console.error('Profile update error:', err);
     } finally {
       setIsEditing(false);
@@ -205,7 +205,7 @@ export const Profile = () => {
                 <div className="flex items-center space-x-3">
                   <FaEnvelope className="w-5 h-5 theme-text-tertiary" />
                   <div>
-                    <p className="text-sm font-medium theme-text-tertiary">Email</p>
+                    <p className="text-sm font-medium theme-text-tertiary">{t('common.email')}</p>
                     <p className="theme-text-primary">{user?.email}</p>
                   </div>
                 </div>
@@ -257,8 +257,8 @@ export const Profile = () => {
               </div>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium theme-text-tertiary">Статус аккаунта</p>
-              <p className="text-lg font-semibold theme-text-primary">Активен</p>
+              <p className="text-sm font-medium theme-text-tertiary">{t('profile.accountStatus')}</p>
+              <p className="text-lg font-semibold theme-text-primary">{t('profile.active')}</p>
             </div>
           </div>
         </div>
@@ -271,9 +271,9 @@ export const Profile = () => {
               </div>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium theme-text-tertiary">Дата регистрации</p>
+              <p className="text-sm font-medium theme-text-tertiary">{t('profile.registrationDate')}</p>
               <p className="text-lg font-semibold theme-text-primary">
-                {user?.id ? 'Недавно' : 'Неизвестно'}
+                {user?.id ? t('profile.recently') : t('profile.notSpecified')}
               </p>
             </div>
           </div>
@@ -287,8 +287,8 @@ export const Profile = () => {
               </div>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium theme-text-tertiary">Email подтвержден</p>
-              <p className="text-lg font-semibold theme-text-primary">Да</p>
+              <p className="text-sm font-medium theme-text-tertiary">{t('profile.emailVerified')}</p>
+              <p className="text-lg font-semibold theme-text-primary">{t('common.yes')}</p>
             </div>
           </div>
         </div>
@@ -301,7 +301,7 @@ export const Profile = () => {
       <Modal
         isOpen={isEditModalOpen}
         onClose={handleCancelEdit}
-        title="Редактировать профиль"
+        title={t('profile.editModalTitle')}
         size="md"
       >
         <div className="space-y-4">
@@ -317,33 +317,33 @@ export const Profile = () => {
             </div>
           )}
 
-          <FormField label="Имя пользователя" required>
+          <FormField label={t('profile.username')} required>
             <Input
               type="text"
               name="username"
               value={formData.username}
               onChange={handleInputChange}
-              placeholder="Введите имя пользователя"
+              placeholder={t('auth.username')}
             />
           </FormField>
 
-          <FormField label="Email" required>
+          <FormField label={t('common.email')} required>
             <Input
               type="email"
               name="email"
               value={formData.email}
               onChange={handleInputChange}
-              placeholder="Введите email"
+              placeholder={t('auth.email')}
               disabled
             />
           </FormField>
 
-          <FormField label="Базовая валюта" required>
+          <FormField label={t('profile.baseCurrency')} required>
             <CurrencySelect
               showFlags={true}
               value={formData.currency}
               onChange={(value) => handleInputChange({ target: { name: 'currency', value } } as any)}
-              placeholder="Введите базовую валюту"
+              placeholder={t('profile.baseCurrency')}
             />
           </FormField>
 
@@ -354,7 +354,7 @@ export const Profile = () => {
               disabled={isEditing}
             >
               <FaTimes className="w-4 h-4 mr-2" />
-              Отмена
+              {t('common.cancel')}
             </Button>
             <Button
               onClick={handleEditProfile}
@@ -362,7 +362,7 @@ export const Profile = () => {
               loading={isEditing}
             >
               <FaSave className="w-4 h-4 mr-2" />
-              Сохранить
+              {t('common.save')}
             </Button>
           </div>
         </div>

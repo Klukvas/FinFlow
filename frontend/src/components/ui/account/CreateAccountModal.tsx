@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal } from '../shared/Modal';
 import { Button } from '../shared/Button';
 import { Input } from '../forms/Input';
@@ -14,6 +15,7 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
   onClose,
   onSubmit
 }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: '',
     type: 'bank',
@@ -23,12 +25,12 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
   const [loading, setLoading] = useState(false);
 
   const accountTypes = [
-    { value: 'bank', label: 'Банковский счет' },
-    { value: 'cash', label: 'Наличные' },
-    { value: 'crypto', label: 'Криптовалюта' },
-    { value: 'investment', label: 'Инвестиции' },
-    { value: 'savings', label: 'Сбережения' },
-    { value: 'other', label: 'Другое' }
+    { value: 'bank', label: t('accountPage.form.types.bank') },
+    { value: 'cash', label: t('accountPage.form.types.cash') },
+    { value: 'crypto', label: t('accountPage.form.types.crypto') },
+    { value: 'investment', label: t('accountPage.form.types.investment') },
+    { value: 'savings', label: t('accountPage.form.types.savings') },
+    { value: 'other', label: t('accountPage.form.types.other') }
   ];
 
 
@@ -58,24 +60,24 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
   };
 
   return (
-    <Modal isOpen={true} onClose={onClose} title="Создать аккаунт">
+    <Modal isOpen={true} onClose={onClose} title={t('accountPage.createModalTitle')}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium theme-text-primary mb-2">
-            Название аккаунта *
+            {t('accountPage.form.name')} {t('accountPage.form.required')}
           </label>
           <Input
             type="text"
             value={formData.name}
             onChange={(e) => handleChange('name', e.target.value)}
-            placeholder="Например: Основной счет"
+            placeholder={t('accountPage.form.namePlaceholder')}
             required
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium theme-text-primary mb-2">
-            Тип аккаунта
+            {t('accountPage.form.type')}
           </label>
           <select
             value={formData.type}
@@ -92,7 +94,7 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
 
         <div>
           <label className="block text-sm font-medium theme-text-primary mb-2">
-            Валюта
+            {t('accountPage.form.currency')}
           </label>
           <CurrencySelect
             value={formData.currency}
@@ -104,7 +106,7 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
 
         <div>
           <label className="block text-sm font-medium theme-text-primary mb-2">
-            Начальный баланс
+            {t('accountPage.form.initialBalance')}
           </label>
           <Input
             type="number"
@@ -122,7 +124,7 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
             onClick={onClose}
             disabled={loading}
           >
-            Отмена
+            {t('accountPage.form.cancel')}
           </Button>
           <Button
             type="submit"
@@ -130,7 +132,7 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
             className="flex items-center gap-2"
           >
             <FaWallet className="w-4 h-4" />
-            {loading ? 'Создание...' : 'Создать аккаунт'}
+            {loading ? t('accountPage.form.creating') : t('accountPage.form.createAccount')}
           </Button>
         </div>
       </form>

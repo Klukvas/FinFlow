@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useApiClients } from '@/hooks/useApiClients';
 import { ParsedTransaction } from '@/services/api/pdfParserApiClient';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -11,6 +12,7 @@ interface PdfUploaderProps {
 }
 
 export const PdfUploader: React.FC<PdfUploaderProps> = ({ onTransactionsParsed, onClose }) => {
+  const { t } = useTranslation();
   const { pdfParser } = useApiClients();
   const { actualTheme } = useTheme();
   const [file, setFile] = useState<File | null>(null);
@@ -35,7 +37,7 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({ onTransactionsParsed, 
         setSupportedBanks(response.supported_banks);
       }
     } catch (err) {
-      setError('Failed to load supported banks');
+      setError(t('pdfParserPage.uploadModal.errors.loadBanksFailed'));
     } finally {
       setIsLoadingBanks(false);
     }
@@ -45,11 +47,11 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({ onTransactionsParsed, 
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
       if (selectedFile.type !== 'application/pdf') {
-        setError('Please select a PDF file');
+        setError(t('pdfParserPage.uploadModal.errors.selectPdf'));
         return;
       }
       if (selectedFile.size > 10 * 1024 * 1024) { // 10MB limit
-        setError('File size must be less than 10MB');
+        setError(t('pdfParserPage.uploadModal.errors.fileSizeLimit'));
         return;
       }
       setFile(selectedFile);
@@ -59,12 +61,12 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({ onTransactionsParsed, 
 
   const handleUpload = async () => {
     if (!file) {
-      setError('Please select a file');
+      setError(t('pdfParserPage.uploadModal.errors.selectFile'));
       return;
     }
 
     if (!bankType) {
-      setError('Please select a bank type');
+      setError(t('pdfParserPage.uploadModal.errors.selectBankType'));
       return;
     }
 
@@ -85,7 +87,7 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({ onTransactionsParsed, 
         onClose();
       }
     } catch (err) {
-      setError('Failed to parse PDF');
+      setError(t('pdfParserPage.uploadModal.errors.parseFailed'));
     } finally {
       setIsUploading(false);
     }
@@ -98,7 +100,7 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({ onTransactionsParsed, 
       setFile(droppedFile);
       setError(null);
     } else {
-      setError('Please drop a PDF file');
+      setError(t('pdfParserPage.uploadModal.errors.dropPdf'));
     }
   };
 
@@ -110,7 +112,7 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({ onTransactionsParsed, 
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="theme-surface rounded-lg p-6 w-full max-w-md mx-4 theme-shadow">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold theme-text-primary">Upload Bank PDF</h2>
+          <h2 className="text-xl font-semibold theme-text-primary">{t('pdfParserPage.uploadModal.title')}</h2>
           <button
             onClick={onClose}
             className="theme-text-tertiary hover:theme-text-primary theme-transition"
@@ -141,7 +143,7 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({ onTransactionsParsed, 
           {/* Bank Type Selection */}
           <div>
             <label htmlFor="bank-type-select" className="block text-sm font-medium theme-text-primary mb-2">
-              Bank Type *
+              {t('pdfParserPage.uploadModal.bankTypeLabel')} *
             </label>
             <select
               id="bank-type-select"
@@ -151,7 +153,7 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({ onTransactionsParsed, 
               disabled={isLoadingBanks}
               required
             >
-              <option value="">Select Bank Type</option>
+              <option value="">{t('pdfParserPage.uploadModal.bankTypePlaceholder')}</option>
               {supportedBanks.map((bank) => (
                 <option 
                   key={bank} 
@@ -167,7 +169,7 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({ onTransactionsParsed, 
           {/* File Upload Area */}
           <div>
             <label className="block text-sm font-medium theme-text-primary mb-2">
-              PDF File *
+              {t('pdfParserPage.uploadModal.pdfFileLabel')} *
             </label>
             <div
               onDrop={handleDrop}
@@ -206,7 +208,7 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({ onTransactionsParsed, 
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3H4v7" />
                   </svg>
-                  <p className="theme-text-secondary mb-4">Drop your PDF here or</p>
+                  <p className="theme-text-secondary mb-4">{t('pdfParserPage.uploadModal.dropOrClick')}</p>
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     className={`px-4 py-2 rounded-lg font-medium transition-colors ${
@@ -215,10 +217,10 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({ onTransactionsParsed, 
                         : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800'
                     } text-white theme-shadow hover:theme-shadow-hover`}
                   >
-                    Choose File
+                    {t('pdfParserPage.uploadModal.chooseFile')}
                   </button>
                   <p className="text-xs theme-text-tertiary mt-2">
-                    Maximum file size: 10MB
+                    {t('pdfParserPage.uploadModal.maxFileSize')}
                   </p>
                 </div>
               )}
@@ -231,7 +233,7 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({ onTransactionsParsed, 
               onClick={onClose}
               className="flex-1 px-4 py-3 theme-border border theme-text-primary rounded-lg hover:theme-surface-hover theme-transition font-medium"
             >
-              Cancel
+              {t('pdfParserPage.uploadModal.cancel')}
             </button>
             <button
               onClick={handleUpload}
@@ -248,10 +250,10 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({ onTransactionsParsed, 
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Parsing...
+                  {t('pdfParserPage.uploadModal.parsing')}
                 </div>
               ) : (
-                'Parse PDF'
+                t('pdfParserPage.uploadModal.parseButton')
               )}
             </button>
           </div>

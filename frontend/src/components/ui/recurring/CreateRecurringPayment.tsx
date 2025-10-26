@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { recurringApiService, CreateRecurringPaymentRequest } from '@/services/api/recurringApi';
 import { useApiClients } from '@/hooks/useApiClients';
@@ -15,6 +16,7 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
   onSuccess,
   onCancel,
 }) => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { category } = useApiClients();
   const [loading, setLoading] = useState(false);
@@ -55,11 +57,11 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
     setLoading(true);
     try {
       await recurringApiService.createRecurringPayment(user.id, formData);
-      toast.success('Повторяющийся платеж успешно создан');
+      toast.success(t('recurringPage.createModal.success'));
       onSuccess();
     } catch (error) {
       console.error('Failed to create recurring payment:', error);
-      toast.error('Ошибка при создании повторяющегося платежа');
+      toast.error(t('recurringPage.createModal.error'));
     } finally {
       setLoading(false);
     }
@@ -81,20 +83,20 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
         return (
           <div>
             <label className="block text-sm font-medium theme-text-primary mb-2">
-              День недели
+              {t('recurringPage.createModal.dayOfWeek')}
             </label>
             <select
               value={formData.schedule_config.day_of_week || 0}
               onChange={(e) => handleScheduleConfigChange('day_of_week', parseInt(e.target.value))}
               className="w-full px-3 py-2 theme-border border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 theme-bg theme-text-primary"
             >
-              <option value={0}>Воскресенье</option>
-              <option value={1}>Понедельник</option>
-              <option value={2}>Вторник</option>
-              <option value={3}>Среда</option>
-              <option value={4}>Четверг</option>
-              <option value={5}>Пятница</option>
-              <option value={6}>Суббота</option>
+              <option value={0}>{t('common.weekDays.sunday')}</option>
+              <option value={1}>{t('common.weekDays.monday')}</option>
+              <option value={2}>{t('common.weekDays.tuesday')}</option>
+              <option value={3}>{t('common.weekDays.wednesday')}</option>
+              <option value={4}>{t('common.weekDays.thursday')}</option>
+              <option value={5}>{t('common.weekDays.friday')}</option>
+              <option value={6}>{t('common.weekDays.saturday')}</option>
             </select>
           </div>
         );
@@ -102,7 +104,7 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
         return (
           <div>
             <label className="block text-sm font-medium theme-text-primary mb-2">
-              День месяца
+              {t('recurringPage.createModal.dayOfMonth')}
             </label>
             <input
               type="number"
@@ -119,7 +121,7 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium theme-text-primary mb-2">
-                Месяц
+                {t('recurringPage.createModal.month')}
               </label>
               <select
                 value={formData.schedule_config.month || 1}
@@ -135,7 +137,7 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
             </div>
             <div>
               <label className="block text-sm font-medium theme-text-primary mb-2">
-                День
+                {t('recurringPage.createModal.day')}
               </label>
               <input
                 type="number"
@@ -164,7 +166,7 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
     >
       <div className="theme-surface rounded-lg p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto theme-border border">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg sm:text-xl font-bold theme-text-primary">Создать повторяющийся платеж</h2>
+          <h2 className="text-lg sm:text-xl font-bold theme-text-primary">{t('recurringPage.createModal.title')}</h2>
           <button
             type="button"
             onClick={onCancel}
@@ -179,7 +181,7 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium theme-text-primary mb-2">
-              Название *
+              {t('recurringPage.createModal.name')} *
             </label>
             <input
               type="text"
@@ -192,7 +194,7 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
 
           <div>
             <label className="block text-sm font-medium theme-text-primary mb-2">
-              Описание
+              {t('recurringPage.createModal.description')}
             </label>
             <textarea
               value={formData.description}
@@ -205,7 +207,7 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <MoneyInput
-                label="Сумма"
+                label={t('recurringPage.createModal.amount')}
                 value={formData.amount}
                 onChange={(value) => setFormData(prev => ({ ...prev, amount: parseFloat(value) || 0 }))}
                 placeholder="0.00"
@@ -215,7 +217,7 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
             </div>
             <div>
               <label className="block text-sm font-medium theme-text-primary mb-2">
-                Валюта
+                {t('recurringPage.createModal.currency')}
               </label>
               <select
                 value={formData.currency}
@@ -231,7 +233,7 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
 
           <div>
             <label className="block text-sm font-medium theme-text-primary mb-2">
-              Категория *
+              {t('recurringPage.createModal.category')} *
             </label>
             <select
               value={formData.category_id}
@@ -239,7 +241,7 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
               className="w-full px-3 py-2 theme-border border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 theme-bg theme-text-primary"
               required
             >
-              <option value="">Выберите категорию</option>
+              <option value="">{t('recurringPage.createModal.selectCategory')}</option>
               {categories.map(category => (
                 <option key={category.id} value={category.id.toString()}>
                   {category.name}
@@ -250,21 +252,21 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
 
           <div>
             <label className="block text-sm font-medium theme-text-primary mb-2">
-              Тип платежа *
+              {t('recurringPage.createModal.paymentType')} *
             </label>
             <select
               value={formData.payment_type}
               onChange={(e) => setFormData(prev => ({ ...prev, payment_type: e.target.value as 'EXPENSE' | 'INCOME' }))}
               className="w-full px-3 py-2 theme-border border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 theme-bg theme-text-primary"
             >
-              <option value="EXPENSE">Расход</option>
-              <option value="INCOME">Доход</option>
+              <option value="EXPENSE">{t('recurringPage.createModal.expense')}</option>
+              <option value="INCOME">{t('recurringPage.createModal.income')}</option>
             </select>
           </div>
 
           <div>
             <label className="block text-sm font-medium theme-text-primary mb-2">
-              Тип расписания *
+              {t('recurringPage.createModal.scheduleType')} *
             </label>
             <select
               value={formData.schedule_type}
@@ -289,10 +291,10 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
               }}
               className="w-full px-3 py-2 theme-border border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 theme-bg theme-text-primary"
             >
-              <option value="daily">Ежедневно</option>
-              <option value="weekly">Еженедельно</option>
-              <option value="monthly">Ежемесячно</option>
-              <option value="yearly">Ежегодно</option>
+              <option value="daily">{t('recurringPage.createModal.daily')}</option>
+              <option value="weekly">{t('recurringPage.createModal.weekly')}</option>
+              <option value="monthly">{t('recurringPage.createModal.monthly')}</option>
+              <option value="yearly">{t('recurringPage.createModal.yearly')}</option>
             </select>
           </div>
 
@@ -300,7 +302,7 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
 
           <div>
             <label className="block text-sm font-medium theme-text-primary mb-2">
-              Дата начала *
+              {t('recurringPage.createModal.startDate')} *
             </label>
             <input
               type="date"
@@ -313,7 +315,7 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
 
           <div>
             <label className="block text-sm font-medium theme-text-primary mb-2">
-              Дата окончания (опционально)
+              {t('recurringPage.createModal.endDate')}
             </label>
             <input
               type="date"
@@ -329,14 +331,14 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
               onClick={onCancel}
               className="w-full sm:w-auto px-4 py-2 theme-text-secondary theme-bg-tertiary rounded-md hover:theme-surface-hover theme-transition"
             >
-              Отмена
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               disabled={loading}
               className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
             >
-              {loading ? 'Создание...' : 'Создать'}
+              {loading ? t('recurringPage.createModal.creating') : t('recurringPage.createModal.create')}
             </button>
           </div>
         </form>

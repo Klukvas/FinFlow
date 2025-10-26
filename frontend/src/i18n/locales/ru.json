@@ -18,7 +18,16 @@
     "amount": "Сумма",
     "date": "Дата",
     "category": "Категория",
-    "type": "Тип"
+    "type": "Тип",
+    "weekDays": {
+      "sunday": "Воскресенье",
+      "monday": "Понедельник",
+      "tuesday": "Вторник",
+      "wednesday": "Среда",
+      "thursday": "Четверг",
+      "friday": "Пятница",
+      "saturday": "Суббота"
+    }
   },
   "navigation": {
     "home": "Главная",
@@ -237,7 +246,8 @@
     }
   },
   "recurring": {
-    "title": "Повторяющиеся транзакции",
+    "title": "Повторяющиеся платежи",
+    "subtitle": "Управление автоматическими платежами",
     "createTitle": "Создать повторяющуюся транзакцию",
     "editTitle": "Редактировать повторяющуюся транзакцию",
     "deleteTitle": "Удалить повторяющуюся транзакцию",
@@ -245,7 +255,26 @@
     "noRecurring": "Повторяющиеся транзакции не найдены",
     "recurringCreated": "Повторяющаяся транзакция успешно создана",
     "recurringUpdated": "Повторяющаяся транзакция успешно обновлена",
-    "recurringDeleted": "Повторяющаяся транзакция успешно удалена"
+    "recurringDeleted": "Повторяющаяся транзакция успешно удалена",
+    "createButton": "Создать платеж",
+    "emptyState": {
+      "title": "Нет повторяющихся платежей",
+      "description": "Создайте первый повторяющийся платеж"
+    },
+    "messages": {
+      "paymentDeleted": "Повторяющийся платеж успешно удален",
+      "paymentPaused": "Повторяющийся платеж приостановлен",
+      "paymentResumed": "Повторяющийся платеж возобновлен",
+      "deleteFailed": "Ошибка при удалении повторяющегося платежа",
+      "pauseFailed": "Ошибка при приостановке повторяющегося платежа",
+      "resumeFailed": "Ошибка при возобновлении повторяющегося платежа"
+    },
+    "pagination": {
+      "previous": "Предыдущая",
+      "next": "Следующая",
+      "page": "Страница",
+      "of": "из"
+    }
   },
   "language": {
     "select": "Выберите язык",
@@ -517,6 +546,8 @@
     "title": "Аккаунты",
     "subtitle": "Управляйте своими финансовыми аккаунтами",
     "createButton": "Создать аккаунт",
+    "createModalTitle": "Создать аккаунт",
+    "editModalTitle": "Редактировать аккаунт",
     "stats": {
       "totalAccounts": "Всего аккаунтов",
       "totalBalance": "Общий баланс",
@@ -528,6 +559,29 @@
       "button": "Создать аккаунт"
     },
     "myAccounts": "Мои аккаунты",
+    "form": {
+      "name": "Название аккаунта",
+      "namePlaceholder": "Например: Основной счет",
+      "type": "Тип аккаунта",
+      "types": {
+        "bank": "Банковский счет",
+        "cash": "Наличные",
+        "crypto": "Криптовалюта",
+        "investment": "Инвестиции",
+        "savings": "Сбережения",
+        "other": "Другое"
+      },
+      "currency": "Валюта",
+      "balance": "Баланс",
+      "initialBalance": "Начальный баланс",
+      "required": "*",
+      "optional": "(необязательно)",
+      "saving": "Сохранение...",
+      "creating": "Создание...",
+      "saveChanges": "Сохранить изменения",
+      "createAccount": "Создать аккаунт",
+      "cancel": "Отмена"
+    },
     "errors": {
       "loadAccounts": "Ошибка при загрузке аккаунтов",
       "loadSummaries": "Ошибка при загрузке сводок аккаунтов",
@@ -537,16 +591,339 @@
       "operationError": "Ошибка при операции с аккаунтом"
     }
   },
+  "debtPage": {
+    "title": "Управление долгами",
+    "subtitle": "Отслеживайте и управляйте своими долгами и платежами",
+    "tabs": {
+      "debts": "Долги",
+      "contacts": "Контакты"
+    },
+    "addButton": "Добавить",
+    "messages": {
+      "debtCreated": "Долг успешно создан",
+      "debtUpdated": "Долг успешно обновлен",
+      "debtDeleted": "Долг успешно удален",
+      "contactCreated": "Контакт успешно создан",
+      "contactUpdated": "Контакт успешно обновлен",
+      "paymentMade": "Платеж успешно выполнен"
+    },
+    "backTo": "← Назад к",
+    "stats": {
+      "totalDebt": "Общий долг",
+      "totalPaid": "Всего выплачено",
+      "activeDebts": "Активные долги",
+      "paidOff": "Выплачено"
+    },
+    "types": {
+      "creditCard": "Кредитная карта",
+      "loan": "Займ",
+      "mortgage": "Ипотека",
+      "all": "Все типы"
+    },
+    "status": {
+      "all": "Все статусы",
+      "active": "Активный",
+      "paidOff": "Выплачено",
+      "inactive": "Неактивный"
+    },
+    "emptyStates": {
+      "noDebtsTitle": "Долги не найдены",
+      "noDebtsDescription": "Начните с добавления своего первого долга.",
+      "noDebtsFiltered": "Попробуйте изменить поиск или фильтры.",
+      "addFirstDebt": "Добавить первый долг",
+      "noContactsTitle": "Контакты не найдены",
+      "noContactsDescription": "Начните с добавления своего первого контакта.",
+      "noContactsFiltered": "Попробуйте изменить поиск.",
+      "addFirstContact": "Добавить первый контакт"
+    },
+    "searchPlaceholder": "Поиск",
+    "paymentHistory": "История платежей",
+    "deleteConfirm": "Вы уверены, что хотите удалить этот долг? Это действие нельзя отменить.",
+    "form": {
+      "title": "Создать новый долг",
+      "editTitle": "Редактировать долг",
+      "name": "Название долга",
+      "namePlaceholder": "например, Кредитная карта - Visa, Автокредит",
+      "debtType": "Тип долга",
+      "description": "Описание",
+      "descriptionPlaceholder": "Дополнительная информация об этом долге...",
+      "initialAmount": "Начальная сумма",
+      "initialAmountPlaceholder": "0.00 (положительная = они должны вам, отрицательная = вы должны им)",
+      "interestRate": "Процентная ставка (%)",
+      "minimumPayment": "Минимальный платеж",
+      "category": "Категория (необязательно)",
+      "selectCategory": "Выберите категорию (необязательно)",
+      "noCategory": "Без категории",
+      "startDate": "Дата начала",
+      "dueDate": "Дата погашения",
+      "contactInformation": "Контактная информация",
+      "selectContact": "Выберите, кто связан с этим долгом (необязательно):",
+      "noContactsAvailable": "Контакты недоступны. Вы можете создать контакты на вкладке Контакты.",
+      "chooseContact": "Выберите контакт или оставьте пустым",
+      "noSpecificContact": "Нет конкретного контакта",
+      "tip": "Подсказка:",
+      "amountTip": "Положительная сумма = они должны вам, Отрицательная сумма = вы должны им",
+      "positiveAmount": "Положительная сумма",
+      "negativeAmount": "Отрицательная сумма",
+      "theyOweYou": "= Они должны вам деньги (💰 входящие)",
+      "youOweThem": "= Вы должны им деньги (💸 исходящие)",
+      "useContacts": "Используйте контакты для отслеживания конкретных людей или организаций",
+      "saving": "Сохранение...",
+      "create": "Создать долг",
+      "update": "Обновить долг",
+      "errors": {
+        "nameRequired": "Название долга обязательно",
+        "initialAmountCannotBeZero": "Начальная сумма не может быть нулевой",
+        "interestRateRange": "Процентная ставка должна быть от 0 до 100",
+        "minimumPaymentMustBeGreater": "Минимальный платеж должен быть больше 0",
+        "startDateRequired": "Дата начала обязательна",
+        "contactNameRequired": "Имя контакта обязательно",
+        "validEmail": "Пожалуйста, введите корректный email адрес"
+      }
+    },
+    "contacts": {
+      "form": {
+        "createTitle": "Создать новый контакт",
+        "editTitle": "Редактировать контакт",
+        "name": "Имя контакта",
+        "namePlaceholder": "например, Иван Иванов, Банк России",
+        "email": "Email адрес",
+        "emailPlaceholder": "ivan@example.com",
+        "phone": "Номер телефона",
+        "phonePlaceholder": "+7 (999) 123-4567",
+        "company": "Компания/Организация",
+        "companyPlaceholder": "например, Банк России, Кредитный союз",
+        "address": "Адрес",
+        "addressPlaceholder": "ул. Примерная, д. 1, Москва",
+        "notes": "Заметки",
+        "notesPlaceholder": "Дополнительная информация об этом контакте...",
+        "saving": "Сохранение...",
+        "create": "Создать контакт",
+        "update": "Обновить контакт"
+      }
+    }
+  },
   "goalsPage": {
     "title": "Цели",
     "createModalTitle": "Создать цель",
     "editModalTitle": "Редактировать цель",
     "progressModalTitle": "Обновить прогресс",
+    "createButton": "Создать цель",
+    "createButtonShort": "Создать",
+    "loadingGoals": "Загрузка целей...",
+    "noGoals": "Нет целей",
+    "createFirstGoal": "Создайте свою первую цель для начала планирования",
+    "pagination": {
+      "previous": "Назад",
+      "next": "Вперед",
+      "of": "из"
+    },
     "messages": {
       "goalCreated": "Цель успешно создана",
       "goalUpdated": "Цель успешно обновлена",
       "goalDeleted": "Цель успешно удалена",
       "progressUpdated": "Прогресс обновлен"
+    },
+    "form": {
+      "title": "Название цели",
+      "titlePlaceholder": "Например: Накопить на отпуск",
+      "titleRequired": "Название обязательно",
+      "description": "Описание",
+      "descriptionPlaceholder": "Дополнительная информация о цели",
+      "goalType": "Тип цели",
+      "priority": "Приоритет",
+      "targetAmount": "Целевая сумма",
+      "targetAmountRequired": "Целевая сумма должна быть больше 0",
+      "currency": "Валюта",
+      "targetDate": "Целевая дата",
+      "targetDateMustBeFuture": "Целевая дата должна быть в будущем",
+      "useMilestones": "Использовать вехи для отслеживания прогресса",
+      "saving": "Сохранение...",
+      "create": "Создать",
+      "update": "Обновить"
+    },
+    "progressModal": {
+      "currentAmount": "Текущая сумма",
+      "targetAmount": "Целевая сумма",
+      "newCurrentAmount": "Новая текущая сумма",
+      "newProgress": "Новый прогресс",
+      "remaining": "Осталось",
+      "enterValidAmount": "Введите корректную сумму",
+      "exceedsTarget": "Текущая сумма не может превышать целевую",
+      "updating": "Обновление...",
+      "updateProgress": "Обновить прогресс"
+    },
+    "statistics": {
+      "totalGoals": "Всего целей",
+      "activeGoals": "Активные",
+      "completedGoals": "Завершенные",
+      "overallProgress": "Общий прогресс",
+      "financialSummary": "Финансовая сводка",
+      "totalSaved": "Накоплено",
+      "targetAmount": "Целевая сумма",
+      "byType": "По типам",
+      "byPriority": "По приоритету"
+    }
+  },
+  "recurringPage": {
+    "createModal": {
+      "title": "Создать повторяющийся платеж",
+      "success": "Повторяющийся платеж успешно создан",
+      "error": "Ошибка при создании повторяющегося платежа",
+      "name": "Название",
+      "description": "Описание",
+      "amount": "Сумма",
+      "currency": "Валюта",
+      "category": "Категория",
+      "selectCategory": "Выберите категорию",
+      "paymentType": "Тип платежа",
+      "expense": "Расход",
+      "income": "Доход",
+      "scheduleType": "Тип расписания",
+      "daily": "Ежедневно",
+      "weekly": "Еженедельно",
+      "monthly": "Ежемесячно",
+      "yearly": "Ежегодно",
+      "dayOfWeek": "День недели",
+      "dayOfMonth": "День месяца",
+      "month": "Месяц",
+      "day": "День",
+      "startDate": "Дата начала",
+      "endDate": "Дата окончания (опционально)",
+      "creating": "Создание...",
+      "create": "Создать"
+    }
+  },
+  "pdfParserPage": {
+    "title": "PDF Парсер",
+    "description": "Загружайте выписки из банка в формате PDF для автоматического извлечения и импорта транзакций.",
+    "uploadButton": "Загрузить PDF",
+    "creatingTransactions": "Создание транзакций...",
+    "uploadSectionTitle": "Загрузить банковский PDF",
+    "supportedBanks": "В настоящее время поддерживается: Монобанк (украинский и английский).",
+    "steps": {
+      "step1Title": "Шаг 1",
+      "step1Description": "Загрузите вашу банковскую выписку в формате PDF",
+      "step2Title": "Шаг 2",
+      "step2Description": "Проверьте и отредактируйте извлеченные транзакции",
+      "step3Title": "Шаг 3",
+      "step3Description": "Создайте записи о доходах и расходах"
+    },
+    "messages": {
+      "noValidTransactions": "Нет действительных транзакций для создания",
+      "someTransactionsFailed": "Некоторые транзакции не удалось создать",
+      "transactionsCreated": "Успешно создано {{count}} из {{total}} транзакций",
+      "allMccFailed": "Все попытки создания категорий MCC провалились. Пожалуйста, выберите категории вручную.",
+      "categoriesCreated": "Успешно создано {{count}} категорий из кодов MCC!",
+      "categoriesPartiallyCreated": "{{successful}} категорий создано успешно, {{failed}} провалилось. Продолжаем с успешными.",
+      "retryFailed": "Повторная попытка провалилась",
+      "retryCompleted": "Повторная попытка завершена: {{successful}} успешно, {{failed}} все еще провалилось",
+      "failedToCreateCategories": "Не удалось создать категории из пакета MCC",
+      "failedToCreateTransactions": "Не удалось создать транзакции"
+    },
+    "errors": {
+      "categoryLimitExceeded": "Лимит категорий превышен. Пожалуйста, обновите ваш план или удалите некоторые существующие категории.",
+      "categoryAlreadyExists": "Категория уже существует для этого кода MCC.",
+      "mccCodeNotFound": "Код MCC не найден в системе.",
+      "validationError": "Предоставлены неверные данные категории.",
+      "subscriptionError": "Ошибка службы подписки. Пожалуйста, попробуйте позже.",
+      "databaseError": "Ошибка базы данных. Пожалуйста, попробуйте позже.",
+      "unauthorized": "Вы не авторизованы для выполнения этого действия.",
+      "forbidden": "Доступ запрещен. Пожалуйста, проверьте ваши права.",
+      "notFound": "Запрашиваемый ресурс не найден.",
+      "internalError": "Внутренняя ошибка сервера. Пожалуйста, попробуйте позже.",
+      "unexpectedError": "Произошла неожиданная ошибка. Пожалуйста, попробуйте снова."
+    },
+    "mccProcessing": {
+      "retrying": "Повторная попытка создания провалившихся категорий MCC...",
+      "creatingCategories": "Создание {{count}} категорий из кодов MCC...",
+      "incomeCreated": "{{count}} доход",
+      "expenseCreated": "{{count}} расход",
+      "debtCreated": "{{count}} долг",
+      "progress": "Прогресс: {{processed}}/{{total}}",
+      "failedMccCodes": "Провалившиеся коды MCC:",
+      "retryFailedButton": "Повторить провалившиеся ({{count}})"
+    },
+    "uploadModal": {
+      "title": "Загрузить банковский PDF",
+      "bankTypeLabel": "Тип банка",
+      "bankTypePlaceholder": "Выберите тип банка",
+      "pdfFileLabel": "PDF файл",
+      "dropOrClick": "Перетащите PDF сюда или",
+      "chooseFile": "Выбрать файл",
+      "maxFileSize": "Максимальный размер файла: 10MB",
+      "cancel": "Отмена",
+      "parseButton": "Распарсить PDF",
+      "parsing": "Обработка...",
+      "errors": {
+        "selectPdf": "Пожалуйста, выберите PDF файл",
+        "fileSizeLimit": "Размер файла должен быть меньше 10MB",
+        "selectFile": "Пожалуйста, выберите файл",
+        "selectBankType": "Пожалуйста, выберите тип банка",
+        "parseFailed": "Не удалось распарсить PDF",
+        "dropPdf": "Пожалуйста, перетащите PDF файл",
+        "loadBanksFailed": "Не удалось загрузить поддерживаемые банки"
+      }
+    },
+    "reviewModal": {
+      "title": "Проверка распарсенных транзакций",
+      "subtitle": "Проверьте и отредактируйте транзакции перед созданием",
+      "subtitleShort": "Проверьте и отредактируйте транзакции",
+      "loadingCategories": "Загрузка категорий...",
+      "stats": {
+        "total": "Всего",
+        "valid": "Валидные",
+        "invalid": "Невалидные",
+        "categoriesNeeded": "Категории требуются"
+      },
+      "transaction": {
+        "include": "Включить",
+        "exclude": "Исключить",
+        "amount": "Сумма",
+        "date": "Дата",
+        "type": "Тип",
+        "category": "Категория",
+        "description": "Описание",
+        "selectCategory": "Выбрать категорию",
+        "descriptionPlaceholder": "Введите описание транзакции...",
+        "mccInfo": "Информация о Merchant Category Code (MCC)",
+        "mccBadge": "MCC",
+        "categoryExists": "Категория существует",
+        "autoCreate": "Авто-создание",
+        "autoCreateNotice": "Эта категория будет автоматически создана из кода MCC, если вы не выберете другую.",
+        "rawText": "Исходный текст (для справки)"
+      },
+      "footer": {
+        "readyToCreate": "Готово к созданию",
+        "noValidTransactions": "Нет валидных транзакций для создания",
+        "cancel": "Отмена",
+        "creating": "Создание...",
+        "createButton": "Создать {{count}} транзакци{{plural}}"
+      },
+      "errors": {
+        "fillRequiredFields": "Пожалуйста, заполните все обязательные поля для {{count}} транзакций",
+        "createFailed": "Не удалось создать транзакции. Пожалуйста, попробуйте снова.",
+        "loadCategoriesFailed": "Не удалось загрузить категории"
+      }
+    }
+  },
+  "dashboard": {
+    "goalsOverview": {
+      "title": "Финансовые цели",
+      "noGoals": "Нет финансовых целей",
+      "createFirstGoal": "Создайте свою первую финансовую цель для отслеживания прогресса",
+      "createGoal": "Создать цель",
+      "viewAll": "Все цели",
+      "totalGoals": "Всего целей",
+      "activeGoals": "Активные",
+      "completedGoals": "Завершенные",
+      "overallProgress": "Общий прогресс",
+      "financialSummary": "Финансовая сводка",
+      "totalSaved": "Накоплено",
+      "targetAmount": "Целевая сумма",
+      "recentGoals": "Последние цели",
+      "overdueDays": "Просрочено на {{days}} дн.",
+      "daysRemaining": "Осталось {{days}} дн."
     }
   },
   "authPage": {
@@ -643,12 +1020,20 @@
     "title": "Профиль пользователя",
     "subtitle": "Управление личными данными и настройками аккаунта",
     "editButton": "Редактировать профиль",
+    "editModalTitle": "Редактировать профиль",
     "defaultUsername": "Пользователь",
     "username": "Имя пользователя",
     "baseCurrency": "Базовая валюта",
     "userId": "ID пользователя",
     "subscription": "Подписка",
     "notSpecified": "Не указано",
-    "noSubscription": "Нет подписки"
+    "noSubscription": "Нет подписки",
+    "accountStatus": "Статус аккаунта",
+    "active": "Активен",
+    "registrationDate": "Дата регистрации",
+    "recently": "Недавно",
+    "emailVerified": "Email подтвержден",
+    "profileUpdated": "Профиль успешно обновлен!",
+    "profileUpdateError": "Ошибка при обновлении профиля"
   }
 }

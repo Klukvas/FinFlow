@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Goal } from '@/types';
 import { GoalCard } from '@/components/ui/goals';
 import { LoadingState } from '@/components/ui/shared/LoadingState';
@@ -26,8 +27,10 @@ export const GoalsList = React.memo<GoalsListProps>(({
   totalPages,
   onPageChange,
 }) => {
+  const { t } = useTranslation();
+
   if (loading) {
-    return <LoadingState isLoading={true} data-testid="goals-list-loading"><div>Загрузка целей...</div></LoadingState>;
+    return <LoadingState isLoading={true} data-testid="goals-list-loading"><div>{t('goalsPage.loadingGoals')}</div></LoadingState>;
   }
 
   if (goals.length === 0) {
@@ -35,10 +38,10 @@ export const GoalsList = React.memo<GoalsListProps>(({
       <div className="text-center py-12" data-testid="goals-empty-state">
         <div className="text-gray-400 text-6xl mb-4">🎯</div>
         <h3 className="text-lg font-medium theme-text-primary mb-2">
-          Нет целей
+          {t('goalsPage.noGoals')}
         </h3>
         <p className="theme-text-tertiary">
-          Создайте свою первую цель для начала планирования
+          {t('goalsPage.createFirstGoal')}
         </p>
       </div>
     );
@@ -68,11 +71,11 @@ export const GoalsList = React.memo<GoalsListProps>(({
               className="px-3 py-2 theme-surface border theme-border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:theme-surface-hover theme-transition"
               data-testid="goals-prev-page"
             >
-              Назад
+              {t('goalsPage.pagination.previous')}
             </button>
             
             <span className="px-3 py-2 theme-text-primary">
-              {currentPage} из {totalPages}
+              {currentPage} {t('goalsPage.pagination.of')} {totalPages}
             </span>
             
             <button
@@ -81,7 +84,7 @@ export const GoalsList = React.memo<GoalsListProps>(({
               className="px-3 py-2 theme-surface border theme-border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:theme-surface-hover theme-transition"
               data-testid="goals-next-page"
             >
-              Вперед
+              {t('goalsPage.pagination.next')}
             </button>
           </div>
         </div>

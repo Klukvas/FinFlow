@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useApiClients } from '@/hooks/useApiClients';
 import { useTheme } from '@/contexts/ThemeContext';
 import { DebtResponse, DebtCreate, DebtUpdate, DebtSummary } from '@/types/debt';
@@ -11,20 +12,15 @@ import { PaymentList } from '@/components/debt/PaymentList';
 import { ContactCard } from '@/components/contact/ContactCard';
 import { ContactForm } from '@/components/contact/ContactForm';
 import { Button } from '@/components/ui/shared/Button';
-import { Input } from '@/components/ui/forms/Input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui';
 import { Card, CardContent } from '@/components/ui';
 import { toast } from 'sonner';
 import { 
   Plus, 
-  Search, 
   DollarSign, 
   TrendingDown, 
   CreditCard,
   AlertCircle,
   CheckCircle,
-  Eye,
-  EyeOff,
   Users,
   UserPlus
 } from 'lucide-react';
@@ -35,6 +31,7 @@ type TabType = 'debts' | 'contacts';
 export const Debts: React.FC = () => {
   const { debt, contact, category } = useApiClients();
   const { actualTheme } = useTheme();
+  const { t } = useTranslation();
   
   const [debts, setDebts] = useState<DebtResponse[]>([]);
   const [contacts, setContacts] = useState<ContactResponse[]>([]);
@@ -45,10 +42,6 @@ export const Debts: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('debts');
   const [selectedDebt, setSelectedDebt] = useState<DebtResponse | null>(null);
   const [selectedContact, setSelectedContact] = useState<ContactResponse | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState<string>('all');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [showSummary, setShowSummary] = useState(true);
 
   useEffect(() => {
     loadData();
@@ -93,7 +86,7 @@ export const Debts: React.FC = () => {
           setDebts(prev => [...prev, result]);
           setViewMode('list');
           loadData(); // Refresh summary
-          toast.success('Debt created successfully');
+          toast.success(t('debtPage.messages.debtCreated'));
         } else {
           console.error('Error creating debt:', result.error);
           toast.error('Failed to create debt. Please try again.');
@@ -116,7 +109,7 @@ export const Debts: React.FC = () => {
           setViewMode('list');
           setSelectedDebt(null);
           loadData(); // Refresh summary
-          toast.success('Debt updated successfully');
+          toast.success(t('debtPage.messages.debtUpdated'));
         } else {
           console.error('Error updating debt:', result.error);
           toast.error('Failed to update debt. Please try again.');
@@ -141,19 +134,19 @@ export const Debts: React.FC = () => {
           setSelectedDebt(updatedDebtResult);
         }
         loadData(); // Refresh summary
-        toast.success('Payment made successfully');
-      } else {
-        console.error('Error making payment:', result.error);
+                  toast.success(t('debtPage.messages.paymentMade'));
+        } else {
+          console.error('Error making payment:', result.error);
+          toast.error('Failed to make payment. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error making payment:', error);
         toast.error('Failed to make payment. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error making payment:', error);
-      toast.error('Failed to make payment. Please try again.');
     }
   };
 
   const handleDeleteDebt = async (debtId: number) => {
-    if (!window.confirm('Are you sure you want to delete this debt? This action cannot be undone.')) {
+    if (!window.confirm(t('debtPage.deleteConfirm'))) {
       return;
     }
     
@@ -170,15 +163,15 @@ export const Debts: React.FC = () => {
         // Refresh the debt summary
         loadData();
         // Show success toast
-        toast.success('Debt deleted successfully');
-      } else {
-        const errorMsg = typeof result === 'object' && 'error' in result ? result.error : 'Unknown error';
-        console.error('Error deleting debt:', errorMsg);
+                  toast.success(t('debtPage.messages.debtDeleted'));
+        } else {
+          const errorMsg = typeof result === 'object' && 'error' in result ? result.error : 'Unknown error';
+          console.error('Error deleting debt:', errorMsg);
+          toast.error('Failed to delete debt. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error deleting debt:', error);
         toast.error('Failed to delete debt. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error deleting debt:', error);
-      toast.error('Failed to delete debt. Please try again.');
     }
   };
 
@@ -189,7 +182,7 @@ export const Debts: React.FC = () => {
         if (!('error' in result)) {
           setContacts(prev => [...prev, result]);
           setViewMode('contacts');
-          toast.success('Contact created successfully');
+          toast.success(t('debtPage.messages.contactCreated'));
         } else {
           console.error('Error creating contact:', result.error);
           toast.error('Failed to create contact. Please try again.');
@@ -211,7 +204,7 @@ export const Debts: React.FC = () => {
           setContacts(prev => prev.map(c => c.id === selectedContact.id ? result : c));
           setViewMode('contacts');
           setSelectedContact(null);
-          toast.success('Contact updated successfully');
+          toast.success(t('debtPage.messages.contactUpdated'));
         } else {
           console.error('Error updating contact:', result.error);
           toast.error('Failed to update contact. Please try again.');
@@ -223,25 +216,9 @@ export const Debts: React.FC = () => {
     })();
   };
 
-  const filteredDebts = debts.filter(debt => {
-    const matchesSearch = debt.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         debt.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = filterType === 'all' || debt.debt_type === filterType;
-    const matchesStatus = filterStatus === 'all' || 
-                         (filterStatus === 'active' && debt.is_active) ||
-                         (filterStatus === 'paid-off' && debt.is_paid_off) ||
-                         (filterStatus === 'inactive' && !debt.is_active);
-    
-    return matchesSearch && matchesType && matchesStatus;
-  });
+  const filteredDebts = debts;
 
-  const filteredContacts = contacts.filter(contact => {
-    const matchesSearch = contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         contact.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         contact.email?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    return matchesSearch;
-  });
+  const filteredContacts = contacts;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -282,7 +259,7 @@ export const Debts: React.FC = () => {
               onClick={() => setViewMode(activeTab === 'debts' ? 'list' : 'contacts')}
               className="mb-4"
             >
-              ← Back to {activeTab === 'debts' ? 'Debts' : 'Contacts'}
+              {t('debtPage.backTo')} {activeTab === 'debts' ? t('debtPage.tabs.debts') : t('debtPage.tabs.contacts')}
             </Button>
             <DebtForm
               contacts={contacts}
@@ -307,7 +284,7 @@ export const Debts: React.FC = () => {
               onClick={() => setViewMode('contacts')}
               className="mb-4"
             >
-              ← Back to Contacts
+              {t('debtPage.backTo')} {t('debtPage.tabs.contacts')}
             </Button>
             <ContactForm
               onSubmit={handleCreateContact}
@@ -330,7 +307,7 @@ export const Debts: React.FC = () => {
               onClick={() => setViewMode(activeTab === 'debts' ? 'list' : 'contacts')}
               className="mb-4"
             >
-              ← Back to {activeTab === 'debts' ? 'Debts' : 'Contacts'}
+              {t('debtPage.backTo')} {activeTab === 'debts' ? t('debtPage.tabs.debts') : t('debtPage.tabs.contacts')}
             </Button>
             <DebtForm
               initialData={selectedDebt}
@@ -356,7 +333,7 @@ export const Debts: React.FC = () => {
               onClick={() => setViewMode('contacts')}
               className="mb-4"
             >
-              ← Back to Contacts
+              {t('debtPage.backTo')} {t('debtPage.tabs.contacts')}
             </Button>
             <ContactForm
               initialData={selectedContact}
@@ -380,7 +357,7 @@ export const Debts: React.FC = () => {
               onClick={() => setViewMode('list')}
               className="mb-4"
             >
-              ← Back to Debts
+              {t('debtPage.backTo')} {t('debtPage.tabs.debts')}
             </Button>
             <PaymentForm
               debtId={selectedDebt.id}
@@ -404,12 +381,12 @@ export const Debts: React.FC = () => {
               onClick={() => setViewMode('list')}
               className="mb-4"
             >
-              ← Back to Debts
+              {t('debtPage.backTo')} {t('debtPage.tabs.debts')}
             </Button>
             <h1 className={`text-3xl font-bold mb-6 ${
               actualTheme === 'dark' ? 'text-white' : 'text-gray-900'
             }`}>
-              Payment History - {selectedDebt.name}
+              {t('debtPage.paymentHistory')} - {selectedDebt.name}
             </h1>
             <PaymentList
               payments={[]} // TODO: Load payments for this debt
@@ -430,12 +407,12 @@ export const Debts: React.FC = () => {
             <h1 className={`text-3xl font-bold ${
               actualTheme === 'dark' ? 'text-white' : 'text-gray-900'
             }`}>
-              Debt Management
+              {t('debtPage.title')}
             </h1>
             <p className={`mt-2 ${
               actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
             }`}>
-              Track and manage your debts and payments
+              {t('debtPage.subtitle')}
             </p>
           </div>
           <Button
@@ -443,7 +420,7 @@ export const Debts: React.FC = () => {
             className="mt-4 sm:mt-0"
           >
             <Plus className="w-4 h-4 mr-2" />
-            Add {activeTab === 'debts' ? 'Debt' : 'Contact'}
+            {t('debtPage.addButton')} {activeTab === 'debts' ? t('debtPage.tabs.debts') : t('debtPage.tabs.contacts')}
           </Button>
         </div>
 
@@ -465,7 +442,7 @@ export const Debts: React.FC = () => {
             }`}
           >
             <CreditCard className="w-4 h-4 inline mr-2" />
-            Debts
+            {t('debtPage.tabs.debts')}
           </button>
           <button
             onClick={() => {
@@ -483,12 +460,12 @@ export const Debts: React.FC = () => {
             }`}
           >
             <Users className="w-4 h-4 inline mr-2" />
-            Contacts
+            {t('debtPage.tabs.contacts')}
           </button>
         </div>
 
         {/* Summary Cards */}
-        {activeTab === 'debts' && summary && showSummary && (
+        {activeTab === 'debts' && summary && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <Card className={`${
               actualTheme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
@@ -499,7 +476,7 @@ export const Debts: React.FC = () => {
                     <p className={`text-sm font-medium ${
                       actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
                     }`}>
-                      Total Debt
+                      {t('debtPage.stats.totalDebt')}
                     </p>
                     <p className={`text-2xl font-bold ${
                       actualTheme === 'dark' ? 'text-white' : 'text-gray-900'
@@ -525,7 +502,7 @@ export const Debts: React.FC = () => {
                     <p className={`text-sm font-medium ${
                       actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
                     }`}>
-                      Total Paid
+                      {t('debtPage.stats.totalPaid')}
                     </p>
                     <p className={`text-2xl font-bold ${
                       actualTheme === 'dark' ? 'text-white' : 'text-gray-900'
@@ -551,7 +528,7 @@ export const Debts: React.FC = () => {
                     <p className={`text-sm font-medium ${
                       actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
                     }`}>
-                      Active Debts
+                      {t('debtPage.stats.activeDebts')}
                     </p>
                     <p className={`text-2xl font-bold ${
                       actualTheme === 'dark' ? 'text-white' : 'text-gray-900'
@@ -577,7 +554,7 @@ export const Debts: React.FC = () => {
                     <p className={`text-sm font-medium ${
                       actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
                     }`}>
-                      Paid Off
+                      {t('debtPage.stats.paidOff')}
                     </p>
                     <p className={`text-2xl font-bold ${
                       actualTheme === 'dark' ? 'text-white' : 'text-gray-900'
@@ -596,73 +573,6 @@ export const Debts: React.FC = () => {
           </div>
         )}
 
-        {/* Controls */}
-        <div className="flex flex-col lg:flex-row gap-4 mb-6">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
-                actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-              }`} />
-              <Input
-                placeholder={`Search ${activeTab}...`}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className={`pl-10 ${
-                  actualTheme === 'dark' 
-                    ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400' 
-                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                }`}
-              />
-            </div>
-          </div>
-          
-          {activeTab === 'debts' && (
-            <div className="flex gap-2">
-              <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className={`w-32 ${
-                  actualTheme === 'dark' 
-                    ? 'bg-gray-800 border-gray-700 text-white' 
-                    : 'bg-white border-gray-300 text-gray-900'
-                }`}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className={actualTheme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-300'}>
-                  <SelectItem value="all" className={actualTheme === 'dark' ? 'text-white hover:bg-gray-700' : 'text-gray-900 hover:bg-gray-100'}>All Types</SelectItem>
-                  <SelectItem value="CREDIT_CARD" className={actualTheme === 'dark' ? 'text-white hover:bg-gray-700' : 'text-gray-900 hover:bg-gray-100'}>Credit Card</SelectItem>
-                  <SelectItem value="LOAN" className={actualTheme === 'dark' ? 'text-white hover:bg-gray-700' : 'text-gray-900 hover:bg-gray-100'}>Loan</SelectItem>
-                  <SelectItem value="MORTGAGE" className={actualTheme === 'dark' ? 'text-white hover:bg-gray-700' : 'text-gray-900 hover:bg-gray-100'}>Mortgage</SelectItem>
-                  <SelectItem value="OTHER" className={actualTheme === 'dark' ? 'text-white hover:bg-gray-700' : 'text-gray-900 hover:bg-gray-100'}>Other</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className={`w-32 ${
-                  actualTheme === 'dark' 
-                    ? 'bg-gray-800 border-gray-700 text-white' 
-                    : 'bg-white border-gray-300 text-gray-900'
-                }`}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className={actualTheme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-300'}>
-                  <SelectItem value="all" className={actualTheme === 'dark' ? 'text-white hover:bg-gray-700' : 'text-gray-900 hover:bg-gray-100'}>All Status</SelectItem>
-                  <SelectItem value="active" className={actualTheme === 'dark' ? 'text-white hover:bg-gray-700' : 'text-gray-900 hover:bg-gray-100'}>Active</SelectItem>
-                  <SelectItem value="paid-off" className={actualTheme === 'dark' ? 'text-white hover:bg-gray-700' : 'text-gray-900 hover:bg-gray-100'}>Paid Off</SelectItem>
-                  <SelectItem value="inactive" className={actualTheme === 'dark' ? 'text-white hover:bg-gray-700' : 'text-gray-900 hover:bg-gray-100'}>Inactive</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowSummary(!showSummary)}
-                className="px-3"
-              >
-                {showSummary ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </Button>
-            </div>
-          )}
-        </div>
-
         {/* Content based on active tab */}
         {activeTab === 'debts' ? (
           /* Debt Cards */
@@ -677,18 +587,16 @@ export const Debts: React.FC = () => {
                 <h3 className={`text-lg font-medium mb-2 ${
                   actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  No Debts Found
+                  {t('debtPage.emptyStates.noDebtsTitle')}
                 </h3>
                 <p className={`mb-6 ${
                   actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'
                 }`}>
-                  {searchTerm || filterType !== 'all' || filterStatus !== 'all'
-                    ? 'Try adjusting your search or filters.'
-                    : 'Get started by adding your first debt.'}
+                  {t('debtPage.emptyStates.noDebtsDescription')}
                 </p>
                 <Button onClick={() => setViewMode('create')}>
                   <Plus className="w-4 h-4 mr-2" />
-                  Add Your First Debt
+                  {t('debtPage.emptyStates.addFirstDebt')}
                 </Button>
               </CardContent>
             </Card>
@@ -734,18 +642,16 @@ export const Debts: React.FC = () => {
                 <h3 className={`text-lg font-medium mb-2 ${
                   actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  No Contacts Found
+                  {t('debtPage.emptyStates.noContactsTitle')}
                 </h3>
                 <p className={`mb-6 ${
                   actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'
                 }`}>
-                  {searchTerm
-                    ? 'Try adjusting your search.'
-                    : 'Get started by adding your first contact.'}
+                  {t('debtPage.emptyStates.noContactsDescription')}
                 </p>
                 <Button onClick={() => setViewMode('create-contact')}>
                   <UserPlus className="w-4 h-4 mr-2" />
-                  Add Your First Contact
+                  {t('debtPage.emptyStates.addFirstContact')}
                 </Button>
               </CardContent>
             </Card>

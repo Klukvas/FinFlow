@@ -18,7 +18,16 @@
     "amount": "Сума",
     "date": "Дата",
     "category": "Категорія",
-    "type": "Тип"
+    "type": "Тип",
+    "weekDays": {
+      "sunday": "Неділя",
+      "monday": "Понеділок",
+      "tuesday": "Вівторок",
+      "wednesday": "Середа",
+      "thursday": "Четвер",
+      "friday": "П'ятниця",
+      "saturday": "Субота"
+    }
   },
   "navigation": {
     "home": "Головна",
@@ -237,7 +246,8 @@
     }
   },
   "recurring": {
-    "title": "Повторювані транзакції",
+    "title": "Повторювані платежі",
+    "subtitle": "Управління автоматичними платежами",
     "createTitle": "Створити повторювану транзакцію",
     "editTitle": "Редагувати повторювану транзакцію",
     "deleteTitle": "Видалити повторювану транзакцію",
@@ -245,7 +255,26 @@
     "noRecurring": "Повторювані транзакції не знайдені",
     "recurringCreated": "Повторювана транзакція успішно створена",
     "recurringUpdated": "Повторювана транзакція успішно оновлена",
-    "recurringDeleted": "Повторювана транзакція успішно видалена"
+    "recurringDeleted": "Повторювана транзакція успішно видалена",
+    "createButton": "Створити платіж",
+    "emptyState": {
+      "title": "Немає повторюваних платежів",
+      "description": "Створіть перший повторюваний платіж"
+    },
+    "messages": {
+      "paymentDeleted": "Повторюваний платіж успішно видалено",
+      "paymentPaused": "Повторюваний платіж призупинено",
+      "paymentResumed": "Повторюваний платіж відновлено",
+      "deleteFailed": "Помилка при видаленні повторюваного платежу",
+      "pauseFailed": "Помилка при призупиненні повторюваного платежу",
+      "resumeFailed": "Помилка при відновленні повторюваного платежу"
+    },
+    "pagination": {
+      "previous": "Попередня",
+      "next": "Наступна",
+      "page": "Сторінка",
+      "of": "з"
+    }
   },
   "language": {
     "select": "Оберіть мову",
@@ -312,16 +341,434 @@
       "text": "Відстежуйте витрати, контролюйте доходи та досягайте фінансових цілей."
     }
   },
+  "categoryPage": {
+    "title": "Управління категоріями",
+    "subtitle": "Створюйте та керуйте категоріями витрат та доходів для кращого контролю над фінансами",
+    "createButton": "Створити категорію",
+    "createModalTitle": "Створити нову категорію",
+    "editModalTitle": "Редагувати категорію"
+  },
+  "incomePage": {
+    "title": "Управління доходами",
+    "subtitle": "Додавайте та відстежуйте ваші доходи для кращого контролю над фінансовим зростанням",
+    "addButton": "Додати дохід",
+    "createModalTitle": "Додати новий дохід"
+  },
+  "expensePage": {
+    "title": "Управління витратами",
+    "subtitle": "Додавайте та відстежуйте ваші витрати для кращого контролю над бюджетом",
+    "addButton": "Додати витрату",
+    "createModalTitle": "Додати нову витрату",
+    "tabs": {
+      "table": "Таблиця витрат",
+      "dashboard": "Аналітика"
+    }
+  },
+  "accountPage": {
+    "title": "Акаунти",
+    "subtitle": "Керуйте своїми фінансовими акаунтами",
+    "createButton": "Створити акаунт",
+    "createModalTitle": "Створити акаунт",
+    "editModalTitle": "Редагувати акаунт",
+    "stats": {
+      "totalAccounts": "Всього акаунтів",
+      "totalBalance": "Загальний баланс",
+      "active": "Активних"
+    },
+    "emptyState": {
+      "title": "У вас поки немає акаунтів",
+      "subtitle": "Створіть свій перший акаунт для відстеження фінансів",
+      "button": "Створити акаунт"
+    },
+    "myAccounts": "Мої акаунти",
+    "form": {
+      "name": "Назва акаунта",
+      "namePlaceholder": "Наприклад: Основний рахунок",
+      "type": "Тип акаунта",
+      "types": {
+        "bank": "Банківський рахунок",
+        "cash": "Готівка",
+        "crypto": "Криптовалюта",
+        "investment": "Інвестиції",
+        "savings": "Заощадження",
+        "other": "Інше"
+      },
+      "currency": "Валюта",
+      "balance": "Баланс",
+      "initialBalance": "Початковий баланс",
+      "required": "*",
+      "optional": "(необов'язково)",
+      "saving": "Збереження...",
+      "creating": "Створення...",
+      "saveChanges": "Зберегти зміни",
+      "createAccount": "Створити акаунт",
+      "cancel": "Скасувати"
+    },
+    "errors": {
+      "loadAccounts": "Помилка при завантаженні акаунтів",
+      "loadSummaries": "Помилка при завантаженні зведень акаунтів",
+      "createAccount": "Помилка при створенні акаунта",
+      "updateAccount": "Помилка при оновленні акаунта",
+      "archiveAccount": "Помилка при архівуванні акаунта",
+      "operationError": "Помилка при операції з акаунтом"
+    }
+  },
+  "debtPage": {
+    "title": "Управління боргами",
+    "subtitle": "Відстежуйте та керуйте своїми боргами та платежами",
+    "tabs": {
+      "debts": "Борги",
+      "contacts": "Контакти"
+    },
+    "addButton": "Додати",
+    "messages": {
+      "debtCreated": "Борг успішно створено",
+      "debtUpdated": "Борг успішно оновлено",
+      "debtDeleted": "Борг успішно видалено",
+      "contactCreated": "Контакт успішно створено",
+      "contactUpdated": "Контакт успішно оновлено",
+      "paymentMade": "Платіж успішно виконано"
+    },
+    "backTo": "← Назад до",
+    "stats": {
+      "totalDebt": "Загальний борг",
+      "totalPaid": "Всього виплачено",
+      "activeDebts": "Активні борги",
+      "paidOff": "Виплачено"
+    },
+    "types": {
+      "creditCard": "Кредитна картка",
+      "loan": "Позика",
+      "mortgage": "Іпотека",
+      "all": "Всі типи"
+    },
+    "status": {
+      "all": "Всі статуси",
+      "active": "Активний",
+      "paidOff": "Виплачено",
+      "inactive": "Неактивний"
+    },
+    "emptyStates": {
+      "noDebtsTitle": "Борги не знайдені",
+      "noDebtsDescription": "Почніть з додавання свого першого боргу.",
+      "noDebtsFiltered": "Спробуйте змінити пошук або фільтри.",
+      "addFirstDebt": "Додати перший борг",
+      "noContactsTitle": "Контакти не знайдені",
+      "noContactsDescription": "Почніть з додавання свого першого контакту.",
+      "noContactsFiltered": "Спробуйте змінити пошук.",
+      "addFirstContact": "Додати перший контакт"
+    },
+    "searchPlaceholder": "Пошук",
+    "paymentHistory": "Історія платежів",
+    "deleteConfirm": "Ви впевнені, що хочете видалити цей борг? Цю дію не можна скасувати.",
+    "form": {
+      "title": "Створити новий борг",
+      "editTitle": "Редагувати борг",
+      "name": "Назва боргу",
+      "namePlaceholder": "наприклад, Кредитна картка - Visa, Автокредит",
+      "debtType": "Тип боргу",
+      "description": "Опис",
+      "descriptionPlaceholder": "Додаткова інформація про цей борг...",
+      "initialAmount": "Початкова сума",
+      "initialAmountPlaceholder": "0.00 (додатна = вони вам винен, від'ємна = ви їм винен)",
+      "interestRate": "Відсоткова ставка (%)",
+      "minimumPayment": "Мінімальний платіж",
+      "category": "Категорія (необов'язково)",
+      "selectCategory": "Виберіть категорію (необов'язково)",
+      "noCategory": "Без категорії",
+      "startDate": "Дата початку",
+      "dueDate": "Дата погашення",
+      "contactInformation": "Контактна інформація",
+      "selectContact": "Виберіть, хто пов'язаний з цим боргом (необов'язково):",
+      "noContactsAvailable": "Контакти недоступні. Ви можете створити контакти на вкладці Контакти.",
+      "chooseContact": "Виберіть контакт або залиште порожнім",
+      "noSpecificContact": "Немає конкретного контакту",
+      "tip": "Підказка:",
+      "amountTip": "Додатна сума = вони вам винен, Від'ємна сума = ви їм винен",
+      "positiveAmount": "Додатна сума",
+      "negativeAmount": "Від'ємна сума",
+      "theyOweYou": "= Вони вам винні гроші (💰 вхідні)",
+      "youOweThem": "= Ви їм винні гроші (💸 вихідні)",
+      "useContacts": "Використовуйте контакти для відстеження конкретних людей або організацій",
+      "saving": "Збереження...",
+      "create": "Створити борг",
+      "update": "Оновити борг",
+      "errors": {
+        "nameRequired": "Назва боргу обов'язкова",
+        "initialAmountCannotBeZero": "Початкова сума не може бути нульовою",
+        "interestRateRange": "Відсоткова ставка повинна бути від 0 до 100",
+        "minimumPaymentMustBeGreater": "Мінімальний платіж повинен бути більше 0",
+        "startDateRequired": "Дата початку обов'язкова",
+        "contactNameRequired": "Ім'я контакту обов'язкове",
+        "validEmail": "Будь ласка, введіть коректну email адресу"
+      }
+    },
+    "contacts": {
+      "form": {
+        "createTitle": "Створити новий контакт",
+        "editTitle": "Редагувати контакт",
+        "name": "Ім'я контакту",
+        "namePlaceholder": "наприклад, Іван Іванов, Банк України",
+        "email": "Email адреса",
+        "emailPlaceholder": "ivan@example.com",
+        "phone": "Номер телефону",
+        "phonePlaceholder": "+380 (99) 123-4567",
+        "company": "Компанія/Організація",
+        "companyPlaceholder": "наприклад, Банк України, Кредитний союз",
+        "address": "Адреса",
+        "addressPlaceholder": "вул. Прикладна, д. 1, Київ",
+        "notes": "Примітки",
+        "notesPlaceholder": "Додаткова інформація про цей контакт...",
+        "saving": "Збереження...",
+        "create": "Створити контакт",
+        "update": "Оновити контакт"
+      }
+    }
+  },
   "goalsPage": {
     "title": "Цілі",
     "createModalTitle": "Створити ціль",
     "editModalTitle": "Редагувати ціль",
     "progressModalTitle": "Оновити прогрес",
+    "createButton": "Створити ціль",
+    "createButtonShort": "Створити",
+    "loadingGoals": "Завантаження цілей...",
+    "noGoals": "Немає цілей",
+    "createFirstGoal": "Створіть свою першу ціль для початку планування",
+    "pagination": {
+      "previous": "Назад",
+      "next": "Вперед",
+      "of": "з"
+    },
     "messages": {
       "goalCreated": "Ціль успішно створена",
       "goalUpdated": "Ціль успішно оновлена",
       "goalDeleted": "Ціль успішно видалена",
       "progressUpdated": "Прогрес оновлено"
+    },
+    "form": {
+      "title": "Назва цілі",
+      "titlePlaceholder": "Наприклад: Накопичити на відпустку",
+      "titleRequired": "Назва обов'язкова",
+      "description": "Опис",
+      "descriptionPlaceholder": "Додаткова інформація про ціль",
+      "goalType": "Тип цілі",
+      "priority": "Пріоритет",
+      "targetAmount": "Цільова сума",
+      "targetAmountRequired": "Цільова сума повинна бути більше 0",
+      "currency": "Валюта",
+      "targetDate": "Цільова дата",
+      "targetDateMustBeFuture": "Цільова дата повинна бути в майбутньому",
+      "useMilestones": "Використовувати віхи для відстеження прогресу",
+      "saving": "Збереження...",
+      "create": "Створити",
+      "update": "Оновити"
+    },
+    "progressModal": {
+      "currentAmount": "Поточна сума",
+      "targetAmount": "Цільова сума",
+      "newCurrentAmount": "Нова поточна сума",
+      "newProgress": "Новий прогрес",
+      "remaining": "Залишилося",
+      "enterValidAmount": "Введіть коректну суму",
+      "exceedsTarget": "Поточна сума не може перевищувати цільову",
+      "updating": "Оновлення...",
+      "updateProgress": "Оновити прогрес"
+    },
+    "statistics": {
+      "totalGoals": "Всього цілей",
+      "activeGoals": "Активні",
+      "completedGoals": "Завершені",
+      "overallProgress": "Загальний прогрес",
+      "financialSummary": "Фінансовий підсумок",
+      "totalSaved": "Накопичено",
+      "targetAmount": "Цільова сума",
+      "byType": "За типами",
+      "byPriority": "За пріоритетом"
+    }
+  },
+  "recurringPage": {
+    "createModal": {
+      "title": "Створити повторюваний платіж",
+      "success": "Повторюваний платіж успішно створено",
+      "error": "Помилка при створенні повторюваного платежу",
+      "name": "Назва",
+      "description": "Опис",
+      "amount": "Сума",
+      "currency": "Валюта",
+      "category": "Категорія",
+      "selectCategory": "Виберіть категорію",
+      "paymentType": "Тип платежу",
+      "expense": "Витрата",
+      "income": "Дохід",
+      "scheduleType": "Тип розкладу",
+      "daily": "Щоденно",
+      "weekly": "Щотижня",
+      "monthly": "Щомісячно",
+      "yearly": "Щорічно",
+      "dayOfWeek": "День тижня",
+      "dayOfMonth": "День місяця",
+      "month": "Місяць",
+      "day": "День",
+      "startDate": "Дата початку",
+      "endDate": "Дата закінчення (опціонально)",
+      "creating": "Створення...",
+      "create": "Створити"
+    }
+  },
+  "pdfParserPage": {
+    "title": "PDF Парсер",
+    "description": "Завантажуйте виписки з банку в форматі PDF для автоматичного витягування та імпорту транзакцій.",
+    "uploadButton": "Завантажити PDF",
+    "creatingTransactions": "Створення транзакцій...",
+    "uploadSectionTitle": "Завантажити банківський PDF",
+    "supportedBanks": "Наразі підтримується: Монобанк (українська та англійська).",
+    "steps": {
+      "step1Title": "Крок 1",
+      "step1Description": "Завантажте вашу банківську виписку в форматі PDF",
+      "step2Title": "Крок 2",
+      "step2Description": "Перевірте та відредагуйте витягнуті транзакції",
+      "step3Title": "Крок 3",
+      "step3Description": "Створіть записи про доходи та витрати"
+    },
+    "messages": {
+      "noValidTransactions": "Немає дійсних транзакцій для створення",
+      "someTransactionsFailed": "Деякі транзакції не вдалося створити",
+      "transactionsCreated": "Успішно створено {{count}} з {{total}} транзакцій",
+      "allMccFailed": "Всі спроби створення категорій MCC провалилися. Будь ласка, виберіть категорії вручну.",
+      "categoriesCreated": "Успішно створено {{count}} категорій з кодів MCC!",
+      "categoriesPartiallyCreated": "{{successful}} категорій створено успішно, {{failed}} провалилося. Продовжуємо з успішними.",
+      "retryFailed": "Повторна спроба провалилася",
+      "retryCompleted": "Повторна спроба завершена: {{successful}} успішно, {{failed}} все ще провалилося",
+      "failedToCreateCategories": "Не вдалося створити категорії з пакету MCC",
+      "failedToCreateTransactions": "Не вдалося створити транзакції"
+    },
+    "errors": {
+      "categoryLimitExceeded": "Ліміт категорій перевищено. Будь ласка, оновіть ваш план або видаліть деякі існуючі категорії.",
+      "categoryAlreadyExists": "Категорія вже існує для цього коду MCC.",
+      "mccCodeNotFound": "Код MCC не знайдено в системі.",
+      "validationError": "Надано невірні дані категорії.",
+      "subscriptionError": "Помилка служби підписки. Будь ласка, спробуйте пізніше.",
+      "databaseError": "Помилка бази даних. Будь ласка, спробуйте пізніше.",
+      "unauthorized": "Ви не авторизовані для виконання цієї дії.",
+      "forbidden": "Доступ заборонено. Будь ласка, перевірте ваші права.",
+      "notFound": "Запитаний ресурс не знайдено.",
+      "internalError": "Внутрішня помилка сервера. Будь ласка, спробуйте пізніше.",
+      "unexpectedError": "Сталася несподівана помилка. Будь ласка, спробуйте знову."
+    },
+    "mccProcessing": {
+      "retrying": "Повторна спроба створення провалившихся категорій MCC...",
+      "creatingCategories": "Створення {{count}} категорій з кодів MCC...",
+      "incomeCreated": "{{count}} дохід",
+      "expenseCreated": "{{count}} витрата",
+      "debtCreated": "{{count}} борг",
+      "progress": "Прогрес: {{processed}}/{{total}}",
+      "failedMccCodes": "Провалившіся коди MCC:",
+      "retryFailedButton": "Повторити провалившіся ({{count}})"
+    },
+    "uploadModal": {
+      "title": "Завантажити банківський PDF",
+      "bankTypeLabel": "Тип банку",
+      "bankTypePlaceholder": "Оберіть тип банку",
+      "pdfFileLabel": "PDF файл",
+      "dropOrClick": "Перетягніть PDF сюди або",
+      "chooseFile": "Вибрати файл",
+      "maxFileSize": "Максимальний розмір файлу: 10MB",
+      "cancel": "Скасувати",
+      "parseButton": "Розпарсити PDF",
+      "parsing": "Обробка...",
+      "errors": {
+        "selectPdf": "Будь ласка, оберіть PDF файл",
+        "fileSizeLimit": "Розмір файлу повинен бути менше 10MB",
+        "selectFile": "Будь ласка, оберіть файл",
+        "selectBankType": "Будь ласка, оберіть тип банку",
+        "parseFailed": "Не вдалося розпарсити PDF",
+        "dropPdf": "Будь ласка, перетягніть PDF файл",
+        "loadBanksFailed": "Не вдалося завантажити підтримувані банки"
+      }
+    },
+    "reviewModal": {
+      "title": "Перевірка розпарсених транзакцій",
+      "subtitle": "Перевірте та відредагуйте транзакції перед створенням",
+      "subtitleShort": "Перевірте та відредагуйте транзакції",
+      "loadingCategories": "Завантаження категорій...",
+      "stats": {
+        "total": "Всього",
+        "valid": "Валідні",
+        "invalid": "Невалідні",
+        "categoriesNeeded": "Категорії потрібні"
+      },
+      "transaction": {
+        "include": "Включити",
+        "exclude": "Виключити",
+        "amount": "Сума",
+        "date": "Дата",
+        "type": "Тип",
+        "category": "Категорія",
+        "description": "Опис",
+        "selectCategory": "Оберіть категорію",
+        "descriptionPlaceholder": "Введіть опис транзакції...",
+        "mccInfo": "Інформація про Merchant Category Code (MCC)",
+        "mccBadge": "MCC",
+        "categoryExists": "Категорія існує",
+        "autoCreate": "Авто-створення",
+        "autoCreateNotice": "Ця категорія буде автоматично створена з коду MCC, якщо ви не виберете іншу.",
+        "rawText": "Вихідний текст (для довідки)"
+      },
+      "footer": {
+        "readyToCreate": "Готово до створення",
+        "noValidTransactions": "Немає валідних транзакцій для створення",
+        "cancel": "Скасувати",
+        "creating": "Створення...",
+        "createButton": "Створити {{count}} транзакці{{plural}}"
+      },
+      "errors": {
+        "fillRequiredFields": "Будь ласка, заповніть всі обов'язкові поля для {{count}} транзакцій",
+        "createFailed": "Не вдалося створити транзакції. Будь ласка, спробуйте знову.",
+        "loadCategoriesFailed": "Не вдалося завантажити категорії"
+      }
+    }
+  },
+  "dashboard": {
+    "goalsOverview": {
+      "title": "Фінансові цілі",
+      "noGoals": "Немає фінансових цілей",
+      "createFirstGoal": "Створіть свою першу фінансову ціль для відстеження прогресу",
+      "createGoal": "Створити ціль",
+      "viewAll": "Всі цілі",
+      "totalGoals": "Всього цілей",
+      "activeGoals": "Активні",
+      "completedGoals": "Завершені",
+      "overallProgress": "Загальний прогрес",
+      "financialSummary": "Фінансовий підсумок",
+      "totalSaved": "Накопичено",
+      "targetAmount": "Цільова сума",
+      "recentGoals": "Останні цілі",
+      "overdueDays": "Протерміновано на {{days}} дн.",
+      "daysRemaining": "Залишилося {{days}} дн."
+    }
+  },
+  "authPage": {
+    "login": {
+      "title": "Вхід в систему",
+      "subtitle": "Увійдіть до свого акаунта для продовження",
+      "submit": "Увійти",
+      "loading": "Вхід...",
+      "noAccount": "Немає акаунта?",
+      "registerLink": "Зареєструватися",
+      "error": "Помилка при вході в систему"
+    },
+    "register": {
+      "title": "Реєстрація",
+      "subtitle": "Створіть новий акаунт для початку роботи",
+      "username": "Ім'я користувача",
+      "usernameRequired": "Ім'я користувача *",
+      "usernamePlaceholder": "Введіть ім'я користувача",
+      "submit": "Зареєструватися",
+      "loading": "Реєстрація...",
+      "hasAccount": "Вже є акаунт?",
+      "loginLink": "Увійти",
+      "error": "Помилка при реєстрації"
     }
   },
   "footer": {
@@ -394,12 +841,20 @@
     "title": "Профіль користувача",
     "subtitle": "Управління особистими даними та налаштуваннями акаунта",
     "editButton": "Редагувати профіль",
+    "editModalTitle": "Редагувати профіль",
     "defaultUsername": "Користувач",
     "username": "Ім'я користувача",
     "baseCurrency": "Базова валюта",
     "userId": "ID користувача",
     "subscription": "Підписка",
     "notSpecified": "Не вказано",
-    "noSubscription": "Немає підписки"
+    "noSubscription": "Немає підписки",
+    "accountStatus": "Статус акаунта",
+    "active": "Активний",
+    "registrationDate": "Дата реєстрації",
+    "recently": "Недавно",
+    "emailVerified": "Email підтверджено",
+    "profileUpdated": "Профіль успішно оновлено!",
+    "profileUpdateError": "Помилка при оновленні профілю"
   }
 }

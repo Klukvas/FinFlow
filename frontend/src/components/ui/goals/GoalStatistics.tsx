@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { GoalStatistics as GoalStatisticsType } from '@/types';
 import { FaBullseye, FaCheckCircle, FaPlay, FaChartPie, FaDollarSign, FaTrophy } from 'react-icons/fa';
 
@@ -7,6 +8,8 @@ interface GoalStatisticsProps {
 }
 
 export const GoalStatistics: React.FC<GoalStatisticsProps> = ({ statistics }) => {
+  const { t } = useTranslation();
+  
   const getProgressColor = (percentage: number) => {
     if (percentage >= 80) return 'theme-success';
     if (percentage >= 60) return 'theme-accent';
@@ -24,7 +27,7 @@ export const GoalStatistics: React.FC<GoalStatisticsProps> = ({ statistics }) =>
             <FaBullseye className="h-6 w-6 sm:h-8 sm:w-8 theme-accent" />
           </div>
           <div className="ml-3 sm:ml-4 min-w-0 flex-1">
-            <p className="text-xs sm:text-sm font-medium theme-text-secondary truncate">Всего целей</p>
+            <p className="text-xs sm:text-sm font-medium theme-text-secondary truncate">{t('goalsPage.statistics.totalGoals')}</p>
             <p className="text-xl sm:text-2xl font-bold theme-text-primary">{statistics.total_goals}</p>
           </div>
         </div>
@@ -37,7 +40,7 @@ export const GoalStatistics: React.FC<GoalStatisticsProps> = ({ statistics }) =>
             <FaPlay className="h-6 w-6 sm:h-8 sm:w-8 theme-success" />
           </div>
           <div className="ml-3 sm:ml-4 min-w-0 flex-1">
-            <p className="text-xs sm:text-sm font-medium theme-text-secondary truncate">Активные</p>
+            <p className="text-xs sm:text-sm font-medium theme-text-secondary truncate">{t('goalsPage.statistics.activeGoals')}</p>
             <p className="text-xl sm:text-2xl font-bold theme-text-primary">{statistics.active_goals}</p>
           </div>
         </div>
@@ -50,7 +53,7 @@ export const GoalStatistics: React.FC<GoalStatisticsProps> = ({ statistics }) =>
             <FaCheckCircle className="h-6 w-6 sm:h-8 sm:w-8 theme-accent" />
           </div>
           <div className="ml-3 sm:ml-4 min-w-0 flex-1">
-            <p className="text-xs sm:text-sm font-medium theme-text-secondary truncate">Завершенные</p>
+            <p className="text-xs sm:text-sm font-medium theme-text-secondary truncate">{t('goalsPage.statistics.completedGoals')}</p>
             <p className="text-xl sm:text-2xl font-bold theme-text-primary">{statistics.completed_goals}</p>
           </div>
         </div>
@@ -63,7 +66,7 @@ export const GoalStatistics: React.FC<GoalStatisticsProps> = ({ statistics }) =>
             <FaChartPie className="h-6 w-6 sm:h-8 sm:w-8 theme-accent" />
           </div>
           <div className="ml-3 sm:ml-4 min-w-0 flex-1">
-            <p className="text-xs sm:text-sm font-medium theme-text-secondary truncate">Общий прогресс</p>
+            <p className="text-xs sm:text-sm font-medium theme-text-secondary truncate">{t('goalsPage.statistics.overallProgress')}</p>
             <p className={`text-xl sm:text-2xl font-bold ${getProgressColor(statistics.overall_progress)}`}>
               {statistics.overall_progress.toFixed(1)}%
             </p>
@@ -75,17 +78,17 @@ export const GoalStatistics: React.FC<GoalStatisticsProps> = ({ statistics }) =>
       <div className="sm:col-span-2 lg:col-span-2 theme-surface theme-shadow rounded-lg border theme-border p-4 sm:p-6 theme-transition">
         <div className="flex items-center mb-3 sm:mb-4">
           <FaDollarSign className="h-5 w-5 sm:h-6 sm:w-6 theme-success mr-2 flex-shrink-0" />
-          <h3 className="text-base sm:text-lg font-semibold theme-text-primary truncate">Финансовая сводка</h3>
+          <h3 className="text-base sm:text-lg font-semibold theme-text-primary truncate">{t('goalsPage.statistics.financialSummary')}</h3>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <div>
-            <p className="text-xs sm:text-sm theme-text-secondary">Накоплено</p>
+            <p className="text-xs sm:text-sm theme-text-secondary">{t('goalsPage.statistics.totalSaved')}</p>
             <p className="text-lg sm:text-xl font-bold theme-success truncate">
               {statistics.total_current_amount.toLocaleString()} USD
             </p>
           </div>
           <div>
-            <p className="text-xs sm:text-sm theme-text-secondary">Целевая сумма</p>
+            <p className="text-xs sm:text-sm theme-text-secondary">{t('goalsPage.statistics.targetAmount')}</p>
             <p className="text-lg sm:text-xl font-bold theme-text-primary truncate">
               {statistics.total_target_amount.toLocaleString()} USD
             </p>
@@ -110,7 +113,7 @@ export const GoalStatistics: React.FC<GoalStatisticsProps> = ({ statistics }) =>
       <div className="theme-surface theme-shadow rounded-lg border theme-border p-4 sm:p-6 theme-transition">
         <div className="flex items-center mb-3 sm:mb-4">
           <FaTrophy className="h-5 w-5 sm:h-6 sm:w-6 theme-warning mr-2 flex-shrink-0" />
-          <h3 className="text-base sm:text-lg font-semibold theme-text-primary truncate">По типам</h3>
+          <h3 className="text-base sm:text-lg font-semibold theme-text-primary truncate">{t('goalsPage.statistics.byType')}</h3>
         </div>
         <div className="space-y-2">
           {Object.entries(statistics.goals_by_type).map(([type, count]) => (
@@ -126,7 +129,7 @@ export const GoalStatistics: React.FC<GoalStatisticsProps> = ({ statistics }) =>
       <div className="theme-surface theme-shadow rounded-lg border theme-border p-4 sm:p-6 theme-transition">
         <div className="flex items-center mb-3 sm:mb-4">
           <FaBullseye className="h-5 w-5 sm:h-6 sm:w-6 theme-error mr-2 flex-shrink-0" />
-          <h3 className="text-base sm:text-lg font-semibold theme-text-primary truncate">По приоритету</h3>
+          <h3 className="text-base sm:text-lg font-semibold theme-text-primary truncate">{t('goalsPage.statistics.byPriority')}</h3>
         </div>
         <div className="space-y-2">
           {Object.entries(statistics.goals_by_priority).map(([priority, count]) => (

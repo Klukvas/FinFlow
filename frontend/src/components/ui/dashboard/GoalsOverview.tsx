@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
+import { useApiClients } from '@/hooks/useApiClients';
 import { Goal, GoalStatistics as GoalStatisticsType } from '@/types';
 import { FaBullseye, FaCheckCircle, FaPlay, FaChartPie, FaDollarSign, FaArrowRight } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 
 export const GoalsOverview: React.FC = () => {
-  const { user, goalsApi } = useAuth();
+  const { t } = useTranslation();
+  const { user } = useAuth();
+  const { goals: goalsApi } = useApiClients();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [statistics, setStatistics] = useState<GoalStatisticsType | null>(null);
   const [loading, setLoading] = useState(true);
@@ -38,7 +42,7 @@ export const GoalsOverview: React.FC = () => {
     };
 
     fetchData();
-  }, [user?.id]);
+  }, [user?.id, goalsApi]);
 
   const getProgressColor = (percentage: number) => {
     if (percentage >= 80) return 'bg-green-500';
@@ -75,13 +79,13 @@ export const GoalsOverview: React.FC = () => {
       <div className="theme-surface rounded-lg theme-shadow theme-border border p-6">
         <div className="text-center">
           <FaBullseye className="mx-auto h-12 w-12 theme-text-tertiary mb-4" />
-          <h3 className="text-lg font-semibold theme-text-primary mb-2">Нет финансовых целей</h3>
-          <p className="theme-text-secondary mb-4">Создайте свою первую финансовую цель для отслеживания прогресса</p>
+          <h3 className="text-lg font-semibold theme-text-primary mb-2">{t('dashboard.goalsOverview.noGoals')}</h3>
+          <p className="theme-text-secondary mb-4">{t('dashboard.goalsOverview.createFirstGoal')}</p>
           <Link
             to="/goals"
             className="inline-flex items-center px-4 py-2 theme-accent-bg theme-text-inverse rounded-md hover:theme-accent-hover theme-transition"
           >
-            Создать цель
+            {t('dashboard.goalsOverview.createGoal')}
             <FaArrowRight className="ml-2 w-4 h-4" />
           </Link>
         </div>
@@ -95,13 +99,13 @@ export const GoalsOverview: React.FC = () => {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center">
           <FaBullseye className="h-6 w-6 theme-accent mr-2" />
-          <h3 className="text-lg font-semibold theme-text-primary">Финансовые цели</h3>
+          <h3 className="text-lg font-semibold theme-text-primary">{t('dashboard.goalsOverview.title')}</h3>
         </div>
         <Link
           to="/goals"
           className="theme-accent hover:theme-accent text-sm font-medium flex items-center theme-transition"
         >
-          Все цели
+          {t('dashboard.goalsOverview.viewAll')}
           <FaArrowRight className="ml-1 w-3 h-3" />
         </Link>
       </div>
@@ -113,7 +117,7 @@ export const GoalsOverview: React.FC = () => {
             <FaBullseye className="h-5 w-5 theme-accent" />
           </div>
           <p className="text-2xl font-bold theme-text-primary">{statistics.total_goals}</p>
-          <p className="text-xs theme-text-tertiary">Всего целей</p>
+          <p className="text-xs theme-text-tertiary">{t('dashboard.goalsOverview.totalGoals')}</p>
         </div>
         
         <div className="text-center">
@@ -121,7 +125,7 @@ export const GoalsOverview: React.FC = () => {
             <FaPlay className="h-5 w-5 theme-success" />
           </div>
           <p className="text-2xl font-bold theme-text-primary">{statistics.active_goals}</p>
-          <p className="text-xs theme-text-tertiary">Активные</p>
+          <p className="text-xs theme-text-tertiary">{t('dashboard.goalsOverview.activeGoals')}</p>
         </div>
         
         <div className="text-center">
@@ -129,7 +133,7 @@ export const GoalsOverview: React.FC = () => {
             <FaCheckCircle className="h-5 w-5 theme-accent" />
           </div>
           <p className="text-2xl font-bold theme-text-primary">{statistics.completed_goals}</p>
-          <p className="text-xs theme-text-tertiary">Завершенные</p>
+          <p className="text-xs theme-text-tertiary">{t('dashboard.goalsOverview.completedGoals')}</p>
         </div>
         
         <div className="text-center">
@@ -137,7 +141,7 @@ export const GoalsOverview: React.FC = () => {
             <FaChartPie className="h-5 w-5 theme-accent" />
           </div>
           <p className="text-2xl font-bold theme-text-primary">{statistics.overall_progress.toFixed(0)}%</p>
-          <p className="text-xs theme-text-tertiary">Общий прогресс</p>
+          <p className="text-xs theme-text-tertiary">{t('dashboard.goalsOverview.overallProgress')}</p>
         </div>
       </div>
 
@@ -145,17 +149,17 @@ export const GoalsOverview: React.FC = () => {
       <div className="theme-bg-secondary rounded-lg p-4 mb-6">
         <div className="flex items-center mb-3">
           <FaDollarSign className="h-5 w-5 theme-success mr-2" />
-          <h4 className="font-semibold theme-text-primary">Финансовая сводка</h4>
+          <h4 className="font-semibold theme-text-primary">{t('dashboard.goalsOverview.financialSummary')}</h4>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <p className="text-sm theme-text-tertiary">Накоплено</p>
+            <p className="text-sm theme-text-tertiary">{t('dashboard.goalsOverview.totalSaved')}</p>
             <p className="text-lg font-bold theme-success">
               {statistics.total_current_amount.toLocaleString()} USD
             </p>
           </div>
           <div>
-            <p className="text-sm theme-text-tertiary">Целевая сумма</p>
+            <p className="text-sm theme-text-tertiary">{t('dashboard.goalsOverview.targetAmount')}</p>
             <p className="text-lg font-bold theme-text-primary">
               {statistics.total_target_amount.toLocaleString()} USD
             </p>
@@ -174,7 +178,7 @@ export const GoalsOverview: React.FC = () => {
       {/* Recent Goals */}
       {goals.length > 0 && (
         <div>
-          <h4 className="font-semibold theme-text-primary mb-4">Последние цели</h4>
+          <h4 className="font-semibold theme-text-primary mb-4">{t('dashboard.goalsOverview.recentGoals')}</h4>
           <div className="space-y-3">
             {goals.map((goal) => {
               const daysRemaining = goal.target_date ? getDaysRemaining(goal.target_date) : null;
@@ -202,7 +206,10 @@ export const GoalsOverview: React.FC = () => {
                     </p>
                     {goal.target_date && (
                       <p className={`text-xs ${isOverdue ? 'text-red-500' : 'text-gray-500'}`}>
-                        {isOverdue ? `Просрочено на ${Math.abs(daysRemaining!)} дн.` : `Осталось ${daysRemaining} дн.`}
+                        {isOverdue 
+                          ? t('dashboard.goalsOverview.overdueDays', { days: Math.abs(daysRemaining!) })
+                          : t('dashboard.goalsOverview.daysRemaining', { days: daysRemaining })
+                        }
                       </p>
                     )}
                   </div>

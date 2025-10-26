@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ContactCreate, ContactUpdate } from '@/types/contact';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Button } from '@/components/ui/shared/Button';
@@ -23,6 +24,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
   isLoading = false,
   mode
 }) => {
+  const { t } = useTranslation();
   const { actualTheme } = useTheme();
   
   const [formData, setFormData] = useState<ContactCreate>({
@@ -40,11 +42,11 @@ export const ContactForm: React.FC<ContactFormProps> = ({
     const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Contact name is required';
+      newErrors.name = t('debtPage.form.errors.contactNameRequired');
     }
 
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = t('debtPage.form.errors.validEmail');
     }
 
     setErrors(newErrors);
@@ -86,7 +88,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
           actualTheme === 'dark' ? 'text-white' : 'text-gray-900'
         }`}>
           <User className="w-5 h-5" />
-          <span>{mode === 'create' ? 'Create New Contact' : 'Edit Contact'}</span>
+          <span>{mode === 'create' ? t('debtPage.contacts.form.createTitle') : t('debtPage.contacts.form.editTitle')}</span>
         </CardTitle>
       </CardHeader>
 
@@ -96,13 +98,13 @@ export const ContactForm: React.FC<ContactFormProps> = ({
           <div className="space-y-2">
             <Label htmlFor="name" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
               <User className="w-4 h-4 inline mr-2" />
-              Contact Name *
+              {t('debtPage.contacts.form.name')} *
             </Label>
             <Input
               id="name"
               value={formData.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
-              placeholder="e.g., John Smith, Bank of America"
+              placeholder={t('debtPage.contacts.form.namePlaceholder')}
               className={`${
                 actualTheme === 'dark' 
                   ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
@@ -119,14 +121,14 @@ export const ContactForm: React.FC<ContactFormProps> = ({
             <div className="space-y-2">
               <Label htmlFor="email" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
                 <Mail className="w-4 h-4 inline mr-2" />
-                Email Address
+                {t('debtPage.contacts.form.email')}
               </Label>
               <Input
                 id="email"
                 type="email"
                 value={formData.email || ''}
                 onChange={(e) => handleInputChange('email', e.target.value || null)}
-                placeholder="john@example.com"
+                placeholder={t('debtPage.contacts.form.emailPlaceholder')}
                 className={`${
                   actualTheme === 'dark' 
                     ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
@@ -141,14 +143,14 @@ export const ContactForm: React.FC<ContactFormProps> = ({
             <div className="space-y-2">
               <Label htmlFor="phone" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
                 <Phone className="w-4 h-4 inline mr-2" />
-                Phone Number
+                {t('debtPage.contacts.form.phone')}
               </Label>
               <Input
                 id="phone"
                 type="tel"
                 value={formData.phone || ''}
                 onChange={(e) => handleInputChange('phone', e.target.value || null)}
-                placeholder="+1 (555) 123-4567"
+                placeholder={t('debtPage.contacts.form.phonePlaceholder')}
                 className={`${
                   actualTheme === 'dark' 
                     ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
@@ -162,13 +164,13 @@ export const ContactForm: React.FC<ContactFormProps> = ({
           <div className="space-y-2">
             <Label htmlFor="company" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
               <Building2 className="w-4 h-4 inline mr-2" />
-              Company/Organization
+              {t('debtPage.contacts.form.company')}
             </Label>
             <Input
               id="company"
               value={formData.company || ''}
               onChange={(e) => handleInputChange('company', e.target.value || null)}
-              placeholder="e.g., Bank of America, Credit Union"
+              placeholder={t('debtPage.contacts.form.companyPlaceholder')}
               className={`${
                 actualTheme === 'dark' 
                   ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
@@ -181,13 +183,13 @@ export const ContactForm: React.FC<ContactFormProps> = ({
           <div className="space-y-2">
             <Label htmlFor="address" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
               <MapPin className="w-4 h-4 inline mr-2" />
-              Address
+              {t('debtPage.contacts.form.address')}
             </Label>
             <Textarea
               id="address"
               value={formData.address || ''}
               onChange={(e) => handleInputChange('address', e.target.value || null)}
-              placeholder="123 Main St, City, State 12345"
+              placeholder={t('debtPage.contacts.form.addressPlaceholder')}
               rows={3}
               className={`${
                 actualTheme === 'dark' 
@@ -201,13 +203,13 @@ export const ContactForm: React.FC<ContactFormProps> = ({
           <div className="space-y-2">
             <Label htmlFor="notes" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
               <FileText className="w-4 h-4 inline mr-2" />
-              Notes
+              {t('debtPage.contacts.form.notes')}
             </Label>
             <Textarea
               id="notes"
               value={formData.notes || ''}
               onChange={(e) => handleInputChange('notes', e.target.value || null)}
-              placeholder="Additional information about this contact..."
+              placeholder={t('debtPage.contacts.form.notesPlaceholder')}
               rows={4}
               className={`${
                 actualTheme === 'dark' 
@@ -224,7 +226,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
               disabled={isLoading}
               className="flex-1"
             >
-              {isLoading ? 'Saving...' : mode === 'create' ? 'Create Contact' : 'Update Contact'}
+              {isLoading ? t('debtPage.contacts.form.saving') : mode === 'create' ? t('debtPage.contacts.form.create') : t('debtPage.contacts.form.update')}
             </Button>
             <Button
               type="button"
@@ -233,7 +235,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
               disabled={isLoading}
               className="flex-1"
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
           </div>
         </form>

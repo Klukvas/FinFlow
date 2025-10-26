@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AccountResponse } from '@/types';
 import { Modal } from '../shared/Modal';
 import { Button } from '../shared/Button';
@@ -17,6 +18,7 @@ export const EditAccountModal: React.FC<EditAccountModalProps> = ({
   onClose,
   onSubmit
 }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: account.name,
     type: account.type,
@@ -26,12 +28,12 @@ export const EditAccountModal: React.FC<EditAccountModalProps> = ({
   const [loading, setLoading] = useState(false);
 
   const accountTypes = [
-    { value: 'bank', label: 'Банковский счет' },
-    { value: 'cash', label: 'Наличные' },
-    { value: 'crypto', label: 'Криптовалюта' },
-    { value: 'investment', label: 'Инвестиции' },
-    { value: 'savings', label: 'Сбережения' },
-    { value: 'other', label: 'Другое' }
+    { value: 'bank', label: t('accountPage.form.types.bank') },
+    { value: 'cash', label: t('accountPage.form.types.cash') },
+    { value: 'crypto', label: t('accountPage.form.types.crypto') },
+    { value: 'investment', label: t('accountPage.form.types.investment') },
+    { value: 'savings', label: t('accountPage.form.types.savings') },
+    { value: 'other', label: t('accountPage.form.types.other') }
   ];
 
 
@@ -70,24 +72,24 @@ export const EditAccountModal: React.FC<EditAccountModalProps> = ({
   };
 
   return (
-    <Modal isOpen={true} onClose={onClose} title="Редактировать аккаунт">
+    <Modal isOpen={true} onClose={onClose} title={t('accountPage.editModalTitle')}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium theme-text-primary mb-2">
-            Название аккаунта *
+            {t('accountPage.form.name')} {t('accountPage.form.required')}
           </label>
           <Input
             type="text"
             value={formData.name}
             onChange={(e) => handleChange('name', e.target.value)}
-            placeholder="Например: Основной счет"
+            placeholder={t('accountPage.form.namePlaceholder')}
             required
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium theme-text-primary mb-2">
-            Тип аккаунта
+            {t('accountPage.form.type')}
           </label>
           <select
             value={formData.type}
@@ -104,7 +106,7 @@ export const EditAccountModal: React.FC<EditAccountModalProps> = ({
 
         <div>
           <label className="block text-sm font-medium theme-text-primary mb-2">
-            Валюта
+            {t('accountPage.form.currency')}
           </label>
           <CurrencySelect
             value={formData.currency}
@@ -116,7 +118,7 @@ export const EditAccountModal: React.FC<EditAccountModalProps> = ({
 
         <div>
           <label className="block text-sm font-medium theme-text-primary mb-2">
-            Баланс
+            {t('accountPage.form.balance')}
           </label>
           <Input
             type="number"
@@ -134,7 +136,7 @@ export const EditAccountModal: React.FC<EditAccountModalProps> = ({
             onClick={onClose}
             disabled={loading}
           >
-            Отмена
+            {t('accountPage.form.cancel')}
           </Button>
           <Button
             type="submit"
@@ -142,7 +144,7 @@ export const EditAccountModal: React.FC<EditAccountModalProps> = ({
             className="flex items-center gap-2"
           >
             <FaWallet className="w-4 h-4" />
-            {loading ? 'Сохранение...' : 'Сохранить изменения'}
+            {loading ? t('accountPage.form.saving') : t('accountPage.form.saveChanges')}
           </Button>
         </div>
       </form>
