@@ -5,6 +5,7 @@ import { ParsedTransaction, TransactionValidation } from '@/services/api/pdfPars
 import { useTheme } from '@/contexts/ThemeContext';
 import i18n from '@/i18n';
 import { MccBatchResponse } from '@/services/api/categoryApiClient';
+import { normalizeLanguageCode } from '@/utils';
 
 export const PdfParser: React.FC = () => {
   const { income, expense, category } = useApiClients();
@@ -91,7 +92,7 @@ export const PdfParser: React.FC = () => {
         type: 'EXPENSE' as const // Default to expense, could be improved
       }));
       
-      const batchResponse = await category.createCategoriesFromMccBatch(retryCategories, i18n.language);
+      const batchResponse = await category.createCategoriesFromMccBatch(retryCategories, normalizeLanguageCode(i18n.language));
       
       if ('error' in batchResponse) {
         setMccProcessingStatus(`Retry failed: ${batchResponse.error}`);
@@ -148,8 +149,8 @@ export const PdfParser: React.FC = () => {
         return;
       }
 
-      // Get current language
-      const currentLanguage = i18n.language || 'ru';
+      // Normalize language (e.g., 'ru-RU' -> 'ru')
+      const currentLanguage = normalizeLanguageCode(i18n.language);
 
       let incomeCount = 0;
       let expenseCount = 0;
