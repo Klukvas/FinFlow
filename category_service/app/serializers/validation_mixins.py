@@ -110,6 +110,16 @@ class UniquenessValidator(ABC):
         
         for field_name in self.get_unique_fields():
             if field_name in data:
+                Logger.debug(
+                    f"Validating uniqueness for field '{field_name}' with value '{data[field_name]}' for user {user_id}",
+                    extra={
+                        "field_name": field_name,
+                        "field_value": data[field_name],
+                        "user_id": user_id,
+                        "exclude_id": exclude_id
+                    }
+                )
+                
                 query = db.query(entity_class).filter(
                     getattr(entity_class, field_name) == data[field_name],
                     user_id_field == user_id
@@ -118,7 +128,17 @@ class UniquenessValidator(ABC):
                 if exclude_id:
                     query = query.filter(entity_class.id != exclude_id)
                 
-                if query.first():
+                existing = query.first()
+                if existing:
+                    Logger.warning(
+                        f"Uniqueness violation: {field_name}='{data[field_name]}' already exists for user {user_id}",
+                        extra={
+                            "field_name": field_name,
+                            "field_value": data[field_name],
+                            "user_id": user_id,
+                            "existing_id": existing.id if hasattr(existing, 'id') else None
+                        }
+                    )
                     raise CategoryNameConflictError(
                         data[field_name], 
                         user_id

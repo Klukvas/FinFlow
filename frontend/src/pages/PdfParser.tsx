@@ -233,6 +233,8 @@ export const PdfParser: React.FC = () => {
           setFailedMccCodes([]);
           
           console.log(`Creating ${mccCategoriesToCreate.length} unique categories from MCC codes in batch:`, mccCategoriesToCreate.map(c => c.mcc_code));
+          console.log('Batch request data:', JSON.stringify(mccCategoriesToCreate, null, 2));
+          console.log('Language:', currentLanguage);
           const batchResponse = await category.createCategoriesFromMccBatch(mccCategoriesToCreate, currentLanguage);
           
           if ('error' in batchResponse) {
@@ -253,12 +255,17 @@ export const PdfParser: React.FC = () => {
                 successfulMccCodes.push(result.mcc_code);
                 console.log(`✅ Mapped MCC ${result.mcc_code} to category ID ${result.category_id} (${result.category_name})`);
               } else {
+                // Log the full error for debugging
+                console.error(`❌ Failed to create category for MCC ${result.mcc_code}:`, {
+                  error: result.error,
+                  full_result: result
+                });
+                
                 failedMccCodes.push({
                   mcc_code: result.mcc_code,
                   error: getUserFriendlyError(result.error || 'Unknown error'),
                   ...(result.category_name && { category_name: result.category_name })
                 });
-                console.error(`❌ Failed to create category for MCC ${result.mcc_code}: ${result.error}`);
               }
             });
             

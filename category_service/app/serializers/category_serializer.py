@@ -15,7 +15,9 @@ from app.exceptions import (
     CategoryNotFoundError,
     CategoryValidationError,
     CategoryNameConflictError,
-    CategoryDepthExceededError
+    CategoryDepthExceededError,
+    CategoryOwnershipError,
+    CircularRelationshipError
 )
 from .validation_mixins import OwnershipValidator, UniquenessValidator, HierarchyValidator
 from app.utils.logger import get_logger
@@ -63,22 +65,47 @@ class CategorySerializer(OwnershipValidator, UniquenessValidator, HierarchyValid
             CircularRelationshipError: If circular relationship would be created
             CategoryDepthExceededError: If maximum depth would be exceeded
         """
-        # Validate category type
-        self.validate_category_type(data.type)
+        try:
+            # Validate category type
+            self.validate_category_type(data.type)
+        except CategoryValidationError as e:
+            Logger.error(f"Category type validation failed: {str(e)}", extra={"category_type": data.type, "user_id": user_id})
+            raise CategoryValidationError(f"Category type validation failed: {str(e)}")
         
-        # Validate name uniqueness
-        data_dict = {
-            "name": data.name
-        }
-        self.validate_uniqueness(db, user_id, data_dict, exclude_id)
+        try:
+            # Validate name uniqueness
+            data_dict = {
+                "name": data.name
+            }
+            self.validate_uniqueness(db, user_id, data_dict, exclude_id)
+        except CategoryNameConflictError as e:
+            Logger.error(f"Category name uniqueness validation failed: {str(e)}", extra={"category_name": data.name, "user_id": user_id})
+            raise
+        except Exception as e:
+            Logger.error(f"Name uniqueness validation error: {str(e)}", extra={"category_name": data.name, "user_id": user_id})
+            raise CategoryValidationError(f"Name uniqueness validation failed: {str(e)}")
         
         # Validate parent category if provided
         if data.parent_id:
-            self.validate_parent_category(db, data.parent_id, user_id)
+            try:
+                self.validate_parent_category(db, data.parent_id, user_id)
+            except (CategoryNotFoundError, CategoryOwnershipError, CategoryDepthExceededError) as e:
+                Logger.error(f"Parent category validation failed: {str(e)}", extra={"parent_id": data.parent_id, "user_id": user_id})
+                raise
+            except Exception as e:
+                Logger.error(f"Parent category validation error: {str(e)}", extra={"parent_id": data.parent_id, "user_id": user_id})
+                raise CategoryValidationError(f"Parent category validation failed: {str(e)}")
             
             # Validate circular relationship for updates
             if exclude_id:
-                self.validate_circular_relationship(db, exclude_id, data.parent_id, user_id)
+                try:
+                    self.validate_circular_relationship(db, exclude_id, data.parent_id, user_id)
+                except (CircularRelationshipError, CategoryDepthExceededError) as e:
+                    Logger.error(f"Circular relationship validation failed: {str(e)}", extra={"category_id": exclude_id, "parent_id": data.parent_id})
+                    raise
+                except Exception as e:
+                    Logger.error(f"Circular relationship validation error: {str(e)}", extra={"category_id": exclude_id, "parent_id": data.parent_id})
+                    raise CategoryValidationError(f"Circular relationship validation failed: {str(e)}")
     
     def validate_category_type(self, category_type: CategoryType) -> None:
         """

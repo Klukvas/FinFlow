@@ -187,7 +187,13 @@ class CategoryService:
                 parent_id=data.parent_id,
                 category_type=data.type,
                 custom_name=data.custom_name,
-                language=language
+                language=language,
+                full_data={
+                    "mcc_code": data.mcc_code,
+                    "parent_id": data.parent_id,
+                    "type": str(data.type) if data.type else None,
+                    "custom_name": data.custom_name
+                }
             )
             
             # Check if MCC code exists
@@ -259,8 +265,27 @@ class CategoryService:
                 type=data.type
             )
             
+            self.logger.info(
+                f"About to validate category data for MCC {data.mcc_code}",
+                category="business",
+                operation="category_validation_start",
+                user_id=user_id,
+                mcc_code=data.mcc_code,
+                category_name=category_name,
+                parent_id=data.parent_id,
+                category_type=str(data.type) if data.type else None
+            )
+            
             # Validate using existing serializer
             self.serializer.validate_category_data(self.db, category_data, user_id)
+            
+            self.logger.info(
+                f"Category validation passed for MCC {data.mcc_code}",
+                category="business",
+                operation="category_validation_success",
+                user_id=user_id,
+                mcc_code=data.mcc_code
+            )
             
             # Serialize data for creation
             serialized_data = self.serializer.serialize_category_for_create(category_data, user_id)
@@ -300,16 +325,28 @@ class CategoryService:
             duration_ms = (time.time() - start_time) * 1000
             self.db.rollback()
             
+            # Add more context to the error message
+            error_msg = f"MCC-based category creation failed: {str(e)}"
+            if hasattr(e, 'detail') and isinstance(e.detail, dict):
+                error_msg += f" (errorCode: {e.detail.get('errorCode', 'N/A')})"
+            
             self.logger.error(
-                f"MCC-based category creation failed: {str(e)}",
+                error_msg,
                 category="business",
                 operation="mcc_category_create_failed",
                 user_id=user_id,
                 mcc_code=data.mcc_code,
                 parent_id=data.parent_id,
                 category_type=data.type,
+                error_type=type(e).__name__,
                 duration_ms=duration_ms
             )
+            
+            # Re-raise with more context if possible
+            if hasattr(e, 'detail') and isinstance(e.detail, dict):
+                # Update the detail with more information
+                e.detail['error'] = f"Failed to create category: {e.detail.get('error', str(e))}"
+            
             raise
         except IntegrityError as e:
             duration_ms = (time.time() - start_time) * 1000
@@ -389,12 +426,27 @@ class CategoryService:
                     )
                     
                 except Exception as e:
+                    # Extract more detailed error information
+                    error_detail = str(e)
+                    
+                    # If it's an HTTPException, try to extract the error message
+                    if hasattr(e, 'detail'):
+                        if isinstance(e.detail, dict):
+                            error_detail = e.detail.get('error', error_detail)
+                        elif isinstance(e.detail, str):
+                            error_detail = e.detail
+                    
+                    # Include error code if available
+                    if hasattr(e, 'detail') and isinstance(e.detail, dict):
+                        error_code = e.detail.get('errorCode', 'UNKNOWN_ERROR')
+                        error_detail = f"{error_code}: {error_detail}"
+                    
                     result = CategoryBatchCreateResult(
                         mcc_code=category_data.mcc_code,
                         success=False,
                         category_id=None,
                         category_name=None,
-                        error=str(e)
+                        error=error_detail
                     )
                     failed += 1
                     
@@ -404,7 +456,8 @@ class CategoryService:
                         operation="mcc_category_batch_item_failed",
                         user_id=user_id,
                         mcc_code=category_data.mcc_code,
-                        error=str(e)
+                        error=str(e),
+                        error_type=type(e).__name__
                     )
                 
                 results.append(result)
