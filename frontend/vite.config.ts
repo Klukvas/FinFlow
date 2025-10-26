@@ -19,6 +19,7 @@ export default defineConfig({
           vendor: ['react', 'react-dom'],
           router: ['react-router-dom'],
           icons: ['react-icons'],
+          seo: ['react-helmet-async'],
         },
       },
     },
@@ -26,5 +27,9 @@ export default defineConfig({
   preview: {
     port: 3000,
     host: true,
+  },
+  // SEO optimizations
+  define: {
+    __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
   },
 }); 

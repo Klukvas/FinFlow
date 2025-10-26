@@ -15,6 +15,19 @@ finflow.ltd {
   # Use custom SSL certificates
   tls /etc/ssl/cf-origin/finflow.crt /etc/ssl/cf-origin/finflow.key
 
+  # SEO and static files
+  handle /robots.txt {
+    file_server
+  }
+  
+  handle /sitemap.xml {
+    file_server
+  }
+  
+  handle /favicon.ico {
+    file_server
+  }
+
   # API routes - proxy to backend services
   handle_path /api/users/* {
     reverse_proxy user_service:8000
@@ -68,6 +81,11 @@ finflow.ltd {
       header_up X-Real-IP {remote_host}
       header_up X-Forwarded-For {remote_host}
       header_up X-Forwarded-Proto {scheme}
+      
+      # SEO headers
+      header_up X-Frame-Options "SAMEORIGIN"
+      header_up X-Content-Type-Options "nosniff"
+      header_up Referrer-Policy "strict-origin-when-cross-origin"
     }
   }
 }

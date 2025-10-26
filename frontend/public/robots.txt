@@ -1,0 +1,22 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://finflow.ltd/sitemap.xml
+
+# Disallow admin and API routes
+Disallow: /admin/
+Disallow: /api/
+Disallow: /_next/
+Disallow: /static/
+
+# Allow important pages
+Allow: /
+Allow: /dashboard
+Allow: /pdf-parser
+Allow: /categories
+Allow: /analytics
+Allow: /settings
+
+# Crawl delay
+Crawl-delay: 1
