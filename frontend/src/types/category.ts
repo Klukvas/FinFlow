@@ -9,6 +9,8 @@ export interface Category {
     children?: Category[];
     created_at?: string;
     updated_at?: string;
+    created_by?: 'USER' | 'SYSTEM';
+    mcc_code?: number;
   }
   
   export interface CreateCategoryRequest {

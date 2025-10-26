@@ -1,5 +1,5 @@
 import httpx
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from app.utils.logger import get_logger
 from app.config import settings
 
@@ -147,4 +147,36 @@ class CategoryServiceClient:
                     
         except Exception as e:
             self.logger.error(f"Error getting category by MCC {mcc_code}: {e}")
+            return None
+
+    async def check_categories_exist_by_mcc_batch(self, mcc_codes: List[int], user_id: int) -> Optional[List[Dict[str, Any]]]:
+        """
+        Check multiple MCC codes for user categories in a single request
+        
+        Args:
+            mcc_codes: List of MCC codes to check
+            user_id: User ID to check
+            
+        Returns:
+            List of results with category information or None if error
+        """
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.post(
+                    f"{self.base_url}/internal/categories/check-mcc-batch",
+                    json={"mcc_codes": mcc_codes, "user_id": user_id},
+                    headers={"X-Internal-Token": settings.internal_service_token}
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    results = data.get("results", [])
+                    self.logger.info(f"Batch MCC check completed for {len(mcc_codes)} codes: {len([r for r in results if r.get('exists')])} existing")
+                    return results
+                else:
+                    self.logger.error(f"Failed to check MCC codes in batch: {response.status_code}")
+                    return None
+                    
+        except Exception as e:
+            self.logger.error(f"Error checking MCC codes in batch: {e}")
             return None

@@ -405,10 +405,22 @@ export const TransactionReview: React.FC<TransactionReviewProps> = ({
                           <option value="">Select Category</option>
                           {categories.map((cat) => (
                             <option key={cat.id} value={cat.id}>
-                              {cat.name}
+                              {cat.name} {(cat as any).created_by === 'SYSTEM' ? '🤖' : ''}
                             </option>
                           ))}
                         </select>
+                        
+                        {/* Show MCC-based category suggestion */}
+                        {transactions[index]?.mcc_code && !transactions[index]?.category_exists && !transaction.category_id && (
+                          <div className="mt-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                            <div className="flex items-center text-xs text-yellow-800 dark:text-yellow-200">
+                              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                              </svg>
+                              Will auto-create: {transactions[index]?.mcc_category_translation || transactions[index]?.mcc_category_name}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -432,26 +444,63 @@ export const TransactionReview: React.FC<TransactionReviewProps> = ({
                       />
                     </div>
 
-                    {/* MCC Category Translation - only show when category_exists is false AND mcc_code exists */}
-                    {!transactions[index]?.category_exists && transactions[index]?.mcc_code && (
+                    {/* MCC Category Information - Enhanced Display */}
+                    {transactions[index]?.mcc_code && (
                       <div className="mt-4 sm:mt-6 space-y-2">
                         <label className="block text-xs sm:text-sm font-semibold theme-text-primary">
-                          Recommended category (Will be used if you didn't select yours)
+                          Merchant Category Code (MCC) Information
                         </label>
+                        
+                        {/* MCC Code Badge */}
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                            MCC: {transactions[index]?.mcc_code}
+                          </span>
+                          {transactions[index]?.category_exists ? (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                              ✓ Category Exists
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                              ⚡ Auto-Create
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Category Name Display */}
                         <div className={`px-3 py-2 sm:py-3 rounded-lg border-l-4 ${
                           actualTheme === 'dark'
                             ? 'bg-blue-900/30 border-blue-400 text-blue-200'
                             : 'bg-blue-50 border-blue-400 text-blue-800'
                         }`}>
-                          <div className="text-sm font-medium">
-                            {transactions[index]?.mcc_category_translation || transactions[index]?.mcc_category_name || 'No category translation available'}
-                          </div>
-                          {transactions[index]?.mcc_category_name && transactions[index]?.mcc_category_translation && (
-                            <div className="text-xs opacity-75 mt-1">
-                              Original: {transactions[index].mcc_category_name}
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="text-sm font-semibold">
+                                {transactions[index]?.mcc_category_translation || transactions[index]?.mcc_category_name || 'No category translation available'}
+                              </div>
+                              {transactions[index]?.mcc_category_name && transactions[index]?.mcc_category_translation && (
+                                <div className="text-xs opacity-75 mt-1">
+                                  Original: {transactions[index].mcc_category_name}
+                                </div>
+                              )}
                             </div>
-                          )}
+                            {!transactions[index]?.category_exists && (
+                              <div className="flex items-center text-xs opacity-75">
+                                <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                                </svg>
+                                Auto-created
+                              </div>
+                            )}
+                          </div>
                         </div>
+
+                        {/* Additional Info */}
+                        {!transactions[index]?.category_exists && (
+                          <div className="text-xs theme-text-secondary">
+                            💡 This category will be automatically created from the MCC code if you don't select a different one.
+                          </div>
+                        )}
                       </div>
                     )}
 

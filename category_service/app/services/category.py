@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session, joinedload, query
 from sqlalchemy.exc import IntegrityError
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import time
 from app.models.category import Category
 from app.models.mcc import MCCCode, MCCTranslation
@@ -688,3 +688,63 @@ class CategoryService:
                 "exists": False,
                 "category_id": None
             }
+
+    def check_categories_exist_by_mcc_batch(self, mcc_codes: List[int], user_id: int) -> List[Dict[str, Any]]:
+        """Check multiple MCC codes for user categories in a single query"""
+        try:
+            self.logger.info(
+                f"Starting batch MCC category existence check for user {user_id}",
+                category="business",
+                operation="mcc_category_batch_check_start",
+                user_id=user_id,
+                mcc_codes=mcc_codes
+            )
+            
+            # Single query to check all MCC codes at once
+            existing_categories = self.db.query(Category).filter(
+                Category.user_id == user_id,
+                Category.mcc_code.in_(mcc_codes)
+            ).all()
+            
+            # Create a map of mcc_code -> category for quick lookup
+            mcc_to_category = {cat.mcc_code: cat for cat in existing_categories}
+            
+            # Build results for all requested MCC codes
+            results = []
+            for mcc_code in mcc_codes:
+                if mcc_code in mcc_to_category:
+                    category = mcc_to_category[mcc_code]
+                    results.append({
+                        "mcc_code": mcc_code,
+                        "exists": True,
+                        "category_id": category.id
+                    })
+                else:
+                    results.append({
+                        "mcc_code": mcc_code,
+                        "exists": False,
+                        "category_id": None
+                    })
+            
+            self.logger.info(
+                f"Batch MCC category existence check completed",
+                category="business",
+                operation="mcc_category_batch_check_completed",
+                user_id=user_id,
+                total_checked=len(mcc_codes),
+                existing_count=len(existing_categories)
+            )
+            
+            return results
+            
+        except Exception as e:
+            self.logger.error(f"Error in batch MCC category existence check: {e}")
+            # Return all as not existing on error
+            return [
+                {
+                    "mcc_code": mcc_code,
+                    "exists": False,
+                    "category_id": None
+                }
+                for mcc_code in mcc_codes
+            ]

@@ -15,12 +15,124 @@ export const PdfParser: React.FC = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  
+  // MCC processing states
+  const [mccProcessingStatus, setMccProcessingStatus] = useState<string>('');
+  const [mccProcessingProgress, setMccProcessingProgress] = useState<{
+    total: number;
+    processed: number;
+    successful: number;
+    failed: number;
+  }>({ total: 0, processed: 0, successful: 0, failed: 0 });
+  const [failedMccCodes, setFailedMccCodes] = useState<Array<{
+    mcc_code: number;
+    error: string;
+    category_name?: string;
+  }>>([]);
+
+  // Translate error codes to user-friendly messages
+  const translateErrorCode = (errorCode: string): string => {
+    const errorTranslations: Record<string, string> = {
+      'CATEGORY_LIMIT_EXCEEDED': 'Category limit exceeded. Please upgrade your plan or delete some existing categories.',
+      'CATEGORY_ALREADY_EXISTS': 'Category already exists for this MCC code.',
+      'MCC_CODE_NOT_FOUND': 'MCC code not found in the system.',
+      'VALIDATION_ERROR': 'Invalid category data provided.',
+      'SUBSCRIPTION_ERROR': 'Subscription service error. Please try again later.',
+      'DATABASE_ERROR': 'Database error. Please try again later.',
+      'UNAUTHORIZED': 'You are not authorized to perform this action.',
+      'FORBIDDEN': 'Access denied. Please check your permissions.',
+      'NOT_FOUND': 'Requested resource not found.',
+      'INTERNAL_ERROR': 'Internal server error. Please try again later.'
+    };
+    
+    return errorTranslations[errorCode] || 'An unexpected error occurred. Please try again.';
+  };
+
+  // Extract user-friendly error message from API response
+  const getUserFriendlyError = (error: string): string => {
+    try {
+      // Try to parse as JSON to extract errorCode
+      const errorObj = JSON.parse(error);
+      if (errorObj.errorCode) {
+        return translateErrorCode(errorObj.errorCode);
+      }
+      return errorObj.error || error;
+    } catch {
+      // If not JSON, check if it contains error codes
+      if (error.includes('CATEGORY_LIMIT_EXCEEDED')) {
+        return translateErrorCode('CATEGORY_LIMIT_EXCEEDED');
+      }
+      if (error.includes('CATEGORY_ALREADY_EXISTS')) {
+        return translateErrorCode('CATEGORY_ALREADY_EXISTS');
+      }
+      if (error.includes('MCC_CODE_NOT_FOUND')) {
+        return translateErrorCode('MCC_CODE_NOT_FOUND');
+      }
+      return error;
+    }
+  };
 
 
   const handleTransactionsParsed = (transactions: ParsedTransaction[]) => {
     setParsedTransactions(transactions);
     setShowUploader(false);
     setShowReview(true);
+  };
+
+  const retryFailedMccCodes = async () => {
+    if (failedMccCodes.length === 0) return;
+    
+    try {
+      setIsCreating(true);
+      setMccProcessingStatus('Retrying failed MCC category creations...');
+      
+      const retryCategories = failedMccCodes.map(failed => ({
+        mcc_code: failed.mcc_code,
+        type: 'EXPENSE' as const // Default to expense, could be improved
+      }));
+      
+      const batchResponse = await category.createCategoriesFromMccBatch(retryCategories, i18n.language);
+      
+      if ('error' in batchResponse) {
+        setMccProcessingStatus(`Retry failed: ${batchResponse.error}`);
+        return;
+      }
+      
+      const response = batchResponse as MccBatchResponse;
+      const newFailedCodes: Array<{mcc_code: number; error: string; category_name?: string}> = [];
+      const mccCodeToCategoryId = new Map<number, number>();
+      
+      response.results.forEach((result) => {
+        if (result.success && result.category_id && result.error === null) {
+          mccCodeToCategoryId.set(result.mcc_code, result.category_id);
+        } else {
+          newFailedCodes.push({
+            mcc_code: result.mcc_code,
+            error: getUserFriendlyError(result.error || 'Unknown error'),
+            ...(result.category_name && { category_name: result.category_name })
+          });
+        }
+      });
+      
+      setFailedMccCodes(newFailedCodes);
+      
+      // Show detailed error information
+      if (response.failed > 0) {
+        const errorDetails = response.results
+          .filter(result => !result.success)
+          .map(result => `MCC ${result.mcc_code}: ${getUserFriendlyError(result.error || 'Unknown error')}`)
+          .join(', ');
+        setMccProcessingStatus(`Retry failed - Errors: ${errorDetails}`);
+      } else {
+        setMccProcessingStatus(`Retry completed: ${response.successful} successful, ${response.failed} still failed`);
+      }
+      
+    } catch (err) {
+      console.error('Error retrying MCC codes:', err);
+      setMccProcessingStatus(`Retry error: ${err}`);
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   const handleTransactionsValidated = async (validatedTransactions: TransactionValidation[]) => {
@@ -109,18 +221,29 @@ export const PdfParser: React.FC = () => {
       // Step 2: Create categories from MCC codes in batch
       if (mccCategoriesToCreate.length > 0) {
         try {
+          // Set up progress tracking
+          setMccProcessingStatus(`Creating ${mccCategoriesToCreate.length} categories from MCC codes...`);
+          setMccProcessingProgress({
+            total: mccCategoriesToCreate.length,
+            processed: 0,
+            successful: 0,
+            failed: 0
+          });
+          setFailedMccCodes([]);
+          
           console.log(`Creating ${mccCategoriesToCreate.length} unique categories from MCC codes in batch:`, mccCategoriesToCreate.map(c => c.mcc_code));
           const batchResponse = await category.createCategoriesFromMccBatch(mccCategoriesToCreate, currentLanguage);
           
           if ('error' in batchResponse) {
             console.error('Failed to create categories from MCC batch:', batchResponse.error);
+            setMccProcessingStatus(`Failed to create categories: ${batchResponse.error}`);
             errors.push(`Failed to create categories from MCC batch: ${batchResponse.error}`);
             return;
           } else {
             const response = batchResponse as MccBatchResponse;
             
-            // Check if any MCC codes failed to create categories
-            const failedMccCodes: number[] = [];
+            // Process results and update progress
+            const failedMccCodes: Array<{mcc_code: number; error: string; category_name?: string}> = [];
             const successfulMccCodes: number[] = [];
             
             response.results.forEach((result) => {
@@ -129,28 +252,45 @@ export const PdfParser: React.FC = () => {
                 successfulMccCodes.push(result.mcc_code);
                 console.log(`✅ Mapped MCC ${result.mcc_code} to category ID ${result.category_id} (${result.category_name})`);
               } else {
-                failedMccCodes.push(result.mcc_code);
+                failedMccCodes.push({
+                  mcc_code: result.mcc_code,
+                  error: getUserFriendlyError(result.error || 'Unknown error'),
+                  ...(result.category_name && { category_name: result.category_name })
+                });
                 console.error(`❌ Failed to create category for MCC ${result.mcc_code}: ${result.error}`);
-                errors.push(`Failed to create category for MCC ${result.mcc_code}: ${result.error}`);
               }
             });
+            
+            // Update progress state
+            setMccProcessingProgress({
+              total: response.total_requested,
+              processed: response.total_requested,
+              successful: response.successful,
+              failed: response.failed
+            });
+            setFailedMccCodes(failedMccCodes);
             
             console.log(`Batch result: ${response.successful} successful, ${response.failed} failed out of ${response.total_requested} requested`);
             
             // If all MCC codes failed, we should stop processing
             if (response.failed === response.total_requested) {
               console.error('All MCC category creations failed. Cannot proceed with transaction creation.');
+              setMccProcessingStatus('All MCC category creations failed. Please select categories manually.');
               errors.push('All MCC category creations failed. Please select categories manually for transactions.');
               return;
             }
             
-            // If some failed, warn but continue with successful ones
+            // Update status based on results
             if (response.failed > 0) {
+              setMccProcessingStatus(`${response.successful} categories created successfully, ${response.failed} failed. Continuing with successful ones.`);
               console.warn(`${response.failed} MCC codes failed to create categories. Continuing with ${response.successful} successful ones.`);
+            } else {
+              setMccProcessingStatus(`Successfully created ${response.successful} categories from MCC codes!`);
             }
           }
         } catch (err) {
           console.error('Error creating categories from MCC batch:', err);
+          setMccProcessingStatus(`Error creating categories: ${err}`);
           errors.push(`Error creating categories from MCC batch: ${err}`);
           return;
         }
@@ -317,6 +457,70 @@ export const PdfParser: React.FC = () => {
                 <p className="text-sm theme-text-primary">{success}</p>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* MCC Processing Status */}
+        {mccProcessingStatus && (
+          <div className="mb-6 p-4 theme-info-light theme-border border theme-info-bg rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  {isCreating ? (
+                    <svg className="animate-spin h-5 w-5 theme-info" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                  ) : (
+                    <svg className="h-5 w-5 theme-info" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm theme-text-primary font-medium">{mccProcessingStatus}</p>
+                  {mccProcessingProgress.total > 0 && (
+                    <div className="mt-2">
+                      <div className="flex justify-between text-xs theme-text-secondary mb-1">
+                        <span>Progress: {mccProcessingProgress.processed}/{mccProcessingProgress.total}</span>
+                        <span>{mccProcessingProgress.successful} successful, {mccProcessingProgress.failed} failed</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                          style={{ width: `${(mccProcessingProgress.processed / mccProcessingProgress.total) * 100}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {failedMccCodes.length > 0 && !isCreating && (
+                <button
+                  onClick={retryFailedMccCodes}
+                  className="px-3 py-1 text-xs theme-button-primary rounded-md hover:opacity-80 transition-opacity"
+                >
+                  Retry Failed ({failedMccCodes.length})
+                </button>
+              )}
+            </div>
+            
+            {/* Failed MCC Codes Details */}
+            {failedMccCodes.length > 0 && (
+              <div className="mt-3 pt-3 border-t theme-border">
+                <p className="text-xs theme-text-secondary mb-2">Failed MCC codes:</p>
+                <div className="space-y-1">
+                  {failedMccCodes.map((failed, index) => (
+                    <div key={index} className="flex items-center justify-between text-xs">
+                      <span className="theme-text-primary">
+                        MCC {failed.mcc_code} {failed.category_name && `(${failed.category_name})`}
+                      </span>
+                      <span className="theme-error">{failed.error}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

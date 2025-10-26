@@ -246,6 +246,62 @@ async def check_category_exists_by_mcc(
         )
 
 
+@internal_router.post(
+    "/categories/check-mcc-batch",
+    summary="Check multiple MCC codes for user categories",
+    description="Internal endpoint to check multiple MCC codes for user categories in a single request",
+    responses={
+        200: {"description": "Batch MCC check completed"},
+        403: {"description": "Invalid internal token"},
+    }
+)
+async def check_categories_exist_by_mcc_batch(
+    request: dict,
+    category_service: CategoryService = Depends(get_category_service_internal),
+    _: None = Depends(verify_internal_token)
+) -> dict:
+    """
+    Internal endpoint to check multiple MCC codes for user categories.
+    
+    This endpoint is used by other microservices to:
+    - Check multiple MCC codes in a single request
+    - Reduce API calls and improve performance
+    
+    Args:
+        request: {"mcc_codes": [int], "user_id": int}
+        
+    Returns:
+        dict: {"results": [{"mcc_code": int, "exists": bool, "category_id": int|null}]}
+    """
+    try:
+        mcc_codes = request.get("mcc_codes", [])
+        user_id = request.get("user_id")
+        
+        if not mcc_codes or not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="mcc_codes and user_id are required"
+            )
+        
+        results = category_service.check_categories_exist_by_mcc_batch(mcc_codes, user_id)
+        
+        log_operation(
+            logger,
+            "Internal batch MCC category existence check",
+            user_id,
+            len(mcc_codes),
+            f"Checked {len(mcc_codes)} MCC codes"
+        )
+        
+        return {"results": results}
+        
+    except Exception as e:
+        logger.error(f"Unexpected error in batch MCC category existence check: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error while checking MCC codes"
+        )
+
 @internal_router.get(
     "/categories/get-by-mcc/{mcc_code}",
     summary="Get category info by MCC code",

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from app.models.transaction import ParsedTransaction, BankType, TransactionType
 from app.config.bank_headers import get_patterns_for_bank
 from app.clients.category_client import CategoryServiceClient
@@ -142,6 +142,49 @@ class MonobankParser(BasePDFParser):
         except Exception as e:
             self.logger.warning(f"Error parsing Monobank transaction row: {e}")
             return None
+
+    async def _get_mcc_categories_batch(self, mcc_codes: List[int], language: str) -> Dict[int, Dict[str, Any]]:
+        """Get MCC category information for multiple codes in batch"""
+        try:
+            # Get all MCC codes and filter for the ones we need
+            response = await self.category_client.get_mcc_category(mcc_codes[0], language)  # This gets all codes
+            if not response:
+                return {}
+            
+            # Since the current API gets all codes, we need to filter
+            # This is a temporary solution - ideally we'd have a batch endpoint
+            mcc_info = {}
+            for mcc_code in mcc_codes:
+                try:
+                    category_info = await self.category_client.get_mcc_category(mcc_code, language)
+                    if category_info:
+                        mcc_info[mcc_code] = category_info
+                except Exception as e:
+                    self.logger.warning(f"Failed to get MCC info for {mcc_code}: {e}")
+            
+            return mcc_info
+        except Exception as e:
+            self.logger.error(f"Error getting MCC categories in batch: {e}")
+            return {}
+
+    async def _get_user_categories_batch(self, mcc_codes: List[int], user_id: int) -> Dict[int, Dict[str, Any]]:
+        """Get user's existing categories for multiple MCC codes in batch"""
+        try:
+            results = await self.category_client.check_categories_exist_by_mcc_batch(mcc_codes, user_id)
+            if not results:
+                return {}
+            
+            # Convert list to dict for easy lookup
+            mcc_categories = {}
+            for result in results:
+                mcc_code = result.get('mcc_code')
+                if mcc_code:
+                    mcc_categories[mcc_code] = result
+            
+            return mcc_categories
+        except Exception as e:
+            self.logger.error(f"Error getting user categories in batch: {e}")
+            return {}
     
     def _calculate_transaction_type(self, amount: float, row: List[str]) -> TransactionType:
         """Determine transaction type for Monobank"""
