@@ -97,7 +97,7 @@ class MonobankParser(BasePDFParser):
                     if category_info:
                         mcc_category_name = category_info.get("name")
                         mcc_category_translation = category_info.get("translation")
-                        self.logger.info(f"Found category for MCC {mcc_code}: {mcc_category_name} ({mcc_category_translation})")
+                        self.logger.info(f"Found category for MCC {mcc_code}: {mcc_category_name} ({mcc_category_translation} {language})")
                     else:
                         self.logger.warning(f"No category found for MCC code {mcc_code}")
                 except Exception as e:

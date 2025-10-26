@@ -2,6 +2,8 @@ import React, { useState, useRef } from 'react';
 import { useApiClients } from '@/hooks/useApiClients';
 import { ParsedTransaction } from '@/services/api/pdfParserApiClient';
 import { useTheme } from '@/contexts/ThemeContext';
+import i18n from '@/i18n';
+import { normalizeLanguageCode } from '@/utils';
 
 interface PdfUploaderProps {
   onTransactionsParsed: (transactions: ParsedTransaction[]) => void;
@@ -70,7 +72,9 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({ onTransactionsParsed, 
       setIsUploading(true);
       setError(null);
 
-      const response = await pdfParser.parsePDF(file, bankType);
+      // Normalize language code for the API
+      const language = normalizeLanguageCode(i18n.language);
+      const response = await pdfParser.parsePDF(file, bankType, language);
       
       
       if ('error' in response) {

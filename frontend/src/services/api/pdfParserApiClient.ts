@@ -89,14 +89,17 @@ export class PDFParserApiClient {
 
   async parsePDF(
     file: File,
-    bankType?: string
+    bankType?: string,
+    language?: string
   ): Promise<ApiResponse<PDFParseResponse>> {
     const formData = new FormData();
     formData.append('file', file);
     if (bankType) {
       formData.append('bank_type', bankType);
     }
-
+    if (language) {
+      formData.append('language', language);
+    }
 
     return this.httpClient.post<PDFParseResponse>('/parse', formData);
   }

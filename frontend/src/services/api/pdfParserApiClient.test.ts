@@ -42,7 +42,8 @@ export const exampleParsePDF = async (file: File) => {
   const client = new PDFParserApiClient(mockGetToken, mockRefreshToken);
 
   try {
-    const response = await client.parsePDF(file, 'monobank');
+    // Parse PDF with language parameter
+    const response = await client.parsePDF(file, 'monobank', 'ru');
     
     if ('error' in response) {
       console.error('PDF parsing error:', response.error);
