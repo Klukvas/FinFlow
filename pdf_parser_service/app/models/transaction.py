@@ -25,6 +25,11 @@ class ParsedTransaction(BaseModel):
     bank_type: BankType = Field(..., description="Bank that issued the PDF")
     raw_text: Optional[str] = Field(None, description="Raw text from PDF for this transaction")
     confidence_score: float = Field(..., ge=0.0, le=1.0, description="Confidence score for parsing accuracy")
+    mcc_code: Optional[int] = Field(None, description="MCC code for the transaction")
+    mcc_category_name: Optional[str] = Field(None, description="MCC category name")
+    mcc_category_translation: Optional[str] = Field(None, description="MCC category translation in specified language")
+    category_exists: Optional[bool] = Field(None, description="Whether user already has a category with this MCC code")
+    category_id: Optional[int] = Field(None, description="ID of existing category with this MCC code")
     
     @validator('amount')
     def validate_amount(cls, v):

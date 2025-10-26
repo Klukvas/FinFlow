@@ -25,10 +25,17 @@ pdf_parser_service = PDFParserService()
 async def parse_pdf(
     file: UploadFile = File(..., description="PDF file to parse"),
     bank_type: Optional[str] = Form(None, description="Specific bank type (optional)"),
+    language: str = Form("en", description="Language for MCC category translations (ru, uk, en)"),
     user_id: int = Depends(get_current_user_id)
 ):
     """
     Parse a bank PDF file and extract transaction data
+    
+    - **file**: PDF file to parse
+    - **bank_type**: Specific bank type (optional, defaults to auto-detection)
+    - **language**: Language for MCC category translations (ru, uk, en, defaults to en)
+    
+    Returns parsed transaction data with MCC categories in the specified language.
     """
     try:
         logger.info(f"Received file upload request: {file.filename}, size: {file.size}, type: {file.content_type}")
@@ -68,7 +75,7 @@ async def parse_pdf(
             from app.models.transaction import BankType
             bank_type_enum = BankType(bank_type) if bank_type else None
             
-            result = await pdf_parser_service.parse_pdf(temp_file_path, bank_type_enum)
+            result = await pdf_parser_service.parse_pdf(temp_file_path, bank_type_enum, language, user_id)
             
             logger.info(f"Successfully parsed PDF: {len(result.transactions)} transactions found")
             

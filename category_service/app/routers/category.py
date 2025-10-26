@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, status, Query, Path
-from typing import List, Annotated
+from typing import List, Annotated, Optional
 
-from app.schemas.category import CategoryCreate, CategoryOut, CategoryListResponse
+from app.schemas.category import CategoryCreate, CategoryCreateFromMCC, CategoryCreateFromMCCBatch, CategoryBatchCreateResponse, CategoryOut, CategoryListResponse, SupportedLanguage
 from app.services.category import CategoryService
 from app.dependencies import get_category_service, get_current_user_id
 from app.exceptions import (
@@ -43,6 +43,90 @@ def create_category(
     Returns the created category with its ID and user association.
     """
     return service.create(category, user_id)
+
+@router.post(
+    "/from-mcc", 
+    response_model=CategoryOut, 
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a category from MCC code",
+    description="Create a new category based on a Merchant Category Code (MCC) with optional custom name and translations",
+    responses={
+        201: {"description": "Category created successfully from MCC"},
+        400: {"description": "Validation error, MCC code not found, or category already exists"},
+        401: {"description": "Unauthorized - invalid or missing token"},
+        404: {"description": "Parent category not found"},
+    }
+)
+def create_category_from_mcc(
+    category: CategoryCreateFromMCC,
+    language: Annotated[Optional[SupportedLanguage], Query(description="Language for MCC translation (ru, uk, en)")] = None,
+    service: CategoryService = Depends(get_category_service),
+    user_id: int = Depends(get_current_user_id)
+) -> CategoryOut:
+    """
+    Create a new category from an MCC code.
+    
+    - **mcc_code**: MCC code to create category from (1-9999)
+    - **parent_id**: Optional parent category ID for hierarchical organization
+    - **type**: Category type - expense or income (default: expense)
+    - **custom_name**: Optional custom name override. If not provided, uses MCC translation or English name
+    - **language**: Language code for MCC translation ('ru', 'uk', 'en')
+    
+    The system will automatically:
+    - Use the translated name if language is provided and translation exists
+    - Fall back to English name if no translation is available
+    - Use custom_name if provided (overrides translation)
+    - Mark the category as system-created (created_by: SYSTEM)
+    - Prevent duplicate categories for the same MCC code per user
+    
+    Returns the created category with its ID and user association.
+    """
+    return service.create_from_mcc(category, user_id, language.value if language else None)
+
+@router.post(
+    "/from-mcc/batch", 
+    response_model=CategoryBatchCreateResponse, 
+    status_code=status.HTTP_201_CREATED,
+    summary="Create multiple categories from MCC codes",
+    description="Create multiple categories from MCC codes in a single request with comprehensive error handling",
+    responses={
+        201: {"description": "Batch category creation completed (check individual results)"},
+        400: {"description": "Validation error or duplicate MCC codes in batch"},
+        401: {"description": "Unauthorized - invalid or missing token"},
+        422: {"description": "Invalid request data"},
+    }
+)
+def create_categories_from_mcc_batch(
+    batch_data: CategoryCreateFromMCCBatch,
+    service: CategoryService = Depends(get_category_service),
+    user_id: int = Depends(get_current_user_id)
+) -> CategoryBatchCreateResponse:
+    """
+    Create multiple categories from MCC codes in a single request.
+    
+    - **categories**: List of MCC-based categories to create (1-50 items)
+    - **language**: Default language for all categories (optional)
+    
+    Each category in the batch can have:
+    - **mcc_code**: MCC code to create category from (1-9999)
+    - **parent_id**: Optional parent category ID for hierarchical organization
+    - **type**: Category type - expense or income (default: expense)
+    - **custom_name**: Optional custom name override
+    
+    The batch operation:
+    - Processes each category individually
+    - Continues processing even if some categories fail
+    - Returns detailed results for each category creation attempt
+    - Prevents duplicate MCC codes within the same batch
+    - Uses batch language as default for all categories
+    - Respects subscription limits per category
+    
+    Returns a comprehensive response with:
+    - Individual results for each category
+    - Summary statistics (total, successful, failed)
+    - Detailed error messages for failed categories
+    """
+    return service.create_from_mcc_batch(batch_data, user_id)
 
 @router.get(
     "/", 

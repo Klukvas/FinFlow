@@ -1,5 +1,6 @@
 from fastapi import Depends, HTTPException, status, Request
 from app.services.category import CategoryService
+from app.services.mcc_categories import DefaultCategoryService
 from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from typing import Generator
@@ -88,9 +89,15 @@ def get_category_service(
     """Get category service with user authentication"""
     return CategoryService(db)
 
+def get_default_category_service(
+    db: Session = Depends(get_db)
+) -> DefaultCategoryService:
+    """Get default category service"""
+    return DefaultCategoryService(db)
+
 def get_category_service_internal(
     db: Session = Depends(get_db)
 ) -> CategoryService:
-    """Get category service for internal use without user authentication"""
+    """Get category service for internal service calls"""
     return CategoryService(db)
 

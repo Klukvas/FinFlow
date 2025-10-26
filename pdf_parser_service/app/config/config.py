@@ -11,6 +11,10 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ALGORITHM: str
     
+    # External Services Configuration
+    category_service_url: str = "http://localhost:8001"
+    internal_service_token: str = "my-secret-token"
+    
     # CORS Configuration
     cors_origins: str
     

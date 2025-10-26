@@ -64,8 +64,11 @@ services:
       ENV_FILE: .env.docker
       CORS_ORIGINS: "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
       SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
-    env_file:
-      - ./category_service/.env.docker
+      DATABASE_URL: "postgresql://postgres:postgres@db:5432/category_db"
+      SECRET_KEY: "your-secret-key-here"
+      ALGORITHM: "HS256"
+      INTERNAL_SECRET_TOKEN: "my-secret-token"
+      LOG_LEVEL: "INFO"
     depends_on:
       db:
         condition: service_healthy
@@ -213,8 +216,16 @@ services:
       dockerfile: ./pdf_parser_service/Dockerfile
     environment:
       ENV_FILE: env.docker
+      CORS_ORIGINS: "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
+      CATEGORY_SERVICE_URL: "http://category_service:8000"
+      INTERNAL_SERVICE_TOKEN: "my-secret-token"
+      SECRET_KEY: "your-secret-key-here"
+      ALGORITHM: "HS256"
     env_file:
       - ./pdf_parser_service/.env.docker
+    depends_on:
+      category_service:
+        condition: service_started
     ports:
       - "8007:8000"
     volumes:

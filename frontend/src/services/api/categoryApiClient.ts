@@ -1,9 +1,25 @@
 import { Category, CreateCategoryRequest, CreateCategoryResponse, CategoryListResponse, CategoryFilters } from '@types';
-import { AuthHttpClient, ApiError } from './AuthHttpClient';
+import { AuthHttpClient } from './AuthHttpClient';
 import { config } from '@/config/env';
 
 export interface ErrorResponse {
   error: string;
+}
+
+export interface MccBatchResult {
+  mcc_code: number;
+  success: boolean;
+  category_id: number | null;
+  category_name: string | null;
+  error: string | null;
+}
+
+export interface MccBatchResponse {
+  results: MccBatchResult[];
+  total_requested: number;
+  successful: number;
+  failed: number;
+  language: string;
 }
 
 export class CategoryApiClient {
@@ -70,5 +86,24 @@ export class CategoryApiClient {
 
   async deleteCategory(id: number): Promise<void | ErrorResponse> {
     return this.httpClient.delete<void>(`/${id}`);
+  }
+
+  async createCategoryFromMcc(mccCode: number, language: string = 'ru'): Promise<Category | ErrorResponse> {
+    return this.httpClient.post<Category>(`/from-mcc?language=${language}`, { mcc_code: mccCode });
+  }
+
+  async createCategoriesFromMccBatch(
+    categories: Array<{
+      mcc_code: number;
+      custom_name?: string;
+      parent_id?: number;
+      type?: 'EXPENSE' | 'INCOME';
+    }>,
+    language: string = 'ru'
+  ): Promise<MccBatchResponse | ErrorResponse> {
+    return this.httpClient.post<MccBatchResponse>(`/from-mcc/batch`, {
+      categories,
+      language
+    });
   }
 }

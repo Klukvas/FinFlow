@@ -43,14 +43,22 @@ export const TransactionReview: React.FC<TransactionReviewProps> = ({
   };
 
   const initializeValidatedTransactions = () => {
-    const initial = transactions.map((transaction, index) => ({
-      transaction_id: `txn_${index}`,
-      amount: transaction.amount,
-      description: transaction.description,
-      transaction_date: transaction.transaction_date,
-      transaction_type: transaction.transaction_type,
-      is_valid: true
-    }));
+    const initial: TransactionValidation[] = transactions.map((transaction, index) => {
+      const validatedTransaction: TransactionValidation = {
+        transaction_id: `txn_${index}`,
+        amount: transaction.amount,
+        description: transaction.description,
+        transaction_date: transaction.transaction_date,
+        transaction_type: transaction.transaction_type,
+        is_valid: true
+      };
+      
+      if (transaction.category_id !== undefined) {
+        validatedTransaction.category_id = transaction.category_id;
+      }
+      
+      return validatedTransaction;
+    });
     setValidatedTransactions(initial);
   };
 
@@ -75,7 +83,6 @@ export const TransactionReview: React.FC<TransactionReviewProps> = ({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(null);
-  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
 
   const handleSubmit = async () => {
     
@@ -90,15 +97,7 @@ export const TransactionReview: React.FC<TransactionReviewProps> = ({
       return;
     }
 
-    // Validate that all valid transactions have categories
-    const validTransactions = validatedTransactions.filter(txn => txn.is_valid);
-    const transactionsWithoutCategory = validTransactions.filter(txn => !txn.category_id);
-
-
-    if (transactionsWithoutCategory.length > 0) {
-      setError(`Please select a category for ${transactionsWithoutCategory.length} transaction(s)`);
-      return;
-    }
+    // Validate that all valid transactions have required fields
 
     try {
       setIsSubmitting(true);
@@ -119,13 +118,18 @@ export const TransactionReview: React.FC<TransactionReviewProps> = ({
       if (!transaction.amount || transaction.amount <= 0) errors.push('Amount is required');
       if (!transaction.transaction_date) errors.push('Date is required');
       if (!transaction.description?.trim()) errors.push('Description is required');
-      if (!transaction.category_id) errors.push('Category is required');
     }
     return errors;
   };
 
   const validTransactions = validatedTransactions.filter(txn => txn.is_valid);
   const invalidTransactions = validatedTransactions.filter(txn => !txn.is_valid);
+  
+  // Calculate category_exists statistics
+  const transactionsWithoutCategory = transactions.filter(txn => !txn.category_exists).length;
+  const transactionsWithUserSelectedCategory = validatedTransactions.filter((txn, index) => 
+    txn.category_id && !transactions[index]?.category_exists
+  ).length;
 
   if (isLoading) {
     return (
@@ -194,90 +198,16 @@ export const TransactionReview: React.FC<TransactionReviewProps> = ({
                 <div className="w-3 h-3 theme-error-bg rounded-full"></div>
                 <span className="text-xs sm:text-sm font-medium theme-error">Invalid: {invalidTransactions.length}</span>
               </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 theme-warning-bg rounded-full"></div>
+                <span className="text-xs sm:text-sm font-medium theme-warning">
+                  Categories Needed: {transactionsWithoutCategory - transactionsWithUserSelectedCategory}
+                </span>
+              </div>
             </div>
 
-            {/* Bulk Actions */}
-            <div className="flex flex-wrap gap-1.5 sm:gap-2">
-              <button
-                onClick={() => setValidatedTransactions(prev =>
-                  prev.map(txn => ({ ...txn, is_valid: true }))
-                )}
-                className="inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-medium theme-success theme-success-light rounded-md hover:theme-surface-hover theme-transition"
-              >
-                <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-                <span className="hidden sm:inline">Mark All Valid</span>
-                <span className="sm:hidden">All Valid</span>
-              </button>
-              <button
-                onClick={() => setValidatedTransactions(prev =>
-                  prev.map(txn => ({ ...txn, is_valid: false }))
-                )}
-                className="inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-medium theme-error theme-error-light rounded-md hover:theme-surface-hover theme-transition"
-              >
-                <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-                <span className="hidden sm:inline">Mark All Invalid</span>
-                <span className="sm:hidden">All Invalid</span>
-              </button>
-            </div>
           </div>
           
-          {/* Quick Actions */}
-          <div className="mt-4 flex flex-wrap gap-1.5 sm:gap-2">
-            <button
-              onClick={() => setValidatedTransactions(prev =>
-                prev.map(txn => ({ ...txn, transaction_type: 'expense' }))
-              )}
-              className="inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-medium theme-warning theme-warning-light rounded-md hover:theme-surface-hover theme-transition"
-            >
-              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span className="hidden sm:inline">Set All as Expenses</span>
-              <span className="sm:hidden">All Expenses</span>
-            </button>
-            <button
-              onClick={() => setValidatedTransactions(prev =>
-                prev.map(txn => ({ ...txn, transaction_type: 'income' }))
-              )}
-              className="inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-medium theme-accent theme-accent-light rounded-md hover:theme-surface-hover theme-transition"
-            >
-              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span className="hidden sm:inline">Set All as Income</span>
-              <span className="sm:hidden">All Income</span>
-            </button>
-            <button
-              onClick={() => setValidatedTransactions(prev =>
-                prev.map(txn => {
-                  const { category_id, ...rest } = txn;
-                  return rest;
-                })
-              )}
-              className="inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-medium theme-text-secondary theme-bg-tertiary rounded-md hover:theme-surface-hover theme-transition"
-            >
-              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-              <span className="hidden sm:inline">Clear All Categories</span>
-              <span className="sm:hidden">Clear Categories</span>
-            </button>
-            <button
-              onClick={() => setShowBulkDeleteConfirm(true)}
-              className="inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-medium theme-error theme-error-light rounded-md hover:theme-surface-hover theme-transition"
-            >
-              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" clipRule="evenodd" />
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-              <span className="hidden sm:inline">Delete All Valid</span>
-              <span className="sm:hidden">Delete Valid</span>
-            </button>
-          </div>
         </div>
 
         {/* Transactions List */}
@@ -288,13 +218,9 @@ export const TransactionReview: React.FC<TransactionReviewProps> = ({
                 key={transaction.transaction_id}
                 className={`theme-border border rounded-xl p-4 sm:p-6 theme-transition theme-shadow hover:theme-shadow-hover ${
                   transaction.is_valid 
-                    ? !transaction.category_id
-                      ? actualTheme === 'dark'
-                        ? 'theme-warning-light border-yellow-600'
-                        : 'theme-warning-light border-yellow-200'
-                      : actualTheme === 'dark'
-                        ? 'theme-success-light border-green-600'
-                        : 'theme-success-light border-green-200'
+                    ? actualTheme === 'dark'
+                      ? 'theme-success-light border-green-600'
+                      : 'theme-success-light border-green-200'
                     : actualTheme === 'dark'
                       ? 'theme-error-light border-red-600'
                       : 'theme-error-light border-red-200'
@@ -344,16 +270,6 @@ export const TransactionReview: React.FC<TransactionReviewProps> = ({
                           <span className="sm:hidden">{transactions[index] ? Math.round(transactions[index].confidence_score * 100) : 0}%</span>
                         </div>
                         
-                        {/* Category warning */}
-                        {transaction.is_valid && !transaction.category_id && (
-                          <div className="flex items-center space-x-1 text-xs sm:text-sm theme-warning">
-                            <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                            </svg>
-                            <span className="hidden sm:inline">Category required</span>
-                            <span className="sm:hidden">Category</span>
-                          </div>
-                        )}
                         
                         {/* Delete button */}
                         {deleteConfirmIndex === index ? (
@@ -516,6 +432,29 @@ export const TransactionReview: React.FC<TransactionReviewProps> = ({
                       />
                     </div>
 
+                    {/* MCC Category Translation - only show when category_exists is false AND mcc_code exists */}
+                    {!transactions[index]?.category_exists && transactions[index]?.mcc_code && (
+                      <div className="mt-4 sm:mt-6 space-y-2">
+                        <label className="block text-xs sm:text-sm font-semibold theme-text-primary">
+                          Recommended category (Will be used if you didn't select yours)
+                        </label>
+                        <div className={`px-3 py-2 sm:py-3 rounded-lg border-l-4 ${
+                          actualTheme === 'dark'
+                            ? 'bg-blue-900/30 border-blue-400 text-blue-200'
+                            : 'bg-blue-50 border-blue-400 text-blue-800'
+                        }`}>
+                          <div className="text-sm font-medium">
+                            {transactions[index]?.mcc_category_translation || transactions[index]?.mcc_category_name || 'No category translation available'}
+                          </div>
+                          {transactions[index]?.mcc_category_name && transactions[index]?.mcc_category_translation && (
+                            <div className="text-xs opacity-75 mt-1">
+                              Original: {transactions[index].mcc_category_name}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Validation errors */}
                     {transaction.is_valid && getValidationErrors(transaction).length > 0 && (
                       <div className="mt-4 p-3 theme-error-light theme-border border rounded-lg">
@@ -608,44 +547,6 @@ export const TransactionReview: React.FC<TransactionReviewProps> = ({
         </div>
       </div>
 
-      {/* Bulk Delete Confirmation Modal */}
-      {showBulkDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-60 p-4">
-          <div className="theme-surface rounded-xl theme-shadow-hover p-4 sm:p-6 max-w-md w-full mx-auto">
-            <div className="flex items-start space-x-3 mb-4">
-              <div className="flex-shrink-0">
-                <svg className="w-6 h-6 sm:w-8 sm:h-8 theme-error" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-base sm:text-lg font-semibold theme-text-primary">Delete All Valid Transactions</h3>
-                <p className="text-xs sm:text-sm theme-text-secondary mt-1">
-                  This will permanently delete {validTransactions.length} valid transaction{validTransactions.length !== 1 ? 's' : ''}. This action cannot be undone.
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
-              <button
-                onClick={() => setShowBulkDeleteConfirm(false)}
-                className="px-4 py-2 theme-border border theme-text-primary rounded-lg hover:theme-surface-hover theme-transition font-medium text-sm sm:text-base"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  setValidatedTransactions(prev => prev.filter(txn => !txn.is_valid));
-                  setShowBulkDeleteConfirm(false);
-                }}
-                className="px-4 py-2 theme-error theme-error-light rounded-lg hover:theme-surface-hover theme-transition font-medium text-sm sm:text-base"
-              >
-                Delete All
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

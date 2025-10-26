@@ -18,23 +18,23 @@ class BasePDFParser(ABC):
         self.logger = get_logger(f"{__name__}.{bank_type.value}")
     
     @abstractmethod
-    async def parse_pdf(self, file_path: str) -> List[ParsedTransaction]:
+    async def parse_pdf(self, file_path: str, language: str = "en", user_id: int = None) -> List[ParsedTransaction]:
         """Parse PDF file and extract transactions"""
         pass
     
     @abstractmethod
-    def _extract_transactions_from_table(self, table: List[List[str]]) -> List[ParsedTransaction]:
+    async def _extract_transactions_from_table(self, table: List[List[str]], language: str = "en", user_id: int = None) -> List[ParsedTransaction]:
         """Extract transactions from a parsed table"""
         pass
     
-    def _extract_transactions_from_tables(self, tables: List[List[List[str]]]) -> List[ParsedTransaction]:
+    async def _extract_transactions_from_tables(self, tables: List[List[List[str]]], language: str = "en", user_id: int = None) -> List[ParsedTransaction]:
         """Extract transactions from multiple tables"""
         all_transactions = []
         
         for i, table in enumerate(tables):
             self.logger.info(f"Processing table {i + 1}/{len(tables)}")
             try:
-                transactions = self._extract_transactions_from_table(table)
+                transactions = await self._extract_transactions_from_table(table, language, user_id)
                 all_transactions.extend(transactions)
                 self.logger.info(f"Extracted {len(transactions)} transactions from table {i + 1}")
             except Exception as e:
@@ -150,6 +150,31 @@ class BasePDFParser(ABC):
         all_headers = bank_headers_ua + bank_headers_en
         
         return any(indicator in cell_lower for indicator in all_headers)
+    
+    def _parse_mcc_code(self, mcc_str: str) -> Optional[int]:
+        """Parse MCC code string to integer"""
+        try:
+            if not mcc_str:
+                return None
+                
+            # Clean MCC string (remove spaces, extract only digits)
+            cleaned_mcc = re.sub(r'[^\d]', '', mcc_str.strip())
+            
+            if not cleaned_mcc:
+                return None
+                
+            mcc_code = int(cleaned_mcc)
+            
+            # Validate MCC code range (typically 4 digits)
+            if 1000 <= mcc_code <= 9999:
+                return mcc_code
+            else:
+                self.logger.warning(f"MCC code {mcc_code} is outside valid range (1000-9999)")
+                return None
+                
+        except (ValueError, TypeError) as e:
+            self.logger.warning(f"Failed to parse MCC code '{mcc_str}': {e}")
+            return None
     
     def _clean_description(self, description: str) -> str:
         """Clean and normalize transaction description"""

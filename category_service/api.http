@@ -81,3 +81,51 @@ Authorization: Bearer 1
 ### 🔴 Internal - Получить категорию другого пользователя (404 Not Found)
 GET http://localhost:8002/internal/categories/4?user_id=4
 X-Internal-Token: my-secret-token
+
+###
+
+### 🟢 Получить все MCC коды (без переводов)
+GET http://localhost:8001/mcc/codes
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzQ0MzE1ODA2fQ.IHl6i8X0dNd0uvNkLxm5lkcGsUkP_SenOj9eLXcqGqM
+
+###
+
+### 🟢 Получить все MCC коды с переводами на русский
+GET http://localhost:8001/mcc/codes?language=ru
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzQ0MzE1ODA2fQ.IHl6i8X0dNd0uvNkLxm5lkcGsUkP_SenOj9eLXcqGqM
+
+###
+
+### 🟢 Получить все MCC коды с переводами на украинский
+GET http://localhost:8001/mcc/codes?language=uk
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzQ0MzE1ODA2fQ.IHl6i8X0dNd0uvNkLxm5lkcGsUkP_SenOj9eLXcqGqM
+
+###
+
+### 🟢 Получить все MCC коды на английском (дефолтный язык)
+GET http://localhost:8001/mcc/codes?language=en
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzQ0MzE1ODA2fQ.IHl6i8X0dNd0uvNkLxm5lkcGsUkP_SenOj9eLXcqGqM
+
+###
+
+### 🟢 Получить дефолтные MCC категории (без переводов)
+GET http://localhost:8001/mcc/defaults
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzQ0MzE1ODA2fQ.IHl6i8X0dNd0uvNkLxm5lkcGsUkP_SenOj9eLXcqGqM
+
+###
+
+### 🟢 Получить дефолтные MCC категории с переводами на русский
+GET http://localhost:8001/mcc/defaults?language=ru
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzQ0MzE1ODA2fQ.IHl6i8X0dNd0uvNkLxm5lkcGsUkP_SenOj9eLXcqGqM
+
+###
+
+### 🟢 Получить дефолтные MCC категории с переводами на украинский
+GET http://localhost:8001/mcc/defaults?language=uk
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzQ0MzE1ODA2fQ.IHl6i8X0dNd0uvNkLxm5lkcGsUkP_SenOj9eLXcqGqM
+
+###
+
+### 🟢 Получить дефолтные MCC категории на английском (дефолтный язык)
+GET http://localhost:8001/mcc/defaults?language=en
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzQ0MzE1ODA2fQ.IHl6i8X0dNd0uvNkLxm5lkcGsUkP_SenOj9eLXcqGqM

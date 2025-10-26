@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Request
 from starlette.middleware.base import BaseHTTPMiddleware
-from app.routers import category, internal
+from app.routers import category, internal, mcc
 from fastapi.exceptions import RequestValidationError
 from app.exception_handlers import (
     custom_validation_exception_handler,
@@ -118,6 +118,7 @@ app.add_middleware(RequestLoggingMiddleware)
 
 # Include routers
 app.include_router(category.router)
+app.include_router(mcc.router)
 app.include_router(internal.internal_router)
 
 # Configure CORS

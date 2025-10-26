@@ -1005,8 +1005,8 @@ def upgrade() -> None:
         (9700, 'Automated Referral Service ( For Visa Only)', FALSE, NOW(), NOW()),
         (9701, 'Visa Credential Service ( For Visa Only)', FALSE, NOW(), NOW()),
         (9702, 'GCAS Emergency Services ( For Visa Only)', FALSE, NOW(), NOW()),
-        (9950, 'Intra – Company Purchases ( For Visa Only)', FALSE, NOW(), NOW()),
-
+        (9950, 'Intra – Company Purchases ( For Visa Only)', FALSE, NOW(), NOW())
+        
         ON CONFLICT (mcc_code) DO NOTHING
     """)
 

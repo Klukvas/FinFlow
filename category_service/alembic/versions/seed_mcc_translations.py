@@ -1,7 +1,7 @@
 """seed_mcc_translations
 
 Revision ID: seed_mcc_translations
-Revises: add_category_fields_for_mcc
+Revises: seed_mcc_codes
 Create Date: 2025-01-27 00:00:00.000000
 
 """
@@ -1989,7 +1989,7 @@ def upgrade() -> None:
         (9701, 'uk', 'Візова служба (тільки для віз)'),
         (9702, 'uk', 'Служба екстреної допомоги GCAS (лише для візових осіб)'),
         (9950, 'uk', 'Внутрішні покупки компанії (тільки для Visa)')
-    ON CONFLICT (mcc_code, lang) DO UPDATE SET text = EXCLUDED.text;
+    ON CONFLICT (mcc_code, lang) DO UPDATE SET text = EXCLUDED.text
     
     """)
 

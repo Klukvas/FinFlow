@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useApiClients } from '@/hooks/useApiClients';
 import { PdfUploader, TransactionReview } from '@/components/ui/pdf';
 import { ParsedTransaction, TransactionValidation } from '@/services/api/pdfParserApiClient';
 import { useTheme } from '@/contexts/ThemeContext';
+import i18n from '@/i18n';
+import { MccBatchResponse } from '@/services/api/categoryApiClient';
 
 export const PdfParser: React.FC = () => {
-  const { income, expense, debt } = useApiClients();
+  const { income, expense, category } = useApiClients();
   const { actualTheme } = useTheme();
   const [showUploader, setShowUploader] = useState(false);
   const [showReview, setShowReview] = useState(false);
@@ -27,30 +29,160 @@ export const PdfParser: React.FC = () => {
       setError(null);
       setSuccess(null);
 
-
       const validTransactions = validatedTransactions.filter(txn => txn.is_valid);
-      
       
       if (validTransactions.length === 0) {
         setError('No valid transactions to create');
         return;
       }
 
+      // Get current language
+      const currentLanguage = i18n.language || 'ru';
+
       let incomeCount = 0;
       let expenseCount = 0;
+      let debtCount = 0;
       const errors: string[] = [];
 
+      // Count transaction types first
+      validTransactions.forEach(transaction => {
+        if (transaction.transaction_type === 'income') {
+          incomeCount++;
+        } else if (transaction.transaction_type === 'expense' && transaction.description?.toLowerCase().includes('debt')) {
+          debtCount++;
+        } else {
+          expenseCount++;
+        }
+      });
 
-      // Create transactions in parallel
-      const createPromises = validTransactions.map(async (transaction, index) => {
+      // Step 1: Collect unique MCC codes that need categories created
+      const mccCodeToCategoryId = new Map<number, number>();
+      const uniqueMccCodes = new Set<number>();
+
+      // Process transactions to identify which MCC categories need to be created
+      const transactionsWithCategories = validTransactions.map((transaction, index) => {
+        const originalTransaction = parsedTransactions[index];
+        let categoryId = transaction.category_id;
+
+        // If user didn't select a category, check if we need to create one from MCC
+        if (!categoryId && originalTransaction) {
+          if (originalTransaction.mcc_code && originalTransaction.mcc_category_name) {
+            // Add unique MCC code to our set
+            uniqueMccCodes.add(originalTransaction.mcc_code);
+          } else {
+            // No MCC data available, force user to select category
+            errors.push(`Transaction "${transaction.description}" requires a category selection (no MCC data available)`);
+            return null; // Skip this transaction
+          }
+        }
+
+        return {
+          transaction,
+          originalTransaction,
+          categoryId
+        };
+      }).filter((item): item is { transaction: TransactionValidation; originalTransaction: ParsedTransaction | undefined; categoryId: number | undefined } => item !== null);
+
+      // Create batch request with unique MCC codes
+      const mccCategoriesToCreate: Array<{
+        mcc_code: number;
+        custom_name?: string;
+        parent_id?: number;
+        type?: 'EXPENSE' | 'INCOME';
+      }> = [];
+
+      // For each unique MCC code, determine the most appropriate type
+      uniqueMccCodes.forEach(mccCode => {
+        // Find the first transaction with this MCC code to determine type
+        const transactionWithMcc = transactionsWithCategories.find(({ originalTransaction }) => 
+          originalTransaction?.mcc_code === mccCode
+        );
+        
+        if (transactionWithMcc) {
+          mccCategoriesToCreate.push({
+            mcc_code: mccCode,
+            type: transactionWithMcc.transaction.transaction_type === 'income' ? 'INCOME' : 'EXPENSE'
+          });
+        }
+      });
+
+      // Step 2: Create categories from MCC codes in batch
+      if (mccCategoriesToCreate.length > 0) {
         try {
+          console.log(`Creating ${mccCategoriesToCreate.length} unique categories from MCC codes in batch:`, mccCategoriesToCreate.map(c => c.mcc_code));
+          const batchResponse = await category.createCategoriesFromMccBatch(mccCategoriesToCreate, currentLanguage);
           
+          if ('error' in batchResponse) {
+            console.error('Failed to create categories from MCC batch:', batchResponse.error);
+            errors.push(`Failed to create categories from MCC batch: ${batchResponse.error}`);
+            return;
+          } else {
+            const response = batchResponse as MccBatchResponse;
+            
+            // Check if any MCC codes failed to create categories
+            const failedMccCodes: number[] = [];
+            const successfulMccCodes: number[] = [];
+            
+            response.results.forEach((result) => {
+              if (result.success && result.category_id && result.error === null) {
+                mccCodeToCategoryId.set(result.mcc_code, result.category_id);
+                successfulMccCodes.push(result.mcc_code);
+                console.log(`✅ Mapped MCC ${result.mcc_code} to category ID ${result.category_id} (${result.category_name})`);
+              } else {
+                failedMccCodes.push(result.mcc_code);
+                console.error(`❌ Failed to create category for MCC ${result.mcc_code}: ${result.error}`);
+                errors.push(`Failed to create category for MCC ${result.mcc_code}: ${result.error}`);
+              }
+            });
+            
+            console.log(`Batch result: ${response.successful} successful, ${response.failed} failed out of ${response.total_requested} requested`);
+            
+            // If all MCC codes failed, we should stop processing
+            if (response.failed === response.total_requested) {
+              console.error('All MCC category creations failed. Cannot proceed with transaction creation.');
+              errors.push('All MCC category creations failed. Please select categories manually for transactions.');
+              return;
+            }
+            
+            // If some failed, warn but continue with successful ones
+            if (response.failed > 0) {
+              console.warn(`${response.failed} MCC codes failed to create categories. Continuing with ${response.successful} successful ones.`);
+            }
+          }
+        } catch (err) {
+          console.error('Error creating categories from MCC batch:', err);
+          errors.push(`Error creating categories from MCC batch: ${err}`);
+          return;
+        }
+      }
+
+      // Step 3: Create transactions with proper category IDs
+      console.log(`Creating ${transactionsWithCategories.length} transactions with categories from batch creation`);
+      let successfulIncomeCount = 0;
+      let successfulExpenseCount = 0;
+      let successfulDebtCount = 0;
+
+      const createPromises = transactionsWithCategories.map(async ({ transaction, originalTransaction, categoryId }) => {
+        try {
+          // If we don't have a category ID yet, get it from our MCC mapping
+          if (!categoryId && originalTransaction?.mcc_code) {
+            categoryId = mccCodeToCategoryId.get(originalTransaction.mcc_code);
+            if (categoryId) {
+              console.log(`Using created category ID ${categoryId} for MCC ${originalTransaction.mcc_code} in transaction: ${transaction.description}`);
+            } else {
+              console.error(`No category ID found for MCC ${originalTransaction.mcc_code}. Skipping transaction: ${transaction.description}`);
+              errors.push(`Transaction "${transaction.description}" requires a category selection (MCC ${originalTransaction.mcc_code} category creation failed)`);
+              return; // Skip this transaction
+            }
+          }
+
+          // Create the transaction with the category
           if (transaction.transaction_type === 'income') {
             const incomeData = {
               amount: transaction.amount,
               description: transaction.description,
               date: transaction.transaction_date,
-              ...(transaction.category_id && { category_id: transaction.category_id })
+              ...(categoryId && { category_id: categoryId })
             };
             const response = await income.createIncome(incomeData);
             
@@ -58,23 +190,19 @@ export const PdfParser: React.FC = () => {
               console.error('PdfParser: Income creation failed:', response.error);
               errors.push(`Income creation failed: ${response.error}`);
             } else {
-              incomeCount++;
+              successfulIncomeCount++;
             }
           } else if (transaction.transaction_type === 'expense' && transaction.description?.toLowerCase().includes('debt')) {
             // For debt transactions, create a debt payment
-            if (!transaction.category_id) {
+            if (!categoryId) {
               console.warn('PdfParser: Skipping debt transaction without category_id');
               errors.push(`Debt transaction requires a category: ${transaction.description}`);
             } else {
-              // First, try to find an existing debt with this description or create a default debt
-              // For now, we'll create a debt payment without a specific debt ID
-              // This is a simplified approach - in a real app, you'd want to match or create debts
-              
               const expenseData = {
                 amount: transaction.amount,
                 description: `[DEBT] ${transaction.description}`,
                 date: transaction.transaction_date,
-                category_id: transaction.category_id
+                category_id: categoryId
               };
               const response = await expense.createExpense(expenseData);
               
@@ -82,7 +210,7 @@ export const PdfParser: React.FC = () => {
                 console.error('PdfParser: Debt expense creation failed:', response.error);
                 errors.push(`Debt expense creation failed: ${response.error}`);
               } else {
-                expenseCount++;
+                successfulDebtCount++;
               }
             }
           } else {
@@ -91,7 +219,7 @@ export const PdfParser: React.FC = () => {
               amount: transaction.amount,
               description: transaction.description,
               date: transaction.transaction_date,
-              ...(transaction.category_id && { category_id: transaction.category_id })
+              ...(categoryId && { category_id: categoryId })
             };
             const response = await expense.createExpense(expenseData);
             
@@ -99,7 +227,7 @@ export const PdfParser: React.FC = () => {
               console.error('PdfParser: Expense creation failed:', response.error);
               errors.push(`Expense creation failed: ${response.error}`);
             } else {
-              expenseCount++;
+              successfulExpenseCount++;
             }
           }
         } catch (err) {
@@ -115,7 +243,17 @@ export const PdfParser: React.FC = () => {
         setError(`Some transactions failed to create: ${errors.join(', ')}`);
       }
 
-      setSuccess(`Successfully created ${incomeCount} income and ${expenseCount} expense transactions`);
+      const totalSuccessful = successfulIncomeCount + successfulExpenseCount + successfulDebtCount;
+      const totalAttempted = incomeCount + expenseCount + debtCount;
+      
+      let successMessage = `Successfully created ${totalSuccessful} out of ${totalAttempted} transactions: `;
+      const parts = [];
+      if (successfulIncomeCount > 0) parts.push(`${successfulIncomeCount} income`);
+      if (successfulExpenseCount > 0) parts.push(`${successfulExpenseCount} expense`);
+      if (successfulDebtCount > 0) parts.push(`${successfulDebtCount} debt`);
+      successMessage += parts.join(', ');
+      
+      setSuccess(successMessage);
       setShowReview(false);
       setParsedTransactions([]);
 

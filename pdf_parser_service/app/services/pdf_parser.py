@@ -26,7 +26,7 @@ class PDFParserService:
     def __init__(self):
         self.monobank_parser = MonobankParser()
     
-    async def parse_pdf(self, file_path: str, bank_type: Optional[BankType] = None) -> PDFParseResponse:
+    async def parse_pdf(self, file_path: str, bank_type: Optional[BankType] = None, language: str = "en", user_id: int = None) -> PDFParseResponse:
         """Parse PDF file and extract transactions (Monobank only)"""
         try:
             # Validate file exists
@@ -40,7 +40,7 @@ class PDFParserService:
             # Parse PDF with timeout
             try:
                 transactions = await asyncio.wait_for(
-                    self.monobank_parser.parse_pdf(file_path),
+                    self.monobank_parser.parse_pdf(file_path, language, user_id),
                     timeout=30.0  # 30 second timeout
                 )
             except asyncio.TimeoutError:

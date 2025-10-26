@@ -9,6 +9,11 @@ export interface ParsedTransaction {
   bank_type: string;
   raw_text?: string;
   confidence_score: number;
+  mcc_code?: number;
+  mcc_category_name?: string;
+  mcc_category_translation?: string;
+  category_exists: boolean;
+  category_id?: number;
 }
 
 export interface PDFParseResponse {

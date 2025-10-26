@@ -5,7 +5,7 @@ from typing import Optional
 # Add the logging directory to the path
 sys.path.append('/app/logging')
 
-from logging_utils import get_structured_logger, set_request_context
+from app.logging_utils import get_structured_logger, set_request_context
 
 def get_logger(name: str):
     """Get a structured logger instance for backward compatibility"""
