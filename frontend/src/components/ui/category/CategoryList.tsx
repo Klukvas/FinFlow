@@ -9,6 +9,8 @@ interface CategoryListProps {
   key?: number;
   onEditCategory?: (category: Category) => void;
   onCategoryClick?: (category: Category) => void;
+  onDeleteCategory?: (id: number) => Promise<void>;
+  deletingId?: number | null;
   initialPageSize?: number;
 }
 
@@ -32,32 +34,43 @@ const flattenCategories = (categories: Category[] | undefined, parentName?: stri
 
 export const CategoryList: React.FC<CategoryListProps> = ({ 
   onEditCategory, 
-  onCategoryClick, 
+  onCategoryClick,
+  onDeleteCategory,
+  deletingId: externalDeletingId,
   initialPageSize = 10 
 }) => {
   const { t } = useTranslation();
-  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [localDeletingId, setLocalDeletingId] = useState<number | null>(null);
   const [showFlat, setShowFlat] = useState(false);
   
   const { category } = useApiClients();
   const { handleCategoryError } = useErrorHandler();
 
+  // Use external deletingId if provided, otherwise use local state
+  const deletingId = externalDeletingId !== undefined ? externalDeletingId : localDeletingId;
+
   const handleDelete = async (id: number) => {
-    setDeletingId(id);
-    try {
-      const response = await category.deleteCategory(id);
-      
-      if (!response || 'error' in response) {
-        // Handle API error with errorCode
-        handleCategoryError(response, true);
-        return; // Don't refresh data if there was an error
+    if (onDeleteCategory) {
+      // Use parent component's handler if provided
+      await onDeleteCategory(id);
+    } else {
+      // Fallback to local handler
+      setLocalDeletingId(id);
+      try {
+        const response = await category.deleteCategory(id);
+        
+        if (!response || 'error' in response) {
+          // Handle API error with errorCode
+          handleCategoryError(response, true);
+          return; // Don't refresh data if there was an error
+        }
+        // The PaginationView will handle refreshing the data
+      } catch (err) {
+        // Handle network or other errors
+        handleCategoryError(err as Error, true);
+      } finally {
+        setLocalDeletingId(null);
       }
-      // The PaginationView will handle refreshing the data
-    } catch (err) {
-      // Handle network or other errors
-      handleCategoryError(err as Error, true);
-    } finally {
-      setDeletingId(null);
     }
   };
 

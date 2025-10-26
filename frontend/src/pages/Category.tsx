@@ -5,6 +5,8 @@ import { CategoryList, CreateCategory, EditCategory, CategoryStatistics } from '
 import { Modal } from '../components/ui/shared/Modal';
 import { Button } from '../components/ui/shared/Button';
 import { FaPlus } from 'react-icons/fa';
+import { useApiClients } from '@/hooks/useApiClients';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import type { Category as CategoryType } from '@/types';
 
 export const Category = () => {
@@ -14,6 +16,10 @@ export const Category = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryType | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  
+  const { category: categoryApi } = useApiClients();
+  const { handleCategoryError } = useErrorHandler();
 
   const handleCategoryCreated = () => {
     setRefreshKey(prev => prev + 1);
@@ -24,6 +30,27 @@ export const Category = () => {
     setRefreshKey(prev => prev + 1);
     setIsEditModalOpen(false);
     setEditingCategory(null);
+  };
+
+  const handleDeleteCategory = async (id: number) => {
+    setDeletingId(id);
+    try {
+      const response = await categoryApi.deleteCategory(id);
+      
+      if (!response || 'error' in response) {
+        // Handle API error with errorCode
+        handleCategoryError(response, true);
+        return; // Don't refresh data if there was an error
+      }
+      
+      // Refresh both list and statistics
+      setRefreshKey(prev => prev + 1);
+    } catch (err) {
+      // Handle network or other errors
+      handleCategoryError(err as Error, true);
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const handleEditCategory = (category: CategoryType) => {
@@ -86,7 +113,13 @@ export const Category = () => {
 
         {/* Categories List */}
         <div className="theme-surface backdrop-blur-sm rounded-xl sm:rounded-2xl border theme-border theme-shadow overflow-hidden">
-          <CategoryList key={refreshKey} onEditCategory={handleEditCategory} onCategoryClick={handleCategoryClick} />
+          <CategoryList 
+            key={refreshKey} 
+            onEditCategory={handleEditCategory} 
+            onCategoryClick={handleCategoryClick}
+            onDeleteCategory={handleDeleteCategory}
+            deletingId={deletingId}
+          />
         </div>
 
         {/* Create Category Modal */}
