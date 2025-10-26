@@ -19,6 +19,9 @@
     "date": "Дата",
     "category": "Категорія",
     "type": "Тип",
+    "selectCurrency": "Виберіть валюту",
+    "currencyLoadError": "Помилка завантаження валют",
+    "loadingCurrencies": "Завантаження валют...",
     "weekDays": {
       "sunday": "Неділя",
       "monday": "Понеділок",
@@ -438,8 +441,12 @@
     },
     "types": {
       "creditCard": "Кредитна картка",
-      "loan": "Позика",
+      "personalLoan": "Особиста позика",
+      "autoLoan": "Автокредит",
+      "studentLoan": "Студентський кредит",
       "mortgage": "Іпотека",
+      "generalLoan": "Загальна позика",
+      "other": "Інше",
       "all": "Всі типи"
     },
     "status": {
@@ -585,6 +592,30 @@
       "targetAmount": "Цільова сума",
       "byType": "За типами",
       "byPriority": "За пріоритетом"
+    },
+    "filters": {
+      "status": "Статус",
+      "allStatuses": "Всі статуси",
+      "active": "Активні",
+      "completed": "Завершені",
+      "paused": "Призупинені",
+      "cancelled": "Скасовані",
+      "type": "Тип",
+      "allTypes": "Всі типи",
+      "savings": "Накопичення",
+      "debtPayoff": "Погашення боргу",
+      "investment": "Інвестиції",
+      "expenseReduction": "Зменшення витрат",
+      "incomeIncrease": "Збільшення доходу",
+      "emergencyFund": "Резервний фонд",
+      "priority": "Пріоритет",
+      "allPriorities": "Всі пріоритети",
+      "low": "Низький",
+      "medium": "Середній",
+      "high": "Високий",
+      "critical": "Критичний",
+      "search": "Пошук",
+      "searchPlaceholder": "Пошук за назвою..."
     }
   },
   "recurringPage": {

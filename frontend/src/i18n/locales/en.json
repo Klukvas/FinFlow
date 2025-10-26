@@ -19,6 +19,9 @@
     "date": "Date",
     "category": "Category",
     "type": "Type",
+    "selectCurrency": "Select currency",
+    "currencyLoadError": "Error loading currencies",
+    "loadingCurrencies": "Loading currencies...",
     "weekDays": {
       "sunday": "Sunday",
       "monday": "Monday",
@@ -616,8 +619,12 @@
     },
     "types": {
       "creditCard": "Credit Card",
-      "loan": "Loan",
+      "personalLoan": "Personal Loan",
+      "autoLoan": "Auto Loan",
+      "studentLoan": "Student Loan",
       "mortgage": "Mortgage",
+      "generalLoan": "General Loan",
+      "other": "Other",
       "all": "All Types"
     },
     "status": {
@@ -763,6 +770,30 @@
       "targetAmount": "Target Amount",
       "byType": "By Type",
       "byPriority": "By Priority"
+    },
+    "filters": {
+      "status": "Status",
+      "allStatuses": "All Statuses",
+      "active": "Active",
+      "completed": "Completed",
+      "paused": "Paused",
+      "cancelled": "Cancelled",
+      "type": "Type",
+      "allTypes": "All Types",
+      "savings": "Savings",
+      "debtPayoff": "Debt Payoff",
+      "investment": "Investment",
+      "expenseReduction": "Expense Reduction",
+      "incomeIncrease": "Income Increase",
+      "emergencyFund": "Emergency Fund",
+      "priority": "Priority",
+      "allPriorities": "All Priorities",
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "critical": "Critical",
+      "search": "Search",
+      "searchPlaceholder": "Search by name..."
     }
   },
   "recurringPage": {

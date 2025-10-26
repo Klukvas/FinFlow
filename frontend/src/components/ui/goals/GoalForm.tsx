@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Goal, CreateGoalRequest, UpdateGoalRequest, GOAL_TYPE_LABELS, GOAL_PRIORITY_LABELS, GoalFormData } from '@/types';
+import { Goal, CreateGoalRequest, UpdateGoalRequest, GoalType, GoalPriority, GoalFormData } from '@/types';
 import { Button } from '../shared/Button';
 import { MoneyInput } from '../forms/MoneyInput';
+import { CurrencySelect } from '../forms/CurrencySelect';
+
+const GOAL_TYPES: GoalType[] = ['SAVINGS', 'DEBT_PAYOFF', 'INVESTMENT', 'EXPENSE_REDUCTION', 'INCOME_INCREASE', 'EMERGENCY_FUND'];
+const GOAL_PRIORITIES: GoalPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 
 interface GoalFormProps {
   goal?: Goal;
@@ -18,6 +22,7 @@ export const GoalForm: React.FC<GoalFormProps> = ({
   isLoading = false
 }) => {
   const { t } = useTranslation();
+  
   const [formData, setFormData] = useState<GoalFormData>({
     title: '',
     description: '',
@@ -145,9 +150,15 @@ export const GoalForm: React.FC<GoalFormProps> = ({
             onChange={(e) => handleInputChange('goal_type', e.target.value)}
             className="w-full px-3 py-3 sm:py-2 text-base sm:text-sm theme-border border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 theme-transition touch-manipulation"
           >
-            {Object.entries(GOAL_TYPE_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
+            {GOAL_TYPES.map((type) => {
+              // Convert DEBT_PAYOFF -> debtPayoff
+              const typeKey = type.toLowerCase().split('_').map((word, idx) => 
+                idx === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1)
+              ).join('');
+              return (
+                <option key={type} value={type}>{t(`goalsPage.filters.${typeKey}`)}</option>
+              );
+            })}
           </select>
         </div>
 
@@ -161,9 +172,12 @@ export const GoalForm: React.FC<GoalFormProps> = ({
             onChange={(e) => handleInputChange('priority', e.target.value)}
             className="w-full px-3 py-3 sm:py-2 text-base sm:text-sm theme-border border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 theme-transition touch-manipulation"
           >
-            {Object.entries(GOAL_PRIORITY_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
+            {GOAL_PRIORITIES.map((priority) => {
+              const priorityKey = priority.toLowerCase();
+              return (
+                <option key={priority} value={priority}>{t(`goalsPage.filters.${priorityKey}`)}</option>
+              );
+            })}
           </select>
         </div>
       </div>
@@ -182,21 +196,17 @@ export const GoalForm: React.FC<GoalFormProps> = ({
           />
         </div>
 
-        <div>
-          <label htmlFor="currency" className="block text-sm font-medium theme-text-primary mb-1 sm:mb-2">
+        <div className="space-y-2">
+          <label htmlFor="currency" className="block text-sm font-medium theme-text-primary">
             {t('goalsPage.form.currency')}
           </label>
-          <select
-            id="currency"
+          <CurrencySelect
             value={formData.currency}
-            onChange={(e) => handleInputChange('currency', e.target.value)}
-            className="w-full px-3 py-3 sm:py-2 text-base sm:text-sm theme-border border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 theme-transition touch-manipulation"
-          >
-            <option value="USD">USD</option>
-            <option value="EUR">EUR</option>
-            <option value="RUB">RUB</option>
-            <option value="UAH">UAH</option>
-          </select>
+            onChange={(value) => handleInputChange('currency', value)}
+            className="w-full"
+            placeholder={t('goalsPage.form.currency')}
+            showFlags={true}
+          />
         </div>
       </div>
 

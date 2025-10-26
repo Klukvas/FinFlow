@@ -15,6 +15,7 @@ interface ContactFormProps {
   onCancel: () => void;
   isLoading?: boolean;
   mode: 'create' | 'edit';
+  showCard?: boolean;
 }
 
 export const ContactForm: React.FC<ContactFormProps> = ({
@@ -22,7 +23,8 @@ export const ContactForm: React.FC<ContactFormProps> = ({
   onSubmit,
   onCancel,
   isLoading = false,
-  mode
+  mode,
+  showCard = true
 }) => {
   const { t } = useTranslation();
   const { actualTheme } = useTheme();
@@ -77,22 +79,17 @@ export const ContactForm: React.FC<ContactFormProps> = ({
     }
   };
 
-  return (
-    <Card className={`max-w-2xl mx-auto ${
-      actualTheme === 'dark' 
-        ? 'bg-gray-800 border-gray-700' 
-        : 'bg-white border-gray-200'
-    }`}>
-      <CardHeader>
-        <CardTitle className={`flex items-center space-x-2 ${
-          actualTheme === 'dark' ? 'text-white' : 'text-gray-900'
-        }`}>
-          <User className="w-5 h-5" />
-          <span>{mode === 'create' ? t('debtPage.contacts.form.createTitle') : t('debtPage.contacts.form.editTitle')}</span>
-        </CardTitle>
-      </CardHeader>
-
-      <CardContent>
+  const formContent = (
+    <>
+      {showCard && (
+        <div className="mb-4">
+          <h2 className={`text-lg font-semibold ${
+            actualTheme === 'dark' ? 'text-white' : 'text-gray-900'
+          }`}>
+            {mode === 'create' ? t('debtPage.contacts.form.createTitle') : t('debtPage.contacts.form.editTitle')}
+          </h2>
+        </div>
+      )}
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Contact Name */}
           <div className="space-y-2">
@@ -239,6 +236,29 @@ export const ContactForm: React.FC<ContactFormProps> = ({
             </Button>
           </div>
         </form>
+    </>
+  );
+
+  if (!showCard) {
+    return formContent;
+  }
+
+  return (
+    <Card className={`max-w-2xl mx-auto ${
+      actualTheme === 'dark' 
+        ? 'bg-gray-800 border-gray-700' 
+        : 'bg-white border-gray-200'
+    }`}>
+      <CardHeader>
+        <CardTitle className={`flex items-center space-x-2 ${
+          actualTheme === 'dark' ? 'text-white' : 'text-gray-900'
+        }`}>
+          <User className="w-5 h-5" />
+          <span>{mode === 'create' ? t('debtPage.contacts.form.createTitle') : t('debtPage.contacts.form.editTitle')}</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {formContent}
       </CardContent>
     </Card>
   );

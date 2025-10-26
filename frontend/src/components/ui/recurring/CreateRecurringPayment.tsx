@@ -5,6 +5,7 @@ import { recurringApiService, CreateRecurringPaymentRequest } from '@/services/a
 import { useApiClients } from '@/hooks/useApiClients';
 import { Category } from '@/types/category';
 import { MoneyInput } from '../forms/MoneyInput';
+import { CurrencySelect } from '../forms/CurrencySelect';
 import { toast } from 'sonner';
 
 interface CreateRecurringPaymentProps {
@@ -215,19 +216,17 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
                 className="w-full"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium theme-text-primary mb-2">
+            <div className="space-y-2">
+              <label className="block text-sm font-medium theme-text-primary">
                 {t('recurringPage.createModal.currency')}
               </label>
-              <select
+              <CurrencySelect
                 value={formData.currency}
-                onChange={(e) => setFormData(prev => ({ ...prev, currency: e.target.value }))}
-                className="w-full px-3 py-2 theme-border border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 theme-bg theme-text-primary"
-              >
-                <option value="RUB">RUB</option>
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-              </select>
+                onChange={(value) => setFormData(prev => ({ ...prev, currency: value }))}
+                className="w-full"
+                placeholder={t('recurringPage.createModal.currency')}
+                showFlags={true}
+              />
             </div>
           </div>
 

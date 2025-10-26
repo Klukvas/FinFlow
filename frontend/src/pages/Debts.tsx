@@ -5,25 +5,18 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { DebtResponse, DebtCreate, DebtUpdate, DebtSummary } from '@/types/debt';
 import { ContactResponse, ContactCreate, ContactUpdate } from '@/types/contact';
 import { Category } from '@/types/category';
-import { DebtCard } from '@/components/debt/DebtCard';
 import { DebtForm } from '@/components/debt/DebtForm';
 import { PaymentForm } from '@/components/debt/PaymentForm';
 import { PaymentList } from '@/components/debt/PaymentList';
-import { ContactCard } from '@/components/contact/ContactCard';
+import { DebtStats } from '@/components/debt/DebtStats';
+import { DebtTabs } from '@/components/debt/DebtTabs';
+import { DebtsList } from '@/components/debt/DebtsList';
+import { ContactsList } from '@/components/debt/ContactsList';
 import { ContactForm } from '@/components/contact/ContactForm';
 import { Button } from '@/components/ui/shared/Button';
-import { Card, CardContent } from '@/components/ui';
+import { Modal } from '@/components/ui/shared/Modal';
 import { toast } from 'sonner';
-import { 
-  Plus, 
-  DollarSign, 
-  TrendingDown, 
-  CreditCard,
-  AlertCircle,
-  CheckCircle,
-  Users,
-  UserPlus
-} from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 type ViewMode = 'list' | 'create' | 'edit' | 'payments' | 'payment-form' | 'contacts' | 'create-contact' | 'edit-contact';
 type TabType = 'debts' | 'contacts';
@@ -42,6 +35,8 @@ export const Debts: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('debts');
   const [selectedDebt, setSelectedDebt] = useState<DebtResponse | null>(null);
   const [selectedContact, setSelectedContact] = useState<ContactResponse | null>(null);
+  const [showDebtModal, setShowDebtModal] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -84,7 +79,7 @@ export const Debts: React.FC = () => {
         const result = await debt.createDebt(debtData as DebtCreate);
         if (!('error' in result)) {
           setDebts(prev => [...prev, result]);
-          setViewMode('list');
+          setShowDebtModal(false);
           loadData(); // Refresh summary
           toast.success(t('debtPage.messages.debtCreated'));
         } else {
@@ -181,7 +176,7 @@ export const Debts: React.FC = () => {
         const result = await contact.createContact(contactData as ContactCreate);
         if (!('error' in result)) {
           setContacts(prev => [...prev, result]);
-          setViewMode('contacts');
+          setShowContactModal(false);
           toast.success(t('debtPage.messages.contactCreated'));
         } else {
           console.error('Error creating contact:', result.error);
@@ -217,15 +212,7 @@ export const Debts: React.FC = () => {
   };
 
   const filteredDebts = debts;
-
   const filteredContacts = contacts;
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
 
   if (isLoading) {
     return (
@@ -249,53 +236,6 @@ export const Debts: React.FC = () => {
     );
   }
 
-  if (viewMode === 'create') {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-6">
-            <Button
-              variant="secondary"
-              onClick={() => setViewMode(activeTab === 'debts' ? 'list' : 'contacts')}
-              className="mb-4"
-            >
-              {t('debtPage.backTo')} {activeTab === 'debts' ? t('debtPage.tabs.debts') : t('debtPage.tabs.contacts')}
-            </Button>
-            <DebtForm
-              contacts={contacts}
-              categories={categories}
-              onSubmit={handleCreateDebt}
-              onCancel={() => setViewMode(activeTab === 'debts' ? 'list' : 'contacts')}
-              mode="create"
-            />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (viewMode === 'create-contact') {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-6">
-            <Button
-              variant="secondary"
-              onClick={() => setViewMode('contacts')}
-              className="mb-4"
-            >
-              {t('debtPage.backTo')} {t('debtPage.tabs.contacts')}
-            </Button>
-            <ContactForm
-              onSubmit={handleCreateContact}
-              onCancel={() => setViewMode('contacts')}
-              mode="create"
-            />
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (viewMode === 'edit' && selectedDebt) {
     return (
@@ -416,7 +356,7 @@ export const Debts: React.FC = () => {
             </p>
           </div>
           <Button
-            onClick={() => setViewMode(activeTab === 'debts' ? 'create' : 'create-contact')}
+            onClick={() => activeTab === 'debts' ? setShowDebtModal(true) : setShowContactModal(true)}
             className="mt-4 sm:mt-0"
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -425,251 +365,89 @@ export const Debts: React.FC = () => {
         </div>
 
         {/* Tabs */}
-        <div className="flex space-x-1 mb-8">
-          <button
-            onClick={() => {
-              setActiveTab('debts');
-              setViewMode('list');
-            }}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === 'debts'
-                ? actualTheme === 'dark'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-blue-500 text-white'
-                : actualTheme === 'dark'
-                ? 'text-gray-400 hover:text-white hover:bg-gray-700'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-            }`}
-          >
-            <CreditCard className="w-4 h-4 inline mr-2" />
-            {t('debtPage.tabs.debts')}
-          </button>
-          <button
-            onClick={() => {
-              setActiveTab('contacts');
-              setViewMode('contacts');
-            }}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === 'contacts'
-                ? actualTheme === 'dark'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-blue-500 text-white'
-                : actualTheme === 'dark'
-                ? 'text-gray-400 hover:text-white hover:bg-gray-700'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-            }`}
-          >
-            <Users className="w-4 h-4 inline mr-2" />
-            {t('debtPage.tabs.contacts')}
-          </button>
-        </div>
+        <DebtTabs
+          activeTab={activeTab}
+          onTabChange={(tab) => {
+            setActiveTab(tab);
+            setViewMode(tab === 'debts' ? 'list' : 'contacts');
+          }}
+          actualTheme={actualTheme}
+        />
 
         {/* Summary Cards */}
         {activeTab === 'debts' && summary && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card className={`${
-              actualTheme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-            }`}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className={`text-sm font-medium ${
-                      actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-                    }`}>
-                      {t('debtPage.stats.totalDebt')}
-                    </p>
-                    <p className={`text-2xl font-bold ${
-                      actualTheme === 'dark' ? 'text-white' : 'text-gray-900'
-                    }`}>
-                      {formatCurrency(summary.total_debt)}
-                    </p>
-                  </div>
-                  <div className={`p-3 rounded-full ${
-                    actualTheme === 'dark' ? 'bg-red-900/50' : 'bg-red-100'
-                  }`}>
-                    <TrendingDown className="w-6 h-6 text-red-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className={`${
-              actualTheme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-            }`}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className={`text-sm font-medium ${
-                      actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-                    }`}>
-                      {t('debtPage.stats.totalPaid')}
-                    </p>
-                    <p className={`text-2xl font-bold ${
-                      actualTheme === 'dark' ? 'text-white' : 'text-gray-900'
-                    }`}>
-                      {formatCurrency(summary.total_payments)}
-                    </p>
-                  </div>
-                  <div className={`p-3 rounded-full ${
-                    actualTheme === 'dark' ? 'bg-green-900/50' : 'bg-green-100'
-                  }`}>
-                    <DollarSign className="w-6 h-6 text-green-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className={`${
-              actualTheme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-            }`}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className={`text-sm font-medium ${
-                      actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-                    }`}>
-                      {t('debtPage.stats.activeDebts')}
-                    </p>
-                    <p className={`text-2xl font-bold ${
-                      actualTheme === 'dark' ? 'text-white' : 'text-gray-900'
-                    }`}>
-                      {summary.active_debts}
-                    </p>
-                  </div>
-                  <div className={`p-3 rounded-full ${
-                    actualTheme === 'dark' ? 'bg-blue-900/50' : 'bg-blue-100'
-                  }`}>
-                    <CreditCard className="w-6 h-6 text-blue-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className={`${
-              actualTheme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-            }`}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className={`text-sm font-medium ${
-                      actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-                    }`}>
-                      {t('debtPage.stats.paidOff')}
-                    </p>
-                    <p className={`text-2xl font-bold ${
-                      actualTheme === 'dark' ? 'text-white' : 'text-gray-900'
-                    }`}>
-                      {summary.paid_off_debts}
-                    </p>
-                  </div>
-                  <div className={`p-3 rounded-full ${
-                    actualTheme === 'dark' ? 'bg-green-900/50' : 'bg-green-100'
-                  }`}>
-                    <CheckCircle className="w-6 h-6 text-green-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <DebtStats summary={summary} actualTheme={actualTheme} />
         )}
 
         {/* Content based on active tab */}
         {activeTab === 'debts' ? (
-          /* Debt Cards */
-          filteredDebts.length === 0 ? (
-            <Card className={`${
-              actualTheme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-            }`}>
-              <CardContent className="p-12 text-center">
-                <AlertCircle className={`w-12 h-12 mx-auto mb-4 ${
-                  actualTheme === 'dark' ? 'text-gray-600' : 'text-gray-400'
-                }`} />
-                <h3 className={`text-lg font-medium mb-2 ${
-                  actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  {t('debtPage.emptyStates.noDebtsTitle')}
-                </h3>
-                <p className={`mb-6 ${
-                  actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                }`}>
-                  {t('debtPage.emptyStates.noDebtsDescription')}
-                </p>
-                <Button onClick={() => setViewMode('create')}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  {t('debtPage.emptyStates.addFirstDebt')}
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredDebts.map((debt) => (
-                <DebtCard
-                  key={debt.id}
-                  debt={debt}
-                  onEdit={(debt) => {
-                    setSelectedDebt(debt);
-                    setViewMode('edit');
-                  }}
-                  onViewPayments={(debtId) => {
-                    const debt = debts.find(d => d.id === debtId);
-                    if (debt) {
-                      setSelectedDebt(debt);
-                      setViewMode('payments');
-                    }
-                  }}
-                  onMakePayment={(debtId) => {
-                    const debt = debts.find(d => d.id === debtId);
-                    if (debt) {
-                      setSelectedDebt(debt);
-                      setViewMode('payment-form');
-                    }
-                  }}
-                  onDelete={handleDeleteDebt}
-                />
-              ))}
-            </div>
-          )
+          <DebtsList
+            debts={filteredDebts}
+            onEdit={(debt) => {
+              setSelectedDebt(debt);
+              setViewMode('edit');
+            }}
+            onViewPayments={(debtId) => {
+              const debt = debts.find(d => d.id === debtId);
+              if (debt) {
+                setSelectedDebt(debt);
+                setViewMode('payments');
+              }
+            }}
+            onMakePayment={(debtId) => {
+              const debt = debts.find(d => d.id === debtId);
+              if (debt) {
+                setSelectedDebt(debt);
+                setViewMode('payment-form');
+              }
+            }}
+            onDelete={handleDeleteDebt}
+            onCreateClick={() => setShowDebtModal(true)}
+            actualTheme={actualTheme}
+          />
         ) : (
-          /* Contact Cards */
-          filteredContacts.length === 0 ? (
-            <Card className={`${
-              actualTheme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-            }`}>
-              <CardContent className="p-12 text-center">
-                <Users className={`w-12 h-12 mx-auto mb-4 ${
-                  actualTheme === 'dark' ? 'text-gray-600' : 'text-gray-400'
-                }`} />
-                <h3 className={`text-lg font-medium mb-2 ${
-                  actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  {t('debtPage.emptyStates.noContactsTitle')}
-                </h3>
-                <p className={`mb-6 ${
-                  actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                }`}>
-                  {t('debtPage.emptyStates.noContactsDescription')}
-                </p>
-                <Button onClick={() => setViewMode('create-contact')}>
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  {t('debtPage.emptyStates.addFirstContact')}
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredContacts.map((contact) => (
-                <ContactCard
-                  key={contact.id}
-                  contact={contact}
-                  onEdit={(contact) => {
-                    setSelectedContact(contact);
-                    setViewMode('edit-contact');
-                  }}
-                />
-              ))}
-            </div>
-          )
+          <ContactsList
+            contacts={filteredContacts}
+            onEdit={(contact) => {
+              setSelectedContact(contact);
+              setViewMode('edit-contact');
+            }}
+            onCreateClick={() => setShowContactModal(true)}
+            actualTheme={actualTheme}
+          />
         )}
+
+        {/* Debt Create Modal */}
+        <Modal
+          isOpen={showDebtModal}
+          onClose={() => setShowDebtModal(false)}
+          title={t('debtPage.form.title')}
+          size="xl"
+        >
+          <DebtForm
+            contacts={contacts}
+            categories={categories}
+            onSubmit={handleCreateDebt}
+            onCancel={() => setShowDebtModal(false)}
+            mode="create"
+            showCard={false}
+          />
+        </Modal>
+
+        {/* Contact Create Modal */}
+        <Modal
+          isOpen={showContactModal}
+          onClose={() => setShowContactModal(false)}
+          title={t('debtPage.contacts.form.createTitle')}
+          size="xl"
+        >
+          <ContactForm
+            onSubmit={handleCreateContact}
+            onCancel={() => setShowContactModal(false)}
+            mode="create"
+            showCard={false}
+          />
+        </Modal>
       </div>
     </div>
   );

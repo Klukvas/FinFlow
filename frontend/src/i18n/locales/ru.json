@@ -19,6 +19,9 @@
     "date": "Дата",
     "category": "Категория",
     "type": "Тип",
+    "selectCurrency": "Выберите валюту",
+    "currencyLoadError": "Ошибка загрузки валют",
+    "loadingCurrencies": "Загрузка валют...",
     "weekDays": {
       "sunday": "Воскресенье",
       "monday": "Понедельник",
@@ -616,8 +619,12 @@
     },
     "types": {
       "creditCard": "Кредитная карта",
-      "loan": "Займ",
+      "personalLoan": "Личный займ",
+      "autoLoan": "Автокредит",
+      "studentLoan": "Студенческий кредит",
       "mortgage": "Ипотека",
+      "generalLoan": "Общий займ",
+      "other": "Другое",
       "all": "Все типы"
     },
     "status": {
@@ -763,6 +770,30 @@
       "targetAmount": "Целевая сумма",
       "byType": "По типам",
       "byPriority": "По приоритету"
+    },
+    "filters": {
+      "status": "Статус",
+      "allStatuses": "Все статусы",
+      "active": "Активные",
+      "completed": "Завершенные",
+      "paused": "Приостановленные",
+      "cancelled": "Отмененные",
+      "type": "Тип",
+      "allTypes": "Все типы",
+      "savings": "Накопления",
+      "debtPayoff": "Погашение долга",
+      "investment": "Инвестиции",
+      "expenseReduction": "Сокращение расходов",
+      "incomeIncrease": "Увеличение дохода",
+      "emergencyFund": "Резервный фонд",
+      "priority": "Приоритет",
+      "allPriorities": "Все приоритеты",
+      "low": "Низкий",
+      "medium": "Средний",
+      "high": "Высокий",
+      "critical": "Критический",
+      "search": "Поиск",
+      "searchPlaceholder": "Поиск по названию..."
     }
   },
   "recurringPage": {

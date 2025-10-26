@@ -29,16 +29,17 @@ interface DebtFormProps {
   onCancel: () => void;
   isLoading?: boolean;
   mode: 'create' | 'edit';
+  showCard?: boolean;
 }
 
-const debtTypes: { value: DebtType; label: string; icon: string }[] = [
-  { value: 'CREDIT_CARD', label: 'Credit Card', icon: '💳' },
-  { value: 'PERSONAL_LOAN', label: 'Personal Loan', icon: '🏦' },
-  { value: 'AUTO_LOAN', label: 'Auto Loan', icon: '🚗' },
-  { value: 'STUDENT_LOAN', label: 'Student Loan', icon: '🎓' },
-  { value: 'MORTGAGE', label: 'Mortgage', icon: '🏠' },
-  { value: 'LOAN', label: 'General Loan', icon: '💰' },
-  { value: 'OTHER', label: 'Other', icon: '📋' }
+const debtTypeConfigs: { value: DebtType; labelKey: string; icon: string }[] = [
+  { value: 'CREDIT_CARD', labelKey: 'debtPage.types.creditCard', icon: '💳' },
+  { value: 'PERSONAL_LOAN', labelKey: 'debtPage.types.personalLoan', icon: '🏦' },
+  { value: 'AUTO_LOAN', labelKey: 'debtPage.types.autoLoan', icon: '🚗' },
+  { value: 'STUDENT_LOAN', labelKey: 'debtPage.types.studentLoan', icon: '🎓' },
+  { value: 'MORTGAGE', labelKey: 'debtPage.types.mortgage', icon: '🏠' },
+  { value: 'LOAN', labelKey: 'debtPage.types.generalLoan', icon: '💰' },
+  { value: 'OTHER', labelKey: 'debtPage.types.other', icon: '📋' }
 ];
 
 export const DebtForm: React.FC<DebtFormProps> = ({
@@ -48,7 +49,8 @@ export const DebtForm: React.FC<DebtFormProps> = ({
   onSubmit,
   onCancel,
   isLoading = false,
-  mode
+  mode,
+  showCard = true
 }) => {
   const { t } = useTranslation();
   const { actualTheme } = useTheme();
@@ -124,24 +126,28 @@ export const DebtForm: React.FC<DebtFormProps> = ({
     }
   };
 
+  const getDebtTypes = () => {
+    return debtTypeConfigs.map(config => ({
+      value: config.value,
+      label: t(config.labelKey),
+      icon: config.icon
+    }));
+  };
+
+  const debtTypes = getDebtTypes();
   const selectedDebtType = debtTypes.find(type => type.value === formData.debt_type);
 
-  return (
-    <Card className={`max-w-2xl mx-auto ${
-      actualTheme === 'dark' 
-        ? 'bg-gray-800 border-gray-700' 
-        : 'bg-white border-gray-200'
-    }`}>
-      <CardHeader>
-        <CardTitle className={`flex items-center space-x-2 ${
-          actualTheme === 'dark' ? 'text-white' : 'text-gray-900'
-        }`}>
-          <DollarSign className="w-5 h-5" />
-          <span>{mode === 'create' ? t('debtPage.form.title') : t('debtPage.form.editTitle')}</span>
-        </CardTitle>
-      </CardHeader>
-
-      <CardContent>
+  const formContent = (
+    <>
+      {showCard && (
+        <div className="mb-4">
+          <h2 className={`text-lg font-semibold ${
+            actualTheme === 'dark' ? 'text-white' : 'text-gray-900'
+          }`}>
+            {mode === 'create' ? t('debtPage.form.title') : t('debtPage.form.editTitle')}
+          </h2>
+        </div>
+      )}
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Debt Name */}
           <div className="space-y-2">
@@ -515,6 +521,29 @@ export const DebtForm: React.FC<DebtFormProps> = ({
             </Button>
           </div>
         </form>
+    </>
+  );
+
+  if (!showCard) {
+    return formContent;
+  }
+
+  return (
+    <Card className={`max-w-2xl mx-auto ${
+      actualTheme === 'dark' 
+        ? 'bg-gray-800 border-gray-700' 
+        : 'bg-white border-gray-200'
+    }`}>
+      <CardHeader>
+        <CardTitle className={`flex items-center space-x-2 ${
+          actualTheme === 'dark' ? 'text-white' : 'text-gray-900'
+        }`}>
+          <DollarSign className="w-5 h-5" />
+          <span>{mode === 'create' ? t('debtPage.form.title') : t('debtPage.form.editTitle')}</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {formContent}
       </CardContent>
     </Card>
   );
