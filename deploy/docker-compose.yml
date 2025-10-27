@@ -35,8 +35,12 @@ services:
       - EXPENSE_SERVICE_URL=http://expense_service:8000
       - INCOME_SERVICE_URL=http://income_service:8000
       - CURRENCY_SERVICE_URL=http://currency_service:8000
+      - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
     depends_on:
       - redis
+      - user_service
+      - currency_service
+      - category_service
     restart: unless-stopped
     logging:
       driver: "json-file"
@@ -66,7 +70,10 @@ services:
   currency_service:
     image: ${REGISTRY}/${IMAGE_PREFIX}/currency_service:latest
     environment:
+      - REDIS_URL=redis://redis:6379
       - cors_origins=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122
+    depends_on:
+      - redis
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
       interval: 10s
@@ -92,6 +99,11 @@ services:
       - USER_SERVICE_URL=http://user_service:8000
       - CURRENCY_SERVICE_URL=http://currency_service:8000
       - CATEGORY_SERVICE_URL=http://category_service:8000
+      - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
+    depends_on:
+      - category_service
+      - user_service
+      - currency_service
     restart: unless-stopped
     logging:
       driver: "json-file"
@@ -112,6 +124,7 @@ services:
       - CATEGORY_SERVICE_URL=http://category_service:8000
       - ACCOUNT_SERVICE_URL=http://account_service:8000
       - CURRENCY_SERVICE_URL=http://currency_service:8000
+      - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
     depends_on:
       - redis
     restart: unless-stopped
@@ -153,8 +166,14 @@ services:
       - ALGORITHM=${ALGORITHM}
       - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
       - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122,https://finflow.ltd,http://finflow.ltd
+      - CATEGORY_SERVICE_URL=http://category_service:8000
+      - ACCOUNT_SERVICE_URL=http://account_service:8000
+      - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
     depends_on:
       - redis
+      - category_service
+      - user_service
+      - account_service
     restart: unless-stopped
     logging:
       driver: "json-file"
@@ -206,6 +225,11 @@ services:
       - ALGORITHM=${ALGORITHM}
       - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
       - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122,https://finflow.ltd,http://finflow.ltd
+      - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
+    depends_on:
+      - expense_service
+      - income_service
+      - category_service
     restart: unless-stopped
     logging:
       driver: "json-file"
