@@ -28,6 +28,7 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
     const [accounts, setAccounts] = useState<AccountResponse[]>([]);
     
     const [error, setError] = useState<string | null>(null);
+    const [amountTouched, setAmountTouched] = useState(false);
     
     const [isLoading, setIsLoading] = useState(false);
     const [isLoadingCategories, setIsLoadingCategories] = useState(false);
@@ -102,6 +103,7 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
     };
 
     const handleAmountChange = (value: string) => {
+        setAmountTouched(true);
         setAmountDisplay(value);
         const cleanedValue = removeSpacesFromNumber(value);
         setFormData(prev => ({
@@ -146,6 +148,7 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                     currency: 'USD',
                 });
                 setAmountDisplay('');
+                setAmountTouched(false);
                 onExpenseCreated();
             }
         } catch (err) {
@@ -167,7 +170,7 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                         onChange={handleAmountChange}
                         placeholder="0"
                         required
-                        error={(!formData.amount || formData.amount <= 0) ? 'Сумма должна быть больше 0' : ''}
+                        error={amountTouched && (!formData.amount || formData.amount <= 0) ? 'Сумма должна быть больше 0' : ''}
                         className="w-full"
                     />
 
@@ -179,7 +182,7 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                         <CurrencySelect
                             value={formData.currency || 'USD'}
                             onChange={(value) => handleChange({ target: { name: 'currency', value } } as any)}
-                            className="w-full px-3 sm:px-4 py-3 theme-surface theme-border border rounded-lg sm:rounded-xl theme-text-primary focus:ring-2 focus:ring-red-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px]"
+                            className="w-full px-3 sm:px-4 py-3 theme-surface theme-border border rounded-lg sm:rounded-xl theme-text-primary focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px]"
                             showFlags={true}
                         />
                     </div>
@@ -195,7 +198,7 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                             name="category_id"
                             value={formData.category_id}
                             onChange={handleChange}
-                            className="w-full px-3 sm:px-4 py-3 theme-surface theme-border border rounded-lg sm:rounded-xl theme-text-primary focus:ring-2 focus:ring-red-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px] disabled:opacity-50"
+                            className="w-full px-3 sm:px-4 py-3 theme-surface theme-border border rounded-lg sm:rounded-xl theme-text-primary focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px] disabled:opacity-50"
                             disabled={isLoadingCategories}
                         >
                             <option value="">Без категории</option>
@@ -224,7 +227,7 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                             name="account_id"
                             value={formData.account_id || ''}
                             onChange={handleChange}
-                            className="w-full px-3 sm:px-4 py-3 theme-surface theme-border border rounded-lg sm:rounded-xl theme-text-primary focus:ring-2 focus:ring-red-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px] disabled:opacity-50"
+                            className="w-full px-3 sm:px-4 py-3 theme-surface theme-border border rounded-lg sm:rounded-xl theme-text-primary focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px] disabled:opacity-50"
                             disabled={isLoadingAccounts}
                         >
                             <option value="">Без аккаунта</option>
@@ -254,7 +257,7 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                             name="date"
                             value={formData.date}
                             onChange={handleChange}
-                            className="w-full px-3 sm:px-4 py-3 theme-surface theme-border border rounded-lg sm:rounded-xl theme-text-primary focus:ring-2 focus:ring-red-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px]"
+                            className="w-full px-3 sm:px-4 py-3 theme-surface theme-border border rounded-lg sm:rounded-xl theme-text-primary focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px]"
                             required
                         />
                     </div>
@@ -271,7 +274,7 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                             value={formData.description}
                             onChange={handleChange}
                             placeholder="Добавьте описание расхода..."
-                            className="w-full px-3 sm:px-4 py-3 theme-surface theme-border border rounded-lg sm:rounded-xl theme-text-primary placeholder-gray-400 focus:ring-2 focus:ring-red-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg resize-none text-sm sm:text-base min-h-[88px]"
+                            className="w-full px-3 sm:px-4 py-3 theme-surface theme-border border rounded-lg sm:rounded-xl theme-text-primary placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg resize-none text-sm sm:text-base min-h-[88px]"
                             rows={3}
                         />
                     </div>
