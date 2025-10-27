@@ -566,7 +566,10 @@
     "stats": {
       "totalAccounts": "Всего аккаунтов",
       "totalBalance": "Общий баланс",
-      "active": "Активных"
+      "active": "Активных",
+      "loading": "(загрузка...)",
+      "notIncludedSingle": "счет не учтен",
+      "notIncludedPlural": "счетов не учтено"
     },
     "emptyState": {
       "title": "У вас пока нет аккаунтов",

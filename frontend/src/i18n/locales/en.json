@@ -566,7 +566,10 @@
     "stats": {
       "totalAccounts": "Total Accounts",
       "totalBalance": "Total Balance",
-      "active": "Active"
+      "active": "Active",
+      "loading": "(loading...)",
+      "notIncludedSingle": "account not included",
+      "notIncludedPlural": "accounts not included"
     },
     "emptyState": {
       "title": "You don't have any accounts yet",

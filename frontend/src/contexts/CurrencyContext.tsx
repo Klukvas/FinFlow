@@ -1,11 +1,15 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { CurrencyApiClient, CurrencyInfo } from '@/services/api/currencyApiClient';
+import { useAuth } from './AuthContext';
 
 interface CurrencyContextType {
   currencies: CurrencyInfo[];
+  exchangeRates: Record<string, number>;
   isLoading: boolean;
+  isLoadingRates: boolean;
   error: string | null;
   refreshCurrencies: () => Promise<void>;
+  refreshRates: () => Promise<void>;
 }
 
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
@@ -15,8 +19,11 @@ interface CurrencyProviderProps {
 }
 
 export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) => {
+  const { user } = useAuth();
   const [currencies, setCurrencies] = useState<CurrencyInfo[]>([]);
+  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingRates, setIsLoadingRates] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
 
@@ -55,15 +62,46 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
     await fetchCurrencies();
   };
 
+  const fetchExchangeRates = async () => {
+    if (!user?.base_currency) return;
+    
+    setIsLoadingRates(true);
+    try {
+      const currencyClient = new CurrencyApiClient();
+      const response = await currencyClient.getCurrencyRates(user.base_currency);
+      setExchangeRates(response.rates);
+    } catch (err) {
+      console.error('Failed to fetch exchange rates:', err);
+      setExchangeRates({});
+    } finally {
+      setIsLoadingRates(false);
+    }
+  };
+
+  const refreshRates = async () => {
+    await fetchExchangeRates();
+  };
+
   useEffect(() => {
     fetchCurrencies();
   }, []);
 
+  // Fetch exchange rates when user logs in or base_currency changes
+  useEffect(() => {
+    if (user?.base_currency) {
+      fetchExchangeRates();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.base_currency]);
+
   const value: CurrencyContextType = {
     currencies,
+    exchangeRates,
     isLoading,
+    isLoadingRates,
     error,
-    refreshCurrencies
+    refreshCurrencies,
+    refreshRates
   };
 
   return (

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { AccountSummary } from '@/types';
 import { Card } from '../shared/Card';
 import { FaChartLine, FaDollarSign, FaWallet } from 'react-icons/fa';
@@ -9,6 +10,7 @@ interface AccountStatsProps {
 }
 
 export const AccountStats: React.FC<AccountStatsProps> = ({ summaries }) => {
+  const { t } = useTranslation();
   const { 
     userCurrency, 
     isLoadingRates, 
@@ -40,7 +42,7 @@ export const AccountStats: React.FC<AccountStatsProps> = ({ summaries }) => {
             <FaWallet className="w-6 h-6 text-blue-600" />
           </div>
           <div className="ml-4">
-            <p className="text-sm font-medium theme-text-secondary">Всего аккаунтов</p>
+            <p className="text-sm font-medium theme-text-secondary">{t('accountPage.stats.totalAccounts')}</p>
             <p className="text-2xl font-bold theme-text-primary">{summaries.length}</p>
           </div>
         </div>
@@ -53,14 +55,14 @@ export const AccountStats: React.FC<AccountStatsProps> = ({ summaries }) => {
           </div>
           <div className="ml-4">
             <p className="text-sm font-medium theme-text-secondary">
-              Общий баланс {isLoadingRates && '(загрузка...)'}
+              {t('accountPage.stats.totalBalance')} {isLoadingRates && t('accountPage.stats.loading')}
             </p>
             <p className="text-2xl font-bold theme-text-primary">
               {formatCurrency(totalBalance, userCurrency)}
             </p>
             {unconvertibleAccounts.length > 0 && (
               <p className="text-xs text-orange-600 mt-1">
-                ⚠️ {unconvertibleAccounts.length} {unconvertibleAccounts.length === 1 ? 'счет' : 'счетов'} не учтен
+                ⚠️ {unconvertibleAccounts.length} {unconvertibleAccounts.length === 1 ? t('accountPage.stats.notIncludedSingle') : t('accountPage.stats.notIncludedPlural')}
               </p>
             )}
           </div>
@@ -73,7 +75,7 @@ export const AccountStats: React.FC<AccountStatsProps> = ({ summaries }) => {
             <FaChartLine className="w-6 h-6 text-purple-600" />
           </div>
           <div className="ml-4">
-            <p className="text-sm font-medium theme-text-secondary">Активных</p>
+            <p className="text-sm font-medium theme-text-secondary">{t('accountPage.stats.active')}</p>
             <p className="text-2xl font-bold theme-text-primary">{activeAccounts}</p>
           </div>
         </div>

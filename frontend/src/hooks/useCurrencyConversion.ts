@@ -1,5 +1,3 @@
-import { useState, useEffect } from 'react';
-import { CurrencyApiClient } from '@/services/api/currencyApiClient';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 
@@ -13,32 +11,9 @@ interface UseCurrencyConversionReturn {
 
 export const useCurrencyConversion = (): UseCurrencyConversionReturn => {
   const { user } = useAuth();
-  const { currencies } = useCurrency();
-  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
-  const [isLoadingRates, setIsLoadingRates] = useState(true);
+  const { currencies, exchangeRates, isLoadingRates } = useCurrency();
   
   const userCurrency = user?.base_currency || 'USD';
-
-  // Fetch exchange rates
-  useEffect(() => {
-    const fetchRates = async () => {
-      try {
-        const currencyClient = new CurrencyApiClient();
-        const response = await currencyClient.getCurrencyRates(userCurrency);
-        setExchangeRates(response.rates);
-      } catch (error) {
-        console.error('Failed to fetch exchange rates:', error);
-        // Set empty rates on error
-        setExchangeRates({});
-      } finally {
-        setIsLoadingRates(false);
-      }
-    };
-
-    if (userCurrency) {
-      fetchRates();
-    }
-  }, [userCurrency]);
 
   // Convert account balance to user's base currency
   const convertToUserCurrency = (amount: number, fromCurrency: string): number | null => {

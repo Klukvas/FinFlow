@@ -388,7 +388,10 @@
     "stats": {
       "totalAccounts": "Всього акаунтів",
       "totalBalance": "Загальний баланс",
-      "active": "Активних"
+      "active": "Активних",
+      "loading": "(завантаження...)",
+      "notIncludedSingle": "акаунт не враховано",
+      "notIncludedPlural": "акаунтів не враховано"
     },
     "emptyState": {
       "title": "У вас поки немає акаунтів",
