@@ -31,6 +31,7 @@ class DebtBase(BaseModel):
     debt_type: DebtType = Field(..., description="Type of debt")
     contact_id: Optional[int] = Field(None, description="Associated contact ID")
     category_id: Optional[int] = Field(None, gt=0, description="Category ID from category service")
+    currency: str = Field(..., min_length=3, max_length=3, description="ISO currency code")
     
     initial_amount: float = Field(..., gt=0, description="Initial debt amount")
     interest_rate: Optional[float] = Field(None, ge=0, le=100, description="Annual interest rate (%)")
@@ -64,6 +65,7 @@ class DebtCreate(DebtBase):
                 "debt_type": "CREDIT_CARD",
                 "contact_id": 1,
                 "category_id": 5,
+                "currency": "USD",
                 "initial_amount": 5000.00,
                 "interest_rate": 18.99,
                 "minimum_payment": 150.00,
@@ -80,6 +82,7 @@ class DebtUpdate(BaseModel):
     debt_type: Optional[DebtType] = None
     contact_id: Optional[int] = None
     category_id: Optional[int] = Field(None, gt=0)
+    currency: Optional[str] = Field(None, min_length=3, max_length=3)
     interest_rate: Optional[float] = Field(None, ge=0, le=100)
     minimum_payment: Optional[float] = Field(None, gt=0)
     due_date: Optional[date] = None
@@ -96,12 +99,17 @@ class DebtResponse(DebtBase):
     is_paid_off: bool = Field(description="Whether debt is fully paid off")
     created_at: datetime
     updated_at: datetime
+    payment_count: int = Field(default=0, description="Number of payments for this debt")
     
     # Include contact info if available
     contact: Optional[ContactResponse] = None
     
     model_config = ConfigDict(
         from_attributes=True,
+        json_encoders={
+            datetime: lambda v: v.isoformat() if v else None,
+            date: lambda v: v.isoformat() if v else None
+        },
         json_schema_extra={
             "example": {
                 "id": 1,
@@ -113,6 +121,7 @@ class DebtResponse(DebtBase):
                 "user_id": 1,
                 "is_active": True,
                 "is_paid_off": False,
+                "payment_count": 3,
                 "created_at": "2024-01-15T10:30:00",
                 "updated_at": "2024-01-15T10:30:00"
             }

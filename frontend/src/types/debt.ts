@@ -1,5 +1,5 @@
 // Import contact types
-import { ContactResponse, ContactSummary } from './contact';
+import { ContactResponse } from './contact';
 
 export type DebtType = 
   | 'CREDIT_CARD'
@@ -25,6 +25,7 @@ export interface DebtCreate {
   debt_type: DebtType;
   contact_id?: number | null;
   category_id?: number | null;
+  currency: string;
   initial_amount: number;
   interest_rate?: number | null;
   minimum_payment?: number | null;
@@ -38,6 +39,7 @@ export interface DebtUpdate {
   debt_type?: DebtType | null;
   contact_id?: number | null;
   category_id?: number | null;
+  currency?: string | null;
   interest_rate?: number | null;
   minimum_payment?: number | null;
   due_date?: string | null;
@@ -53,6 +55,7 @@ export interface DebtResponse {
   debt_type: DebtType;
   contact_id?: number | null;
   category_id: number;
+  currency: string;
   initial_amount: number;
   current_balance: number;
   interest_rate?: number | null;
@@ -65,6 +68,7 @@ export interface DebtResponse {
   created_at: string;
   updated_at: string;
   contact?: ContactResponse | null;
+  payment_count?: number; // Number of payments for this debt
 }
 
 // Debt Payment Interfaces

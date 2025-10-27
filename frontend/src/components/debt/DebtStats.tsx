@@ -1,22 +1,64 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DebtSummary } from '@/types/debt';
+import { DebtResponse } from '@/types/debt';
 import { Card, CardContent } from '@/components/ui';
 import { DollarSign, TrendingDown, CreditCard, CheckCircle } from 'lucide-react';
+import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 
 interface DebtStatsProps {
-  summary: DebtSummary;
+  debts: DebtResponse[];
   actualTheme: 'light' | 'dark';
 }
 
-export const DebtStats: React.FC<DebtStatsProps> = ({ summary, actualTheme }) => {
+export const DebtStats: React.FC<DebtStatsProps> = ({ debts, actualTheme }) => {
   const { t } = useTranslation();
+  const { formatCurrency, convertToUserCurrency, userCurrency, isLoadingRates } = useCurrencyConversion();
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
+  // Calculate summary with currency conversion
+  const summary = useMemo(() => {
+    let totalDebt = 0;
+    let totalPayments = 0;
+    let activeDebts = 0;
+    let paidOffDebts = 0;
+
+    debts.forEach((debt) => {
+      // Convert current balance to user's currency
+      const convertedBalance = convertToUserCurrency(Math.abs(debt.current_balance), debt.currency);
+      
+      if (convertedBalance !== null) {
+        totalDebt += convertedBalance;
+      }
+
+      // Calculate amount paid (difference between initial and current balance)
+      // Use absolute value to handle both positive (they owe me) and negative (I owe them) debts
+      const amountPaid = Math.abs(debt.initial_amount - debt.current_balance);
+      
+      // Convert the amount paid to user's currency
+      if (amountPaid > 0) {
+        const convertedPaid = convertToUserCurrency(amountPaid, debt.currency);
+        if (convertedPaid !== null) {
+          totalPayments += convertedPaid;
+        }
+      }
+
+      if (debt.is_active) {
+        activeDebts++;
+      }
+      if (debt.is_paid_off) {
+        paidOffDebts++;
+      }
+    });
+
+    return {
+      total_debt: totalDebt,
+      total_payments: totalPayments,
+      active_debts: activeDebts,
+      paid_off_debts: paidOffDebts
+    };
+  }, [debts, convertToUserCurrency]);
+
+  const formatAmount = (amount: number) => {
+    return formatCurrency(amount, userCurrency);
   };
 
   return (
@@ -35,7 +77,7 @@ export const DebtStats: React.FC<DebtStatsProps> = ({ summary, actualTheme }) =>
               <p className={`text-2xl font-bold ${
                 actualTheme === 'dark' ? 'text-white' : 'text-gray-900'
               }`}>
-                {formatCurrency(summary.total_debt)}
+                {formatAmount(summary.total_debt)} {isLoadingRates && '(loading...)'}
               </p>
             </div>
             <div className={`p-3 rounded-full ${
@@ -61,7 +103,7 @@ export const DebtStats: React.FC<DebtStatsProps> = ({ summary, actualTheme }) =>
               <p className={`text-2xl font-bold ${
                 actualTheme === 'dark' ? 'text-white' : 'text-gray-900'
               }`}>
-                {formatCurrency(summary.total_payments)}
+                {formatAmount(summary.total_payments)} {isLoadingRates && '(loading...)'}
               </p>
             </div>
             <div className={`p-3 rounded-full ${

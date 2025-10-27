@@ -2,6 +2,7 @@ import React from 'react';
 import { DebtResponse, DebtType } from '@/types/debt';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Card, CardContent, CardHeader, CardTitle, Badge, Button, DropdownMenu, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui';
+import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 import { 
   CreditCard, 
   Home, 
@@ -66,12 +67,10 @@ export const DebtCard: React.FC<DebtCardProps> = ({
   onMakePayment
 }) => {
   const { actualTheme } = useTheme();
+  const { formatCurrency } = useCurrencyConversion();
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
+  const formatAmount = (amount: number, currency?: string) => {
+    return formatCurrency(amount, currency || debt.currency);
   };
 
   const formatDate = (dateString: string) => {
@@ -193,7 +192,7 @@ export const DebtCard: React.FC<DebtCardProps> = ({
                 ? 'text-green-600 dark:text-green-400' 
                 : 'text-red-600 dark:text-red-400'
             }`}>
-              {formatCurrency(Math.abs(debt.current_balance))}
+              {formatAmount(Math.abs(debt.current_balance), debt.currency)}
             </p>
             <p className={`text-xs mt-1 ${
               actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'
@@ -215,7 +214,7 @@ export const DebtCard: React.FC<DebtCardProps> = ({
             <p className={`text-lg font-semibold ${
               actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'
             }`}>
-              {formatCurrency(Math.abs(debt.initial_amount))}
+              {formatAmount(Math.abs(debt.initial_amount), debt.currency)}
             </p>
             <p className={`text-xs mt-1 ${
               actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'
@@ -269,7 +268,7 @@ export const DebtCard: React.FC<DebtCardProps> = ({
               <span className={`font-medium ${
                 actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'
               }`}>
-                {formatCurrency(debt.minimum_payment)}
+                {formatAmount(debt.minimum_payment, debt.currency)}
               </span>
             </div>
           )}

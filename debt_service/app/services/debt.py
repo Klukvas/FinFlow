@@ -64,6 +64,7 @@ class DebtService:
                 debt_type=debt.debt_type.value,
                 contact_id=debt.contact_id,
                 category_id=debt.category_id,
+                currency=debt.currency,
                 initial_amount=debt.initial_amount,
                 current_balance=debt.initial_amount,  # Start with initial amount
                 interest_rate=debt.interest_rate,
@@ -81,7 +82,11 @@ class DebtService:
                 self.db.refresh(db_debt)
             
             log_operation(self.logger, "Debt created", user_id, f"Debt ID: {db_debt.id}, Name: {debt.name}, Amount: {debt.initial_amount}")
-            return DebtResponse.model_validate(db_debt)
+            
+            # New debt has 0 payments
+            debt_dict = DebtResponse.model_validate(db_debt).model_dump()
+            debt_dict['payment_count'] = 0
+            return DebtResponse.model_validate(debt_dict)
             
         except Exception as e:
             self.db.rollback()
@@ -102,7 +107,17 @@ class DebtService:
         
         debts = query.offset(skip).limit(limit).all()
         
-        return [DebtResponse.model_validate(debt) for debt in debts]
+        # Add payment count for each debt
+        result = []
+        for debt in debts:
+            debt_dict = DebtResponse.model_validate(debt).model_dump()
+            payment_count = self.db.query(DebtPayment).filter(
+                DebtPayment.debt_id == debt.id
+            ).count()
+            debt_dict['payment_count'] = payment_count
+            result.append(DebtResponse.model_validate(debt_dict))
+        
+        return result
 
     def get_debt(self, debt_id: int, user_id: int) -> DebtResponse:
         """Get a specific debt"""
@@ -114,7 +129,13 @@ class DebtService:
         if not debt:
             raise DebtNotFoundError(debt_id)
         
-        return DebtResponse.model_validate(debt)
+        debt_dict = DebtResponse.model_validate(debt).model_dump()
+        payment_count = self.db.query(DebtPayment).filter(
+            DebtPayment.debt_id == debt_id
+        ).count()
+        debt_dict['payment_count'] = payment_count
+        
+        return DebtResponse.model_validate(debt_dict)
 
     async def update_debt(self, debt_id: int, debt_update: DebtUpdate, user_id: int) -> DebtResponse:
         """Update a debt"""
@@ -125,11 +146,27 @@ class DebtService:
         if not debt:
             raise DebtNotFoundError(debt_id)
         
+        # Check if currency is being changed
+        update_data = debt_update.model_dump(exclude_unset=True)
+        if "currency" in update_data and update_data["currency"] != debt.currency:
+            # Check if there are any payments for this debt
+            payment_count = self.db.query(DebtPayment).filter(
+                DebtPayment.debt_id == debt_id
+            ).count()
+            
+            if payment_count > 0:
+                raise DebtValidationError(
+                    f"Cannot change currency. This debt has {payment_count} payment(s) already."
+                )
+        
         try:
-            update_data = debt_update.model_dump(exclude_unset=True)
             for field, value in update_data.items():
                 if field == "debt_type" and value:
                     setattr(debt, field, value.value)
+                elif field == "currency" and value:
+                    # Validate currency is a valid 3-letter code
+                    if len(value) == 3 and value.isupper():
+                        setattr(debt, field, value)
                 else:
                     setattr(debt, field, value)
             
@@ -147,7 +184,15 @@ class DebtService:
                 self.db.refresh(debt)
             
             log_operation(self.logger, "Debt updated", user_id, f"Debt ID: {debt.id}, Fields: {list(update_data.keys())}")
-            return DebtResponse.model_validate(debt)
+            
+            # Add payment count
+            debt_dict = DebtResponse.model_validate(debt).model_dump()
+            payment_count = self.db.query(DebtPayment).filter(
+                DebtPayment.debt_id == debt_id
+            ).count()
+            debt_dict['payment_count'] = payment_count
+            
+            return DebtResponse.model_validate(debt_dict)
             
         except Exception as e:
             self.db.rollback()

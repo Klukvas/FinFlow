@@ -36,6 +36,7 @@ class Debt(Base):
     debt_type = Column(String(50), nullable=False)  # CREDIT_CARD, LOAN, MORTGAGE, etc.
     
     # Financial details
+    currency = Column(String(3), nullable=False, default='USD')  # ISO currency code
     initial_amount = Column(Float, nullable=False)
     current_balance = Column(Float, nullable=False)
     interest_rate = Column(Float, nullable=True)  # Annual percentage rate

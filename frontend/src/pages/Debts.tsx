@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApiClients } from '@/hooks/useApiClients';
 import { useTheme } from '@/contexts/ThemeContext';
-import { DebtResponse, DebtCreate, DebtUpdate, DebtSummary } from '@/types/debt';
+import { DebtResponse, DebtCreate, DebtUpdate, DebtSummary, DebtPaymentResponse } from '@/types/debt';
 import { ContactResponse, ContactCreate, ContactUpdate } from '@/types/contact';
 import { Category } from '@/types/category';
 import { DebtForm } from '@/components/debt/DebtForm';
@@ -30,12 +30,16 @@ export const Debts: React.FC = () => {
   const [contacts, setContacts] = useState<ContactResponse[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [summary, setSummary] = useState<DebtSummary | null>(null);
+  const [payments, setPayments] = useState<DebtPaymentResponse[]>([]);
+  const [isLoadingPayments, setIsLoadingPayments] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [activeTab, setActiveTab] = useState<TabType>('debts');
   const [selectedDebt, setSelectedDebt] = useState<DebtResponse | null>(null);
   const [selectedContact, setSelectedContact] = useState<ContactResponse | null>(null);
   const [showDebtModal, setShowDebtModal] = useState(false);
+  const [showEditDebtModal, setShowEditDebtModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
 
   useEffect(() => {
@@ -73,6 +77,24 @@ export const Debts: React.FC = () => {
     }
   };
 
+  const loadPayments = async (debtId: number) => {
+    setIsLoadingPayments(true);
+    try {
+      const paymentsResult = await debt.getPayments(debtId);
+      if (!('error' in paymentsResult)) {
+        setPayments(paymentsResult);
+      } else {
+        console.error('Error loading payments:', paymentsResult);
+        setPayments([]);
+      }
+    } catch (error) {
+      console.error('Error loading payments:', error);
+      setPayments([]);
+    } finally {
+      setIsLoadingPayments(false);
+    }
+  };
+
   const handleCreateDebt = (debtData: DebtCreate | DebtUpdate) => {
     (async () => {
       try {
@@ -101,13 +123,14 @@ export const Debts: React.FC = () => {
         const result = await debt.updateDebt(selectedDebt.id, debtData as DebtUpdate);
         if (!('error' in result)) {
           setDebts(prev => prev.map(d => d.id === selectedDebt.id ? result : d));
-          setViewMode('list');
+          setShowEditDebtModal(false);
           setSelectedDebt(null);
           loadData(); // Refresh summary
           toast.success(t('debtPage.messages.debtUpdated'));
         } else {
           console.error('Error updating debt:', result.error);
-          toast.error('Failed to update debt. Please try again.');
+          // Display the actual error message from the backend
+          toast.error(result.error || 'Failed to update debt. Please try again.');
         }
       } catch (error) {
         console.error('Error updating debt:', error);
@@ -128,15 +151,16 @@ export const Debts: React.FC = () => {
           setDebts(prev => prev.map(d => d.id === selectedDebt.id ? updatedDebtResult : d));
           setSelectedDebt(updatedDebtResult);
         }
+        setShowPaymentModal(false);
         loadData(); // Refresh summary
-                  toast.success(t('debtPage.messages.paymentMade'));
-        } else {
-          console.error('Error making payment:', result.error);
-          toast.error('Failed to make payment. Please try again.');
-        }
-      } catch (error) {
-        console.error('Error making payment:', error);
+        toast.success(t('debtPage.messages.paymentMade'));
+      } else {
+        console.error('Error making payment:', result.error);
         toast.error('Failed to make payment. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error making payment:', error);
+      toast.error('Failed to make payment. Please try again.');
     }
   };
 
@@ -237,31 +261,6 @@ export const Debts: React.FC = () => {
   }
 
 
-  if (viewMode === 'edit' && selectedDebt) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-6">
-            <Button
-              variant="secondary"
-              onClick={() => setViewMode(activeTab === 'debts' ? 'list' : 'contacts')}
-              className="mb-4"
-            >
-              {t('debtPage.backTo')} {activeTab === 'debts' ? t('debtPage.tabs.debts') : t('debtPage.tabs.contacts')}
-            </Button>
-            <DebtForm
-              initialData={selectedDebt}
-              contacts={contacts}
-              categories={categories}
-              onSubmit={handleUpdateDebt}
-              onCancel={() => setViewMode(activeTab === 'debts' ? 'list' : 'contacts')}
-              mode="edit"
-            />
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (viewMode === 'edit-contact' && selectedContact) {
     return (
@@ -287,29 +286,6 @@ export const Debts: React.FC = () => {
     );
   }
 
-  if (viewMode === 'payment-form' && selectedDebt) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-6">
-            <Button
-              variant="secondary"
-              onClick={() => setViewMode('list')}
-              className="mb-4"
-            >
-              {t('debtPage.backTo')} {t('debtPage.tabs.debts')}
-            </Button>
-            <PaymentForm
-              debtId={selectedDebt.id}
-              currentBalance={selectedDebt.current_balance}
-              onSubmit={handleMakePayment}
-              onCancel={() => setViewMode('list')}
-            />
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (viewMode === 'payments' && selectedDebt) {
     return (
@@ -329,8 +305,9 @@ export const Debts: React.FC = () => {
               {t('debtPage.paymentHistory')} - {selectedDebt.name}
             </h1>
             <PaymentList
-              payments={[]} // TODO: Load payments for this debt
-              isLoading={false}
+              payments={payments}
+              currency={selectedDebt.currency}
+              isLoading={isLoadingPayments}
             />
           </div>
         </div>
@@ -375,8 +352,8 @@ export const Debts: React.FC = () => {
         />
 
         {/* Summary Cards */}
-        {activeTab === 'debts' && summary && (
-          <DebtStats summary={summary} actualTheme={actualTheme} />
+        {activeTab === 'debts' && (
+          <DebtStats debts={debts} actualTheme={actualTheme} />
         )}
 
         {/* Content based on active tab */}
@@ -385,20 +362,21 @@ export const Debts: React.FC = () => {
             debts={filteredDebts}
             onEdit={(debt) => {
               setSelectedDebt(debt);
-              setViewMode('edit');
+              setShowEditDebtModal(true);
             }}
             onViewPayments={(debtId) => {
               const debt = debts.find(d => d.id === debtId);
               if (debt) {
                 setSelectedDebt(debt);
                 setViewMode('payments');
+                loadPayments(debtId);
               }
             }}
             onMakePayment={(debtId) => {
               const debt = debts.find(d => d.id === debtId);
               if (debt) {
                 setSelectedDebt(debt);
-                setViewMode('payment-form');
+                setShowPaymentModal(true);
               }
             }}
             onDelete={handleDeleteDebt}
@@ -432,6 +410,58 @@ export const Debts: React.FC = () => {
             mode="create"
             showCard={false}
           />
+        </Modal>
+
+        {/* Edit Debt Modal */}
+        <Modal
+          isOpen={showEditDebtModal}
+          onClose={() => {
+            setShowEditDebtModal(false);
+            setSelectedDebt(null);
+          }}
+          title={t('debtPage.form.editTitle')}
+          size="xl"
+        >
+          {selectedDebt && (
+            <DebtForm
+              initialData={selectedDebt}
+              contacts={contacts}
+              categories={categories}
+              onSubmit={handleUpdateDebt}
+              onCancel={() => {
+                setShowEditDebtModal(false);
+                setSelectedDebt(null);
+              }}
+              mode="edit"
+              showCard={false}
+              paymentCount={selectedDebt.payment_count ?? 0}
+            />
+          )}
+        </Modal>
+
+        {/* Make Payment Modal */}
+        <Modal
+          isOpen={showPaymentModal}
+          onClose={() => {
+            setShowPaymentModal(false);
+            setSelectedDebt(null);
+          }}
+          title="Make Payment"
+          size="lg"
+        >
+          {selectedDebt && (
+            <PaymentForm
+              debtId={selectedDebt.id}
+              currentBalance={selectedDebt.current_balance}
+              currency={selectedDebt.currency}
+              onSubmit={handleMakePayment}
+              onCancel={() => {
+                setShowPaymentModal(false);
+                setSelectedDebt(null);
+              }}
+              showCard={false}
+            />
+          )}
         </Modal>
 
         {/* Contact Create Modal */}

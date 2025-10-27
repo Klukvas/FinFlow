@@ -19,6 +19,7 @@ import {
   CardHeader, 
   CardTitle 
 } from '@/components/ui';
+import { CurrencySelect } from '@/components/ui/forms/CurrencySelect';
 import { removeSpacesFromNumber, formatNumberWithSpaces } from '@/utils/numberFormat';
 import { Calendar, DollarSign, User, Building2 } from 'lucide-react';
 
@@ -31,6 +32,7 @@ interface DebtFormProps {
   isLoading?: boolean;
   mode: 'create' | 'edit';
   showCard?: boolean;
+  paymentCount?: number; // Number of payments for validation
 }
 
 const debtTypeConfigs: { value: DebtType; labelKey: string; icon: string }[] = [
@@ -51,12 +53,11 @@ export const DebtForm: React.FC<DebtFormProps> = ({
   onCancel,
   isLoading = false,
   mode,
-  showCard = true
+  showCard = true,
+  paymentCount = 0
 }) => {
   const { t } = useTranslation();
   const { actualTheme } = useTheme();
-  
-  // Debug: log contacts data
   
   const [formData, setFormData] = useState<DebtCreate>({
     name: initialData.name || '',
@@ -64,6 +65,7 @@ export const DebtForm: React.FC<DebtFormProps> = ({
     debt_type: initialData.debt_type || 'CREDIT_CARD',
     contact_id: initialData.contact_id || null,
     category_id: initialData.category_id || null,
+    currency: initialData.currency || 'USD',
     initial_amount: initialData.initial_amount || 0,
     interest_rate: initialData.interest_rate || null,
     minimum_payment: initialData.minimum_payment || null,
@@ -112,6 +114,18 @@ export const DebtForm: React.FC<DebtFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevent currency changes if debt has payments
+    if (mode === 'edit' && paymentCount > 0 && initialData?.currency) {
+      if (formData.currency !== initialData.currency) {
+        setErrors(prev => ({
+          ...prev,
+          currency: t('debtPage.form.currencyLocked')
+        }));
+        return;
+      }
+    }
+    
     if (validateForm()) {
       // Clean the form data - ensure empty strings become null
       const cleanedFormData = {
@@ -234,6 +248,41 @@ export const DebtForm: React.FC<DebtFormProps> = ({
                   : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
               }`}
             />
+          </div>
+
+          {/* Currency */}
+          <div className="space-y-2">
+            <Label htmlFor="currency" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
+              {t('debtPage.form.currency')}
+            </Label>
+            <CurrencySelect
+              value={formData.currency}
+              onChange={(value) => {
+                // Prevent changes if debt has payments
+                if (mode === 'edit' && paymentCount > 0) {
+                  return;
+                }
+                handleInputChange('currency', value);
+              }}
+              disabled={mode === 'edit' && paymentCount > 0}
+              className={`${
+                actualTheme === 'dark' 
+                  ? 'bg-gray-700 border-gray-600 text-white' 
+                  : 'bg-white border-gray-300 text-gray-900'
+              } ${mode === 'edit' && paymentCount > 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+              placeholder={t('debtPage.form.selectCurrency')}
+              showFlags={true}
+            />
+            {errors.currency && (
+              <p className="text-sm text-red-500">{errors.currency}</p>
+            )}
+            {mode === 'edit' && paymentCount > 0 && !errors.currency && (
+              <p className={`text-xs mt-1 ${
+                actualTheme === 'dark' ? 'text-yellow-400' : 'text-yellow-600'
+              }`}>
+                ⚠️ {t('debtPage.form.currencyLocked')}
+              </p>
+            )}
           </div>
 
           {/* Amount and Financial Details */}

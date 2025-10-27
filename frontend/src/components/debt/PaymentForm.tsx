@@ -4,18 +4,22 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { Button } from '@/components/ui/shared/Button';
 import { Input } from '@/components/ui/forms/Input';
 import { Label } from '@/components/ui/forms/Label';
-import { MoneyInput } from '@/components/ui/forms/MoneyInput';
+import { FormattedNumberInput } from '@/components/ui/forms/FormattedNumberInput';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/forms/Select';
 import { Textarea } from '@/components/ui/forms/Textarea';
+import { removeSpacesFromNumber } from '@/utils/numberFormat';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/shared/Card';
 import { Calendar, DollarSign, CreditCard, Wallet, Banknote } from 'lucide-react';
+import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 
 interface PaymentFormProps {
   debtId: number;
   currentBalance: number;
+  currency: string;
   onSubmit: (payment: DebtPaymentCreate) => void;
   onCancel: () => void;
   isLoading?: boolean;
+  showCard?: boolean;
 }
 
 const paymentMethods: { value: PaymentMethod; label: string; icon: React.ReactNode }[] = [
@@ -29,22 +33,28 @@ const paymentMethods: { value: PaymentMethod; label: string; icon: React.ReactNo
 
 export const PaymentForm: React.FC<PaymentFormProps> = ({
   currentBalance,
+  currency,
   onSubmit,
   onCancel,
-  isLoading = false
+  isLoading = false,
+  showCard = true
 }) => {
   const { actualTheme } = useTheme();
+  const { formatCurrency } = useCurrencyConversion();
   
   const [formData, setFormData] = useState<DebtPaymentCreate>({
     amount: 0,
     principal_amount: null,
     interest_amount: null,
-    payment_date: new Date().toISOString().split('T')[0],
-    description: '',
+    payment_date: (new Date().toISOString().split('T')[0] || '') as string,
+    description: null,
     payment_method: 'CASH'
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [amountDisplay, setAmountDisplay] = useState('');
+  const [principalAmountDisplay, setPrincipalAmountDisplay] = useState('');
+  const [interestAmountDisplay, setInterestAmountDisplay] = useState('');
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -57,15 +67,15 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       newErrors.amount = 'Payment amount cannot exceed current balance';
     }
 
-    if (formData.principal_amount !== null && formData.principal_amount < 0) {
+    if (formData.principal_amount !== null && formData.principal_amount !== undefined && formData.principal_amount < 0) {
       newErrors.principal_amount = 'Principal amount cannot be negative';
     }
 
-    if (formData.interest_amount !== null && formData.interest_amount < 0) {
+    if (formData.interest_amount !== null && formData.interest_amount !== undefined && formData.interest_amount < 0) {
       newErrors.interest_amount = 'Interest amount cannot be negative';
     }
 
-    if (formData.principal_amount !== null && formData.interest_amount !== null) {
+    if (formData.principal_amount !== null && formData.principal_amount !== undefined && formData.interest_amount !== null && formData.interest_amount !== undefined) {
       const total = (formData.principal_amount || 0) + (formData.interest_amount || 0);
       if (Math.abs(total - formData.amount) > 0.01) {
         newErrors.interest_amount = 'Principal + Interest must equal total payment amount';
@@ -95,32 +105,12 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
-
   const calculateRemainingBalance = () => {
     return currentBalance - formData.amount;
   };
 
-  return (
-    <Card className={`max-w-lg mx-auto ${
-      actualTheme === 'dark' 
-        ? 'bg-gray-800 border-gray-700' 
-        : 'bg-white border-gray-200'
-    }`}>
-      <CardHeader>
-        <CardTitle className={`flex items-center space-x-2 ${
-          actualTheme === 'dark' ? 'text-white' : 'text-gray-900'
-        }`}>
-          <DollarSign className="w-5 h-5" />
-          <span>Make Payment</span>
-        </CardTitle>
-      </CardHeader>
-
+  const content = (
+    <>
       <CardContent>
         {/* Current Balance Info */}
         <div className={`p-4 rounded-lg mb-6 ${
@@ -135,7 +125,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             <span className={`text-lg font-bold ${
               actualTheme === 'dark' ? 'text-white' : 'text-gray-900'
             }`}>
-              {formatCurrency(currentBalance)}
+              {formatCurrency(currentBalance, currency)}
             </span>
           </div>
           {formData.amount > 0 && (
@@ -148,7 +138,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               <span className={`text-lg font-bold ${
                 actualTheme === 'dark' ? 'text-green-400' : 'text-green-600'
               }`}>
-                {formatCurrency(calculateRemainingBalance())}
+                {formatCurrency(calculateRemainingBalance(), currency)}
               </span>
             </div>
           )}
@@ -156,13 +146,18 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Payment Amount */}
-          <MoneyInput
+          <FormattedNumberInput
             label="Payment Amount"
-            value={formData.amount}
-            onChange={(value) => handleInputChange('amount', parseFloat(value) || 0)}
+            value={amountDisplay}
+            onChange={(value) => {
+              setAmountDisplay(value);
+              const cleanedValue = removeSpacesFromNumber(value);
+              const numValue = cleanedValue ? Math.round(parseFloat(cleanedValue) * 100) / 100 : 0;
+              handleInputChange('amount', numValue);
+            }}
             placeholder="0.00"
             required
-            error={errors.amount}
+            error={errors.amount || ''}
             className="w-full"
           />
 
@@ -249,21 +244,31 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <MoneyInput
+              <FormattedNumberInput
                 label="Principal Amount"
-                value={formData.principal_amount || ''}
-                onChange={(value) => handleInputChange('principal_amount', value ? parseFloat(value) : null)}
+                value={principalAmountDisplay}
+                onChange={(value) => {
+                  setPrincipalAmountDisplay(value);
+                  const cleanedValue = removeSpacesFromNumber(value);
+                  const numValue = cleanedValue ? Math.round(parseFloat(cleanedValue) * 100) / 100 : null;
+                  handleInputChange('principal_amount', numValue);
+                }}
                 placeholder="0.00"
-                error={errors.principal_amount}
+                error={errors.principal_amount || ''}
                 className="w-full"
               />
 
-              <MoneyInput
+              <FormattedNumberInput
                 label="Interest Amount"
-                value={formData.interest_amount || ''}
-                onChange={(value) => handleInputChange('interest_amount', value ? parseFloat(value) : null)}
+                value={interestAmountDisplay}
+                onChange={(value) => {
+                  setInterestAmountDisplay(value);
+                  const cleanedValue = removeSpacesFromNumber(value);
+                  const numValue = cleanedValue ? Math.round(parseFloat(cleanedValue) * 100) / 100 : null;
+                  handleInputChange('interest_amount', numValue);
+                }}
                 placeholder="0.00"
-                error={errors.interest_amount}
+                error={errors.interest_amount || ''}
                 className="w-full"
               />
             </div>
@@ -309,6 +314,28 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           </div>
         </form>
       </CardContent>
+    </>
+  );
+
+  if (!showCard) {
+    return <div className="space-y-4">{content}</div>;
+  }
+
+  return (
+    <Card className={`max-w-lg mx-auto ${
+      actualTheme === 'dark' 
+        ? 'bg-gray-800 border-gray-700' 
+        : 'bg-white border-gray-200'
+    }`}>
+      <CardHeader>
+        <CardTitle className={`flex items-center space-x-2 ${
+          actualTheme === 'dark' ? 'text-white' : 'text-gray-900'
+        }`}>
+          <DollarSign className="w-5 h-5" />
+          <span>Make Payment</span>
+        </CardTitle>
+      </CardHeader>
+      {content}
     </Card>
   );
 };

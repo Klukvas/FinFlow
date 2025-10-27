@@ -13,9 +13,11 @@ import {
   TrendingDown,
   TrendingUp
 } from 'lucide-react';
+import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 
 interface PaymentListProps {
   payments: DebtPaymentResponse[];
+  currency: string;
   isLoading?: boolean;
 }
 
@@ -55,16 +57,11 @@ const getPaymentMethodLabel = (method: PaymentMethod) => {
 
 export const PaymentList: React.FC<PaymentListProps> = ({
   payments,
+  currency,
   isLoading = false
 }) => {
   const { actualTheme } = useTheme();
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
+  const { formatCurrency } = useCurrencyConversion();
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -159,7 +156,7 @@ export const PaymentList: React.FC<PaymentListProps> = ({
             <p className={`text-2xl font-bold ${
               actualTheme === 'dark' ? 'text-white' : 'text-gray-900'
             }`}>
-              {formatCurrency(getTotalPayments())}
+              {formatCurrency(getTotalPayments(), currency)}
             </p>
             <p className={`text-xs mt-1 ${
               actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'
@@ -184,7 +181,7 @@ export const PaymentList: React.FC<PaymentListProps> = ({
             <p className={`text-2xl font-bold ${
               actualTheme === 'dark' ? 'text-white' : 'text-gray-900'
             }`}>
-              {formatCurrency(getTotalPrincipal())}
+              {formatCurrency(getTotalPrincipal(), currency)}
             </p>
             <p className={`text-xs mt-1 ${
               actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'
@@ -209,7 +206,7 @@ export const PaymentList: React.FC<PaymentListProps> = ({
             <p className={`text-2xl font-bold ${
               actualTheme === 'dark' ? 'text-white' : 'text-gray-900'
             }`}>
-              {formatCurrency(getTotalInterest())}
+              {formatCurrency(getTotalInterest(), currency)}
             </p>
             <p className={`text-xs mt-1 ${
               actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'
@@ -247,7 +244,7 @@ export const PaymentList: React.FC<PaymentListProps> = ({
                       <h4 className={`font-semibold ${
                         actualTheme === 'dark' ? 'text-white' : 'text-gray-900'
                       }`}>
-                        {formatCurrency(payment.amount)}
+                        {formatCurrency(payment.amount, currency)}
                       </h4>
                       <div className="flex items-center space-x-2">
                         <Calendar className={`w-3 h-3 ${
@@ -271,7 +268,7 @@ export const PaymentList: React.FC<PaymentListProps> = ({
                           <span className={`text-xs ${
                             actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'
                           }`}>
-                            Principal: {formatCurrency(payment.principal_amount)}
+                            Principal: {formatCurrency(payment.principal_amount, currency)}
                           </span>
                         </div>
                       )}
@@ -281,7 +278,7 @@ export const PaymentList: React.FC<PaymentListProps> = ({
                           <span className={`text-xs ${
                             actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'
                           }`}>
-                            Interest: {formatCurrency(payment.interest_amount)}
+                            Interest: {formatCurrency(payment.interest_amount, currency)}
                           </span>
                         </div>
                       )}
