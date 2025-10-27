@@ -107,7 +107,10 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({ onEditExpense }) => {
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-1">
                                         <span className="text-sm sm:text-base font-semibold theme-error">
-                                            {expense.amount.toLocaleString('uk-UA')} ₴
+                                            {expense.amount.toLocaleString('uk-UA')}
+                                        </span>
+                                        <span className="text-xs theme-text-secondary px-2 py-1 rounded theme-bg-secondary">
+                                            {expense.currency}
                                         </span>
                                         <span className="text-xs theme-text-secondary">
                                             {formatDate(expense.date)}
@@ -159,6 +162,9 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({ onEditExpense }) => {
                                         {t('expense.list.amount')}
                                     </th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold theme-text-secondary uppercase tracking-wider">
+                                        {t('expense.list.currency')}
+                                    </th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold theme-text-secondary uppercase tracking-wider">
                                         {t('expense.list.category')}
                                     </th>
                                     <th className="px-6 py-4 text-left text-xs font-semibold theme-text-secondary uppercase tracking-wider">
@@ -179,7 +185,12 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({ onEditExpense }) => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="text-sm font-semibold theme-error">
-                                                {expense.amount.toLocaleString('uk-UA')} ₴
+                                                {expense.amount.toLocaleString('uk-UA')}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="text-sm theme-text-secondary">
+                                                {expense.currency}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">

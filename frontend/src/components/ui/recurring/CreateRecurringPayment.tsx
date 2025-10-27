@@ -4,9 +4,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { recurringApiService, CreateRecurringPaymentRequest } from '@/services/api/recurringApi';
 import { useApiClients } from '@/hooks/useApiClients';
 import { Category } from '@/types/category';
-import { MoneyInput } from '../forms/MoneyInput';
+import { FormattedNumberInput } from '../forms/FormattedNumberInput';
 import { CurrencySelect } from '../forms/CurrencySelect';
 import { toast } from 'sonner';
+import { removeSpacesFromNumber } from '@/utils/numberFormat';
 
 interface CreateRecurringPaymentProps {
   onSuccess: () => void;
@@ -22,6 +23,7 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
   const { category } = useApiClients();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [amountDisplay, setAmountDisplay] = useState('');
   const [formData, setFormData] = useState<CreateRecurringPaymentRequest>({
     name: '',
     description: '',
@@ -33,6 +35,11 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
     schedule_config: { day_of_month: 1 },
     start_date: new Date().toISOString().split('T')[0] as string,
   } as CreateRecurringPaymentRequest);
+
+  // Filter categories based on payment type
+  const filteredCategories = React.useMemo(() => {
+    return categories.filter(cat => cat.type === formData.payment_type);
+  }, [categories, formData.payment_type]);
 
   React.useEffect(() => {
     const fetchCategories = async () => {
@@ -207,17 +214,22 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <MoneyInput
+              <FormattedNumberInput
                 label={t('recurringPage.createModal.amount')}
-                value={formData.amount}
-                onChange={(value) => setFormData(prev => ({ ...prev, amount: parseFloat(value) || 0 }))}
+                value={amountDisplay}
+                onChange={(value) => {
+                  setAmountDisplay(value);
+                  const cleanedValue = removeSpacesFromNumber(value);
+                  const numValue = cleanedValue ? Math.round(parseFloat(cleanedValue) * 100) / 100 : 0;
+                  setFormData(prev => ({ ...prev, amount: numValue }));
+                }}
                 placeholder="0.00"
                 required
                 className="w-full"
               />
             </div>
             <div className="space-y-2">
-              <label className="block text-sm font-medium theme-text-primary">
+              <label className="block text-sm font-medium leading-none theme-text-primary">
                 {t('recurringPage.createModal.currency')}
               </label>
               <CurrencySelect
@@ -241,7 +253,7 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
               required
             >
               <option value="">{t('recurringPage.createModal.selectCategory')}</option>
-              {categories.map(category => (
+              {filteredCategories.map(category => (
                 <option key={category.id} value={category.id.toString()}>
                   {category.name}
                 </option>

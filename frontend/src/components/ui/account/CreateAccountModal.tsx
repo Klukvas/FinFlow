@@ -4,7 +4,9 @@ import { Modal } from '../shared/Modal';
 import { Button } from '../shared/Button';
 import { Input } from '../forms/Input';
 import { CurrencySelect } from '../forms/CurrencySelect';
+import { FormattedNumberInput } from '../forms/FormattedNumberInput';
 import { FaWallet } from 'react-icons/fa';
+import { removeSpacesFromNumber } from '@/utils/numberFormat';
 
 interface CreateAccountModalProps {
   onClose: () => void;
@@ -20,7 +22,7 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
     name: '',
     type: 'bank',
     currency: 'USD',
-    balance: 0
+    balance: ''
   });
   const [loading, setLoading] = useState(false);
 
@@ -45,7 +47,7 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
     try {
       await onSubmit({
         ...formData,
-        balance: parseFloat(formData.balance.toString()) || 0
+        balance: parseFloat(removeSpacesFromNumber(formData.balance.toString())) || 0
       });
     } finally {
       setLoading(false);
@@ -105,15 +107,11 @@ export const CreateAccountModal: React.FC<CreateAccountModalProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium theme-text-primary mb-2">
-            {t('accountPage.form.initialBalance')}
-          </label>
-          <Input
-            type="number"
-            step="0.01"
+          <FormattedNumberInput
+            label={t('accountPage.form.initialBalance')}
             value={formData.balance}
-            onChange={(e) => handleChange('balance', parseFloat(e.target.value) || 0)}
-            placeholder="0.00"
+            onChange={(value) => handleChange('balance', value)}
+            placeholder="0"
           />
         </div>
 

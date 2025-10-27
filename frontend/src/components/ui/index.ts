@@ -18,6 +18,7 @@ export { PaginationView } from "./shared/PaginationView";
 // Form components
 export { Input } from "./forms/Input";
 export { MoneyInput } from "./forms/MoneyInput";
+export { FormattedNumberInput } from "./forms/FormattedNumberInput";
 export { Label } from "./forms/Label";
 export { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./forms/Select";
 export { Textarea } from "./forms/Textarea";

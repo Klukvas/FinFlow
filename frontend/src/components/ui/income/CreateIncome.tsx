@@ -4,8 +4,9 @@ import { useApiClients } from '@/hooks/useApiClients';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { Category, IncomeCreate, AccountResponse, CategoryListResponse } from '@/types';
 import { Button } from '@/components/ui/shared/Button';
-import { MoneyInput } from '@/components/ui/forms/MoneyInput';
+import { FormattedNumberInput } from '@/components/ui/forms/FormattedNumberInput';
 import { CurrencySelect } from '@/components/ui/forms/CurrencySelect';
+import { removeSpacesFromNumber } from '@/utils/numberFormat';
 // removed unused icon and config imports
 
 interface CreateIncomeProps {
@@ -24,6 +25,7 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) =
     account_id: null,
     currency: 'USD'
   });
+  const [amountDisplay, setAmountDisplay] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
   const [accounts, setAccounts] = useState<AccountResponse[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -83,7 +85,9 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) =
   };
 
   const handleAmountChange = (value: string) => {
-    setFormData(prev => ({ ...prev, amount: parseFloat(value) || 0 }));
+    setAmountDisplay(value);
+    const cleanedValue = removeSpacesFromNumber(value);
+    setFormData(prev => ({ ...prev, amount: parseFloat(cleanedValue) || 0 }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -101,7 +105,7 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) =
 
       if ('error' in response && 'errorCode' in response) {
         // Handle API error with errorCode
-        handleIncomeError(response);
+        handleIncomeError(response as any);
         return;
       } else {
         onIncomeCreated();
@@ -113,6 +117,7 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) =
           account_id: null,
           currency: 'USD'
         });
+        setAmountDisplay('');
       }
     } catch (err) {
       // Handle network or other errors
@@ -126,13 +131,13 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) =
     <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
       <div className="space-y-4 sm:space-y-6">
         {/* Amount */}
-        <MoneyInput
+        <FormattedNumberInput
           label={t('income.form.amount')}
-          value={formData.amount || ''}
+          value={amountDisplay}
           onChange={handleAmountChange}
-          placeholder={t('income.form.amountPlaceholder')}
+          placeholder="0"
           required
-          error={formData.amount <= 0 ? t('income.form.amountMustBePositive') : undefined}
+          error={formData.amount <= 0 ? t('income.form.amountMustBePositive') : ''}
           className="w-full"
         />
 

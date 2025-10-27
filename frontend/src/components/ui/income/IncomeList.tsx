@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useApiClients } from '@/hooks/useApiClients';
 import { IncomeOut, Category, CategoryListResponse } from '@/types';
 import { DeleteButton } from '@/components/ui';
 
 export const IncomeList: React.FC = () => {
+  const { t } = useTranslation();
   const { income, category } = useApiClients();
   const [incomes, setIncomes] = useState<IncomeOut[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -111,7 +113,7 @@ export const IncomeList: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
           <h2 className="text-lg sm:text-xl font-bold text-white">Список доходов</h2>
           <div className="text-white text-sm sm:text-base">
-            Всего: <span className="font-bold text-lg sm:text-xl">{totalIncomes.toLocaleString('uk-UA')} ₴</span>
+            Всего: <span className="font-bold text-lg sm:text-xl">{totalIncomes.toLocaleString('uk-UA')}</span>
           </div>
         </div>
       </div>
@@ -138,6 +140,9 @@ export const IncomeList: React.FC = () => {
                       Сумма
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium theme-text-tertiary uppercase tracking-wider">
+                      {t('income.list.currency')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium theme-text-tertiary uppercase tracking-wider">
                       Категория
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium theme-text-tertiary uppercase tracking-wider">
@@ -158,7 +163,12 @@ export const IncomeList: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-semibold theme-success">
-                          +{income.amount.toLocaleString('uk-UA')} ₴
+                          +{income.amount.toLocaleString('uk-UA')}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm theme-text-secondary">
+                          {income.currency}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -201,10 +211,15 @@ export const IncomeList: React.FC = () => {
                           </svg>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="text-base sm:text-lg font-bold theme-success truncate">
-                            +{income.amount.toLocaleString('uk-UA')} ₴
+                          <div className="flex items-center gap-2">
+                            <div className="text-base sm:text-lg font-bold theme-success truncate">
+                              +{income.amount.toLocaleString('uk-UA')}
+                            </div>
+                            <div className="text-xs theme-text-secondary px-2 py-1 rounded theme-bg-secondary">
+                              {income.currency}
+                            </div>
                           </div>
-                          <div className="text-xs sm:text-sm theme-text-tertiary">
+                          <div className="text-xs sm:text-sm theme-text-tertiary mt-1">
                             {formatDate(income.date)}
                           </div>
                         </div>

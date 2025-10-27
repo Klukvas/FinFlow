@@ -180,6 +180,7 @@
       "loadingSubtitle": "Будь ласка, зачекайте",
       "date": "Дата",
       "amount": "Сума",
+      "currency": "Валюта",
       "category": "Категорія",
       "description": "Опис",
       "actions": "Дії",
@@ -230,6 +231,17 @@
     "incomeCreated": "Дохід успішно створений",
     "incomeUpdated": "Дохід успішно оновлений",
     "incomeDeleted": "Дохід успішно видалений",
+    "list": {
+      "title": "Список доходів",
+      "loading": "Завантаження доходів...",
+      "loadingSubtitle": "Будь ласка, зачекайте",
+      "date": "Дата",
+      "amount": "Сума",
+      "currency": "Валюта",
+      "category": "Категорія",
+      "description": "Опис",
+      "actions": "Дії"
+    },
     "form": {
       "amount": "Сума",
       "amountPlaceholder": "Введіть суму доходу",

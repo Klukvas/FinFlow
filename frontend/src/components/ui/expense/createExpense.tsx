@@ -1,7 +1,8 @@
 import { Category, CreateExpenseRequest, AccountResponse, CategoryListResponse } from '@/types';
 import React, { useCallback, useEffect, useState } from 'react';
 import { CurrencySelect } from '@/components/ui/forms/CurrencySelect';
-import { MoneyInput } from '@/components/ui/forms/MoneyInput';
+import { FormattedNumberInput } from '@/components/ui/forms/FormattedNumberInput';
+import { removeSpacesFromNumber } from '@/utils/numberFormat';
 
 import { useApiClients } from '@/hooks';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
@@ -11,7 +12,7 @@ interface CreateExpenseProps {
 }
 
 export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }) => {
-    const {category, expense, account, currency} = useApiClients();
+    const {category, expense, account} = useApiClients();
     const { handleExpenseError } = useErrorHandler();
     
     const [formData, setFormData] = useState<CreateExpenseRequest>({
@@ -22,6 +23,7 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
         account_id: undefined,
         currency: 'USD',
     });
+    const [amountDisplay, setAmountDisplay] = useState('');
     const [categories, setCategories] = useState<Category[]>([]);
     const [accounts, setAccounts] = useState<AccountResponse[]>([]);
     
@@ -43,7 +45,7 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
             
             if ('error' in response && 'errorCode' in response) {
                 // Handle API error with errorCode
-                handleExpenseError(response);
+                handleExpenseError(response as any);
                 return;
             } else {
                 const paginatedResponse = response as CategoryListResponse;
@@ -68,10 +70,10 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
             const response = await account.getAccounts();
             if ('error' in response && 'errorCode' in response) {
                 // Handle API error with errorCode
-                handleExpenseError(response);
+                handleExpenseError(response as any);
                 return;
-            } else {
-                setAccounts(response);
+            } else if (!('error' in response)) {
+                setAccounts(response as AccountResponse[]);
             }
         } catch (err) {
             // Handle network or other errors
@@ -100,9 +102,11 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
     };
 
     const handleAmountChange = (value: string) => {
+        setAmountDisplay(value);
+        const cleanedValue = removeSpacesFromNumber(value);
         setFormData(prev => ({
             ...prev,
-            amount: parseFloat(value) || 0
+            amount: parseFloat(cleanedValue) || 0
         }));
     };
 
@@ -130,7 +134,7 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
             const response = await expense.createExpense(expenseData);
             if ('error' in response && 'errorCode' in response) {
                 // Handle API error with errorCode
-                handleExpenseError(response);
+                handleExpenseError(response as any);
                 return;
             } else {
                 setFormData({
@@ -141,6 +145,7 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                     account_id: undefined,
                     currency: 'USD',
                 });
+                setAmountDisplay('');
                 onExpenseCreated();
             }
         } catch (err) {
@@ -156,13 +161,13 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
             <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
                 <div className="space-y-4 sm:space-y-6">
                     {/* Сумма */}
-                    <MoneyInput
+                    <FormattedNumberInput
                         label="Сумма"
-                        value={formData.amount || ''}
+                        value={amountDisplay}
                         onChange={handleAmountChange}
-                        placeholder="0.00"
+                        placeholder="0"
                         required
-                        error={!formData.amount || formData.amount <= 0 ? 'Сумма должна быть больше 0' : undefined}
+                        error={(!formData.amount || formData.amount <= 0) ? 'Сумма должна быть больше 0' : ''}
                         className="w-full"
                     />
 

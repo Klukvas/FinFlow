@@ -7,7 +7,7 @@ import {
   Button, 
   Input, 
   Label, 
-  MoneyInput,
+  FormattedNumberInput,
   Select, 
   SelectContent, 
   SelectItem, 
@@ -19,6 +19,7 @@ import {
   CardHeader, 
   CardTitle 
 } from '@/components/ui';
+import { removeSpacesFromNumber, formatNumberWithSpaces } from '@/utils/numberFormat';
 import { Calendar, DollarSign, User, Building2 } from 'lucide-react';
 
 interface DebtFormProps {
@@ -69,6 +70,12 @@ export const DebtForm: React.FC<DebtFormProps> = ({
     start_date: initialData.start_date || new Date().toISOString().split('T')[0] || '',
     due_date: initialData.due_date || null
   });
+  const [initialAmountDisplay, setInitialAmountDisplay] = useState(
+    initialData.initial_amount ? formatNumberWithSpaces(initialData.initial_amount.toString()) : ''
+  );
+  const [minimumPaymentDisplay, setMinimumPaymentDisplay] = useState(
+    initialData.minimum_payment ? formatNumberWithSpaces(initialData.minimum_payment.toString()) : ''
+  );
 
   // Debug: log formData after initialization
 
@@ -230,122 +237,116 @@ export const DebtForm: React.FC<DebtFormProps> = ({
           </div>
 
           {/* Amount and Financial Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <MoneyInput
-                label={t('debtPage.form.initialAmount')}
-                value={formData.initial_amount}
-                onChange={(value) => {
-                  const numValue = value ? Math.round(parseFloat(value) * 100) / 100 : 0;
-                  handleInputChange('initial_amount', numValue);
-                }}
-                placeholder={t('debtPage.form.initialAmountPlaceholder')}
-                required
-                error={errors.initial_amount}
-                className="w-full"
-              />
-              <div className={`text-xs ${
-                actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-              }`}>
-                💡 <strong>{t('debtPage.form.tip')}</strong> {t('debtPage.form.amountTip')}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="interest_rate" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
-                {t('debtPage.form.interestRate')}
-              </Label>
-              <Input
-                id="interest_rate"
-                type="number"
-                step="0.01"
-                min="0"
-                max="100"
-                value={formData.interest_rate || ''}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  // Use parseFloat but round to 2 decimal places to avoid precision errors
-                  const numValue = value ? Math.round(parseFloat(value) * 100) / 100 : null;
-                  handleInputChange('interest_rate', numValue);
-                }}
-                placeholder="0.00"
-                className={`${
-                  actualTheme === 'dark' 
-                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                } ${errors.interest_rate ? 'border-red-500' : ''}`}
-              />
-              {errors.interest_rate && (
-                <p className="text-sm text-red-500">{errors.interest_rate}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="minimum_payment" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
-                {t('debtPage.form.minimumPayment')}
-              </Label>
-              <div className="relative">
-                <DollarSign className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+              <div>
+                <FormattedNumberInput
+                  label={t('debtPage.form.initialAmount')}
+                  value={initialAmountDisplay}
+                  onChange={(value) => {
+                    setInitialAmountDisplay(value);
+                    const cleanedValue = removeSpacesFromNumber(value);
+                    const numValue = cleanedValue ? Math.round(parseFloat(cleanedValue) * 100) / 100 : 0;
+                    handleInputChange('initial_amount', numValue);
+                  }}
+                  placeholder="0.00"
+                  required
+                  error={errors.initial_amount || ''}
+                  className="w-full"
+                />
+                <div className={`mt-2 text-xs ${
                   actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                }`} />
+                }`}>
+                  💡 <strong>{t('debtPage.form.tip')}</strong> {t('debtPage.form.amountTip')}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="interest_rate" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
+                  {t('debtPage.form.interestRate')}
+                </Label>
                 <Input
-                  id="minimum_payment"
+                  id="interest_rate"
                   type="number"
                   step="0.01"
                   min="0"
-                  value={formData.minimum_payment || ''}
+                  max="100"
+                  value={formData.interest_rate || ''}
                   onChange={(e) => {
                     const value = e.target.value;
                     // Use parseFloat but round to 2 decimal places to avoid precision errors
                     const numValue = value ? Math.round(parseFloat(value) * 100) / 100 : null;
-                    handleInputChange('minimum_payment', numValue);
+                    handleInputChange('interest_rate', numValue);
                   }}
                   placeholder="0.00"
-                  className={`pl-10 ${
+                  className={`${
                     actualTheme === 'dark' 
                       ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                       : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                  } ${errors.minimum_payment ? 'border-red-500' : ''}`}
+                  } ${errors.interest_rate ? 'border-red-500' : ''}`}
                 />
+                {errors.interest_rate && (
+                  <p className="text-sm text-red-500">{errors.interest_rate}</p>
+                )}
               </div>
-              {errors.minimum_payment && (
-                <p className="text-sm text-red-500">{errors.minimum_payment}</p>
-              )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="category_id" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
-                {t('debtPage.form.category')}
-              </Label>
-              <Select
-                value={formData.category_id?.toString() || ''}
-                onValueChange={(value: string) => handleInputChange('category_id', value ? parseInt(value) : null)}
-              >
-                <SelectTrigger className={`${
-                  actualTheme === 'dark' 
-                    ? 'bg-gray-700 border-gray-600 text-white' 
-                    : 'bg-white border-gray-300 text-gray-900'
-                }`}>
-                  <SelectValue placeholder={t('debtPage.form.selectCategory')} />
-                </SelectTrigger>
-                <SelectContent className={actualTheme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'}>
-                  <SelectItem 
-                    value=""
-                    className={actualTheme === 'dark' ? 'text-white hover:bg-gray-600' : 'text-gray-900 hover:bg-gray-100'}
-                  >
-                    {t('debtPage.form.noCategory')}
-                  </SelectItem>
-                  {categories.map((category) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+              <div>
+                <FormattedNumberInput
+                  label={t('debtPage.form.minimumPayment')}
+                  value={minimumPaymentDisplay}
+                  onChange={(value) => {
+                    setMinimumPaymentDisplay(value);
+                    const cleanedValue = removeSpacesFromNumber(value);
+                    const numValue = cleanedValue ? Math.round(parseFloat(cleanedValue) * 100) / 100 : null;
+                    handleInputChange('minimum_payment', numValue);
+                  }}
+                  placeholder="0"
+                  error={errors.minimum_payment || ''}
+                  className="w-full"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="category_id" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
+                  {t('debtPage.form.category')}
+                </Label>
+                <Select
+                  value={formData.category_id?.toString() || 'none'}
+                  onValueChange={(value: string) => handleInputChange('category_id', value && value !== 'none' ? parseInt(value) : null)}
+                >
+                  <SelectTrigger className={`${
+                    actualTheme === 'dark' 
+                      ? 'bg-gray-700 border-gray-600 text-white' 
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}>
+                    <SelectValue>
+                      {formData.category_id ? 
+                        categories.find(c => c.id === formData.category_id)?.name : 
+                        t('debtPage.form.noCategory')
+                      }
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className={actualTheme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'}>
                     <SelectItem 
-                      key={category.id} 
-                      value={category.id.toString()}
+                      value="none"
                       className={actualTheme === 'dark' ? 'text-white hover:bg-gray-600' : 'text-gray-900 hover:bg-gray-100'}
                     >
-                      {category.name}
+                      {t('debtPage.form.noCategory')}
                     </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    {categories.map((category) => (
+                      <SelectItem 
+                        key={category.id} 
+                        value={category.id.toString()}
+                        className={actualTheme === 'dark' ? 'text-white hover:bg-gray-600' : 'text-gray-900 hover:bg-gray-100'}
+                      >
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 

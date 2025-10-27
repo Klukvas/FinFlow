@@ -76,7 +76,9 @@ export const Select: React.FC<SelectProps> = ({
       setIsOpen,
       contentRef
     }}>
-      {children}
+      <div className="relative">
+        {children}
+      </div>
     </SelectContext.Provider>
   );
 };
@@ -145,7 +147,7 @@ export const SelectContent: React.FC<SelectContentProps> = ({
   return (
     <div 
       ref={contentRef}
-      className={`absolute z-50 min-w-full overflow-hidden rounded-lg theme-border border theme-surface theme-shadow animate-in fade-in-0 zoom-in-95 max-h-60 overflow-y-auto ${className}`}
+      className={`absolute top-full left-0 z-50 mt-1 min-w-full overflow-hidden rounded-lg theme-border border theme-surface theme-shadow animate-in fade-in-0 zoom-in-95 max-h-60 overflow-y-auto ${className}`}
       data-testid={testId || 'select-content'}
     >
       <div className="p-1">

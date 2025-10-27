@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Goal, CreateGoalRequest, UpdateGoalRequest, GoalType, GoalPriority, GoalFormData } from '@/types';
 import { Button } from '../shared/Button';
-import { MoneyInput } from '../forms/MoneyInput';
+import { FormattedNumberInput } from '../forms/FormattedNumberInput';
 import { CurrencySelect } from '../forms/CurrencySelect';
+import { removeSpacesFromNumber } from '@/utils/numberFormat';
 
 const GOAL_TYPES: GoalType[] = ['SAVINGS', 'DEBT_PAYOFF', 'INVESTMENT', 'EXPENSE_REDUCTION', 'INCOME_INCREASE', 'EMERGENCY_FUND'];
 const GOAL_PRIORITIES: GoalPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
@@ -23,6 +24,7 @@ export const GoalForm: React.FC<GoalFormProps> = ({
 }) => {
   const { t } = useTranslation();
   
+  const [targetAmountDisplay, setTargetAmountDisplay] = useState('');
   const [formData, setFormData] = useState<GoalFormData>({
     title: '',
     description: '',
@@ -38,6 +40,7 @@ export const GoalForm: React.FC<GoalFormProps> = ({
 
   useEffect(() => {
     if (goal) {
+      setTargetAmountDisplay(goal.target_amount.toString());
       setFormData({
         title: goal.title,
         description: goal.description || '',
@@ -185,13 +188,18 @@ export const GoalForm: React.FC<GoalFormProps> = ({
       {/* Target Amount and Currency */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         <div className="sm:col-span-2">
-          <MoneyInput
+          <FormattedNumberInput
             label={t('goalsPage.form.targetAmount')}
-            value={formData.target_amount}
-            onChange={(value) => handleInputChange('target_amount', value)}
+            value={targetAmountDisplay}
+            onChange={(value) => {
+              setTargetAmountDisplay(value);
+              const cleanedValue = removeSpacesFromNumber(value);
+              const numValue = cleanedValue || '0';
+              handleInputChange('target_amount', numValue);
+            }}
             placeholder="10000"
             required
-            error={errors.target_amount}
+            error={errors.target_amount || ''}
             className="w-full"
           />
         </div>
