@@ -2,10 +2,8 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { recurringApiService, CreateRecurringPaymentRequest } from '@/services/api/recurringApi';
-import { useApiClients } from '@/hooks/useApiClients';
-import { Category } from '@/types/category';
 import { FormattedNumberInput } from '../forms/FormattedNumberInput';
-import { CurrencySelect } from '../forms/CurrencySelect';
+import { CurrencySelect, CategorySelect } from '../forms';
 import { toast } from 'sonner';
 import { removeSpacesFromNumber } from '@/utils/numberFormat';
 
@@ -20,9 +18,7 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
 }) => {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { category } = useApiClients();
   const [loading, setLoading] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [amountDisplay, setAmountDisplay] = useState('');
   const [formData, setFormData] = useState<CreateRecurringPaymentRequest>({
     name: '',
@@ -36,27 +32,12 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
     start_date: new Date().toISOString().split('T')[0] as string,
   } as CreateRecurringPaymentRequest);
 
-  // Filter categories based on payment type
-  const filteredCategories = React.useMemo(() => {
-    return categories.filter(cat => cat.type === formData.payment_type);
-  }, [categories, formData.payment_type]);
-
-  React.useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await category.getCategories();
-        if (Array.isArray(response)) {
-          setCategories(response);
-        }
-      } catch (error) {
-        console.error('Failed to fetch categories:', error);
-      }
-    };
-
-    if (user?.id) {
-      fetchCategories();
-    }
-  }, [user?.id, category]);
+  const handleCategoryChange = (categoryId: number | null) => {
+    setFormData(prev => ({
+      ...prev,
+      category_id: categoryId || 0
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -244,36 +225,34 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
 
           <div>
             <label className="block text-sm font-medium theme-text-primary mb-2">
-              {t('recurringPage.createModal.category')} *
-            </label>
-            <select
-              value={formData.category_id}
-              onChange={(e) => setFormData(prev => ({ ...prev, category_id: parseInt(e.target.value) }))}
-              className="w-full px-3 py-2 theme-border border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 theme-bg theme-text-primary"
-              required
-            >
-              <option value="">{t('recurringPage.createModal.selectCategory')}</option>
-              {filteredCategories.map(category => (
-                <option key={category.id} value={category.id.toString()}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium theme-text-primary mb-2">
               {t('recurringPage.createModal.paymentType')} *
             </label>
             <select
               value={formData.payment_type}
-              onChange={(e) => setFormData(prev => ({ ...prev, payment_type: e.target.value as 'EXPENSE' | 'INCOME' }))}
+              onChange={(e) => {
+                const newPaymentType = e.target.value as 'EXPENSE' | 'INCOME';
+                setFormData(prev => ({ 
+                  ...prev, 
+                  payment_type: newPaymentType,
+                  category_id: 0  // Reset category when payment type changes
+                }));
+              }}
               className="w-full px-3 py-2 theme-border border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 theme-bg theme-text-primary"
             >
               <option value="EXPENSE">{t('recurringPage.createModal.expense')}</option>
               <option value="INCOME">{t('recurringPage.createModal.income')}</option>
             </select>
           </div>
+
+          <CategorySelect
+            key={formData.payment_type}
+            value={formData.category_id || null}
+            onChange={handleCategoryChange}
+            categoryType={formData.payment_type}
+            required={true}
+            showEmptyOption={true}
+            placeholderKey="recurringPage.createModal.selectCategory"
+          />
 
           <div>
             <label className="block text-sm font-medium theme-text-primary mb-2">

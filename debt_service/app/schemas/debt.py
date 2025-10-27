@@ -191,4 +191,5 @@ class DebtSummary(BaseModel):
     total_payments: float = Field(description="Total payments made")
     active_debts: int = Field(description="Number of active debts")
     paid_off_debts: int = Field(description="Number of paid off debts")
+    currency: str = Field(description="Currency for the summary amounts")
     average_interest_rate: Optional[float] = Field(description="Average interest rate")

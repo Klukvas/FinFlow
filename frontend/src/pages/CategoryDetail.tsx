@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApiClients } from '@/hooks/useApiClients';
-import { Category, ExpenseResponse } from '@/types';
-import { IncomeOut } from '@/types/income';
+import { Category, ExpenseResponse, CategoryExpenseStatistics } from '@/types';
+import { IncomeOut, CategoryIncomeStatistics } from '@/types/income';
 import { Button } from '@/components/ui/shared/Button';
 import { Modal } from '@/components/ui/shared/Modal';
 import { FaArrowLeft, FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
@@ -16,6 +16,8 @@ export const CategoryDetail: React.FC = () => {
   const [categoryData, setCategoryData] = useState<Category | null>(null);
   const [expenses, setExpenses] = useState<ExpenseResponse[]>([]);
   const [incomes, setIncomes] = useState<IncomeOut[]>([]);
+  const [expenseStatistics, setExpenseStatistics] = useState<CategoryExpenseStatistics | null>(null);
+  const [incomeStatistics, setIncomeStatistics] = useState<CategoryIncomeStatistics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -27,8 +29,8 @@ export const CategoryDetail: React.FC = () => {
       setLoading(true);
       const [categoryResponse, expensesResponse, incomesResponse] = await Promise.all([
         category.getCategory(parseInt(id)),
-        expense.getExpenses(),
-        income.getIncomes()
+        expense.getExpensesByCategory(parseInt(id)),
+        income.getIncomesByCategory(parseInt(id))
       ]);
 
       if ('error' in categoryResponse) {
@@ -42,18 +44,20 @@ export const CategoryDetail: React.FC = () => {
       if ('error' in expensesResponse) {
         console.error('Error fetching expenses:', expensesResponse.error);
         setExpenses([]);
+        setExpenseStatistics(null);
       } else {
-        const categoryExpenses = expensesResponse.filter(exp => exp.category_id === parseInt(id));
-        setExpenses(categoryExpenses);
+        setExpenses(expensesResponse.expenses);
+        setExpenseStatistics(expensesResponse.statistics);
       }
 
       // Обрабатываем доходы
       if ('error' in incomesResponse) {
-        console.error('Error fetching incomes:', incomesResponse.error);
+        console.warn('Error fetching incomes (endpoint may not be available yet):', incomesResponse.error);
         setIncomes([]);
+        setIncomeStatistics(null);
       } else {
-        const categoryIncomes = incomesResponse.filter(inc => inc.category_id === parseInt(id));
-        setIncomes(categoryIncomes);
+        setIncomes(incomesResponse.incomes);
+        setIncomeStatistics(incomesResponse.statistics);
       }
     } catch (err) {
       setError('Ошибка при загрузке данных категории');
@@ -92,9 +96,19 @@ export const CategoryDetail: React.FC = () => {
 
   // Получаем данные в зависимости от типа категории
   const isIncomeCategory = categoryData?.type === 'INCOME';
-  const items = isIncomeCategory ? incomes : expenses;
-  const totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
+  const items = (isIncomeCategory ? incomes : expenses) || [];
+  
+  // Use backend statistics for both expenses and incomes
+  const totalAmount = isIncomeCategory 
+    ? incomeStatistics?.total_amount || 0
+    : expenseStatistics?.total_amount || 0;
   const itemsCount = items.length;
+  const averageAmount = isIncomeCategory 
+    ? incomeStatistics?.average_amount || 0
+    : expenseStatistics?.average_amount || 0;
+  const currency = isIncomeCategory 
+    ? incomeStatistics?.currency || '₴'
+    : expenseStatistics?.currency || '₴';
 
   if (loading) {
     return (
@@ -210,12 +224,14 @@ export const CategoryDetail: React.FC = () => {
             </div>
             <div className="flex justify-between">
               <span className="theme-text-secondary">Общая сумма:</span>
-              <span className="theme-text-primary font-medium">{totalAmount.toFixed(2)} ₴</span>
+              <span className="theme-text-primary font-medium">
+                {totalAmount.toFixed(2)} {currency}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="theme-text-secondary">Средняя сумма:</span>
               <span className="theme-text-primary font-medium">
-                {itemsCount > 0 ? (totalAmount / itemsCount).toFixed(2) : '0.00'} ₴
+                {averageAmount.toFixed(2)} {currency}
               </span>
             </div>
           </div>
@@ -282,7 +298,7 @@ export const CategoryDetail: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <div className="text-sm font-medium theme-text-primary">
-                          {item.amount.toFixed(2)} ₴
+                          {item.amount.toFixed(2)} {currency}
                         </div>
                       </td>
                     </tr>

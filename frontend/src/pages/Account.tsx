@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AccountResponse, AccountSummary } from '@/types';
+import { AccountResponse, AccountSummary, AccountStatisticsResponse } from '@/types';
 import { useApiClients } from '@/hooks/useApiClients';
 import { Card } from '@/components/ui/shared/Card';
 import { Button } from '@/components/ui/shared/Button';
@@ -16,7 +16,9 @@ export const Account: React.FC = () => {
   const { account: accountApiClient } = useApiClients();
   const [accounts, setAccounts] = useState<AccountResponse[]>([]);
   const [summaries, setSummaries] = useState<AccountSummary[]>([]);
+  const [statistics, setStatistics] = useState<AccountStatisticsResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [statisticsLoading, setStatisticsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingAccount, setEditingAccount] = useState<AccountResponse | null>(null);
@@ -30,9 +32,10 @@ export const Account: React.FC = () => {
       setLoading(true);
       setError(null);
       
-      const [accountsResult, summariesResult] = await Promise.all([
+      const [accountsResult, summariesResult, statisticsResult] = await Promise.all([
         accountApiClient.getAccounts(),
-        accountApiClient.getAccountSummaries()
+        accountApiClient.getAccountSummaries(),
+        accountApiClient.getAccountStatistics()
       ]);
 
       if ('error' in accountsResult) {
@@ -51,8 +54,18 @@ export const Account: React.FC = () => {
         return;
       }
 
+      if ('error' in statisticsResult) {
+        const errorMessage = typeof statisticsResult.error === 'string' 
+          ? statisticsResult.error 
+          : t('accountPage.errors.loadStatistics');
+        setError(errorMessage);
+        return;
+      }
+
       setAccounts(accountsResult);
       setSummaries(summariesResult);
+      setStatistics(statisticsResult);
+      setStatisticsLoading(false);
     } catch (err) {
       setError(t('accountPage.errors.loadAccounts'));
       console.error('Error loading accounts:', err);
@@ -161,7 +174,7 @@ export const Account: React.FC = () => {
       )}
 
       {/* Stats Cards */}
-      <AccountStats summaries={summaries} />
+      {statistics && <AccountStats statistics={statistics} isLoading={statisticsLoading} />}
 
       {/* Accounts List */}
       <div className="space-y-4">

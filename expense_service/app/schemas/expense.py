@@ -246,3 +246,51 @@ class ExpenseListResponse(BaseModel):
             }
         }
     )
+
+class CategoryExpenseStatistics(BaseModel):
+    """Statistics for expenses by category with currency conversion"""
+    total_amount: float = Field(description="Total amount of expenses in user's currency")
+    count: int = Field(description="Number of expenses")
+    average_amount: float = Field(description="Average expense amount")
+    currency: str = Field(description="Currency used for converted amounts")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "total_amount": 1250.75,
+                "count": 15,
+                "average_amount": 83.38,
+                "currency": "USD"
+            }
+        }
+    )
+
+class ExpensesByCategoryResponse(BaseModel):
+    """Response schema for expenses by category with statistics"""
+    expenses: List[ExpenseResponse] = Field(description="List of expenses")
+    statistics: CategoryExpenseStatistics = Field(description="Category expense statistics")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "expenses": [
+                    {
+                        "id": 1,
+                        "amount": 25.50,
+                        "category_id": 1,
+                        "account_id": 1,
+                        "description": "Lunch",
+                        "date": "2024-01-15",
+                        "user_id": 1,
+                        "currency": "USD"
+                    }
+                ],
+                "statistics": {
+                    "total_amount": 1250.75,
+                    "count": 15,
+                    "average_amount": 83.38,
+                    "currency": "USD"
+                }
+            }
+        }
+    )

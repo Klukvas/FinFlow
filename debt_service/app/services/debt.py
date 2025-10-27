@@ -12,6 +12,8 @@ from app.schemas.debt import (
 )
 from app.services.contact import ContactService
 from app.clients.subscription import SubscriptionClient
+from app.clients.user_service_client import UserServiceClient
+from app.clients.currency_service_client import CurrencyServiceClient
 from app.exceptions import (
     DebtNotFoundError,
     DebtValidationError,
@@ -37,6 +39,8 @@ class DebtService:
         self.logger = get_logger(__name__)
         self.contact_service = ContactService(db)
         self.subscription_client = SubscriptionClient()
+        self.user_client = UserServiceClient()
+        self.currency_client = CurrencyServiceClient()
 
     # Debt Management
     async def create_debt(self, debt: DebtCreate, user_id: int) -> DebtResponse:
@@ -278,7 +282,14 @@ class DebtService:
 
     # Summary and Statistics
     def get_debt_summary(self, user_id: int) -> DebtSummary:
-        """Get debt summary statistics"""
+        """Get debt summary statistics with currency conversion"""
+        # Get user's base currency
+        try:
+            user_currency = self.user_client.get_user_base_currency(user_id)
+        except Exception as e:
+            self.logger.warning(f"Could not fetch user currency for user {user_id}: {str(e)}, defaulting to USD")
+            user_currency = "USD"
+        
         active_debts = self.db.query(Debt).filter(
             and_(Debt.user_id == user_id, Debt.is_active == True)
         ).all()
@@ -287,22 +298,57 @@ class DebtService:
             and_(Debt.user_id == user_id, Debt.is_paid_off == True)
         ).count()
         
-        total_debt = sum(debt.current_balance for debt in active_debts)
+        # Convert and sum all debts to user's currency
+        total_debt = 0.0
+        for debt in active_debts:
+            debt_amount = abs(debt.current_balance)  # Use absolute value
+            debt_currency = debt.currency or "USD"
+            
+            if debt_currency != user_currency:
+                # Convert to user's currency
+                converted_amount = self.currency_client.convert_amount(
+                    debt_amount, debt_currency, user_currency
+                )
+                if converted_amount is not None:
+                    debt_amount = converted_amount
+            
+            total_debt += debt_amount
         
-        # Calculate total payments
-        total_payments = self.db.query(func.sum(DebtPayment.amount)).filter(
+        # Calculate total payments with currency conversion
+        # Get all debts (not just active ones) to get payment currencies
+        all_debts = self.db.query(Debt).filter(Debt.user_id == user_id).all()
+        debt_currency_map = {debt.id: debt.currency or "USD" for debt in all_debts}
+        
+        all_payments = self.db.query(DebtPayment).filter(
             DebtPayment.user_id == user_id
-        ).scalar() or 0
+        ).all()
+        
+        total_payments = 0.0
+        for payment in all_payments:
+            # Get the debt currency from the map
+            payment_currency = debt_currency_map.get(payment.debt_id, "USD")
+            payment_amount = payment.amount
+            
+            if payment_currency != user_currency:
+                # Convert to user's currency
+                converted_amount = self.currency_client.convert_amount(
+                    payment_amount, payment_currency, user_currency
+                )
+                if converted_amount is not None:
+                    payment_amount = converted_amount
+            
+            total_payments += payment_amount
         
         # Calculate average interest rate
         interest_rates = [debt.interest_rate for debt in active_debts if debt.interest_rate is not None]
         avg_interest_rate = sum(interest_rates) / len(interest_rates) if interest_rates else None
         
         return DebtSummary(
-            total_debt=total_debt,
-            total_payments=total_payments,
+            total_debt=round(total_debt, 2),
+            total_payments=round(total_payments, 2),
             active_debts=len(active_debts),
             paid_off_debts=paid_off_debts,
+            currency=user_currency,
             average_interest_rate=avg_interest_rate
         )
 

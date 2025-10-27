@@ -43,3 +43,11 @@ export interface CategoryFilters {
     page?: number;
     size?: number;
   }
+
+export interface CategoryStatisticsResponse {
+    total_categories: number;
+    expense_categories: number;
+    income_categories: number;
+    parent_categories: number;
+    child_categories: number;
+  }

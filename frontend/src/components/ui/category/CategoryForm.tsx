@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-
 import { CreateCategoryRequest, Category } from '@/types';
-import { useApiClients } from '@hooks';
+import { useCategories } from '@/contexts/CategoriesContext';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
+import { CategorySelect } from '@/components/ui/forms';
 
 interface CategoryFormProps {
   mode: 'create' | 'edit';
@@ -21,8 +21,8 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
   onSuccess
 }) => {
   const { t } = useTranslation();
-  const { category } = useApiClients();
   const { handleCategoryError } = useErrorHandler();
+  const { categories: allCategories } = useCategories();
   const [formData, setFormData] = useState<CreateCategoryRequest>(() => {
     if (mode === 'edit' && initialData) {
       const baseData = {
@@ -36,7 +36,6 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
       type: 'EXPENSE',
     };
   });
-  const [parentCategories, setParentCategories] = useState<Category[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -51,40 +50,24 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
     return false;
   };
 
-  const fetchParentCategories = useCallback(async () => {
-    try {
-      const res = await category.getCategories(true); // Get flat list
-      
-      if (!('error' in res)) {
-        const categories = res as Category[];
-        
-        if (mode === 'edit' && initialData) {
-          // Filter out the current category and its children to prevent circular references
-          const filteredCategories = categories.filter(cat => 
-            cat.id !== initialData.id && 
-            !isChildCategory(cat, initialData.id, categories)
-          );
-          setParentCategories(filteredCategories);
-        } else {
-          setParentCategories(categories);
-        }
-      } else {
-        setParentCategories([]); // Set empty array as fallback
-      }
-    } catch (err) {
-      setParentCategories([]); // Set empty array as fallback
+  // Get parent categories filtered by type and excluding current category (for edit mode)
+  const getAvailableParentCategories = useCallback(() => {
+    if (mode === 'edit' && initialData) {
+      // Filter out the current category and its children to prevent circular references
+      return allCategories.filter(cat => 
+        cat.id !== initialData.id && 
+        !isChildCategory(cat, initialData.id, allCategories) &&
+        cat.type === formData.type
+      );
     }
-  }, [category, mode, initialData]);
-
-  useEffect(() => {
-    fetchParentCategories();
-  }, [fetchParentCategories]);
+    return allCategories.filter(cat => cat.type === formData.type);
+  }, [mode, initialData, allCategories, formData.type, isChildCategory]);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'parent_id' ? (value ? parseInt(value) : undefined) : value
+      [name]: value
     }));
     
     // Clear field error when user starts typing
@@ -96,6 +79,17 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
       });
     }
   }, [fieldErrors]);
+
+  const handleParentCategoryChange = useCallback((categoryId: number | null) => {
+    if (categoryId) {
+      setFormData(prev => ({ ...prev, parent_id: categoryId }));
+    } else {
+      setFormData(prev => {
+        const { parent_id, ...rest } = prev;
+        return rest as CreateCategoryRequest;
+      });
+    }
+  }, []);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -188,27 +182,17 @@ export const CategoryForm = React.memo<CategoryFormProps>(({
             </select>
           </div>
 
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold theme-text-primary" htmlFor="parent_id">
-              {t('category.form.parentCategory')}
-              <span className="theme-text-tertiary font-normal ml-1">{t('category.form.optional')}</span>
-            </label>
-            <select
-              id="parent_id"
-              data-testid='category-parent-select'
-              name="parent_id"
-              value={formData.parent_id || ''}
-              onChange={handleChange}
-              className="w-full px-3 sm:px-4 py-3 theme-surface border theme-border rounded-lg sm:rounded-xl theme-text-primary focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px]"
-            >
-              <option value="">{t('category.form.noParentCategory')}</option>
-              {Array.isArray(parentCategories) && parentCategories.map((cat) => (
-                <option key={cat.id} value={cat.id} data-testid={`category-parent-option-${cat.name.toLowerCase().replace(/\s+/g, '-')}`}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          <CategorySelect
+            key={`parent-${formData.type}`}
+            value={formData.parent_id || null}
+            onChange={handleParentCategoryChange}
+            categoryType={formData.type as 'EXPENSE' | 'INCOME'}
+            label={t('category.form.parentCategory')}
+            optional={true}
+            showEmptyOption={true}
+            emptyOptionLabel={t('category.form.noParentCategory')}
+            disabled={getAvailableParentCategories().length === 0}
+          />
 
           {error && (
             <div className="theme-error-light border theme-border rounded-lg sm:rounded-xl p-3 sm:p-4" data-testid='category-form-error'>

@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { CategoriesProvider } from '@/contexts/CategoriesContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { ModalProvider } from '@/contexts/ModalContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
@@ -18,11 +19,13 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
       <ThemeProvider>
         <ModalProvider>
           <AuthProvider>
-            <CurrencyProvider>
-              <Router>
-                {children || <AppRoutes />}
-              </Router>
-            </CurrencyProvider>
+            <CategoriesProvider>
+              <CurrencyProvider>
+                <Router>
+                  {children || <AppRoutes />}
+                </Router>
+              </CurrencyProvider>
+            </CategoriesProvider>
           </AuthProvider>
         </ModalProvider>
       </ThemeProvider>

@@ -1,4 +1,4 @@
-import { CreateExpenseRequest, ErrorResponse, ExpenseResponse, ExpenseUpdate, ExpenseListResponse, ExpenseFilters } from '@/types';
+import { CreateExpenseRequest, ErrorResponse, ExpenseResponse, ExpenseUpdate, ExpenseListResponse, ExpenseFilters, ExpensesByCategoryResponse } from '@/types';
 import { AuthHttpClient } from './AuthHttpClient';
 import { config } from '@/config/env';
 
@@ -50,5 +50,9 @@ export class ExpenseApiClient {
 
   async deleteExpense(id: number): Promise<void | ErrorResponse> {
     return this.httpClient.delete<void>(`/${id}`);
+  }
+
+  async getExpensesByCategory(category_id: number): Promise<ExpensesByCategoryResponse | ErrorResponse> {
+    return this.httpClient.get<ExpensesByCategoryResponse>(`/category/${category_id}`);
   }
 }

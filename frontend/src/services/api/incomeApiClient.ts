@@ -1,6 +1,6 @@
 import { AuthHttpClient, ApiError } from './AuthHttpClient';
 import { config } from '@/config/env';
-import { IncomeCreate, IncomeOut, IncomeUpdate, IncomeSummary, IncomeStats } from '@/types/income';
+import { IncomeCreate, IncomeOut, IncomeUpdate, IncomeSummary, IncomeStats, IncomesByCategoryResponse } from '@/types/income';
 
 export type ApiResponse<T> = T | ApiError;
 
@@ -44,5 +44,9 @@ export class IncomeApiClient {
 
   async getIncomeStats(): Promise<ApiResponse<IncomeStats>> {
     return this.httpClient.get<IncomeStats>('/stats/overview');
+  }
+
+  async getIncomesByCategory(category_id: number): Promise<ApiResponse<IncomesByCategoryResponse>> {
+    return this.httpClient.get<IncomesByCategoryResponse>(`/category/${category_id}`);
   }
 }

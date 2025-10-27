@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApiClients } from '@/hooks';
-import { CategoryListResponse } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface CategoryStatisticsProps {
   refreshTrigger?: number;
@@ -9,6 +9,7 @@ interface CategoryStatisticsProps {
 
 export const CategoryStatistics: React.FC<CategoryStatisticsProps> = ({ refreshTrigger }) => {
   const { t } = useTranslation();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [stats, setStats] = useState({
     totalCategories: 0,
     expenseCategories: 0,
@@ -21,57 +22,37 @@ export const CategoryStatistics: React.FC<CategoryStatisticsProps> = ({ refreshT
   const { category } = useApiClients();
 
   const fetchStatistics = useCallback(async () => {
+    // Don't fetch if not authenticated or auth is still loading
+    if (!isAuthenticated || authLoading) {
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
       
-      // Получаем категории с помощью пагинированного API
-      // Используем максимальный разрешенный размер страницы (100 элементов)
-      // Для статистики берем первые 100 категорий, общее количество получаем из total
-      const response = await category.getCategoriesPaginated({
-        flat: true,
-        page: 1,
-        size: 100 // Максимальный размер согласно ограничениям API
-      });
+      // Fetch statistics from the dedicated backend endpoint
+      const statsResponse = await category.getCategoryStatistics();
       
-      if ('error' in response) {
-        setError(response.error);
+      if ('error' in statsResponse) {
+        console.error('CategoryStatistics: Error response:', statsResponse.error);
+        setError(statsResponse.error);
       } else {
-        const paginatedResponse = response as CategoryListResponse;
-        const categories = paginatedResponse.items;
-        
-        // Безопасная проверка на случай, если categories undefined
-        if (!categories || !Array.isArray(categories)) {
-          setStats({
-            totalCategories: 0,
-            expenseCategories: 0,
-            incomeCategories: 0,
-            parentCategories: 0,
-            childCategories: 0
-          });
-          return;
-        }
-        
-        const expenseCategories = categories.filter(cat => cat.type === 'EXPENSE').length;
-        const incomeCategories = categories.filter(cat => cat.type === 'INCOME').length;
-        const parentCategories = categories.filter(cat => !cat.parent_id).length;
-        const childCategories = categories.filter(cat => cat.parent_id).length;
-
         setStats({
-          totalCategories: paginatedResponse.total, // Используем total из пагинированного ответа
-          expenseCategories,
-          incomeCategories,
-          parentCategories,
-          childCategories
+          totalCategories: statsResponse.total_categories,
+          expenseCategories: statsResponse.expense_categories,
+          incomeCategories: statsResponse.income_categories,
+          parentCategories: statsResponse.parent_categories,
+          childCategories: statsResponse.child_categories
         });
       }
     } catch (err) {
+      console.error('CategoryStatistics: Exception during fetch:', err);
       setError(t('category.statistics.loadError'));
-      console.error('Error fetching category statistics:', err);
     } finally {
       setLoading(false);
     }
-  }, [category, t]);
+  }, [category, t, isAuthenticated, authLoading]);
 
   useEffect(() => {
     fetchStatistics();

@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, validator
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime, date
 
 class IncomeBase(BaseModel):
@@ -49,3 +49,15 @@ class IncomeStats(BaseModel):
     yearly_income: float
     income_count: int
     average_income: float
+
+class CategoryIncomeStatistics(BaseModel):
+    """Statistics for incomes by category with currency conversion"""
+    total_amount: float = Field(description="Total amount of incomes in user's currency")
+    count: int = Field(description="Number of incomes")
+    average_amount: float = Field(description="Average income amount")
+    currency: str = Field(description="Currency used for converted amounts")
+
+class IncomesByCategoryResponse(BaseModel):
+    """Response schema for incomes by category with statistics"""
+    incomes: List[IncomeOut] = Field(description="List of incomes")
+    statistics: CategoryIncomeStatistics = Field(description="Category income statistics")

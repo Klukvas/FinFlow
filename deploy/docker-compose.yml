@@ -67,6 +67,12 @@ services:
     image: ${REGISTRY}/${IMAGE_PREFIX}/currency_service:latest
     environment:
       - cors_origins=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     restart: unless-stopped
     logging:
       driver: "json-file"
@@ -83,6 +89,9 @@ services:
       - ALGORITHM=${ALGORITHM}
       - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
       - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122,https://finflow.ltd,http://finflow.ltd
+      - USER_SERVICE_URL=http://user_service:8000
+      - CURRENCY_SERVICE_URL=http://currency_service:8000
+      - CATEGORY_SERVICE_URL=http://category_service:8000
     restart: unless-stopped
     logging:
       driver: "json-file"
@@ -102,6 +111,7 @@ services:
       - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122,https://finflow.ltd,http://finflow.ltd
       - CATEGORY_SERVICE_URL=http://category_service:8000
       - ACCOUNT_SERVICE_URL=http://account_service:8000
+      - CURRENCY_SERVICE_URL=http://currency_service:8000
     depends_on:
       - redis
     restart: unless-stopped
@@ -119,7 +129,13 @@ services:
       - SECRET_KEY=${SECRET_KEY}
       - ALGORITHM=${ALGORITHM}
       - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
+      - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
+      - USER_SERVICE_URL=http://user_service:8000
+      - CURRENCY_SERVICE_URL=http://currency_service:8000
       - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122,https://finflow.ltd,http://finflow.ltd
+    depends_on:
+      - user_service
+      - currency_service
     restart: unless-stopped
     logging:
       driver: "json-file"
@@ -207,6 +223,12 @@ services:
       - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
       - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122,https://finflow.ltd,http://finflow.ltd
       - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     restart: unless-stopped
     logging:
       driver: "json-file"

@@ -1,6 +1,6 @@
-import { Category, CreateExpenseRequest, AccountResponse, CategoryListResponse } from '@/types';
+import { CreateExpenseRequest, AccountResponse } from '@/types';
 import React, { useCallback, useEffect, useState } from 'react';
-import { CurrencySelect } from '@/components/ui/forms/CurrencySelect';
+import { CurrencySelect, CategorySelect } from '@/components/ui/forms';
 import { FormattedNumberInput } from '@/components/ui/forms/FormattedNumberInput';
 import { removeSpacesFromNumber } from '@/utils/numberFormat';
 
@@ -12,58 +12,25 @@ interface CreateExpenseProps {
 }
 
 export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }) => {
-    const {category, expense, account} = useApiClients();
+    const { expense, account } = useApiClients();
     const { handleExpenseError } = useErrorHandler();
     
     const [formData, setFormData] = useState<CreateExpenseRequest>({
         amount: 0,
-        category_id: 0,
+        category_id: undefined,
         description: '',
         date: new Date().toISOString().split('T')[0] as string,
         account_id: undefined,
         currency: 'USD',
     });
     const [amountDisplay, setAmountDisplay] = useState('');
-    const [categories, setCategories] = useState<Category[]>([]);
     const [accounts, setAccounts] = useState<AccountResponse[]>([]);
     
     const [error, setError] = useState<string | null>(null);
     const [amountTouched, setAmountTouched] = useState(false);
     
     const [isLoading, setIsLoading] = useState(false);
-    const [isLoadingCategories, setIsLoadingCategories] = useState(false);
     const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
-
-    const fetchCategories = useCallback(async () => {
-        setIsLoadingCategories(true);
-        try {
-            // Используем новый пагинированный API для получения категорий расходов
-            const response = await category.getCategoriesPaginated({
-                flat: true,
-                page: 1,
-                size: 100 // Максимальный размер страницы
-            });
-            
-            if ('error' in response && 'errorCode' in response) {
-                // Handle API error with errorCode
-                handleExpenseError(response as any);
-                return;
-            } else {
-                const paginatedResponse = response as CategoryListResponse;
-                const allCategories = paginatedResponse.items || [];
-                
-                // Filter only expense categories
-                const expenseCategories = allCategories.filter(cat => cat.type === 'EXPENSE');
-                setCategories(expenseCategories);
-                // Категория остается пустой по умолчанию (необязательная)
-            }
-        } catch (err) {
-            // Handle network or other errors
-            handleExpenseError(err as Error);
-        } finally {
-            setIsLoadingCategories(false);
-        }
-    }, [category]);
 
     const fetchAccounts = useCallback(async () => {
         setIsLoadingAccounts(true);
@@ -85,20 +52,25 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
     }, [account]);
 
     useEffect(() => {
-        fetchCategories();
         fetchAccounts();
-    }, [fetchCategories, fetchAccounts]);
+    }, [fetchAccounts]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         const parsedValue =
-            name === 'category_id' ? (value === '' ? 0 : parseInt(value, 10)) :
             name === 'account_id' ? (value === '' ? undefined : parseInt(value, 10)) :
             value;
 
         setFormData(prev => ({
             ...prev,
             [name]: parsedValue
+        }));
+    };
+
+    const handleCategoryChange = (categoryId: number | null) => {
+        setFormData(prev => ({
+            ...prev,
+            category_id: categoryId || undefined
         }));
     };
 
@@ -141,7 +113,7 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
             } else {
                 setFormData({
                     amount: 0,
-                    category_id: 0,
+                    category_id: undefined,
                     description: '',
                     date: new Date().toISOString().split('T')[0] as string,
                     account_id: undefined,
@@ -188,33 +160,13 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
                     </div>
 
                     {/* Категория */}
-                    <div className="space-y-2">
-                        <label className="block text-sm font-semibold theme-text-primary" htmlFor="category_id">
-                            Категория
-                            <span className="theme-text-tertiary font-normal ml-1">(необязательно)</span>
-                        </label>
-                        <select
-                            id="category_id"
-                            name="category_id"
-                            value={formData.category_id}
-                            onChange={handleChange}
-                            className="w-full px-3 sm:px-4 py-3 theme-surface theme-border border rounded-lg sm:rounded-xl theme-text-primary focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px] disabled:opacity-50"
-                            disabled={isLoadingCategories}
-                        >
-                            <option value="">Без категории</option>
-                            {isLoadingCategories ? (
-                                <option>Загрузка категорий...</option>
-                            ) : categories.length === 0 ? (
-                                <option value="">Нет доступных категорий</option>
-                            ) : (
-                                categories.map(cat => (
-                                    <option key={cat.id} value={cat.id}>
-                                        {cat.name}
-                                    </option>
-                                ))
-                            )}
-                        </select>
-                    </div>
+                    <CategorySelect
+                        value={formData.category_id || null}
+                        onChange={handleCategoryChange}
+                        categoryType="EXPENSE"
+                        optional={true}
+                        showEmptyOption={true}
+                    />
 
                     {/* Аккаунт */}
                     <div className="space-y-2">
@@ -295,7 +247,7 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
 
                 <button
                     type="submit"
-                    disabled={isLoading || isLoadingCategories}
+                    disabled={isLoading}
                     className="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-semibold py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 sm:gap-3 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none min-h-[44px] text-sm sm:text-base"
                 >
                     {isLoading ? (

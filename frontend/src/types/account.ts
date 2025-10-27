@@ -56,3 +56,11 @@ export interface CreateAccountRequest {
   balance: number;
 }
 
+export interface AccountStatisticsResponse {
+  total_accounts: number;
+  active_accounts: number;
+  total_balance: number;
+  currency: string;
+  unconvertible_accounts_count: number;
+}
+

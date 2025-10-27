@@ -109,7 +109,8 @@ class CurrencyService:
                 return None
             
             # Calculate rate
-            rate = self._calculate_rate(rates, from_currency, to_currency)
+            # base_currency is from_currency since we fetched rates for from_currency
+            rate = self._calculate_rate(rates, from_currency, from_currency, to_currency)
             if rate is None:
                 return None
                 
@@ -211,7 +212,8 @@ class CurrencyService:
             
             if cached_data:
                 rates = json.loads(cached_data)
-                return self._calculate_rate(rates, from_currency, to_currency)
+                # base_currency is the same as from_currency since we cached with that base
+                return self._calculate_rate(rates, from_currency, from_currency, to_currency)
             
             return None
         except redis.RedisError as e:
@@ -221,24 +223,28 @@ class CurrencyService:
             logger.error(f"Error getting cached rate: {e}")
             raise CurrencyCacheError("get", cache_key)
     
-    def _calculate_rate(self, rates: Dict[str, float], from_currency: str, to_currency: str) -> Optional[float]:
-        """Calculate exchange rate from rates dictionary"""
+    def _calculate_rate(self, rates: Dict[str, float], base_currency: str, from_currency: str, to_currency: str) -> Optional[float]:
+        """Calculate exchange rate from rates dictionary where base_currency is the base"""
         try:
             if from_currency == to_currency:
                 return 1.0
-                
-            # If converting from base currency (USD)
-            if from_currency == "USD":
+            
+            # If converting from the base currency
+            if from_currency == base_currency:
+                # Return the rate directly from the dict
                 return rates.get(to_currency)
             
-            # If converting to base currency (USD)
-            if to_currency == "USD":
+            # If converting to the base currency
+            if to_currency == base_currency:
+                # Get rate from base to from_currency and invert it
                 from_rate = rates.get(from_currency)
                 if from_rate and from_rate > 0:
                     return 1.0 / from_rate
                 return None
             
-            # Converting between two non-USD currencies via USD
+            # Converting between two non-base currencies
+            # rates shows: 1 base = X from_currency and 1 base = Y to_currency
+            # So: X base = to_currency / Y base
             from_rate = rates.get(from_currency)
             to_rate = rates.get(to_currency)
             

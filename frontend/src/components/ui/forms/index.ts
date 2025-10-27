@@ -1,6 +1,7 @@
 export { FormField } from './FormField';
 export { Input } from './Input';
 export { CurrencySelect } from './CurrencySelect';
+export { CategorySelect } from './CategorySelect';
 export { Label } from './Label';
 export { MoneyInput } from './MoneyInput';
 export { FormattedNumberInput } from './FormattedNumberInput';

@@ -84,6 +84,7 @@ class GoalStatistics(BaseModel):
     total_target_amount: float
     total_current_amount: float
     overall_progress: float
+    currency: str
     goals_by_type: dict
     goals_by_priority: dict
 

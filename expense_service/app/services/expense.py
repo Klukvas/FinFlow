@@ -5,9 +5,11 @@ from datetime import date, datetime
 from decimal import Decimal, ROUND_HALF_UP
 
 from app.models.expense import Expense
-from app.schemas.expense import ExpenseCreate, ExpenseUpdate
+from app.schemas.expense import ExpenseCreate, ExpenseUpdate, CategoryExpenseStatistics, ExpensesByCategoryResponse
 from app.clients.category_service_client import CategoryServiceClient
 from app.clients.account_service_client import AccountServiceClient
+from app.clients.currency_service_client import CurrencyServiceClient
+from app.clients.user_service_client import UserServiceClient
 from app.clients.subscription import SubscriptionClient
 from app.exceptions import (
     ErrorCode,
@@ -27,6 +29,8 @@ class ExpenseService:
         self.db = db
         self.category_client = category_client
         self.account_client = account_client
+        self.currency_client = CurrencyServiceClient()
+        self.user_client = UserServiceClient()
         self.logger = get_logger(__name__)
         self.subscription_client = SubscriptionClient()
 
@@ -105,13 +109,43 @@ class ExpenseService:
                 
                 # Restore balance to old account if it had one
                 if old_account_id is not None:
-                    self.account_client.update_account_balance(old_account_id, user_id, old_amount, expense.currency)
-                    self.logger.info(f"Restored {old_amount} {expense.currency} to account {old_account_id}")
+                    # Get old account currency and convert if needed
+                    old_account_data = self.account_client.validate_account(old_account_id, user_id)
+                    old_account_currency = old_account_data.get("account", {}).get("currency", "USD")
+                    
+                    # Convert expense amount to account currency if needed
+                    amount_to_restore = float(old_amount)
+                    if expense.currency != old_account_currency:
+                        converted_amount = self.currency_client.convert_amount(
+                            float(old_amount), expense.currency, old_account_currency
+                        )
+                        if converted_amount is not None:
+                            amount_to_restore = converted_amount
+                    
+                    self.account_client.update_account_balance(
+                        old_account_id, user_id, amount_to_restore, old_account_currency
+                    )
+                    self.logger.info(f"Restored {amount_to_restore} {old_account_currency} to account {old_account_id}")
                 
                 # Deduct from new account if it has one
                 if expense.account_id is not None:
-                    self.account_client.update_account_balance(expense.account_id, user_id, -expense.amount, expense.currency)
-                    self.logger.info(f"Deducted {expense.amount} {expense.currency} from account {expense.account_id}")
+                    # Get account currency and convert expense amount if needed
+                    account_data = self.account_client.validate_account(expense.account_id, user_id)
+                    account_currency = account_data.get("account", {}).get("currency", "USD")
+                    
+                    # Convert expense amount to account currency if needed
+                    amount_to_deduct = float(expense.amount)
+                    if expense.currency != account_currency:
+                        converted_amount = self.currency_client.convert_amount(
+                            float(expense.amount), expense.currency, account_currency
+                        )
+                        if converted_amount is not None:
+                            amount_to_deduct = converted_amount
+                    
+                    self.account_client.update_account_balance(
+                        expense.account_id, user_id, -amount_to_deduct, account_currency
+                    )
+                    self.logger.info(f"Deducted {amount_to_deduct} {account_currency} from account {expense.account_id}")
                     
         except Exception as e:
             self.logger.error(f"Failed to handle balance updates: {e}")
@@ -149,11 +183,34 @@ class ExpenseService:
             else:
                 self.logger.info("Skipping category validation - category_id is None, 0, or invalid")
             
-            # Validate account if provided and update balance
+            # Validate account if provided and update balance with currency conversion
             if data.account_id is not None:
-                self._validate_account(data.account_id, user_id)
+                account_data = self._validate_account(data.account_id, user_id)
+                account_currency = account_data.get("account", {}).get("currency", "USD")
+                expense_currency = data.currency or "USD"
+                
+                # Convert amount if currencies differ
+                amount_to_deduct = validated_amount
+                if expense_currency != account_currency:
+                    self.logger.info(f"Converting expense from {expense_currency} to account currency {account_currency}")
+                    converted_amount = self.currency_client.convert_amount(
+                        float(validated_amount), 
+                        expense_currency, 
+                        account_currency
+                    )
+                    if converted_amount is not None:
+                        amount_to_deduct = Decimal(str(converted_amount)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+                        self.logger.info(f"Converted {validated_amount} {expense_currency} to {amount_to_deduct} {account_currency}")
+                    else:
+                        self.logger.warning(f"Currency conversion failed, using original amount")
+                
                 # Deduct amount from account balance with currency conversion
-                self.account_client.update_account_balance(data.account_id, user_id, -validated_amount, data.currency)
+                self.account_client.update_account_balance(
+                    data.account_id, 
+                    user_id, 
+                    -float(amount_to_deduct), 
+                    account_currency
+                )
             
             # Log currency value for debugging
             self.logger.info(f"Currency value: {data.currency} (type: {type(data.currency)})")
@@ -373,16 +430,63 @@ class ExpenseService:
                 {"original_error": str(e)}
             )
 
-    def get_by_category(self, category_id: int, user_id: int) -> List[Expense]:
-        """Get all expenses for a specific category"""
+    def get_by_category(self, category_id: int, user_id: int) -> ExpensesByCategoryResponse:
+        """Get all expenses for a specific category with statistics"""
         try:
             # First validate the category belongs to the user
             self._validate_category(category_id, user_id)
             
-            return self.db.query(Expense).filter(
+            # Get all expenses for this category
+            expenses = self.db.query(Expense).filter(
                 Expense.user_id == user_id,
                 Expense.category_id == category_id
             ).order_by(Expense.date.desc()).all()
+            
+            # Get user's base currency
+            try:
+                user_currency = self.user_client.get_user_base_currency(user_id)
+            except Exception as e:
+                self.logger.warning(f"Could not fetch user currency for user {user_id}: {str(e)}, defaulting to USD")
+                user_currency = "USD"
+            
+            # Calculate statistics with currency conversion
+            total_amount = 0.0
+            count = 0
+            
+            for expense in expenses:
+                expense_amount = float(expense.amount)
+                expense_currency = expense.currency or "USD"
+                
+                # Convert to user's currency if needed
+                if expense_currency != user_currency:
+                    converted_amount = self.currency_client.convert_amount(
+                        expense_amount, expense_currency, user_currency
+                    )
+                    if converted_amount is not None:
+                        expense_amount = converted_amount
+                
+                total_amount += expense_amount
+                count += 1
+            
+            # Calculate average
+            average_amount = total_amount / count if count > 0 else 0.0
+            
+            # Create statistics
+            statistics = CategoryExpenseStatistics(
+                total_amount=round(total_amount, 2),
+                count=count,
+                average_amount=round(average_amount, 2),
+                currency=user_currency
+            )
+            
+            # Convert expenses to response format
+            from app.schemas.expense import ExpenseResponse
+            expense_responses = [ExpenseResponse.model_validate(expense) for expense in expenses]
+            
+            return ExpensesByCategoryResponse(
+                expenses=expense_responses,
+                statistics=statistics
+            )
         except Exception as e:
             self.logger.error(f"Error retrieving expenses by category: {e}")
             raise ExpenseValidationError(

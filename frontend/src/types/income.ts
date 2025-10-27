@@ -52,3 +52,15 @@ export interface CreateIncomeRequest {
   description: string;
   date: string;
 }
+
+export interface CategoryIncomeStatistics {
+  total_amount: number;
+  count: number;
+  average_amount: number;
+  currency: string;
+}
+
+export interface IncomesByCategoryResponse {
+  incomes: IncomeOut[];
+  statistics: CategoryIncomeStatistics;
+}

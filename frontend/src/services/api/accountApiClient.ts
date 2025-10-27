@@ -5,6 +5,7 @@ import {
   AccountSummary, 
   AccountTransactionSummary,
   CreateAccountRequest,
+  AccountStatisticsResponse,
   ErrorResponse 
 } from '@/types';
 import { AuthHttpClient, ApiError } from './AuthHttpClient';
@@ -50,5 +51,9 @@ export class AccountApiClient {
 
   async getAccountTransactions(id: number): Promise<AccountTransactionSummary | ErrorResponse> {
     return this.httpClient.get<AccountTransactionSummary>(`/${id}/transactions`);
+  }
+
+  async getAccountStatistics(): Promise<AccountStatisticsResponse | ErrorResponse> {
+    return this.httpClient.get<AccountStatisticsResponse>('/statistics');
   }
 }

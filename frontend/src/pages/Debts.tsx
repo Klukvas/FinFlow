@@ -353,7 +353,7 @@ export const Debts: React.FC = () => {
 
         {/* Summary Cards */}
         {activeTab === 'debts' && (
-          <DebtStats debts={debts} actualTheme={actualTheme} />
+          <DebtStats summary={summary} actualTheme={actualTheme} />
         )}
 
         {/* Content based on active tab */}

@@ -1,4 +1,4 @@
-import { Category, CreateCategoryRequest, CreateCategoryResponse, CategoryListResponse, CategoryFilters } from '@types';
+import { Category, CreateCategoryRequest, CreateCategoryResponse, CategoryListResponse, CategoryFilters, CategoryStatisticsResponse } from '@types';
 import { AuthHttpClient } from './AuthHttpClient';
 import { config } from '@/config/env';
 
@@ -105,5 +105,9 @@ export class CategoryApiClient {
       categories,
       language
     });
+  }
+
+  async getCategoryStatistics(): Promise<CategoryStatisticsResponse | ErrorResponse> {
+    return this.httpClient.get<CategoryStatisticsResponse>('/statistics');
   }
 }

@@ -1,38 +1,38 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { AccountSummary } from '@/types';
 import { Card } from '../shared/Card';
 import { FaChartLine, FaDollarSign, FaWallet } from 'react-icons/fa';
 import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 
-interface AccountStatsProps {
-  summaries: AccountSummary[];
+interface AccountStatistics {
+  total_accounts: number;
+  active_accounts: number;
+  total_balance: number;
+  currency: string;
+  unconvertible_accounts_count: number;
 }
 
-export const AccountStats: React.FC<AccountStatsProps> = ({ summaries }) => {
-  const { t } = useTranslation();
-  const { 
-    userCurrency, 
-    isLoadingRates, 
-    convertToUserCurrency, 
-    formatCurrency 
-  } = useCurrencyConversion();
-  
-  const activeAccounts = summaries.filter(account => account.balance > 0).length;
+interface AccountStatsProps {
+  statistics: AccountStatistics;
+  isLoading?: boolean;
+}
 
-  // Calculate total balance in user's currency
-  const { totalBalance, unconvertibleAccounts } = summaries.reduce((acc, account) => {
-    const convertedAmount = convertToUserCurrency(account.balance, account.currency);
-    
-    if (convertedAmount === null) {
-      // Track accounts that couldn't be converted
-      acc.unconvertibleAccounts.push(account);
-    } else {
-      acc.totalBalance += convertedAmount;
-    }
-    
-    return acc;
-  }, { totalBalance: 0, unconvertibleAccounts: [] as AccountSummary[] });
+export const AccountStats: React.FC<AccountStatsProps> = ({ statistics, isLoading = false }) => {
+  const { t } = useTranslation();
+  const { formatCurrency } = useCurrencyConversion();
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {[1, 2, 3].map((i) => (
+          <Card key={i} className="p-6 animate-pulse">
+            <div className="h-6 bg-gray-200 rounded mb-2"></div>
+            <div className="h-8 bg-gray-200 rounded w-24"></div>
+          </Card>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -43,7 +43,7 @@ export const AccountStats: React.FC<AccountStatsProps> = ({ summaries }) => {
           </div>
           <div className="ml-4">
             <p className="text-sm font-medium theme-text-secondary">{t('accountPage.stats.totalAccounts')}</p>
-            <p className="text-2xl font-bold theme-text-primary">{summaries.length}</p>
+            <p className="text-2xl font-bold theme-text-primary">{statistics.total_accounts}</p>
           </div>
         </div>
       </Card>
@@ -55,14 +55,14 @@ export const AccountStats: React.FC<AccountStatsProps> = ({ summaries }) => {
           </div>
           <div className="ml-4">
             <p className="text-sm font-medium theme-text-secondary">
-              {t('accountPage.stats.totalBalance')} {isLoadingRates && t('accountPage.stats.loading')}
+              {t('accountPage.stats.totalBalance')}
             </p>
             <p className="text-2xl font-bold theme-text-primary">
-              {formatCurrency(totalBalance, userCurrency)}
+              {formatCurrency(statistics.total_balance, statistics.currency)}
             </p>
-            {unconvertibleAccounts.length > 0 && (
+            {statistics.unconvertible_accounts_count > 0 && (
               <p className="text-xs text-orange-600 mt-1">
-                ⚠️ {unconvertibleAccounts.length} {unconvertibleAccounts.length === 1 ? t('accountPage.stats.notIncludedSingle') : t('accountPage.stats.notIncludedPlural')}
+                ⚠️ {statistics.unconvertible_accounts_count} {statistics.unconvertible_accounts_count === 1 ? t('accountPage.stats.notIncludedSingle') : t('accountPage.stats.notIncludedPlural')}
               </p>
             )}
           </div>
@@ -76,7 +76,7 @@ export const AccountStats: React.FC<AccountStatsProps> = ({ summaries }) => {
           </div>
           <div className="ml-4">
             <p className="text-sm font-medium theme-text-secondary">{t('accountPage.stats.active')}</p>
-            <p className="text-2xl font-bold theme-text-primary">{activeAccounts}</p>
+            <p className="text-2xl font-bold theme-text-primary">{statistics.active_accounts}</p>
           </div>
         </div>
       </Card>

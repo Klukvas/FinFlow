@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, status, Query, Path
 from typing import List, Annotated, Optional
 
-from app.schemas.category import CategoryCreate, CategoryCreateFromMCC, CategoryCreateFromMCCBatch, CategoryBatchCreateResponse, CategoryOut, CategoryListResponse, SupportedLanguage
+from app.schemas.category import CategoryCreate, CategoryCreateFromMCC, CategoryCreateFromMCCBatch, CategoryBatchCreateResponse, CategoryOut, CategoryListResponse, SupportedLanguage, CategoryStatisticsResponse
 from app.services.category import CategoryService
 from app.dependencies import get_category_service, get_current_user_id
 from app.exceptions import (
@@ -169,6 +169,33 @@ def read_categories(
         size=size,
         pages=pages
     )
+
+@router.get(
+    "/statistics", 
+    response_model=CategoryStatisticsResponse,
+    summary="Get category statistics",
+    description="Get statistics about the authenticated user's categories including counts by type and hierarchy",
+    responses={
+        200: {"description": "Statistics retrieved successfully"},
+        401: {"description": "Unauthorized - invalid or missing token"},
+    }
+)
+def get_category_statistics(
+    service: CategoryService = Depends(get_category_service),
+    user_id: int = Depends(get_current_user_id)
+) -> CategoryStatisticsResponse:
+    """
+    Get category statistics for the authenticated user.
+    
+    Returns:
+    - **total_categories**: Total number of categories
+    - **expense_categories**: Number of expense categories
+    - **income_categories**: Number of income categories
+    - **parent_categories**: Number of parent categories (categories without a parent)
+    - **child_categories**: Number of child categories (categories with a parent)
+    """
+    statistics = service.get_statistics(user_id)
+    return CategoryStatisticsResponse(**statistics)
 
 @router.get(
     "/{category_id}", 

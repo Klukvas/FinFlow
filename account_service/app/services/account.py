@@ -20,6 +20,8 @@ from app.clients.expense_service_client import ExpenseServiceClient
 from app.clients.income_service_client import IncomeServiceClient
 from app.clients.currency_service_client import CurrencyServiceClient
 from app.clients.subscription import SubscriptionClient
+from app.clients.user_service_client import UserServiceClient
+from app.schemas.account import AccountStatisticsResponse
 
 class AccountService:
     def __init__(self, db: Session, expense_client: ExpenseServiceClient = None, income_client: IncomeServiceClient = None, currency_client: CurrencyServiceClient = None):
@@ -29,6 +31,7 @@ class AccountService:
         self.income_client = income_client or IncomeServiceClient()
         self.currency_client = currency_client or CurrencyServiceClient()
         self.subscription_client = SubscriptionClient()
+        self.user_client = UserServiceClient()
 
     def create_account(self, account_data: AccountCreate, user_id: int) -> Account:
         """Create a new account for a user"""
@@ -461,3 +464,62 @@ class AccountService:
         except Exception as e:
             self.logger.error(f"Error validating account ownership: {e}")
             return False
+
+    async def get_account_statistics(self, user_id: int) -> AccountStatisticsResponse:
+        """Get statistics about user's accounts with currency conversion"""
+        try:
+            # Get user's base currency
+            user_currency = self.user_client.get_user_base_currency(user_id)
+            
+            # Get all non-archived accounts for the user
+            accounts = self.db.query(Account).filter(
+                Account.owner_id == user_id,
+                Account.is_archived == False
+            ).all()
+            
+            total_accounts = len(accounts)
+            active_accounts = sum(1 for account in accounts if account.balance > 0)
+            
+            # Calculate total balance with currency conversion
+            total_balance = 0.0
+            unconvertible_count = 0
+            
+            for account in accounts:
+                account_balance = abs(account.balance)
+                account_currency = account.currency or "USD"
+                
+                if account_currency != user_currency:
+                    # Convert to user's currency
+                    try:
+                        converted_amount = await self.currency_client.convert_amount(
+                            account_balance, account_currency, user_currency
+                        )
+                        if converted_amount is not None:
+                            total_balance += converted_amount
+                        else:
+                            unconvertible_count += 1
+                            self.logger.warning(f"Could not convert account {account.id} from {account_currency} to {user_currency}")
+                    except Exception as e:
+                        self.logger.error(f"Error converting currency for account {account.id}: {e}")
+                        unconvertible_count += 1
+                else:
+                    total_balance += account_balance
+            
+            return AccountStatisticsResponse(
+                total_accounts=total_accounts,
+                active_accounts=active_accounts,
+                total_balance=round(total_balance, 2),
+                currency=user_currency,
+                unconvertible_accounts_count=unconvertible_count
+            )
+            
+        except Exception as e:
+            self.logger.error(f"Failed to get account statistics: {e}")
+            # Return default values
+            return AccountStatisticsResponse(
+                total_accounts=0,
+                active_accounts=0,
+                total_balance=0.0,
+                currency="USD",
+                unconvertible_accounts_count=0
+            )

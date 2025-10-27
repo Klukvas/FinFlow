@@ -101,5 +101,6 @@ export interface DebtSummary {
   total_payments: number;
   active_debts: number;
   paid_off_debts: number;
+  currency: string;
   average_interest_rate?: number | null;
 }

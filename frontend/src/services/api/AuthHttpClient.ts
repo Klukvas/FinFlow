@@ -39,6 +39,8 @@ export class AuthHttpClient {
 
     if (token) {
       headers.Authorization = `Bearer ${token}`;
+    } else {
+      console.warn('AuthHttpClient: No token available for request to', url);
     }
 
     try {

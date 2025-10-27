@@ -11,6 +11,7 @@ interface SelectProps {
 interface SelectTriggerProps {
   children: React.ReactNode;
   className?: string;
+  disabled?: boolean;
   'data-testid'?: string;
 }
 
@@ -24,6 +25,7 @@ interface SelectItemProps {
   children: React.ReactNode;
   value: string;
   className?: string;
+  disabled?: boolean;
   'data-testid'?: string;
 }
 
@@ -86,6 +88,7 @@ export const Select: React.FC<SelectProps> = ({
 export const SelectTrigger: React.FC<SelectTriggerProps> = ({ 
   children, 
   className = '',
+  disabled = false,
   'data-testid': testId
 }) => {
   const { isOpen, setIsOpen, contentRef } = React.useContext(SelectContext);
@@ -118,6 +121,7 @@ export const SelectTrigger: React.FC<SelectTriggerProps> = ({
         setIsOpen(!isOpen);
       }}
       className={`flex h-12 w-full items-center justify-between rounded-lg theme-border border theme-bg px-3 py-3 text-base theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition hover:theme-border-hover disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation ${className}`}
+      disabled={disabled}
       data-testid={testId || 'select-trigger'}
     >
       {children}
@@ -161,6 +165,7 @@ export const SelectItem: React.FC<SelectItemProps> = ({
   children, 
   value, 
   className = '',
+  disabled = false,
   'data-testid': testId
 }) => {
   const { onValueChange } = React.useContext(SelectContext);
@@ -168,14 +173,18 @@ export const SelectItem: React.FC<SelectItemProps> = ({
   return (
     <div
       onMouseDown={(e) => {
-        e.preventDefault();
+        if (!disabled) {
+          e.preventDefault();
+        }
       }}
       onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        onValueChange?.(value);
+        if (!disabled) {
+          e.preventDefault();
+          e.stopPropagation();
+          onValueChange?.(value);
+        }
       }}
-      className={`relative flex w-full select-none items-center rounded-md py-3 px-3 text-base outline-none theme-text-primary hover:theme-surface-hover focus:theme-surface-hover data-[disabled]:pointer-events-none data-[disabled]:opacity-50 cursor-pointer theme-transition touch-manipulation min-h-[44px] ${className}`}
+      className={`relative flex w-full select-none items-center rounded-md py-3 px-3 text-base outline-none theme-text-primary hover:theme-surface-hover focus:theme-surface-hover data-[disabled]:pointer-events-none data-[disabled]:opacity-50 cursor-pointer theme-transition touch-manipulation min-h-[44px] ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
       data-testid={testId || `select-item-${value}`}
     >
       {children}

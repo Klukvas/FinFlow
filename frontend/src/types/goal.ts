@@ -98,6 +98,7 @@ export interface GoalStatistics {
   total_target_amount: number;
   total_current_amount: number;
   overall_progress: number;
+  currency: string;
   goals_by_type: Record<string, number>;
   goals_by_priority: Record<string, number>;
 }

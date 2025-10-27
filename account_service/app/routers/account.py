@@ -9,7 +9,8 @@ from app.schemas.account import (
     AccountUpdate, 
     AccountResponse, 
     AccountSummary,
-    AccountTransactionSummary
+    AccountTransactionSummary,
+    AccountStatisticsResponse
 )
 
 router = APIRouter(prefix="/accounts", tags=["accounts"])
@@ -41,6 +42,14 @@ async def get_account_summaries(
 ) -> List[AccountSummary]:
     """Get summaries for all user accounts"""
     return service.get_user_account_summaries(user_id)
+
+@router.get("/statistics", response_model=AccountStatisticsResponse)
+async def get_account_statistics(
+    user_id: int = Depends(get_current_user_id),
+    service: AccountService = Depends(get_account_service)
+) -> AccountStatisticsResponse:
+    """Get account statistics with currency conversion"""
+    return await service.get_account_statistics(user_id)
 
 @router.get("/{account_id}", response_model=AccountResponse)
 async def get_account(

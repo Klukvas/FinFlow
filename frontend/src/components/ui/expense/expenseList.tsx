@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { ExpenseResponse } from '@/types';
 import { useApiClients } from '@/hooks';
-import { DeleteButton, EditButton, PaginationView } from '@/components/ui';
+import { DeleteButton, EditButton, Pagination } from '@/components/ui';
 
 interface ExpenseListProps {
   onEditExpense?: (expense: ExpenseResponse) => void;
@@ -13,6 +13,13 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({ onEditExpense }) => {
     const { t } = useTranslation();
     const [categories, setCategories] = useState<Record<number, string>>({});
     const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [expenses, setExpenses] = useState<ExpenseResponse[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [totalItems, setTotalItems] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
     const { category, expense } = useApiClients();
 
     // Load categories once
@@ -31,10 +38,37 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({ onEditExpense }) => {
         }
     }, [category]);
 
+    // Load expenses
+    const loadExpenses = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await expense.getExpensesPaginated({ page: currentPage, size: pageSize });
+            
+            if ('error' in response) {
+                setError(response.error);
+                throw new Error(response.error);
+            }
+            
+            setExpenses(response.items);
+            setTotalItems(response.total);
+            setTotalPages(response.pages);
+        } catch (err) {
+            console.error('Error fetching expenses:', err);
+        } finally {
+            setLoading(false);
+        }
+    }, [expense, currentPage, pageSize]);
+
     // Load categories on mount
     useEffect(() => {
         loadCategories();
     }, [loadCategories]);
+
+    // Load expenses when page or size changes
+    useEffect(() => {
+        loadExpenses();
+    }, [loadExpenses]);
 
     const handleDelete = async (id: number) => {
         setDeletingId(id);
@@ -42,8 +76,10 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({ onEditExpense }) => {
             const response = await expense.deleteExpense(id);
             if (!response || 'error' in response) {
                 console.error('Error deleting expense:', response?.error);
+            } else {
+                // Refresh the current page
+                await loadExpenses();
             }
-            // The PaginationView will handle refreshing the data
         } catch (err) {
             console.error('Error deleting expense:', err);
         } finally {
@@ -57,21 +93,14 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({ onEditExpense }) => {
         }
     };
 
-    // Fetch expenses data for PaginationView
-    const fetchExpenses = useCallback(async (page: number, pageSize: number) => {
-        const response = await expense.getExpensesPaginated({ page, size: pageSize });
-        
-        if ('error' in response) {
-            throw new Error(response.error);
-        }
-        
-        return {
-            items: response.items,
-            total: response.total,
-            pages: response.pages,
-            page: response.page
-        };
-    }, [expense]);
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+    };
+
+    const handlePageSizeChange = (size: number) => {
+        setPageSize(size);
+        setCurrentPage(1);
+    };
 
     const formatDate = (dateString: string | null | undefined) => {
         if (!dateString) return t('expense.list.noDate');
@@ -79,7 +108,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({ onEditExpense }) => {
     };
 
     // Render function for expenses
-    const renderExpenses = (expenses: ExpenseResponse[], loading: boolean) => {
+    const renderExpenses = () => {
         if (loading) {
             return (
                 <div className="text-center py-8 sm:py-12 lg:py-16">
@@ -235,7 +264,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({ onEditExpense }) => {
     };
 
     // Render function for empty state
-    const renderEmpty = (totalItems: number) => (
+    const renderEmpty = () => (
         <div className="text-center py-8 sm:py-12 lg:py-16">
             <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 mx-auto mb-4 sm:mb-6 theme-bg-tertiary rounded-xl sm:rounded-2xl flex items-center justify-center">
                 <svg className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 theme-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -254,6 +283,21 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({ onEditExpense }) => {
         </div>
     );
 
+    if (error) {
+        return (
+            <div className="theme-error-light theme-border border rounded-lg sm:rounded-xl p-4 sm:p-6 mx-4 sm:mx-6 my-4 sm:my-6">
+                <div className="flex items-center gap-3">
+                    <div className="w-5 h-5 theme-error flex-shrink-0">
+                        <svg fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                    </div>
+                    <p className="theme-error text-sm font-medium">{error}</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="w-full">
             <div className="theme-bg-secondary px-4 sm:px-6 py-3 sm:py-4 lg:px-8 lg:py-6">
@@ -268,16 +312,27 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({ onEditExpense }) => {
             </div>
             
             <div className="p-4 sm:p-6 lg:p-8">
-                <PaginationView
-                    fetchData={fetchExpenses}
-                    renderContent={renderExpenses}
-                    renderEmpty={renderEmpty}
-                    initialPageSize={10}
-                    pageSizeOptions={[5, 10, 25, 50]}
-                    showPageSizeSelector={true}
-                    dependencies={[deletingId]} // Refresh when delete operation completes
-                    data-testid="expense-list"
-                />
+                {expenses.length === 0 && !loading ? (
+                    renderEmpty()
+                ) : (
+                    <>
+                        {renderExpenses()}
+                        {totalPages > 1 && (
+                            <div className="mt-6">
+                                <Pagination
+                                    currentPage={currentPage}
+                                    totalPages={totalPages}
+                                    itemsPerPage={pageSize}
+                                    totalItems={totalItems}
+                                    onPageChange={handlePageChange}
+                                    onPageSizeChange={handlePageSizeChange}
+                                    showPageSizeSelector={true}
+                                    pageSizeOptions={[5, 10, 25, 50]}
+                                />
+                            </div>
+                        )}
+                    </>
+                )}
             </div>
         </div>
     );

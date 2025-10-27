@@ -3,7 +3,7 @@ from sqlalchemy import and_, func, desc
 from typing import List, Optional
 from datetime import datetime, date
 from app.models.income import Income
-from app.schemas.income import IncomeCreate, IncomeUpdate, IncomeOut, IncomeSummary, IncomeStats
+from app.schemas.income import IncomeCreate, IncomeUpdate, IncomeOut, IncomeSummary, IncomeStats, CategoryIncomeStatistics, IncomesByCategoryResponse
 from app.exceptions import (
     IncomeNotFoundError,
     IncomeValidationError,
@@ -16,6 +16,7 @@ from app.exceptions import (
 )
 from app.clients.category_service_client import CategoryServiceClient
 from app.clients.account_service_client import AccountServiceClient
+from app.clients.currency_service_client import CurrencyServiceClient
 from app.clients.subscription import SubscriptionClient
 from app.utils.logger import get_logger
 
@@ -28,6 +29,7 @@ class IncomeService:
         self.db = db
         self.category_client = CategoryServiceClient()
         self.account_client = account_client or AccountServiceClient()
+        self.currency_client = CurrencyServiceClient()
         self.subscription_client = SubscriptionClient()
     
     async def _validate_category(self, category_id: int, user_id: int) -> dict:
@@ -157,6 +159,57 @@ class IncomeService:
         ).order_by(desc(Income.date)).offset(skip).limit(limit).all()
         
         return [IncomeOut.from_orm(income) for income in incomes]
+    
+    async def get_by_category(self, category_id: int, user_id: int) -> IncomesByCategoryResponse:
+        """Get all incomes for a specific category with statistics"""
+        incomes = self.db.query(Income).filter(
+            and_(Income.category_id == category_id, Income.user_id == user_id)
+        ).order_by(desc(Income.date)).all()
+        
+        # Get user's base currency
+        try:
+            user_currency = self.currency_client.get_user_base_currency(user_id)
+        except Exception as e:
+            logger.warning(f"Could not fetch user currency for user {user_id}: {str(e)}, defaulting to USD")
+            user_currency = "USD"
+        
+        # Calculate statistics with currency conversion
+        total_amount = 0.0
+        count = 0
+        
+        for income in incomes:
+            income_amount = float(income.amount)
+            income_currency = income.currency or "USD"
+            
+            # Convert to user's currency if needed
+            if income_currency != user_currency:
+                converted_amount = await self.currency_client.convert_amount(
+                    income_amount, income_currency, user_currency
+                )
+                if converted_amount is not None:
+                    income_amount = converted_amount
+            
+            total_amount += income_amount
+            count += 1
+        
+        # Calculate average
+        average_amount = total_amount / count if count > 0 else 0.0
+        
+        # Create statistics
+        statistics = CategoryIncomeStatistics(
+            total_amount=round(total_amount, 2),
+            count=count,
+            average_amount=round(average_amount, 2),
+            currency=user_currency
+        )
+        
+        # Convert incomes to response format
+        income_responses = [IncomeOut.from_orm(income) for income in incomes]
+        
+        return IncomesByCategoryResponse(
+            incomes=income_responses,
+            statistics=statistics
+        )
     
     async def update(self, income_id: int, income_update: IncomeUpdate, user_id: int) -> IncomeOut:
         """Update income"""

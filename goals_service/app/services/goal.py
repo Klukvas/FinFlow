@@ -8,6 +8,8 @@ from app.schemas.goal import (
     MilestoneCreate, MilestoneUpdate, MilestoneProgressUpdate
 )
 from app.clients.subscription import SubscriptionClient
+from app.clients.user_service_client import UserServiceClient
+from app.clients.currency_service_client import CurrencyServiceClient
 from app.exceptions.goal_exceptions import (
     GoalNotFoundError, GoalValidationError, GoalCreationError, GoalUpdateError,
     GoalDeletionError, GoalRetrievalError, GoalStatisticsError, GoalProgressError,
@@ -23,6 +25,8 @@ class GoalService:
     def __init__(self, db: Session):
         self.db = db
         self.subscription_client = SubscriptionClient()
+        self.user_client = UserServiceClient()
+        self.currency_client = CurrencyServiceClient()
 
     def create_goal(self, user_id: int, goal_data: GoalCreate) -> Goal:
         """Create a new financial goal"""
@@ -157,6 +161,13 @@ class GoalService:
         try:
             goals = self.db.query(Goal).filter(Goal.user_id == user_id).all()
             
+            # Get user's base currency
+            try:
+                user_currency = self.user_client.get_user_base_currency(user_id)
+            except Exception as e:
+                logger.warning(f"Could not fetch user currency for user {user_id}: {str(e)}, defaulting to USD")
+                user_currency = "USD"
+            
             if not goals:
                 return {
                     "total_goals": 0,
@@ -165,6 +176,7 @@ class GoalService:
                     "total_target_amount": 0.0,
                     "total_current_amount": 0.0,
                     "overall_progress": 0.0,
+                    "currency": user_currency,
                     "goals_by_type": {},
                     "goals_by_priority": {}
                 }
@@ -173,8 +185,34 @@ class GoalService:
             active_goals = len([g for g in goals if g.status == GoalStatus.ACTIVE])
             completed_goals = len([g for g in goals if g.status == GoalStatus.COMPLETED])
             
-            total_target_amount = sum(g.target_amount for g in goals)
-            total_current_amount = sum(g.current_amount for g in goals)
+            # Convert and sum amounts to user's base currency
+            total_target_amount = 0.0
+            total_current_amount = 0.0
+            
+            for goal in goals:
+                # Convert target amount if needed
+                goal_target = goal.target_amount
+                goal_current = goal.current_amount
+                goal_currency = goal.currency or "USD"
+                
+                if goal_currency != user_currency:
+                    # Convert target amount
+                    converted_target = self.currency_client.convert_amount(
+                        goal_target, goal_currency, user_currency
+                    )
+                    if converted_target is not None:
+                        goal_target = converted_target
+                    
+                    # Convert current amount
+                    converted_current = self.currency_client.convert_amount(
+                        goal_current, goal_currency, user_currency
+                    )
+                    if converted_current is not None:
+                        goal_current = converted_current
+                
+                total_target_amount += goal_target
+                total_current_amount += goal_current
+            
             overall_progress = (total_current_amount / total_target_amount * 100) if total_target_amount > 0 else 0.0
             
             # Group by type
@@ -198,6 +236,7 @@ class GoalService:
                 "total_target_amount": round(total_target_amount, 2),
                 "total_current_amount": round(total_current_amount, 2),
                 "overall_progress": round(overall_progress, 2),
+                "currency": user_currency,
                 "goals_by_type": goals_by_type,
                 "goals_by_priority": goals_by_priority
             }

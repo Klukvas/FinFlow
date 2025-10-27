@@ -377,5 +377,25 @@ class MCCCodeListResponse(BaseModel):
         }
     )
 
+class CategoryStatisticsResponse(BaseModel):
+    """Response schema for category statistics"""
+    total_categories: int = Field(description="Total number of categories")
+    expense_categories: int = Field(description="Number of expense categories")
+    income_categories: int = Field(description="Number of income categories")
+    parent_categories: int = Field(description="Number of parent categories")
+    child_categories: int = Field(description="Number of child categories")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "total_categories": 23,
+                "expense_categories": 15,
+                "income_categories": 8,
+                "parent_categories": 10,
+                "child_categories": 13
+            }
+        }
+    )
+
 # Update forward references
 CategoryOut.model_rebuild()

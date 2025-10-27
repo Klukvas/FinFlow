@@ -50,3 +50,15 @@ export interface ExpenseCreate {
     page?: number;
     size?: number;
   }
+
+  export interface CategoryExpenseStatistics {
+    total_amount: number;
+    count: number;
+    average_amount: number;
+    currency: string;
+  }
+
+  export interface ExpensesByCategoryResponse {
+    expenses: ExpenseResponse[];
+    statistics: CategoryExpenseStatistics;
+  }

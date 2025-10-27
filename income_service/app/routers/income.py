@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, status, Query, Path
 from typing import List, Optional
 from datetime import datetime, date
-from app.schemas.income import IncomeCreate, IncomeOut, IncomeUpdate, IncomeSummary, IncomeStats
+from app.schemas.income import IncomeCreate, IncomeOut, IncomeUpdate, IncomeSummary, IncomeStats, IncomesByCategoryResponse
 from app.services.income import IncomeService
 from app.dependencies import get_income_service, get_current_user_id
 from app.exceptions import (
@@ -185,3 +185,28 @@ def get_income_stats(
     Returns total, monthly, yearly income and other statistics.
     """
     return service.get_stats(user_id)
+
+@router.get(
+    "/category/{category_id}",
+    response_model=IncomesByCategoryResponse,
+    summary="Get incomes by category",
+    description="Retrieve all incomes for a specific category with statistics",
+    responses={
+        200: {"description": "Incomes retrieved successfully"},
+        400: {"description": "Category not found or doesn't belong to user"},
+        401: {"description": "Unauthorized - invalid or missing token"},
+        503: {"description": "External service unavailable"},
+    }
+)
+async def get_incomes_by_category(
+    category_id: int = Path(description="Category ID", gt=0),
+    service: IncomeService = Depends(get_income_service),
+    user_id: int = Depends(get_current_user_id)
+) -> IncomesByCategoryResponse:
+    """
+    Get all incomes for a specific category with statistics.
+    
+    Returns a list of incomes for the specified category (ordered by date, newest first) along with
+    statistics including total amount, count, and average amount, all converted to the user's base currency.
+    """
+    return await service.get_by_category(category_id, user_id)

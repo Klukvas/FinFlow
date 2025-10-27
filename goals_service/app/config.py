@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     USER_SERVICE_URL: str = "http://user_service:8000"
     EXPENSE_SERVICE_URL: str = "http://expense_service:8000"
     INCOME_SERVICE_URL: str = "http://income_service:8000"
+    CURRENCY_SERVICE_URL: str = "http://currency_service:8000"
     SUBSCRIPTION_SERVICE_URL: str = "http://subscription_service:8080"
     
     # Internal communication

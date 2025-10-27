@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, validator
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 from app.models.account import AccountType
 
@@ -69,3 +69,11 @@ class AccountTransactionSummary(BaseModel):
     total_income: float = 0.0
     total_expenses: float = 0.0
     net_change: float = 0.0
+
+class AccountStatisticsResponse(BaseModel):
+    """Statistics about user's accounts with currency conversion"""
+    total_accounts: int = Field(description="Total number of accounts")
+    active_accounts: int = Field(description="Number of accounts with balance > 0")
+    total_balance: float = Field(description="Total balance across all accounts in user's base currency")
+    currency: str = Field(description="User's base currency")
+    unconvertible_accounts_count: int = Field(description="Number of accounts that couldn't be converted to base currency")

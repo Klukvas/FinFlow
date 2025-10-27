@@ -1,6 +1,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { GoalStatistics as GoalStatisticsType } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
 import { FaBullseye, FaCheckCircle, FaPlay, FaChartPie, FaDollarSign, FaTrophy } from 'react-icons/fa';
 
 interface GoalStatisticsProps {
@@ -9,6 +11,11 @@ interface GoalStatisticsProps {
 
 export const GoalStatistics: React.FC<GoalStatisticsProps> = ({ statistics }) => {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const { formatCurrency } = useCurrencyConversion();
+  
+  // Get currency from statistics or fallback to user's base currency
+  const displayCurrency = statistics.currency || user?.base_currency || 'USD';
   
   const getProgressColor = (percentage: number) => {
     if (percentage >= 80) return 'theme-success';
@@ -84,13 +91,13 @@ export const GoalStatistics: React.FC<GoalStatisticsProps> = ({ statistics }) =>
           <div>
             <p className="text-xs sm:text-sm theme-text-secondary">{t('goalsPage.statistics.totalSaved')}</p>
             <p className="text-lg sm:text-xl font-bold theme-success truncate">
-              {statistics.total_current_amount.toLocaleString()} USD
+              {formatCurrency(statistics.total_current_amount, displayCurrency)}
             </p>
           </div>
           <div>
             <p className="text-xs sm:text-sm theme-text-secondary">{t('goalsPage.statistics.targetAmount')}</p>
             <p className="text-lg sm:text-xl font-bold theme-text-primary truncate">
-              {statistics.total_target_amount.toLocaleString()} USD
+              {formatCurrency(statistics.total_target_amount, displayCurrency)}
             </p>
           </div>
         </div>

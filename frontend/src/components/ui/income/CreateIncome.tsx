@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApiClients } from '@/hooks/useApiClients';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
-import { Category, IncomeCreate, AccountResponse, CategoryListResponse } from '@/types';
+import { IncomeCreate, AccountResponse } from '@/types';
 import { Button } from '@/components/ui/shared/Button';
 import { FormattedNumberInput } from '@/components/ui/forms/FormattedNumberInput';
-import { CurrencySelect } from '@/components/ui/forms/CurrencySelect';
+import { CurrencySelect, CategorySelect } from '@/components/ui/forms';
 import { removeSpacesFromNumber } from '@/utils/numberFormat';
 // removed unused icon and config imports
 
@@ -15,7 +15,7 @@ interface CreateIncomeProps {
 
 export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) => {
   const { t } = useTranslation();
-  const { income, category, account } = useApiClients();
+  const { income, account } = useApiClients();
   const { handleIncomeError } = useErrorHandler();
   const [formData, setFormData] = useState<IncomeCreate>({
     amount: 0,
@@ -26,35 +26,11 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) =
     currency: 'USD'
   });
   const [amountDisplay, setAmountDisplay] = useState('');
-  const [categories, setCategories] = useState<Category[]>([]);
   const [accounts, setAccounts] = useState<AccountResponse[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await category.getCategoriesPaginated({
-          flat: true,
-          page: 1,
-          size: 100 // Максимальный размер страницы
-        });
-        
-        if ('error' in response) {
-          console.error('Failed to fetch categories:', response.error);
-        } else {
-          const paginatedResponse = response as CategoryListResponse;
-          const allCategories = paginatedResponse.items || [];
-          
-          // Filter only income categories
-          const incomeCategories = allCategories.filter(cat => cat.type === 'INCOME');
-          setCategories(incomeCategories);
-        }
-      } catch (err) {
-        console.error('Error fetching categories:', err);
-      }
-    };
-
     const fetchAccounts = async () => {
       try {
         const response = await account.getAccounts();
@@ -68,20 +44,24 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) =
       }
     };
 
-    fetchCategories();
     fetchAccounts();
-  }, [category, account]);
+  }, [account]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     
-    if (name === 'category_id') {
-      setFormData(prev => ({ ...prev, [name]: value ? parseInt(value) : null }));
-    } else if (name === 'account_id') {
+    if (name === 'account_id') {
       setFormData(prev => ({ ...prev, [name]: value ? parseInt(value) : null }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
+  };
+
+  const handleCategoryChange = (categoryId: number | null) => {
+    setFormData(prev => ({
+      ...prev,
+      category_id: categoryId
+    }));
   };
 
   const handleAmountChange = (value: string) => {
@@ -155,26 +135,13 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) =
         </div>
 
         {/* Category */}
-        <div className="space-y-2">
-          <label className="block text-sm font-semibold theme-text-primary" htmlFor="category_id">
-            {t('income.form.category')}
-            <span className="theme-text-tertiary font-normal ml-1">{t('income.form.optional')}</span>
-          </label>
-          <select
-            id="category_id"
-            name="category_id"
-            value={formData.category_id || ''}
-            onChange={handleInputChange}
-            className="w-full px-3 sm:px-4 py-3 theme-surface theme-border border rounded-lg sm:rounded-xl theme-text-primary focus:ring-2 focus:ring-green-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px]"
-          >
-            <option value="">{t('income.form.selectCategoryOptional')}</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <CategorySelect
+          value={formData.category_id || null}
+          onChange={handleCategoryChange}
+          categoryType="INCOME"
+          optional={true}
+          showEmptyOption={true}
+        />
 
         {/* Account */}
         <div className="space-y-2">

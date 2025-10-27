@@ -5,6 +5,8 @@ import logging
 class Settings(BaseSettings):
     CATEGORY_SERVICE_URL: str
     ACCOUNT_SERVICE_URL: str
+    CURRENCY_SERVICE_URL: str = "http://currency_service:8000"
+    USER_SERVICE_URL: str = "http://user_service:8000"
     INTERNAL_SECRET_TOKEN: str
     DATABASE_URL: str
     SECRET_KEY: str

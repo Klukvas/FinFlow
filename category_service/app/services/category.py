@@ -801,3 +801,50 @@ class CategoryService:
                 }
                 for mcc_code in mcc_codes
             ]
+
+    def get_statistics(self, user_id: int) -> dict:
+        """Get category statistics for a user"""
+        try:
+            self.logger.info(
+                f"Retrieving category statistics for user {user_id}",
+                category="business",
+                operation="category_statistics_start",
+                user_id=user_id
+            )
+            
+            # Query all categories for the user
+            categories = self.db.query(Category).filter(Category.user_id == user_id).all()
+            
+            # Calculate statistics
+            total_categories = len(categories)
+            expense_categories = sum(1 for cat in categories if cat.type == CategoryType.EXPENSE)
+            income_categories = sum(1 for cat in categories if cat.type == CategoryType.INCOME)
+            parent_categories = sum(1 for cat in categories if cat.parent_id is None)
+            child_categories = sum(1 for cat in categories if cat.parent_id is not None)
+            
+            statistics = {
+                "total_categories": total_categories,
+                "expense_categories": expense_categories,
+                "income_categories": income_categories,
+                "parent_categories": parent_categories,
+                "child_categories": child_categories
+            }
+            
+            self.logger.info(
+                f"Category statistics retrieved successfully",
+                category="business",
+                operation="category_statistics_success",
+                user_id=user_id,
+                **statistics
+            )
+            
+            return statistics
+            
+        except Exception as e:
+            self.logger.error(
+                f"Error retrieving category statistics for user {user_id}: {str(e)}",
+                category="business",
+                operation="category_statistics_failed",
+                user_id=user_id
+            )
+            raise CategoryValidationError("Failed to retrieve category statistics")

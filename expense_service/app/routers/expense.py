@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, status, Query, Path
 from typing import List, Optional, Annotated
 from datetime import date
-from app.schemas.expense import ExpenseCreate, ExpenseResponse, ExpenseResponse, ExpenseUpdate, ExpenseSummary, ExpenseStats, ExpenseListResponse
+from app.schemas.expense import ExpenseCreate, ExpenseResponse, ExpenseUpdate, ExpenseSummary, ExpenseStats, ExpenseListResponse, ExpensesByCategoryResponse
 from app.services.expense import ExpenseService
 from app.dependencies import get_expense_service, get_current_user_id
 from app.exceptions import (
@@ -181,9 +181,9 @@ def delete_expense(
 
 @router.get(
     "/category/{category_id}",
-    response_model=List[ExpenseResponse],
+    response_model=ExpensesByCategoryResponse,
     summary="Get expenses by category",
-    description="Retrieve all expenses for a specific category",
+    description="Retrieve all expenses for a specific category with statistics",
     responses={
         200: {"description": "Expenses retrieved successfully"},
         400: {"description": "Category not found or doesn't belong to user"},
@@ -195,11 +195,12 @@ def read_expenses_by_category(
     category_id: int = Path(description="Category ID", gt=0),
     service: ExpenseService = Depends(get_expense_service),
     user_id: int = Depends(get_current_user_id)
-) -> List[ExpenseResponse]:
+) -> ExpensesByCategoryResponse:
     """
-    Get all expenses for a specific category.
+    Get all expenses for a specific category with statistics.
     
-    Returns a list of expenses for the specified category, ordered by date (newest first).
+    Returns a list of expenses for the specified category (ordered by date, newest first) along with
+    statistics including total amount, count, and average amount, all converted to the user's base currency.
     """
     return service.get_by_category(category_id, user_id)
 
