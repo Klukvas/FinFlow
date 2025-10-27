@@ -9,16 +9,21 @@ interface CurrencySelectProps {
   className?: string;
   placeholder?: string;
   showFlags?: boolean;
+  onBlur?: () => void;
+  dataTestId?: string;
 }
 
-export const CurrencySelect: React.FC<CurrencySelectProps> = ({
-  value,
-  onChange,
-  disabled = false,
-  className = '',
-  placeholder,
-  showFlags = true
-}) => {
+export const CurrencySelect: React.FC<CurrencySelectProps> = (props) => {
+  const {
+    value,
+    onChange,
+    disabled = false,
+    className = '',
+    placeholder,
+    showFlags = true,
+    onBlur,
+    dataTestId
+  } = props;
   const { t } = useTranslation();
   const { currencies, isLoading, error } = useCurrency();
 
@@ -34,8 +39,10 @@ export const CurrencySelect: React.FC<CurrencySelectProps> = ({
       <select
         value={value}
         onChange={handleChange}
+        onBlur={onBlur}
         disabled={disabled || true}
         className={combinedClassName}
+        {...(dataTestId && { 'data-testid': dataTestId })}
       >
         <option value="USD">⚠️ USD {t('common.currencyLoadError') || 'Error loading currencies'}</option>
       </select>
@@ -46,8 +53,10 @@ export const CurrencySelect: React.FC<CurrencySelectProps> = ({
     <select
       value={value}
       onChange={handleChange}
+      onBlur={onBlur}
       disabled={disabled || isLoading}
       className={combinedClassName}
+      {...(dataTestId && { 'data-testid': dataTestId })}
     >
       {isLoading ? (
         <option disabled>🔄 {t('common.loadingCurrencies') || 'Loading currencies...'}</option>

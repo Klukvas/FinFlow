@@ -1,4 +1,5 @@
 import { EmailInput, PasswordInput } from '../../components';
+import { CurrencySelect } from '../../components/ui/forms/CurrencySelect';
 import { Link, useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -18,20 +19,24 @@ export default function Register() {
     username: string[];
     email: string[];
     password: string[];
+    currency: string;
   }>({
     username: [],
     email: [],
-    password: []
+    password: [],
+    currency: ''
   });
 
   const [touched, setTouched] = useState<{
     username: boolean;
     email: boolean;
     password: boolean;
+    currency: boolean;
   }>({
     username: false,
     email: false,
-    password: false
+    password: false,
+    currency: false
   });
   
   const {
@@ -46,12 +51,13 @@ export default function Register() {
       email: "",
       password: "",
       username: "",
+      base_currency: "USD",
     } as RegisterRequest,
     onSubmit: async (data: RegisterRequest) => {
       if (config.debug) {
       }
       
-      const result = await register(data.email, data.password, data.username);
+      const result = await register(data.email, data.password, data.username, data.base_currency || 'USD');
       
       if (config.debug) {
       }
@@ -90,7 +96,7 @@ export default function Register() {
     }
   };
 
-  const handleBlur = (fieldName: 'username' | 'email' | 'password') => {
+  const handleBlur = (fieldName: 'username' | 'email' | 'password' | 'currency') => {
     setTouched(prev => ({ ...prev, [fieldName]: true }));
   };
 
@@ -98,22 +104,24 @@ export default function Register() {
     e.preventDefault();
     
     // Mark all fields as touched
-    setTouched({ username: true, email: true, password: true });
+    setTouched({ username: true, email: true, password: true, currency: true });
     
     // Validate all fields
     const usernameResult = validateUsername(formData.username);
     const emailResult = validateEmail(formData.email);
     const emailDomainResult = formData.email.includes('@') ? validateEmailDomain(formData.email) : { isValid: true, errors: [] };
     const passwordResult = validatePasswordStrength(formData.password);
+    const currencyError = !formData.base_currency ? t('profile.baseCurrency') || 'Currency is required' : '';
     
     setValidationErrors({
       username: usernameResult.errors,
       email: [...emailResult.errors, ...emailDomainResult.errors],
-      password: passwordResult.errors
+      password: passwordResult.errors,
+      currency: currencyError
     });
     
     // If any validation fails, don't submit
-    if (!usernameResult.isValid || !emailResult.isValid || !emailDomainResult.isValid || !passwordResult.isValid) {
+    if (!usernameResult.isValid || !emailResult.isValid || !emailDomainResult.isValid || !passwordResult.isValid || currencyError) {
       return;
     }
     
@@ -195,6 +203,34 @@ export default function Register() {
                     <p key={idx} className="text-red-500 text-xs">{err}</p>
                   ))}
                 </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium theme-text-primary">
+                {t('profile.baseCurrency')} <span className="text-red-500">*</span>
+              </label>
+              <CurrencySelect
+                value={formData.base_currency || 'USD'}
+                onChange={(value) => {
+                  handleChange({ target: { name: 'base_currency', value } } as React.ChangeEvent<HTMLInputElement>);
+                  if (validationErrors.currency) {
+                    setValidationErrors(prev => ({ ...prev, currency: '' }));
+                  }
+                }}
+                onBlur={() => {
+                  handleBlur('currency');
+                  if (!formData.base_currency) {
+                    setValidationErrors(prev => ({
+                      ...prev,
+                      currency: t('profile.baseCurrency') || 'Currency is required'
+                    }));
+                  }
+                }}
+                showFlags={true}
+              />
+              {touched.currency && validationErrors.currency && (
+                <p className="text-red-500 text-xs">{validationErrors.currency}</p>
               )}
             </div>
             

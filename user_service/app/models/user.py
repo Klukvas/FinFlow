@@ -8,4 +8,4 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     username = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
-    base_currency = Column(String, default="UAH", nullable=False)
+    base_currency = Column(String, default="USD", nullable=False)

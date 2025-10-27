@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Modal } from '../shared/Modal';
 import { EmailInput } from '../inputs/EmailInput';
 import { PasswordInput } from '../inputs/PasswordInput';
+import { CurrencySelect } from '../forms/CurrencySelect';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthForm } from '@/hooks';
 import { RegisterRequest } from '@/services/api/userApiClient';
@@ -21,6 +22,7 @@ interface ValidationErrors {
   username: string;
   email: string;
   password: string;
+  currency: string;
 }
 
 export const RegisterModal: React.FC<RegisterModalProps> = ({ 
@@ -33,7 +35,8 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({
     username: '',
     email: '',
-    password: ''
+    password: '',
+    currency: ''
   });
   
   const {
@@ -48,6 +51,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
       email: "",
       password: "",
       username: "",
+      base_currency: "USD",
     } as RegisterRequest,
     validateEmail: false, // We handle validation separately with translations
     onSubmit: async (data: RegisterRequest) => {
@@ -55,7 +59,8 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
       const errors: ValidationErrors = {
         username: '',
         email: '',
-        password: ''
+        password: '',
+        currency: ''
       };
 
       // Validate username
@@ -75,8 +80,13 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
         errors.password = passwordValidation.errors[0] || 'Invalid password';
       }
 
+      // Validate currency
+      if (!data.base_currency) {
+        errors.currency = t('profile.baseCurrency') || 'Currency is required';
+      }
+
       // If any errors, show them and stop submission
-      if (errors.username || errors.email || errors.password) {
+      if (errors.username || errors.email || errors.password || errors.currency) {
         setValidationErrors(errors);
         throw new Error('Validation failed');
       }
@@ -84,7 +94,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
       if (config.debug) {
       }
       
-      const result = await register(data.email, data.password, data.username);
+      const result = await register(data.email, data.password, data.username, data.base_currency || 'USD');
       
       if (config.debug) {
       }
@@ -104,7 +114,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
 
   const handleClose = () => {
     setError('');
-    setValidationErrors({ username: '', email: '', password: '' });
+    setValidationErrors({ username: '', email: '', password: '', currency: '' });
     onClose();
   };
 
@@ -164,6 +174,25 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
     }
   };
 
+  const handleCurrencyChange = (value: string) => {
+    handleChange({ target: { name: 'base_currency', value } } as React.ChangeEvent<HTMLInputElement>);
+    if (validationErrors.currency) {
+      setValidationErrors(prev => ({ ...prev, currency: '' }));
+    }
+  };
+
+  // Validate currency on blur
+  const handleCurrencyBlur = () => {
+    if (!formData.base_currency) {
+      setValidationErrors(prev => ({
+        ...prev,
+        currency: t('profile.baseCurrency') || 'Currency is required'
+      }));
+    } else {
+      setValidationErrors(prev => ({ ...prev, currency: '' }));
+    }
+  };
+
   return (
     <Modal 
       isOpen={isOpen} 
@@ -220,6 +249,22 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
             onBlur={handlePasswordBlur}
             error={validationErrors.password}
           />
+
+          <div className="space-y-2">
+            <label className="block text-sm font-medium theme-text-primary">
+              {t('profile.baseCurrency')} <span className="theme-error">*</span>
+            </label>
+            <CurrencySelect
+              value={formData.base_currency || 'USD'}
+              onChange={handleCurrencyChange}
+              onBlur={handleCurrencyBlur}
+              showFlags={true}
+              dataTestId="currency-select"
+            />
+            {validationErrors.currency && (
+              <p className="text-red-500 text-sm mt-1">{validationErrors.currency}</p>
+            )}
+          </div>
           
           {error && (
             <div className="theme-error-light theme-border border rounded-lg p-4">
@@ -229,7 +274,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
 
           <button
             type="submit"
-            disabled={isLoading || !!validationErrors.username || !!validationErrors.email || !!validationErrors.password}
+            disabled={isLoading || !!validationErrors.username || !!validationErrors.email || !!validationErrors.password || !!validationErrors.currency}
             data-testid="submit-register-button"
             className="w-full theme-accent-bg hover:theme-accent-hover theme-text-inverse font-semibold py-3 px-4 rounded-lg theme-transition disabled:opacity-50 disabled:cursor-not-allowed"
           >

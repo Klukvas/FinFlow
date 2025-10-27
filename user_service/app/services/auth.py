@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from typing import Optional
 from app.clients.subscription import SubscriptionClient
+from app.clients.currency import CurrencyClient
 
 from app.models.user import User
 from app.schemas.user import UserCreate, UserLogin
@@ -66,6 +67,7 @@ class AuthService:
             email = sanitize_input(data.email.lower().strip())
             username = sanitize_input(data.username.strip())
             password = data.password
+            base_currency = data.base_currency.upper() if data.base_currency else "USD"
 
             # Validate email domain
             validate_email_domain(email)
@@ -75,6 +77,16 @@ class AuthService:
 
             # Validate password strength
             validate_password_strength(password)
+
+            # Validate currency code
+            currency_client = CurrencyClient()
+            if not currency_client.validate_currency(base_currency):
+                self.logger.warning(
+                    f"Currency validation failed or service unavailable for currency: {base_currency}",
+                    extra={"operation": "currency_validation", "currency": base_currency}
+                )
+                # Don't block registration if currency service is unavailable, use USD as fallback
+                base_currency = "USD"
 
             # Check for existing users
             if self.get_user_by_email(email):
@@ -105,7 +117,7 @@ class AuthService:
                 email=email,
                 username=username,
                 hashed_password=hashed_password,
-                base_currency=data.base_currency
+                base_currency=base_currency
             )
 
             self.db.add(user)

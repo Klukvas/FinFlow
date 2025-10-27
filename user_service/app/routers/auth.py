@@ -172,7 +172,20 @@ def update_me(
             user.username = user_update.username.strip()
         
         if user_update.base_currency is not None:
-            user.base_currency = user_update.base_currency.strip()
+            base_currency = user_update.base_currency.strip().upper()
+            
+            # Validate currency code via currency service
+            from app.clients.currency import CurrencyClient
+            currency_client = CurrencyClient()
+            if not currency_client.validate_currency(base_currency):
+                service.logger.warning(
+                    f"Currency validation failed or service unavailable for currency: {base_currency}",
+                    extra={"operation": "currency_validation", "currency": base_currency, "user_id": user_id}
+                )
+                # Use USD as fallback instead of blocking the update
+                base_currency = "USD"
+            
+            user.base_currency = base_currency
         
         service.db.commit()
         service.db.refresh(user)

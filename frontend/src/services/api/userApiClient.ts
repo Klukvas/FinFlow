@@ -10,6 +10,7 @@ export interface RegisterRequest {
   email: string;
   password: string;
   username: string;
+  base_currency?: string;
 }
 
 export interface LoginResponse {
