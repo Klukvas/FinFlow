@@ -17,6 +17,8 @@ interface ThemeProviderProps {
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [theme, setThemeState] = useState<Theme>(() => {
+    // Check if we're in a browser environment
+    if (typeof window === 'undefined') return 'dark';
     const stored = localStorage.getItem('theme') as Theme;
     return stored || 'dark';
   });
@@ -25,6 +27,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   // Update actual theme based on system preference or selected theme
   useEffect(() => {
+    // Check if we're in a browser environment
+    if (typeof window === 'undefined') return;
+    
     const updateActualTheme = () => {
       if (theme === 'system') {
         const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -50,9 +55,16 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   // Apply theme to document
   useEffect(() => {
+    // Check if we're in a browser environment
+    if (typeof window === 'undefined') return;
+    
     const root = document.documentElement;
-    root.classList.remove('light', 'dark');
-    root.classList.add(actualTheme);
+    
+    // Check if classList exists before using it
+    if (root && root.classList) {
+      root.classList.remove('light', 'dark');
+      root.classList.add(actualTheme);
+    }
     
     // Update meta theme-color for mobile browsers
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
@@ -63,7 +75,10 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
-    localStorage.setItem('theme', newTheme);
+    // Check if we're in a browser environment before accessing localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('theme', newTheme);
+    }
   };
 
   const toggleTheme = () => {

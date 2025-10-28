@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { CategoriesProvider } from '@/contexts/CategoriesContext';
@@ -16,19 +17,21 @@ interface AppProvidersProps {
 export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
   return (
     <ErrorBoundary>
-      <ThemeProvider>
-        <ModalProvider>
-          <AuthProvider>
-            <CategoriesProvider>
-              <CurrencyProvider>
-                <Router>
-                  {children || <AppRoutes />}
-                </Router>
-              </CurrencyProvider>
-            </CategoriesProvider>
-          </AuthProvider>
-        </ModalProvider>
-      </ThemeProvider>
+      <HelmetProvider>
+        <ThemeProvider>
+          <ModalProvider>
+            <AuthProvider>
+              <CategoriesProvider>
+                <CurrencyProvider>
+                  <Router>
+                    {children || <AppRoutes />}
+                  </Router>
+                </CurrencyProvider>
+              </CategoriesProvider>
+            </AuthProvider>
+          </ModalProvider>
+        </ThemeProvider>
+      </HelmetProvider>
     </ErrorBoundary>
   );
 };
