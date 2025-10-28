@@ -4,19 +4,26 @@ Allow: /
 # Sitemap
 Sitemap: https://finflow.ltd/sitemap.xml
 
-# Disallow admin and API routes
-Disallow: /admin/
+# Disallow API routes and authenticated pages
 Disallow: /api/
-Disallow: /_next/
-Disallow: /static/
+Disallow: /login
+Disallow: /register
+Disallow: /category
+Disallow: /expense
+Disallow: /income
+Disallow: /recurring
+Disallow: /goals
+Disallow: /debts
+Disallow: /account
+Disallow: /profile
+Disallow: /pdf-parser
 
-# Allow important pages
+# Allow public pages
 Allow: /
-Allow: /dashboard
-Allow: /pdf-parser
-Allow: /categories
-Allow: /analytics
-Allow: /settings
+Allow: /about
+Allow: /features
+Allow: /pricing
+Allow: /contact
 
 # Crawl delay
 Crawl-delay: 1

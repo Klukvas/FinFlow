@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaChartBar, FaShieldAlt, FaMobile, FaClock, FaUsers, FaCog } from 'react-icons/fa';
+import { SEOHead, SEOConfigs } from '@/components/seo/SEOHead';
 
 export const Features: React.FC = () => {
   const { t } = useTranslation();
@@ -14,7 +15,9 @@ export const Features: React.FC = () => {
   const icons = [FaChartBar, FaShieldAlt, FaMobile, FaClock, FaUsers, FaCog];
 
   return (
-    <div className="py-20 px-6">
+    <>
+      <SEOHead {...SEOConfigs.features} url="https://finflow.ltd/features" />
+      <div className="py-20 px-6">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
           <h1 className="text-4xl font-bold theme-text-primary mb-6">
@@ -67,5 +70,6 @@ export const Features: React.FC = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };

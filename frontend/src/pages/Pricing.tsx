@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaCheck, FaCrown, FaRocket } from 'react-icons/fa';
 import { Button } from '@/components/ui/shared/Button';
+import { SEOHead, SEOConfigs } from '@/components/seo/SEOHead';
 
 export const Pricing: React.FC = () => {
   const { t } = useTranslation();
@@ -18,7 +19,9 @@ export const Pricing: React.FC = () => {
   }>;
 
   return (
-    <div className="py-20 px-6">
+    <>
+      <SEOHead {...SEOConfigs.pricing} url="https://finflow.ltd/pricing" />
+      <div className="py-20 px-6">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
           <h1 className="text-4xl font-bold theme-text-primary mb-6">
@@ -125,5 +128,6 @@ export const Pricing: React.FC = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };

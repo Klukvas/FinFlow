@@ -5,12 +5,15 @@ import { Button } from '@/components/ui/shared/Button';
 import { useModal } from '@/contexts/ModalContext';
 import { BackgroundCanvas } from '@/components/ui/layout/BackgroundCanvas';
 import { AnimatedBackground } from '@/components/ui/layout/AnimatedBackground';
+import { SEOHead, SEOConfigs } from '@/components/seo/SEOHead';
 
 export const Home: React.FC = () => {
   const { t } = useTranslation();
   const { openLoginModal, openRegisterModal } = useModal();
 
   return (
+    <>
+      <SEOHead {...SEOConfigs.home} url="https://finflow.ltd/" />
     <div className="min-h-screen relative theme-bg">
       {/* Animated Background Layers */}
       <BackgroundCanvas />
@@ -153,5 +156,6 @@ export const Home: React.FC = () => {
       </section>
       </div>
     </div>
+    </>
   );
 };

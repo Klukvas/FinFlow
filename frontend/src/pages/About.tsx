@@ -1,11 +1,14 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { SEOHead, SEOConfigs } from '@/components/seo/SEOHead';
 
 export const About: React.FC = () => {
   const { t } = useTranslation();
 
   return (
-    <div className="py-20 px-6">
+    <>
+      <SEOHead {...SEOConfigs.about} url="https://finflow.ltd/about" />
+      <div className="py-20 px-6">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-4xl font-bold theme-text-primary mb-8 text-center">
           {t('aboutPage.title')}
@@ -41,5 +44,6 @@ export const About: React.FC = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };

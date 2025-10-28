@@ -2,9 +2,12 @@ import React from 'react';
 import { FaEnvelope, FaPhone, FaMapMarkerAlt, FaClock } from 'react-icons/fa';
 import { Button } from '@/components/ui/shared/Button';
 import { useTranslation } from 'react-i18next';
+import { SEOHead, SEOConfigs } from '@/components/seo/SEOHead';
 
 export const Contact: React.FC = () => {
   const { t } = useTranslation();
+
+  const faqQuestions = t('contactPage.faq.questions', { returnObjects: true }) as Array<{ question: string; answer: string }>;
 
   const contactInfo = [
     {
@@ -34,7 +37,9 @@ export const Contact: React.FC = () => {
   ];
 
   return (
-    <div className="py-20 px-6">
+    <>
+      <SEOHead {...SEOConfigs.contact} url="https://finflow.ltd/contact" />
+      <div className="py-20 px-6">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
           <h1 className="text-4xl font-bold theme-text-primary mb-6">
@@ -81,7 +86,7 @@ export const Contact: React.FC = () => {
                 {t('contactPage.faq.title')}
               </h3>
               <div className="space-y-3">
-                {t('contactPage.faq.questions', { returnObjects: true }).map((faq: any, index: number) => (
+                {faqQuestions.map((faq, index: number) => (
                   <div key={index}>
                     <p className="theme-text-primary font-medium mb-1">
                       {faq.question}
@@ -155,5 +160,6 @@ export const Contact: React.FC = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
