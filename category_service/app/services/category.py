@@ -126,8 +126,15 @@ class CategoryService:
             
             return category
             
-        except (CategoryNotFoundError, CategoryValidationError, CategoryNameConflictError, 
-                CircularRelationshipError, CategoryOwnershipError, CategoryDepthExceededError) as e:
+        except (
+            CategoryNotFoundError, 
+            CategoryValidationError, 
+            CategoryNameConflictError, 
+            CategoryLimitExceededError,
+            CircularRelationshipError, 
+            CategoryOwnershipError, 
+            CategoryDepthExceededError
+        ) as e:
             duration_ms = (time.time() - start_time) * 1000
             self.db.rollback()
             
