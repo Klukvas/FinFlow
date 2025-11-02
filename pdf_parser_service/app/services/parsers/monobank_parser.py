@@ -84,6 +84,10 @@ class MonobankParser(BasePDFParser):
             amount_str = str(row[3]).strip() if row[3] else ""
             amount = self._parse_amount(amount_str)
             
+            # Skip if amount couldn't be parsed
+            if amount is None:
+                self.logger.warning(f"Skipping row with invalid amount: {amount_str}")
+                return None
             
             # Determine transaction type
             transaction_type = self._calculate_transaction_type(amount, row)
@@ -191,3 +195,5 @@ class MonobankParser(BasePDFParser):
         # Monobank uses negative amounts for expenses, positive for income
         if amount < 0:
             return TransactionType.EXPENSE
+        else:
+            return TransactionType.INCOME
