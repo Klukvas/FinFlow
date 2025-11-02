@@ -120,13 +120,15 @@ export const SelectTrigger: React.FC<SelectTriggerProps> = ({
       onClick={() => {
         setIsOpen(!isOpen);
       }}
-      className={`flex h-12 w-full items-center justify-between rounded-lg theme-border border theme-bg px-3 py-3 text-base theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition hover:theme-border-hover disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation ${className}`}
+      className={`flex h-12 w-full items-center justify-between rounded-lg theme-border border theme-bg px-3 py-3 text-base theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition hover:theme-border-hover disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation overflow-hidden ${className}`}
       disabled={disabled}
       data-testid={testId || 'select-trigger'}
     >
-      {children}
+      <span className="flex-1 min-w-0 overflow-hidden text-left">
+        {children}
+      </span>
       <svg
-        className={`h-5 w-5 theme-text-secondary transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+        className={`h-5 w-5 theme-text-secondary transition-transform duration-200 flex-shrink-0 ml-2 ${isOpen ? 'rotate-180' : ''}`}
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"

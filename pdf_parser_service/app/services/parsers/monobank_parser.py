@@ -86,7 +86,7 @@ class MonobankParser(BasePDFParser):
             
             # Skip if amount couldn't be parsed
             if amount is None:
-                self.logger.warning(f"Skipping row with invalid amount: {amount_str}")
+                self.logger.warning(f"Skipping row with invalid amount: {amount_str}. Row: {row}")
                 return None
             
             # Determine transaction type

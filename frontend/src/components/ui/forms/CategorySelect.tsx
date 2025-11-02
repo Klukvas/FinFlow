@@ -82,14 +82,18 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
             placeholder || 
             t(placeholderKey || 'common.selectCategory')
           }>
-            {selectedCategory?.name || emptyOptionLabel || t(emptyOptionLabelKey || 'common.noCategory')}
+            <span className="block truncate">
+              {selectedCategory?.name || emptyOptionLabel || t(emptyOptionLabelKey || 'common.noCategory')}
+            </span>
           </SelectValue>
         </SelectTrigger>
         
         <SelectContent>
           {showEmptyOption && (
-            <SelectItem value="none" data-testid="category-none">
-              {emptyOptionLabel || t(emptyOptionLabelKey || 'common.noCategory')}
+            <SelectItem value="none" data-testid="category-none" className="truncate">
+              <span className="block truncate">
+                {emptyOptionLabel || t(emptyOptionLabelKey || 'common.noCategory')}
+              </span>
             </SelectItem>
           )}
           
@@ -107,8 +111,11 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
                 key={category.id} 
                 value={category.id.toString()}
                 data-testid={`category-${category.id}`}
+                className="truncate"
               >
-                {category.name}
+                <span className="block truncate" title={category.name}>
+                  {category.name}
+                </span>
               </SelectItem>
             ))
           )}
