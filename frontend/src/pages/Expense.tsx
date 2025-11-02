@@ -1,17 +1,21 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CreateExpense } from '../components/ui/expense/createExpense';
+import { EditExpense } from '../components/ui/expense/editExpense';
 import { ExpenseList } from '../components/ui/expense/expenseList';
 import { ExpenseDashboard } from '../components/ui/expense/ExpenseDashboard';
 import { Modal } from '../components/ui/shared/Modal';
 import { Button } from '../components/ui/shared/Button';
 import { Tabs } from '../components/ui/shared/Tabs';
 import { FaPlus, FaTable, FaChartBar } from 'react-icons/fa';
+import { ExpenseResponse } from '@/types';
 
 export const Expense = () => {
   const { t } = useTranslation();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedExpense, setSelectedExpense] = useState<ExpenseResponse | null>(null);
   const [activeTab, setActiveTab] = useState('table');
 
   const tabs = [
@@ -30,6 +34,17 @@ export const Expense = () => {
   const handleExpenseCreated = () => {
     setRefreshTrigger(prev => prev + 1);
     setIsCreateModalOpen(false);
+  };
+
+  const handleEditExpense = (expense: ExpenseResponse) => {
+    setSelectedExpense(expense);
+    setIsEditModalOpen(true);
+  };
+
+  const handleExpenseUpdated = () => {
+    setRefreshTrigger(prev => prev + 1);
+    setIsEditModalOpen(false);
+    setSelectedExpense(null);
   };
 
   return (
@@ -84,7 +99,7 @@ export const Expense = () => {
         {/* Tab Content */}
         {activeTab === 'table' && (
           <div className="theme-surface backdrop-blur-sm rounded-xl sm:rounded-2xl border theme-border theme-shadow overflow-hidden">
-            <ExpenseList key={refreshTrigger} />
+            <ExpenseList key={refreshTrigger} onEditExpense={handleEditExpense} />
           </div>
         )}
 
@@ -103,6 +118,24 @@ export const Expense = () => {
         >
           <CreateExpense onExpenseCreated={handleExpenseCreated} />
         </Modal>
+
+        {/* Edit Expense Modal */}
+        {selectedExpense && (
+          <Modal
+            isOpen={isEditModalOpen}
+            onClose={() => {
+              setIsEditModalOpen(false);
+              setSelectedExpense(null);
+            }}
+            title={t('expensePage.editModalTitle') || 'Редагувати витрату'}
+            size="lg"
+          >
+            <EditExpense 
+              expense={selectedExpense} 
+              onExpenseUpdated={handleExpenseUpdated} 
+            />
+          </Modal>
+        )}
       </div>
     </div>
   );

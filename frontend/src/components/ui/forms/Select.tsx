@@ -153,10 +153,10 @@ export const SelectContent: React.FC<SelectContentProps> = ({
   return (
     <div 
       ref={contentRef}
-      className={`absolute top-full left-0 z-50 mt-1 min-w-full overflow-hidden rounded-lg theme-border border theme-surface theme-shadow animate-in fade-in-0 zoom-in-95 max-h-60 overflow-y-auto ${className}`}
+      className={`absolute top-full left-0 z-50 mt-1 w-full max-w-full overflow-hidden rounded-lg theme-border border theme-surface theme-shadow animate-in fade-in-0 zoom-in-95 max-h-60 overflow-y-auto box-border ${className}`}
       data-testid={testId || 'select-content'}
     >
-      <div className="p-1">
+      <div className="p-1 w-full box-border">
         {children}
       </div>
     </div>
@@ -186,7 +186,7 @@ export const SelectItem: React.FC<SelectItemProps> = ({
           onValueChange?.(value);
         }
       }}
-      className={`relative flex w-full select-none items-center rounded-md py-3 px-3 text-base outline-none theme-text-primary hover:theme-surface-hover focus:theme-surface-hover data-[disabled]:pointer-events-none data-[disabled]:opacity-50 cursor-pointer theme-transition touch-manipulation min-h-[44px] ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
+      className={`relative flex w-full select-none items-center rounded-md py-3 px-3 text-base outline-none theme-text-primary hover:theme-surface-hover focus:theme-surface-hover data-[disabled]:pointer-events-none data-[disabled]:opacity-50 cursor-pointer theme-transition touch-manipulation min-h-[44px] overflow-hidden ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
       data-testid={testId || `select-item-${value}`}
     >
       {children}

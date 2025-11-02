@@ -90,8 +90,8 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
         
         <SelectContent>
           {showEmptyOption && (
-            <SelectItem value="none" data-testid="category-none" className="truncate">
-              <span className="block truncate">
+            <SelectItem value="none" data-testid="category-none">
+              <span className="min-w-0 flex-1 truncate">
                 {emptyOptionLabel || t(emptyOptionLabelKey || 'common.noCategory')}
               </span>
             </SelectItem>
@@ -99,11 +99,11 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
           
           {isLoading ? (
             <SelectItem value="loading" disabled>
-              {t('common.loading')}
+              <span className="truncate">{t('common.loading')}</span>
             </SelectItem>
           ) : displayCategories.length === 0 ? (
             <SelectItem value="empty" disabled>
-              {t('category.noCategories')}
+              <span className="truncate">{t('category.noCategories')}</span>
             </SelectItem>
           ) : (
             displayCategories.map((category) => (
@@ -111,9 +111,8 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
                 key={category.id} 
                 value={category.id.toString()}
                 data-testid={`category-${category.id}`}
-                className="truncate"
               >
-                <span className="block truncate" title={category.name}>
+                <span className="min-w-0 flex-1 truncate" title={category.name}>
                   {category.name}
                 </span>
               </SelectItem>
