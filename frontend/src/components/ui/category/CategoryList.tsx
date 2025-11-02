@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Category } from '@types';
 import { useApiClients } from '@hooks';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
+import { useCategories } from '@/contexts/CategoriesContext';
 import { DeleteButton, EditButton, PaginationView } from '@/components/ui';
 
 interface CategoryListProps {
@@ -45,6 +46,7 @@ export const CategoryList: React.FC<CategoryListProps> = ({
   
   const { category } = useApiClients();
   const { handleCategoryError } = useErrorHandler();
+  const { refreshCategories } = useCategories();
 
   // Use external deletingId if provided, otherwise use local state
   const deletingId = externalDeletingId !== undefined ? externalDeletingId : localDeletingId;
@@ -52,6 +54,7 @@ export const CategoryList: React.FC<CategoryListProps> = ({
   const handleDelete = async (id: number) => {
     if (onDeleteCategory) {
       // Use parent component's handler if provided
+      // Parent component (Category.tsx) will handle refreshing CategoriesContext
       await onDeleteCategory(id);
     } else {
       // Fallback to local handler
@@ -64,6 +67,8 @@ export const CategoryList: React.FC<CategoryListProps> = ({
           handleCategoryError(response, true);
           return; // Don't refresh data if there was an error
         }
+        // Refresh CategoriesContext after successful deletion
+        await refreshCategories();
         // The PaginationView will handle refreshing the data
       } catch (err) {
         // Handle network or other errors
@@ -146,9 +151,9 @@ export const CategoryList: React.FC<CategoryListProps> = ({
               className="theme-bg-secondary rounded-lg sm:rounded-xl border theme-border p-3 sm:p-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-200 cursor-pointer"
               onClick={() => handleCategoryClick(category)}
             >
-              <div className="flex items-start justify-between mb-2 sm:mb-3">
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold theme-text-primary text-sm sm:text-base mb-1 truncate">
+              <div className="flex items-start justify-between gap-2 sm:gap-3 mb-2 sm:mb-3">
+                <div className="flex-1 min-w-0 overflow-hidden">
+                  <h3 className="font-semibold theme-text-primary text-sm sm:text-base mb-1 break-all">
                     {category.name}
                   </h3>
                   <div className="flex items-center gap-1 sm:gap-2 mb-2">
@@ -163,14 +168,14 @@ export const CategoryList: React.FC<CategoryListProps> = ({
                       #{category.id}
                     </span>
                   </div>
-                  <p className="text-xs sm:text-sm theme-text-secondary truncate">
+                  <p className="text-xs sm:text-sm theme-text-secondary break-words">
                     {category.parentName || (
                       <span className="italic">{t('category.list.rootCategory')}</span>
                     )}
                   </p>
                 </div>
                 <div 
-                  className="flex items-center gap-1 ml-2 sm:ml-3 flex-shrink-0"
+                  className="flex items-center gap-1 flex-shrink-0"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <EditButton

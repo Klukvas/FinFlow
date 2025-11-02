@@ -1,6 +1,7 @@
 import React from 'react';
 import { CreateCategoryRequest } from '@/types';
 import { useApiClients } from '@hooks';
+import { useCategories } from '@/contexts/CategoriesContext';
 import CategoryForm from './CategoryForm';
 
 interface CreateCategoryProps {
@@ -9,6 +10,7 @@ interface CreateCategoryProps {
 
 export const CreateCategory: React.FC<CreateCategoryProps> = ({ onCategoryCreated }) => {
   const { category } = useApiClients();
+  const { refreshCategories } = useCategories();
 
   const handleSubmit = async (formData: CreateCategoryRequest) => {
     const response = await category.createCategory(formData);
@@ -18,6 +20,8 @@ export const CreateCategory: React.FC<CreateCategoryProps> = ({ onCategoryCreate
   };
 
   const handleSuccess = async () => {
+    // Refresh CategoriesContext after successful creation
+    await refreshCategories();
     onCategoryCreated();
   };
 

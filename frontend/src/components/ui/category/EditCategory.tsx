@@ -1,6 +1,7 @@
 import React from 'react';
 import { CreateCategoryRequest, Category } from '@/types';
 import { useApiClients } from '@hooks';
+import { useCategories } from '@/contexts/CategoriesContext';
 import CategoryForm from './CategoryForm';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 
@@ -17,6 +18,8 @@ export const EditCategory: React.FC<EditCategoryProps> = ({
 }) => {
   const { category: categoryApi } = useApiClients();
   const { handleCategoryError } = useErrorHandler();
+  const { refreshCategories } = useCategories();
+
   const handleSubmit = async (formData: CreateCategoryRequest) => {
     const response = await categoryApi.updateCategory(category.id, formData);
     if ('error' in response) {
@@ -25,13 +28,19 @@ export const EditCategory: React.FC<EditCategoryProps> = ({
     }
   };
 
+  const handleSuccess = async () => {
+    // Refresh CategoriesContext after successful update
+    await refreshCategories();
+    onCategoryUpdated();
+  };
+
   return (
     <CategoryForm
       mode="edit"
       initialData={category}
       onSubmit={handleSubmit}
       onCancel={onCancel}
-      onSuccess={onCategoryUpdated}
+      onSuccess={handleSuccess}
     />
   );
 };

@@ -7,6 +7,7 @@ import { Button } from '../components/ui/shared/Button';
 import { FaPlus } from 'react-icons/fa';
 import { useApiClients } from '@/hooks/useApiClients';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
+import { useCategories } from '@/contexts/CategoriesContext';
 import type { Category as CategoryType } from '@/types';
 
 export const Category = () => {
@@ -20,13 +21,18 @@ export const Category = () => {
   
   const { category: categoryApi } = useApiClients();
   const { handleCategoryError } = useErrorHandler();
+  const { refreshCategories } = useCategories();
 
-  const handleCategoryCreated = () => {
+  const handleCategoryCreated = async () => {
+    // Refresh CategoriesContext after successful creation
+    await refreshCategories();
     setRefreshKey(prev => prev + 1);
     setIsCreateModalOpen(false);
   };
 
-  const handleCategoryUpdated = () => {
+  const handleCategoryUpdated = async () => {
+    // Refresh CategoriesContext after successful update
+    await refreshCategories();
     setRefreshKey(prev => prev + 1);
     setIsEditModalOpen(false);
     setEditingCategory(null);
@@ -43,6 +49,8 @@ export const Category = () => {
         return; // Don't refresh data if there was an error
       }
       
+      // Refresh CategoriesContext after successful deletion
+      await refreshCategories();
       // Refresh both list and statistics
       setRefreshKey(prev => prev + 1);
     } catch (err) {
