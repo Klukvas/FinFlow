@@ -22,13 +22,6 @@ def validate_password_strength(password: str) -> None:
     if settings.REQUIRE_NUMBERS and not re.search(r'\d', password):
         errors.append("Password must contain at least one number")
     
-    if settings.REQUIRE_SPECIAL_CHARS and not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
-        errors.append("Password must contain at least one special character")
-    
-    # Check for common weak patterns
-    if re.search(r'(.)\1{2,}', password):
-        errors.append("Password cannot contain more than 2 consecutive identical characters")
-    
     if errors:
         raise PasswordPolicyError("; ".join(errors))
 

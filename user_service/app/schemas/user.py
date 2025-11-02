@@ -19,7 +19,7 @@ class UserCreate(BaseModel):
         ...,
         min_length=8,
         max_length=128,
-        description="Password (8-128 characters, must include uppercase, lowercase, numbers, and special characters)",
+        description="Password (8-128 characters, must include uppercase, lowercase, and numbers)",
         examples=["SecurePass123!", "MyPassword2024#"]
     )
     base_currency: str = Field(
@@ -54,8 +54,6 @@ class UserCreate(BaseModel):
             raise ValueError('Password must contain at least one lowercase letter')
         if not re.search(r'\d', v):
             raise ValueError('Password must contain at least one number')
-        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
-            raise ValueError('Password must contain at least one special character')
         return v
 
     model_config = ConfigDict(
@@ -159,7 +157,7 @@ class PasswordChange(BaseModel):
         ...,
         min_length=8,
         max_length=128,
-        description="New password (8-128 characters, must include uppercase, lowercase, numbers, and special characters)"
+        description="New password (8-128 characters, must include uppercase, lowercase, and numbers)"
     )
 
     @field_validator('new_password')
@@ -176,8 +174,6 @@ class PasswordChange(BaseModel):
             raise ValueError('Password must contain at least one lowercase letter')
         if not re.search(r'\d', v):
             raise ValueError('Password must contain at least one number')
-        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
-            raise ValueError('Password must contain at least one special character')
         return v
 
     model_config = ConfigDict(

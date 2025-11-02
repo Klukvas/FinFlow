@@ -41,7 +41,7 @@ def register(
     
     - **email**: User's email address (must be unique)
     - **username**: Unique username (3-50 characters, alphanumeric, underscores, hyphens)
-    - **password**: Strong password (8-128 characters, must include uppercase, lowercase, numbers, and special characters)
+    - **password**: Strong password (8-128 characters, must include uppercase, lowercase, and numbers)
     
     Returns an access token for immediate authentication.
     """

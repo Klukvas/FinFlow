@@ -10,7 +10,6 @@ const MAX_PASSWORD_LENGTH = 128;
 const REQUIRE_UPPERCASE = true;
 const REQUIRE_LOWERCASE = true;
 const REQUIRE_NUMBERS = true;
-const REQUIRE_SPECIAL_CHARS = true;
 
 // Username validation settings (matching backend config)
 const MIN_USERNAME_LENGTH = 3;
@@ -37,10 +36,6 @@ export const validatePasswordStrength = (password: string): ValidationResult => 
 
   if (REQUIRE_NUMBERS && !/\d/.test(password)) {
     errors.push("Password must contain at least one number");
-  }
-
-  if (REQUIRE_SPECIAL_CHARS && !/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-    errors.push("Password must contain at least one special character");
   }
 
   // Check for common weak patterns
