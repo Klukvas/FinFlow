@@ -247,6 +247,7 @@ services:
       - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
       - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122,https://finflow.ltd,http://finflow.ltd
       - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
+      - WORKSPACE_SERVICE_URL=http://workspace_service:8000
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
       interval: 10s

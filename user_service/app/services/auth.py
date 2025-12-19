@@ -6,6 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from typing import Optional
 from app.clients.subscription import SubscriptionClient
 from app.clients.currency import CurrencyClient
+from app.clients.workspace import WorkspaceClient
 
 from app.models.user import User
 from app.schemas.user import UserCreate, UserLogin
@@ -124,6 +125,32 @@ class AuthService:
             self.db.commit()
             self.db.refresh(user)
 
+            # Create personal workspace (best-effort, non-blocking)
+            try:
+                self.logger.info(
+                    "Creating personal workspace",
+                    extra={"operation": "workspace_create", "user_id": user.id}
+                )
+                workspace_id = WorkspaceClient().create_personal_workspace(user.id)
+                if workspace_id:
+                    user.default_workspace_id = workspace_id
+                    self.db.commit()
+                    self.db.refresh(user)
+                    self.logger.info(
+                        "Personal workspace created and linked",
+                        extra={"operation": "workspace_create", "user_id": user.id, "workspace_id": str(workspace_id)}
+                    )
+                else:
+                    self.logger.warning(
+                        "Personal workspace creation failed, user will have no default workspace",
+                        extra={"operation": "workspace_create", "user_id": user.id}
+                    )
+            except Exception as e:
+                self.logger.warning(
+                    f"Personal workspace creation failed: {e}",
+                    extra={"operation": "workspace_create", "user_id": user.id}
+                )
+
             # Bootstrap basic subscription (best-effort, non-blocking)
             try:
                 self.logger.info(
@@ -214,7 +241,8 @@ class AuthService:
                 "exp": expire,
                 "iat": datetime.now(timezone.utc),
                 "email": user.email,
-                "username": user.username
+                "username": user.username,
+                "default_workspace_id": str(user.default_workspace_id) if user.default_workspace_id else None
             }
             token = jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
             
@@ -222,7 +250,7 @@ class AuthService:
                 self.logger,
                 "Token created",
                 user.id,
-                f"Expires: {expire}"
+                f"Expires: {expire}, Workspace: {user.default_workspace_id}"
             )
             
             return token
