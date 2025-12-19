@@ -261,6 +261,32 @@ services:
         max-file: "3"
         labels: "service=user_service,logging=promtail"
 
+  workspace_service:
+    image: ${REGISTRY}/${IMAGE_PREFIX}/workspace_service:latest
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/workspace_db
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=${ALGORITHM}
+      - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122,https://finflow.ltd,http://finflow.ltd
+      - USER_SERVICE_URL=http://user_service:8000
+      - LOG_LEVEL=INFO
+    depends_on:
+      - user_service
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service=workspace_service,logging=promtail"
+
   redis:
     image: redis:7-alpine
     restart: unless-stopped

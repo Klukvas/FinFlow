@@ -53,6 +53,7 @@ jobs:
       recurring_service: ${{ steps.detect.outputs.recurring_service }}
       user_service: ${{ steps.detect.outputs.user_service }}
       subscription_service: ${{ steps.detect.outputs.subscription_service }}
+      workspace_service: ${{ steps.detect.outputs.workspace_service }}
       services_list: ${{ steps.detect.outputs.services_list }}
     steps:
       - name: Checkout
@@ -76,6 +77,7 @@ jobs:
           RECURRING_SERVICE="false"
           USER_SERVICE="false"
           SUBSCRIPTION_SERVICE="false"
+          WORKSPACE_SERVICE="false"
           
           # If manual dispatch with specific services
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]] && [[ -n "${{ inputs.services }}" ]]; then
@@ -93,6 +95,7 @@ jobs:
                 pdf_parser_service) PDF_PARSER_SERVICE="true" ;;
                 recurring_service) RECURRING_SERVICE="true" ;;
                 user_service) USER_SERVICE="true" ;;
+                workspace_service) WORKSPACE_SERVICE="true" ;;
               esac
             done
           else
@@ -133,6 +136,9 @@ jobs:
             if git diff --name-only HEAD^..HEAD | grep -q "^subscription_service/"; then
               SUBSCRIPTION_SERVICE="true"
             fi
+            if git diff --name-only HEAD^..HEAD | grep -q "^workspace_service/"; then
+              WORKSPACE_SERVICE="true"
+            fi
             
             # If nothing changed, build all
             if [[ "$FRONTEND" == "false" ]] && \
@@ -145,7 +151,8 @@ jobs:
                [[ "$INCOME_SERVICE" == "false" ]] && \
                [[ "$PDF_PARSER_SERVICE" == "false" ]] && \
                [[ "$RECURRING_SERVICE" == "false" ]] && \
-               [[ "$USER_SERVICE" == "false" ]]; then
+               [[ "$USER_SERVICE" == "false" ]] && \
+               [[ "$WORKSPACE_SERVICE" == "false" ]]; then
               echo "No changes detected, building all services"
               FRONTEND="true"
               ACCOUNT_SERVICE="true"
@@ -159,6 +166,7 @@ jobs:
               RECURRING_SERVICE="true"
               USER_SERVICE="true"
               SUBSCRIPTION_SERVICE="true"
+              WORKSPACE_SERVICE="true"
             fi
           fi
           
@@ -175,6 +183,7 @@ jobs:
           echo "recurring_service=$RECURRING_SERVICE" >> $GITHUB_OUTPUT
           echo "user_service=$USER_SERVICE" >> $GITHUB_OUTPUT
           echo "subscription_service=$SUBSCRIPTION_SERVICE" >> $GITHUB_OUTPUT
+          echo "workspace_service=$WORKSPACE_SERVICE" >> $GITHUB_OUTPUT
           
           # Build list for deployment
           SERVICES_LIST=""
@@ -190,6 +199,7 @@ jobs:
           [[ "$RECURRING_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST recurring_service"
           [[ "$USER_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST user_service"
           [[ "$SUBSCRIPTION_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST subscription_service"
+          [[ "$WORKSPACE_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST workspace_service"
           
           echo "services_list=$SERVICES_LIST" >> $GITHUB_OUTPUT
           echo "Services to build/deploy:$SERVICES_LIST"
@@ -578,6 +588,38 @@ jobs:
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/subscription_service:latest
           cache-to: type=inline
 
+  # Stage 13: Workspace Service Build
+  stage13-workspace-service:
+    name: "Stage 13: Build Workspace Service"
+    needs: detect-changes
+    if: needs.detect-changes.outputs.workspace_service == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./workspace_service/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/workspace_service:latest
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/workspace_service:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/workspace_service:latest
+          cache-to: type=inline
+
   # Final Stage: Deploy
   deploy:
     name: Deploy to ${{ github.event.inputs.environment || 'production' }}
@@ -595,6 +637,7 @@ jobs:
       - stage10-recurring-service
       - stage11-user-service
       - stage12-subscription-service
+      - stage13-workspace-service
     # Deploy only after ALL builds complete successfully (or skip if no changes)
     # This ensures we don't deploy while builds are still running
     # Run if: on main/manual dispatch, no failures/cancellations, and at least one service built
@@ -648,6 +691,7 @@ jobs:
           [[ "${{ needs.stage10-recurring-service.result }}" == "success" ]] && echo "- ✅ Recurring Service" >> $GITHUB_STEP_SUMMARY
           [[ "${{ needs.stage11-user-service.result }}" == "success" ]] && echo "- ✅ User Service" >> $GITHUB_STEP_SUMMARY
           [[ "${{ needs.stage12-subscription-service.result }}" == "success" ]] && echo "- ✅ Subscription Service" >> $GITHUB_STEP_SUMMARY
+          [[ "${{ needs.stage13-workspace-service.result }}" == "success" ]] && echo "- ✅ Workspace Service" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Environment**: ${{ github.event.inputs.environment || 'production' }}" >> $GITHUB_STEP_SUMMARY
           echo "**Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
