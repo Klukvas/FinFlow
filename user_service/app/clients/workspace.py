@@ -14,6 +14,16 @@ class WorkspaceClient:
         self.base_url = settings.WORKSPACE_SERVICE_URL
         self.internal_token = settings.INTERNAL_SECRET_TOKEN
         self.timeout = 10.0
+        
+        # Log initialization (but not the actual token for security)
+        logger.info(
+            "WorkspaceClient initialized",
+            extra={
+                "base_url": self.base_url,
+                "has_token": bool(self.internal_token),
+                "token_length": len(self.internal_token) if self.internal_token else 0
+            }
+        )
 
     def _get_headers(self) -> dict:
         """Get headers for internal API calls"""

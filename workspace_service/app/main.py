@@ -150,7 +150,13 @@ async def health_check():
 @app.on_event("startup")
 async def startup_event():
     """Application startup event"""
-    logger.info("Workspace Service starting up")
+    logger.info(
+        "Workspace Service starting up",
+        extra={
+            "has_internal_token": bool(settings.INTERNAL_SECRET_TOKEN),
+            "token_length": len(settings.INTERNAL_SECRET_TOKEN) if settings.INTERNAL_SECRET_TOKEN else 0
+        }
+    )
 
 
 @app.on_event("shutdown")

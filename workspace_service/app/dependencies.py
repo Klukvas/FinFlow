@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Header
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from jose import jwt, JWTError
@@ -52,13 +52,20 @@ def get_current_user_id(
 
 
 def verify_internal_token(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    x_internal_token: Optional[str] = Header(None)
 ) -> None:
     """Verify internal service token for inter-service communication"""
-    if credentials.credentials != settings.INTERNAL_SECRET_TOKEN:
+    if not x_internal_token:
+        logger.warning("Missing internal token in request")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authenticated"
+        )
+    
+    if x_internal_token != settings.INTERNAL_SECRET_TOKEN:
         logger.warning("Invalid internal token attempt")
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid internal token"
         )
 
