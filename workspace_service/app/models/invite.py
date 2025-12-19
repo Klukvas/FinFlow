@@ -24,7 +24,7 @@ class WorkspaceInvite(Base):
     invitee_email = Column(String(255), nullable=True)  # For email invites
     token_hash = Column(String(255), nullable=False, unique=True)
     expires_at = Column(DateTime(timezone=True), nullable=False)
-    status = Column(Enum(InviteStatus), nullable=False, default=InviteStatus.PENDING)
+    status = Column(Enum(InviteStatus, native_enum=False, length=50), nullable=False, default=InviteStatus.PENDING)
     
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())

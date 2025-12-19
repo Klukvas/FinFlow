@@ -13,6 +13,7 @@ from .workspace_errors import (
     InviteExpiredError,
     InviteAlreadyUsedError,
     InvalidInviteTokenError,
+    PersonalWorkspaceProtectedError,
 )
 
 __all__ = [
@@ -30,5 +31,6 @@ __all__ = [
     "InviteExpiredError",
     "InviteAlreadyUsedError",
     "InvalidInviteTokenError",
+    "PersonalWorkspaceProtectedError",
 ]
 

@@ -1,12 +1,12 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
+from jose import jwt, JWTError
 from app.database import get_db
 from app.config import settings
 from app.services.workspace import WorkspaceService
 from app.services.invite import InviteService
 from app.utils.logger import get_logger
-import jwt
 from typing import Optional
 
 logger = get_logger(__name__)
@@ -42,7 +42,7 @@ def get_current_user_id(
                 headers={"WWW-Authenticate": "Bearer"},
             )
         return int(user_id)
-    except jwt.PyJWTError as e:
+    except JWTError as e:
         logger.warning(f"JWT decode error: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

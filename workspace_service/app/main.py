@@ -23,6 +23,7 @@ from app.exception_handlers import (
     invite_expired_handler,
     invite_already_used_handler,
     invalid_invite_token_handler,
+    personal_workspace_protected_handler,
     http_exception_handler,
 )
 from app.exceptions import (
@@ -38,6 +39,7 @@ from app.exceptions import (
     InviteExpiredError,
     InviteAlreadyUsedError,
     InvalidInviteTokenError,
+    PersonalWorkspaceProtectedError,
 )
 from app.database import Base, engine
 from app.config import settings
@@ -117,6 +119,7 @@ app.add_exception_handler(InviteNotFoundError, invite_not_found_handler)
 app.add_exception_handler(InviteExpiredError, invite_expired_handler)
 app.add_exception_handler(InviteAlreadyUsedError, invite_already_used_handler)
 app.add_exception_handler(InvalidInviteTokenError, invalid_invite_token_handler)
+app.add_exception_handler(PersonalWorkspaceProtectedError, personal_workspace_protected_handler)
 app.add_exception_handler(HTTPException, http_exception_handler)
 
 # Add middleware

@@ -15,6 +15,7 @@ from app.exceptions.workspace_errors import (
     InviteExpiredError,
     InviteAlreadyUsedError,
     InvalidInviteTokenError,
+    PersonalWorkspaceProtectedError,
     WorkspaceErrorCode,
 )
 from app.utils.logger import get_logger
@@ -157,6 +158,15 @@ async def invite_already_used_handler(request: Request, exc: InviteAlreadyUsedEr
 async def invalid_invite_token_handler(request: Request, exc: InvalidInviteTokenError):
     """Handle invalid invite token errors"""
     logger.warning(f"Invalid invite token: {exc.detail}")
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"error": exc.detail, "errorCode": exc.error_code}
+    )
+
+
+async def personal_workspace_protected_handler(request: Request, exc: PersonalWorkspaceProtectedError):
+    """Handle personal workspace protection errors"""
+    logger.warning(f"Personal workspace protected: {exc.detail}")
     return JSONResponse(
         status_code=exc.status_code,
         content={"error": exc.detail, "errorCode": exc.error_code}

@@ -25,8 +25,8 @@ class WorkspaceMember(Base):
     id = Column(Integer, primary_key=True, index=True)
     workspace_id = Column(UUID(as_uuid=True), ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False)
     user_id = Column(Integer, nullable=False, index=True)
-    role = Column(Enum(MemberRole), nullable=False, default=MemberRole.MEMBER)
-    status = Column(Enum(MemberStatus), nullable=False, default=MemberStatus.ACTIVE)
+    role = Column(Enum(MemberRole, native_enum=False, length=50), nullable=False, default=MemberRole.MEMBER)
+    status = Column(Enum(MemberStatus, native_enum=False, length=50), nullable=False, default=MemberStatus.ACTIVE)
     
     # Timestamps
     joined_at = Column(DateTime(timezone=True), server_default=func.now())

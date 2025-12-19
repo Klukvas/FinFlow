@@ -17,6 +17,7 @@ class WorkspaceServiceError(str, Enum):
     INVITE_ALREADY_USED = "Invite has already been used"
     INVALID_INVITE_TOKEN = "Invalid invite token"
     VALIDATION_ERROR = "Validation error"
+    PERSONAL_WORKSPACE_PROTECTED = "Personal workspace cannot be archived, deleted, or have its type changed"
 
 
 class WorkspaceErrorCode(str, Enum):
@@ -32,6 +33,7 @@ class WorkspaceErrorCode(str, Enum):
     INVITE_ALREADY_USED = "INVITE_ALREADY_USED"
     INVALID_INVITE_TOKEN = "INVALID_INVITE_TOKEN"
     VALIDATION_ERROR = "VALIDATION_ERROR"
+    PERSONAL_WORKSPACE_PROTECTED = "PERSONAL_WORKSPACE_PROTECTED"
     INTERNAL_ERROR = "INTERNAL_ERROR"
 
 
@@ -151,4 +153,13 @@ class InvalidInviteTokenError(HTTPException):
             detail="Invalid invite token"
         )
         self.error_code = WorkspaceErrorCode.INVALID_INVITE_TOKEN
+
+
+class PersonalWorkspaceProtectedError(HTTPException):
+    def __init__(self, detail: str = "Personal workspace cannot be archived, deleted, or have its type changed"):
+        super().__init__(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=detail
+        )
+        self.error_code = WorkspaceErrorCode.PERSONAL_WORKSPACE_PROTECTED
 

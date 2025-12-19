@@ -17,6 +17,7 @@ from app.exceptions import (
     MemberAlreadyExistsError,
     InvalidRoleChangeError,
     OwnerCannotLeaveError,
+    PersonalWorkspaceProtectedError,
 )
 from app.utils.logger import get_logger, log_operation
 
@@ -151,8 +152,15 @@ class WorkspaceService:
         if workspace.is_archived:
             raise WorkspaceArchivedError(workspace_id)
 
-        if data.name is not None:
-            workspace.name = data.name.strip()
+        # Protect personal workspace - only allow name change, not type change
+        if workspace.type == WorkspaceType.PERSONAL:
+            # Personal workspace name can be changed, but it's recommended to keep it as "Personal"
+            if data.name is not None:
+                workspace.name = data.name.strip()
+        else:
+            # Regular workspace can have name changed
+            if data.name is not None:
+                workspace.name = data.name.strip()
 
         self.db.commit()
         self.db.refresh(workspace)
@@ -164,6 +172,10 @@ class WorkspaceService:
         """Archive a workspace"""
         workspace = self.get_workspace(workspace_id, user_id)
         member = self._get_member(workspace_id, user_id)
+
+        # Protect personal workspace from being archived
+        if workspace.type == WorkspaceType.PERSONAL:
+            raise PersonalWorkspaceProtectedError("Personal workspace cannot be archived")
 
         if member.role != MemberRole.OWNER:
             raise WorkspaceAccessDeniedError("Only the owner can archive a workspace")
@@ -288,6 +300,10 @@ class WorkspaceService:
         workspace = self.get_workspace(workspace_id, user_id)
         member = self._get_member(workspace_id, user_id)
 
+        # Protect personal workspace - owner cannot leave
+        if workspace.type == WorkspaceType.PERSONAL and member.role == MemberRole.OWNER:
+            raise PersonalWorkspaceProtectedError("Cannot leave personal workspace")
+
         if workspace.is_archived:
             raise WorkspaceArchivedError(workspace_id)
 
@@ -304,6 +320,10 @@ class WorkspaceService:
         workspace = self.get_workspace(workspace_id, user_id)
         current_owner = self._get_member(workspace_id, user_id)
         new_owner = self._get_member(workspace_id, new_owner_id)
+
+        # Protect personal workspace - ownership cannot be transferred
+        if workspace.type == WorkspaceType.PERSONAL:
+            raise PersonalWorkspaceProtectedError("Personal workspace ownership cannot be transferred")
 
         if not new_owner:
             raise MemberNotFoundError(new_owner_id, workspace_id)
