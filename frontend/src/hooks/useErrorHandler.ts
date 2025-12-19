@@ -23,18 +23,10 @@ export const useErrorHandler = (options: UseErrorHandlerOptions = {}) => {
     }
     let errorMessage: string;
 
-
-    // its a backend error
-    console.log('Error handler received:', error);
-    console.log('Has errorCode:', error && typeof error === 'object' && 'errorCode' in error);
-    
     if(error && typeof error === 'object' && 'errorCode' in error){
       const translationKey = getErrorTranslationKey(error, service);
-      console.log('Translation key:', translationKey);
       errorMessage = t(translationKey);
-      console.log('Final message:', errorMessage);
     }else{
-      console.log('Using generic error');
       errorMessage = t(`${service}.errors.genericError`);
     }
 

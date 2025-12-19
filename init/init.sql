@@ -10,6 +10,7 @@ CREATE DATABASE debt_db;
 CREATE DATABASE account_db;
 CREATE DATABASE subscription_db;
 CREATE DATABASE currency_db;
+CREATE DATABASE workspace_db;
 
 -- Grant permissions to postgres user
 GRANT ALL PRIVILEGES ON DATABASE user_db TO postgres;
@@ -22,3 +23,4 @@ GRANT ALL PRIVILEGES ON DATABASE debt_db TO postgres;
 GRANT ALL PRIVILEGES ON DATABASE account_db TO postgres;
 GRANT ALL PRIVILEGES ON DATABASE subscription_db TO postgres;
 GRANT ALL PRIVILEGES ON DATABASE currency_db TO postgres;
+GRANT ALL PRIVILEGES ON DATABASE workspace_db TO postgres;

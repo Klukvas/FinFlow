@@ -384,6 +384,41 @@ services:
       - default
       - logging
 
+  workspace_service:
+    build:
+      context: .
+      dockerfile: ./workspace_service/Dockerfile
+    environment:
+      CORS_ORIGINS: "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
+      DATABASE_URL: "postgresql://postgres:postgres@db:5432/workspace_db"
+      SECRET_KEY: "your-secret-key-here"
+      ALGORITHM: "HS256"
+      INTERNAL_SECRET_TOKEN: "my-secret-token"
+      USER_SERVICE_URL: "http://user_service:8000"
+      LOG_LEVEL: "INFO"
+    depends_on:
+      db:
+        condition: service_healthy
+      user_service:
+        condition: service_healthy
+    ports:
+      - "8012:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service=workspace_service,logging=promtail"
+    networks:
+      - default
+      - logging
+
   # Logging Infrastructure
   loki:
     image: grafana/loki:2.9.0
