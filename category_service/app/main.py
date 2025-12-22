@@ -5,7 +5,8 @@ from fastapi.exceptions import RequestValidationError
 from app.exception_handlers import (
     custom_validation_exception_handler,
     category_exception_handler,
-    http_exception_handler
+    http_exception_handler,
+    general_exception_handler
 )
 from app.exceptions import (
     CategoryNotFoundError,
@@ -100,10 +101,70 @@ app = FastAPI(
     description="Microservice for managing hierarchical categories",
     version="1.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    swagger_ui_parameters={
+        "persistAuthorization": True
+    }
 )
 
-# Register exception handlers
+# Configure JWT Bearer authentication for Swagger UI
+from fastapi.openapi.models import SecurityScheme
+from fastapi.security import HTTPBearer
+
+security_scheme = HTTPBearer()
+
+app.openapi_schema = None  # Reset to force regeneration
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    
+    from fastapi.openapi.utils import get_openapi
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+    
+    # Add security schemes
+    openapi_schema["components"]["securitySchemes"] = {
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+            "description": "Enter your JWT token (no 'Bearer' prefix needed)"
+        },
+        "WorkspaceId": {
+            "type": "apiKey",
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "description": "Workspace UUID for multi-tenancy"
+        }
+    }
+    
+    # Apply security to all endpoints except health and internal
+    for path, path_item in openapi_schema["paths"].items():
+        # Skip internal endpoints and health check
+        if path.startswith("/internal") or path == "/health":
+            continue
+        
+        # Apply security to all methods
+        for method in path_item:
+            if method in ["get", "post", "put", "delete", "patch", "options", "head"]:
+                if "security" not in path_item[method]:
+                    # Most endpoints require both JWT and Workspace-Id
+                    # Statistics endpoint also requires workspace
+                    path_item[method]["security"] = [
+                        {"BearerAuth": [], "WorkspaceId": []}
+                    ]
+    
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi
+
+# Register exception handlers (order matters - most specific first)
 app.add_exception_handler(RequestValidationError, custom_validation_exception_handler)
 app.add_exception_handler(CategoryNotFoundError, category_exception_handler)
 app.add_exception_handler(CategoryValidationError, category_exception_handler)
@@ -112,6 +173,7 @@ app.add_exception_handler(CircularRelationshipError, category_exception_handler)
 app.add_exception_handler(CategoryDepthExceededError, category_exception_handler)
 app.add_exception_handler(CategoryNameConflictError, category_exception_handler)
 app.add_exception_handler(HTTPException, http_exception_handler)
+app.add_exception_handler(Exception, general_exception_handler)  # Catch-all for unexpected errors
 
 # Add middleware
 app.add_middleware(RequestLoggingMiddleware)

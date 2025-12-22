@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, status, Query, Path, Request, HTTPException
 from typing import Annotated
+from uuid import UUID
 
 from app.schemas.category import CategoryOut, MCCCodeListResponse, DefaultCategoryListResponse, SupportedLanguage
 from app.services.category import CategoryService
@@ -27,6 +28,7 @@ logger = get_logger(__name__)
 async def get_category_internal(
     category_id: Annotated[int, Path(description="Category ID to validate", gt=0)],
     user_id: Annotated[int, Query(description="User ID to validate ownership", gt=0)],
+    workspace_id: Annotated[str, Query(description="Workspace ID to validate against")],
     category_service: CategoryService = Depends(get_category_service_internal),
     _: None = Depends(verify_internal_token)
 ) -> CategoryOut:
@@ -36,23 +38,35 @@ async def get_category_internal(
     This endpoint is used by other microservices to:
     - Validate that a category exists
     - Verify that the category belongs to the specified user
+    - Verify that the category belongs to the specified workspace
     - Retrieve category details for internal processing
     
     Args:
         category_id: The ID of the category to validate
         user_id: The ID of the user who should own the category
+        workspace_id: The workspace UUID to validate against
         category_service: Injected category service instance
         
     Returns:
-        CategoryOut: The category details if found and owned by user
+        CategoryOut: The category details if found and owned by user in workspace
         
     Raises:
+        HTTPException: 400 if invalid workspace_id format
         HTTPException: 403 if invalid internal token or unauthorized access
         HTTPException: 404 if category not found
     """
     try:
+        # Parse workspace_id
+        try:
+            workspace_uuid = UUID(workspace_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid workspace ID format"
+            )
+        
         # Use the service method for proper validation and error handling
-        category = category_service.get_by_id_internal(category_id, user_id)
+        category = category_service.get_by_id_internal(category_id, user_id, workspace_uuid)
         
         log_operation(
             logger,
@@ -204,29 +218,41 @@ async def get_default_categories_internal(
 async def check_category_exists_by_mcc(
     mcc_code: Annotated[int, Path(description="MCC code to check", gt=0)],
     user_id: Annotated[int, Query(description="User ID to check", gt=0)],
+    workspace_id: Annotated[str, Query(description="Workspace ID to check")],
     category_service: CategoryService = Depends(get_category_service_internal),
     _: None = Depends(verify_internal_token)
 ) -> dict:
     """
-    Internal endpoint to check if user has a category with the given MCC code.
+    Internal endpoint to check if user has a category with the given MCC code in workspace.
     
     This endpoint is used by other microservices to:
-    - Check if user already has a category with specific MCC code
+    - Check if user already has a category with specific MCC code in workspace
     - Determine if new category needs to be created
     
     Args:
         mcc_code: MCC code to check
         user_id: User ID to check
+        workspace_id: Workspace UUID to check
         category_service: Injected category service instance
         
     Returns:
         dict: {"exists": bool} - whether category exists
         
     Raises:
+        HTTPException: 400 if invalid workspace_id format
         HTTPException: 403 if invalid internal token
     """
     try:
-        exists = category_service.check_category_exists_by_mcc(mcc_code, user_id)
+        # Parse workspace_id
+        try:
+            workspace_uuid = UUID(workspace_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid workspace ID format"
+            )
+        
+        exists = category_service.check_category_exists_by_mcc(mcc_code, user_id, workspace_uuid)
         
         log_operation(
             logger,
@@ -276,14 +302,24 @@ async def check_categories_exist_by_mcc_batch(
     try:
         mcc_codes = request.get("mcc_codes", [])
         user_id = request.get("user_id")
+        workspace_id = request.get("workspace_id")
         
-        if not mcc_codes or not user_id:
+        if not mcc_codes or not user_id or not workspace_id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="mcc_codes and user_id are required"
+                detail="mcc_codes, user_id, and workspace_id are required"
             )
         
-        results = category_service.check_categories_exist_by_mcc_batch(mcc_codes, user_id)
+        # Parse workspace_id
+        try:
+            workspace_uuid = UUID(workspace_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid workspace ID format"
+            )
+        
+        results = category_service.check_categories_exist_by_mcc_batch(mcc_codes, user_id, workspace_uuid)
         
         log_operation(
             logger,
@@ -315,29 +351,41 @@ async def check_categories_exist_by_mcc_batch(
 async def get_category_by_mcc(
     mcc_code: Annotated[int, Path(description="MCC code to check", gt=0)],
     user_id: Annotated[int, Query(description="User ID to check", gt=0)],
+    workspace_id: Annotated[str, Query(description="Workspace ID to check")],
     category_service: CategoryService = Depends(get_category_service_internal),
     _: None = Depends(verify_internal_token)
 ) -> dict:
     """
-    Internal endpoint to get category information by MCC code.
+    Internal endpoint to get category information by MCC code in workspace.
     
     This endpoint is used by other microservices to:
-    - Get category ID if user has a category with specific MCC code
+    - Get category ID if user has a category with specific MCC code in workspace
     - Retrieve category information for PDF parsing
     
     Args:
         mcc_code: MCC code to check
         user_id: User ID to check
+        workspace_id: Workspace UUID to check
         category_service: Injected category service instance
         
     Returns:
         dict: {"exists": bool, "category_id": int|null} - category existence and ID
         
     Raises:
+        HTTPException: 400 if invalid workspace_id format
         HTTPException: 403 if invalid internal token
     """
     try:
-        category_info = category_service.get_category_by_mcc(mcc_code, user_id)
+        # Parse workspace_id
+        try:
+            workspace_uuid = UUID(workspace_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid workspace ID format"
+            )
+        
+        category_info = category_service.get_category_by_mcc(mcc_code, user_id, workspace_uuid)
         
         log_operation(
             logger,

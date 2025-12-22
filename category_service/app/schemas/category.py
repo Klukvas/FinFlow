@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field, ConfigDict, field_validator
 from typing import List, Optional
+from uuid import UUID
 import re
 from enum import Enum
 
@@ -230,6 +231,7 @@ class CategoryOut(CategoryBase):
     """Schema for category output with all fields"""
     id: int = Field(description="Unique category identifier", examples=[1, 2, 3])
     user_id: int = Field(description="ID of the user who owns this category", examples=[1, 2, 3])
+    workspace_id: UUID = Field(description="Workspace ID this category belongs to")
     children: List['CategoryOut'] = Field(
         default_factory=list,
         description="List of child categories"
@@ -243,12 +245,14 @@ class CategoryOut(CategoryBase):
                 "name": "Food & Dining",
                 "parent_id": None,
                 "user_id": 1,
+                "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
                 "children": [
                     {
                         "id": 2,
                         "name": "Restaurants",
                         "parent_id": 1,
                         "user_id": 1,
+                        "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
                         "children": []
                     }
                 ]

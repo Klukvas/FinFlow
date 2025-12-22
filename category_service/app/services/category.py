@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session, joinedload, query
 from sqlalchemy.exc import IntegrityError
 from typing import List, Optional, Dict, Any
+from uuid import UUID
 import time
 from app.models.category import Category
 from app.models.mcc import MCCCode, MCCTranslation
@@ -18,9 +19,11 @@ from app.utils.logger import get_logger, log_operation, log_security_event
 from app.config import settings
 from app.serializers import CategorySerializer
 from app.clients.subscription import SubscriptionClient
+from app.services.workspace_authorization import WorkspaceAuthorizationMixin
 
-class CategoryService:
+class CategoryService(WorkspaceAuthorizationMixin):
     def __init__(self, db: Session):
+        super().__init__()  # Initialize WorkspaceAuthorizationMixin
         self.db = db
         self.logger = get_logger(__name__)
         self.serializer = CategorySerializer()
@@ -29,23 +32,77 @@ class CategoryService:
     # Validation methods are now handled directly by the serializer
     # No need for wrapper methods
 
-    def create(self, data: CategoryCreate, user_id: int) -> Category:
+    def create(self, data: CategoryCreate, user_id: int, workspace_id: UUID) -> Category:
         """Create a new category with proper validation and transaction management"""
         start_time = time.time()
         
+        # Log incoming request with full data
+        self.logger.info(
+            f"[CREATE CATEGORY] Received request",
+            category="business",
+            operation="category_create_request",
+            user_id=user_id,
+            workspace_id=str(workspace_id),
+            category_name=data.name,
+            parent_id=data.parent_id,
+            category_type=data.type.value if hasattr(data.type, 'value') else str(data.type),
+            icon=getattr(data, 'icon', None),
+            color=getattr(data, 'color', None),
+            data_dict=data.dict() if hasattr(data, 'dict') else str(data)
+        )
+        
         try:
+            # Authorize user in workspace (requires 'member' role for POST)
             self.logger.info(
-                f"Starting category creation for user {user_id}",
+                f"[CREATE CATEGORY] Step 1: Authorizing user in workspace",
+                category="business",
+                operation="category_create_auth_start",
+                user_id=user_id,
+                workspace_id=str(workspace_id)
+            )
+            
+            self.authorize_workspace_access(
+                workspace_id, 
+                user_id, 
+                required_role="member",
+                operation="create_category"
+            )
+            
+            self.logger.info(
+                f"[CREATE CATEGORY] Step 1: Authorization successful",
+                category="business",
+                operation="category_create_auth_success",
+                user_id=user_id,
+                workspace_id=str(workspace_id)
+            )
+            
+            self.logger.info(
+                f"[CREATE CATEGORY] Step 2: Starting category creation",
                 category="business",
                 operation="category_create_start",
                 user_id=user_id,
+                workspace_id=str(workspace_id),
                 category_name=data.name,
                 parent_id=data.parent_id,
                 category_type=data.type
             )
             
-            # Check subscription limits before creating
-            current_count = self.db.query(Category).filter(Category.user_id == user_id).count()
+            # Validate parent belongs to same workspace (if parent_id provided)
+            if data.parent_id:
+                parent = self.db.query(Category).filter(Category.id == data.parent_id).first()
+                if not parent:
+                    raise CategoryNotFoundError(data.parent_id)
+                
+                self.validate_workspace_match(
+                    parent.workspace_id,
+                    workspace_id,
+                    parent.id
+                )
+            
+            # Check subscription limits before creating (filtered by workspace)
+            current_count = self.db.query(Category).filter(
+                Category.workspace_id == workspace_id
+            ).count()
             self.logger.info(
                 f"Checking subscription limits for user {user_id}, current count: {current_count}",
                 category="business",
@@ -103,6 +160,7 @@ class CategoryService:
             
             # Serialize data for creation
             category_data = self.serializer.serialize_category_for_create(data, user_id)
+            category_data['workspace_id'] = workspace_id
             
             category = Category(**category_data)
             
@@ -139,54 +197,79 @@ class CategoryService:
             self.db.rollback()
             
             self.logger.error(
-                f"Category creation failed: {str(e)}",
+                f"[CREATE CATEGORY] FAILED - {e.__class__.__name__}: {str(e)}",
                 category="business",
                 operation="category_create_failed",
+                exception_type=e.__class__.__name__,
+                exception_message=str(e),
                 user_id=user_id,
+                workspace_id=str(workspace_id),
                 category_name=data.name,
                 parent_id=data.parent_id,
                 category_type=data.type,
-                duration_ms=duration_ms
+                duration_ms=duration_ms,
+                error_code=getattr(e, 'error_code', None),
+                data_dict=data.dict() if hasattr(data, 'dict') else str(data)
             )
             raise
         except IntegrityError as e:
+            import traceback
             duration_ms = (time.time() - start_time) * 1000
             self.db.rollback()
             
             self.logger.error(
-                f"Category creation failed due to database constraint: {str(e)}",
+                f"[CREATE CATEGORY] DATABASE INTEGRITY ERROR: {str(e)}",
                 category="database",
                 operation="category_create_integrity_error",
+                exception_type="IntegrityError",
+                exception_message=str(e),
                 user_id=user_id,
+                workspace_id=str(workspace_id),
                 category_name=data.name,
                 parent_id=data.parent_id,
                 category_type=data.type,
-                duration_ms=duration_ms
+                duration_ms=duration_ms,
+                data_dict=data.dict() if hasattr(data, 'dict') else str(data),
+                traceback=traceback.format_exc()
             )
             raise CategoryValidationError("Database constraint violation")
         except Exception as e:
+            import traceback
             duration_ms = (time.time() - start_time) * 1000
             self.db.rollback()
             
             self.logger.error(
-                f"Unexpected error during category creation: {str(e)}",
+                f"[CREATE CATEGORY] UNEXPECTED ERROR: {e.__class__.__name__} - {str(e)}",
                 category="system",
                 operation="category_create_unexpected_error",
+                exception_type=e.__class__.__name__,
+                exception_message=str(e),
                 user_id=user_id,
+                workspace_id=str(workspace_id),
                 category_name=data.name,
                 parent_id=data.parent_id,
                 category_type=data.type,
-                duration_ms=duration_ms
+                duration_ms=duration_ms,
+                data_dict=data.dict() if hasattr(data, 'dict') else str(data),
+                traceback=traceback.format_exc()
             )
             raise CategoryValidationError("Failed to create category")
 
-    def create_from_mcc(self, data: CategoryCreateFromMCC, user_id: int, language: Optional[str] = None) -> Category:
+    def create_from_mcc(self, data: CategoryCreateFromMCC, user_id: int, workspace_id: UUID, language: Optional[str] = None) -> Category:
         """Create a new category from an MCC code with proper validation and transaction management"""
         start_time = time.time()
         
         try:
+            # Authorize user in workspace (requires 'member' role for POST)
+            self.authorize_workspace_access(
+                workspace_id,
+                user_id,
+                required_role="member",
+                operation="create_category_from_mcc"
+            )
+            
             self.logger.info(
-                f"Starting MCC-based category creation for user {user_id}",
+                f"Starting MCC-based category creation for user {user_id} in workspace {workspace_id}",
                 category="business",
                 operation="mcc_category_create_start",
                 user_id=user_id,
@@ -217,8 +300,21 @@ class CategoryService:
                 mcc_name=mcc_code_obj.name
             )
             
-            # Check if user already has a category for this MCC code
+            # Validate parent belongs to same workspace (if parent_id provided)
+            if data.parent_id:
+                parent = self.db.query(Category).filter(Category.id == data.parent_id).first()
+                if not parent:
+                    raise CategoryNotFoundError(data.parent_id)
+                
+                self.validate_workspace_match(
+                    parent.workspace_id,
+                    workspace_id,
+                    parent.id
+                )
+            
+            # Check if user already has a category for this MCC code in this workspace
             existing_category = self.db.query(Category).filter(
+                Category.workspace_id == workspace_id,
                 Category.user_id == user_id,
                 Category.mcc_code == data.mcc_code
             ).first()
@@ -226,8 +322,10 @@ class CategoryService:
             if existing_category:
                 raise CategoryNameConflictError(f"Category already exists for MCC code {data.mcc_code}")
             
-            # Check subscription limits before creating
-            current_count = self.db.query(Category).filter(Category.user_id == user_id).count()
+            # Check subscription limits before creating (filtered by workspace)
+            current_count = self.db.query(Category).filter(
+                Category.workspace_id == workspace_id
+            ).count()
             if not self.subscription_client.check_category_limit(user_id, current_count):
                 features = self.subscription_client.get_user_features(user_id)
                 category_feature = features.get("categories", {})
@@ -297,11 +395,12 @@ class CategoryService:
             # Serialize data for creation
             serialized_data = self.serializer.serialize_category_for_create(category_data, user_id)
             
-            # Add MCC-specific fields
+            # Add MCC-specific fields and workspace_id
             from app.models.category import CategoryCreatedBy
             serialized_data.update({
                 'mcc_code': data.mcc_code,
-                'created_by': CategoryCreatedBy.SYSTEM  # Categories created from MCC are marked as system-created
+                'created_by': CategoryCreatedBy.SYSTEM,  # Categories created from MCC are marked as system-created
+                'workspace_id': workspace_id
             })
             
             category = Category(**serialized_data)
@@ -386,16 +485,18 @@ class CategoryService:
             )
             raise CategoryValidationError("Failed to create category")
 
-    def create_from_mcc_batch(self, data: CategoryCreateFromMCCBatch, user_id: int) -> CategoryBatchCreateResponse:
+    def create_from_mcc_batch(self, data: CategoryCreateFromMCCBatch, user_id: int, workspace_id: UUID) -> CategoryBatchCreateResponse:
         """Create multiple categories from MCC codes with comprehensive error handling"""
         start_time = time.time()
         
         try:
+            # Authorization is checked in create_from_mcc for each category
             self.logger.info(
-                f"Starting batch MCC-based category creation for user {user_id}",
+                f"Starting batch MCC-based category creation for user {user_id} in workspace {workspace_id}",
                 category="business",
                 operation="mcc_category_batch_create_start",
                 user_id=user_id,
+                workspace_id=str(workspace_id),
                 total_categories=len(data.categories),
                 language=data.language.value if data.language else None
             )
@@ -411,7 +512,7 @@ class CategoryService:
                     language = data.language.value if data.language else None
                     
                     # Create the category using the existing single creation method
-                    created_category = self.create_from_mcc(category_data, user_id, language)
+                    created_category = self.create_from_mcc(category_data, user_id, workspace_id, language)
                     
                     result = CategoryBatchCreateResult(
                         mcc_code=category_data.mcc_code,
@@ -524,21 +625,39 @@ class CategoryService:
                 language=data.language
             )
 
-    def get_all(self, user_id: int, page: int = 1, size: int = 50) -> tuple[List[Category], int]:
-        """Get root categories with their full hierarchy (paginated)"""
+    def get_all(self, user_id: int, workspace_id: UUID, page: int = 1, size: int = 50) -> tuple[List[Category], int]:
+        """Get root categories with their full hierarchy (paginated, filtered by workspace)"""
         start_time = time.time()
         
         try:
+            # Authorize user (requires 'viewer' role for GET)
+            self.authorize_workspace_access(
+                workspace_id,
+                user_id,
+                required_role="viewer",
+                operation="list_categories"
+            )
+            
             self.logger.info(
-                f"Retrieving categories for user {user_id}",
+                f"Retrieving categories for user {user_id} in workspace {workspace_id}",
                 category="business",
                 operation="category_list_start",
                 user_id=user_id,
+                workspace_id=str(workspace_id),
                 page=page,
                 size=size
             )
             
-            result = self.serializer.get_categories_for_user(self.db, user_id, page, size, flat=False)
+            # Query categories filtered by workspace_id
+            query = self.db.query(Category).options(joinedload(Category.children)).filter(
+                Category.workspace_id == workspace_id,
+                Category.parent_id == None  # Root categories only
+            ).order_by(Category.created_at.desc())
+            
+            total = query.count()
+            categories = query.offset((page - 1) * size).limit(size).all()
+            
+            result = (categories, total)
             
             duration_ms = (time.time() - start_time) * 1000
             
@@ -570,31 +689,119 @@ class CategoryService:
             )
             raise CategoryValidationError("Failed to retrieve categories")
 
-    def get_all_flat(self, user_id: int, page: int = 1, size: int = 50) -> tuple[List[Category], int]:
-        """Get all categories in a flat list (paginated)"""
+    def get_all_flat(self, user_id: int, workspace_id: UUID, page: int = 1, size: int = 50) -> tuple[List[Category], int]:
+        """Get all categories in a flat list (paginated, filtered by workspace)"""
         try:
-            return self.serializer.get_categories_for_user(self.db, user_id, page, size, flat=True)
+            # Authorize user (requires 'viewer' role for GET)
+            self.authorize_workspace_access(
+                workspace_id,
+                user_id,
+                required_role="viewer",
+                operation="list_categories_flat"
+            )
+            
+            # Query all categories filtered by workspace_id (flat list)
+            query = self.db.query(Category).filter(
+                Category.workspace_id == workspace_id
+            ).order_by(Category.created_at.desc())
+            
+            total = query.count()
+            categories = query.offset((page - 1) * size).limit(size).all()
+            
+            return categories, total
         except Exception as e:
             self.logger.error(f"Error retrieving flat categories: {e}")
             raise CategoryValidationError("Failed to retrieve categories")
 
-    def get(self, category_id: int, user_id: int) -> Category:
-        """Get a specific category by ID"""
-        return self.serializer.validate_ownership(self.db, category_id, user_id, "Category")
+    def get(self, category_id: int, user_id: int, workspace_id: UUID) -> Category:
+        """Get a specific category by ID with workspace validation"""
+        # Authorize user in workspace
+        self.authorize_workspace_access(
+            workspace_id,
+            user_id,
+            required_role="viewer",
+            operation="get_category"
+        )
+        
+        # Get category
+        category = self.db.query(Category).filter(Category.id == category_id).first()
+        if not category:
+            raise CategoryNotFoundError(category_id)
+        
+        # Validate workspace match
+        self.validate_workspace_match(
+            category.workspace_id,
+            workspace_id,
+            category_id
+        )
+        
+        # Validate ownership
+        if category.user_id != user_id:
+            raise CategoryOwnershipError("Category belongs to another user")
+        
+        return category
 
-    def get_children(self, category_id: int, user_id: int) -> List[Category]:
-        """Get direct children of a category"""
+    def get_children(self, category_id: int, user_id: int, workspace_id: UUID) -> List[Category]:
+        """Get direct children of a category with workspace validation"""
         try:
-            return self.serializer.get_category_children(self.db, category_id, user_id)
+            # Authorize user in workspace
+            self.authorize_workspace_access(
+                workspace_id,
+                user_id,
+                required_role="viewer",
+                operation="get_category_children"
+            )
+            
+            # Get parent category and validate
+            parent = self.db.query(Category).filter(Category.id == category_id).first()
+            if not parent:
+                raise CategoryNotFoundError(category_id)
+            
+            self.validate_workspace_match(
+                parent.workspace_id,
+                workspace_id,
+                category_id
+            )
+            
+            # Get children filtered by workspace
+            children = self.db.query(Category).filter(
+                Category.parent_id == category_id,
+                Category.workspace_id == workspace_id
+            ).all()
+            
+            return children
         except Exception as e:
             self.logger.error(f"Error retrieving category children: {e}")
             raise CategoryValidationError("Failed to retrieve category children")
 
-    def update(self, category_id: int, data: CategoryCreate, user_id: int) -> Category:
+    def update(self, category_id: int, data: CategoryCreate, user_id: int, workspace_id: UUID) -> Category:
         """Update a category with proper validation and transaction management"""
         try:
-            # Get category for ownership validation and logging
-            category = self.serializer.validate_ownership(self.db, category_id, user_id, "Category")
+            # Authorize user (requires 'member' role for PATCH)
+            self.authorize_workspace_access(
+                workspace_id,
+                user_id,
+                required_role="member",
+                operation="update_category"
+            )
+            
+            # Get and validate category
+            category = self.db.query(Category).filter(Category.id == category_id).first()
+            if not category:
+                raise CategoryNotFoundError(category_id)
+            
+            self.validate_workspace_match(category.workspace_id, workspace_id, category_id)
+            
+            if category.user_id != user_id:
+                raise CategoryOwnershipError("Category belongs to another user")
+            
+            # If changing parent, validate new parent is in same workspace
+            if data.parent_id and data.parent_id != category.parent_id:
+                new_parent = self.db.query(Category).filter(Category.id == data.parent_id).first()
+                if not new_parent:
+                    raise CategoryNotFoundError(data.parent_id)
+                
+                self.validate_workspace_match(new_parent.workspace_id, workspace_id, data.parent_id)
             
             # Comprehensive validation using serializer (with exclude_id for updates)
             self.serializer.validate_category_data(self.db, data, user_id, exclude_id=category_id)
@@ -602,12 +809,13 @@ class CategoryService:
             # Serialize data for update
             update_data = self.serializer.serialize_category_for_update(data)
             
-            # Update category fields
+            # Update category fields (workspace_id cannot be changed)
             old_name = category.name
             old_parent = category.parent_id
             
             for field, value in update_data.items():
-                setattr(category, field, value)
+                if field != 'workspace_id':  # Prevent workspace change
+                    setattr(category, field, value)
             
             self.db.commit()
             self.db.refresh(category)
@@ -635,15 +843,34 @@ class CategoryService:
             self.logger.error(f"Unexpected error during category update: {e}")
             raise CategoryValidationError("Failed to update category")
 
-    def delete(self, category_id: int, user_id: int) -> dict:
+    def delete(self, category_id: int, user_id: int, workspace_id: UUID) -> dict:
         """Delete a category with proper validation and transaction management"""
         try:
-            # Get category with ownership validation
-            category = self.serializer.validate_ownership(self.db, category_id, user_id, "Category")
+            # Authorize user (requires 'member' role for DELETE)
+            self.authorize_workspace_access(
+                workspace_id,
+                user_id,
+                required_role="member",
+                operation="delete_category"
+            )
             
-            # Check if category has children
-            children = self.serializer.get_category_children(self.db, category_id, user_id)
-            if children:
+            # Get and validate category
+            category = self.db.query(Category).filter(Category.id == category_id).first()
+            if not category:
+                raise CategoryNotFoundError(category_id)
+            
+            self.validate_workspace_match(category.workspace_id, workspace_id, category_id)
+            
+            if category.user_id != user_id:
+                raise CategoryOwnershipError("Category belongs to another user")
+            
+            # Check for children in the same workspace
+            children_count = self.db.query(Category).filter(
+                Category.parent_id == category_id,
+                Category.workspace_id == workspace_id
+            ).count()
+            
+            if children_count > 0:
                 raise CategoryValidationError(
                     "Cannot delete category with children. Delete children first.",
                     "CATEGORY_HAS_CHILDREN"
@@ -671,18 +898,31 @@ class CategoryService:
             self.logger.error(f"Unexpected error during category deletion: {e}")
             raise CategoryValidationError("Failed to delete category")
 
-    def get_by_id_internal(self, category_id: int, user_id: int) -> Category:
+    def get_by_id_internal(self, category_id: int, user_id: int, workspace_id: UUID) -> Category:
         """Internal method to get category by ID for internal service calls"""
         try:
-            return self.serializer.validate_ownership(self.db, category_id, user_id, "Category")
+            category = self.db.query(Category).filter(Category.id == category_id).first()
+            if not category:
+                raise CategoryNotFoundError(category_id)
+            
+            # Validate workspace match
+            if category.workspace_id != workspace_id:
+                raise CategoryOwnershipError("Category not in specified workspace")
+            
+            # Validate user ownership
+            if category.user_id != user_id:
+                raise CategoryOwnershipError("Category belongs to another user")
+            
+            return category
         except Exception as e:
             self.logger.error(f"Error in internal category retrieval: {e}")
             raise CategoryValidationError("Failed to retrieve category for internal validation")
 
-    def check_category_exists_by_mcc(self, mcc_code: int, user_id: int) -> bool:
-        """Check if user already has a category with the given MCC code"""
+    def check_category_exists_by_mcc(self, mcc_code: int, user_id: int, workspace_id: UUID) -> bool:
+        """Check if user already has a category with the given MCC code in workspace"""
         try:
             category = self.db.query(Category).filter(
+                Category.workspace_id == workspace_id,
                 Category.user_id == user_id,
                 Category.mcc_code == mcc_code
             ).first()
@@ -703,10 +943,11 @@ class CategoryService:
             self.logger.error(f"Error checking category existence by MCC: {e}")
             return False
 
-    def get_category_by_mcc(self, mcc_code: int, user_id: int) -> dict:
-        """Get category information by MCC code including category ID"""
+    def get_category_by_mcc(self, mcc_code: int, user_id: int, workspace_id: UUID) -> dict:
+        """Get category information by MCC code including category ID in workspace"""
         try:
             category = self.db.query(Category).filter(
+                Category.workspace_id == workspace_id,
                 Category.user_id == user_id,
                 Category.mcc_code == mcc_code
             ).first()
@@ -749,19 +990,21 @@ class CategoryService:
                 "category_id": None
             }
 
-    def check_categories_exist_by_mcc_batch(self, mcc_codes: List[int], user_id: int) -> List[Dict[str, Any]]:
-        """Check multiple MCC codes for user categories in a single query"""
+    def check_categories_exist_by_mcc_batch(self, mcc_codes: List[int], user_id: int, workspace_id: UUID) -> List[Dict[str, Any]]:
+        """Check multiple MCC codes for user categories in a single query within workspace"""
         try:
             self.logger.info(
-                f"Starting batch MCC category existence check for user {user_id}",
+                f"Starting batch MCC category existence check for user {user_id} in workspace {workspace_id}",
                 category="business",
                 operation="mcc_category_batch_check_start",
                 user_id=user_id,
+                workspace_id=str(workspace_id),
                 mcc_codes=mcc_codes
             )
             
-            # Single query to check all MCC codes at once
+            # Single query to check all MCC codes at once in workspace
             existing_categories = self.db.query(Category).filter(
+                Category.workspace_id == workspace_id,
                 Category.user_id == user_id,
                 Category.mcc_code.in_(mcc_codes)
             ).all()
@@ -809,18 +1052,29 @@ class CategoryService:
                 for mcc_code in mcc_codes
             ]
 
-    def get_statistics(self, user_id: int) -> dict:
-        """Get category statistics for a user"""
+    def get_statistics(self, user_id: int, workspace_id: UUID) -> dict:
+        """Get category statistics for a user in a workspace"""
         try:
-            self.logger.info(
-                f"Retrieving category statistics for user {user_id}",
-                category="business",
-                operation="category_statistics_start",
-                user_id=user_id
+            # Authorize user
+            self.authorize_workspace_access(
+                workspace_id,
+                user_id,
+                required_role="viewer",
+                operation="get_statistics"
             )
             
-            # Query all categories for the user
-            categories = self.db.query(Category).filter(Category.user_id == user_id).all()
+            self.logger.info(
+                f"Retrieving category statistics for user {user_id} in workspace {workspace_id}",
+                category="business",
+                operation="category_statistics_start",
+                user_id=user_id,
+                workspace_id=str(workspace_id)
+            )
+            
+            # Query all categories for the workspace
+            categories = self.db.query(Category).filter(
+                Category.workspace_id == workspace_id
+            ).all()
             
             # Calculate statistics
             total_categories = len(categories)

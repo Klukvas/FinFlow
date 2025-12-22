@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     
     # Internal services
     SUBSCRIPTION_SERVICE_URL: str = "http://subscription_service:8080"
+    WORKSPACE_SERVICE_URL: str = "http://workspace_service:8000"
     
     model_config = {
         "env_file": ".env",

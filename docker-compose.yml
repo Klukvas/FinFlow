@@ -72,6 +72,7 @@ services:
       ENV_FILE: .env.docker
       CORS_ORIGINS: "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
       SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
+      WORKSPACE_SERVICE_URL: "http://workspace_service:8000"
       DATABASE_URL: "postgresql://postgres:postgres@db:5432/category_db"
       SECRET_KEY: "your-secret-key-here"
       ALGORITHM: "HS256"
