@@ -171,9 +171,11 @@ services:
       - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122,https://finflow.ltd,http://finflow.ltd
       - CATEGORY_SERVICE_URL=http://category_service:8000
       - ACCOUNT_SERVICE_URL=http://account_service:8000
+      - WORKSPACE_SERVICE_URL=http://workspace_service:8000
       - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
     depends_on:
       - redis
+      - workspace_service
       - category_service
       - user_service
       - account_service

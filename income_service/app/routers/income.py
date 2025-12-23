@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, status, Query, Path
 from typing import List, Optional
 from datetime import datetime, date
+from uuid import UUID
 from app.schemas.income import IncomeCreate, IncomeOut, IncomeUpdate, IncomeSummary, IncomeStats, IncomesByCategoryResponse
 from app.services.income import IncomeService
-from app.dependencies import get_income_service, get_current_user_id
+from app.dependencies import get_income_service, get_current_user_id, get_workspace_id
 from app.exceptions import (
     IncomeNotFoundError,
     IncomeValidationError,
@@ -32,6 +33,7 @@ router = APIRouter(prefix="/incomes", tags=["Incomes"])
 async def create_income(
     income: IncomeCreate,
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     service: IncomeService = Depends(get_income_service)
 ) -> IncomeOut:
     """
@@ -42,9 +44,10 @@ async def create_income(
     - **description**: Optional description (max 500 characters)
     - **date**: Optional date (defaults to today if not provided)
     
+    Requires 'member' role in the workspace.
     Returns the created income with its ID and user association.
     """
-    return await service.create(income, user_id)
+    return await service.create(income, user_id, workspace_id)
 
 @router.get(
     "/", 
@@ -60,14 +63,15 @@ def get_incomes(
     skip: int = Query(0, ge=0, description="Number of incomes to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of incomes to return"),
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     service: IncomeService = Depends(get_income_service)
 ) -> List[IncomeOut]:
     """
-    Get all incomes for the authenticated user.
+    Get all incomes in the workspace.
     
-    Returns a list of incomes ordered by date (newest first).
+    Requires 'viewer' role. Returns a list of incomes ordered by date (newest first).
     """
-    return service.get_all(user_id, skip, limit)
+    return service.get_all(user_id, workspace_id, skip, limit)
 
 @router.get(
     "/{income_id}",
@@ -83,14 +87,15 @@ def get_incomes(
 def get_income(
     income_id: int = Path(..., gt=0, description="Income ID"),
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     service: IncomeService = Depends(get_income_service)
 ) -> IncomeOut:
     """
     Get a specific income by ID.
     
-    Returns the income if it exists and belongs to the authenticated user.
+    Requires 'viewer' role. Returns the income if it exists in the workspace.
     """
-    return service.get_by_id(income_id, user_id)
+    return service.get_by_id(income_id, user_id, workspace_id)
 
 @router.put(
     "/{income_id}",
@@ -108,14 +113,15 @@ async def update_income(
     income_id: int = Path(..., gt=0, description="Income ID"),
     income_update: IncomeUpdate = ...,
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     service: IncomeService = Depends(get_income_service)
 ) -> IncomeOut:
     """
     Update an existing income.
     
-    Only provided fields will be updated.
+    Requires 'member' role. Only provided fields will be updated.
     """
-    return await service.update(income_id, income_update, user_id)
+    return await service.update(income_id, income_update, user_id, workspace_id)
 
 @router.delete(
     "/{income_id}",
@@ -130,14 +136,15 @@ async def update_income(
 async def delete_income(
     income_id: int = Path(..., gt=0, description="Income ID"),
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     service: IncomeService = Depends(get_income_service)
 ) -> dict:
     """
     Delete an existing income.
     
-    Returns success message if deletion was successful.
+    Requires 'member' role. Returns success message if deletion was successful.
     """
-    await service.delete(income_id, user_id)
+    await service.delete(income_id, user_id, workspace_id)
     return {"message": "Income deleted successfully"}
 
 @router.get(

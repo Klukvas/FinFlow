@@ -1,4 +1,5 @@
 from fastapi import Depends, HTTPException, status, Request, Header
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.services.category import CategoryService
 from app.services.mcc_categories import DefaultCategoryService
 from sqlalchemy.orm import Session
@@ -11,9 +12,11 @@ from uuid import UUID
 
 logger = get_logger(__name__)
 
+# Security scheme for Swagger UI
+security = HTTPBearer()
+
 # Constants
 INTERNAL_USER_ID_PLACEHOLDER = 0  # Placeholder for internal service calls
-BEARER_PREFIX = "Bearer "
 
 def verify_internal_token(request: Request) -> None:
     """Verify internal service token for inter-service communication"""
@@ -112,6 +115,15 @@ def get_current_user_id(request: Request) -> int:
     )
     
     return user_id
+
+def get_current_user_id_simple(credentials: HTTPAuthorizationCredentials = Depends(security)) -> int:
+    """Simplified version for Swagger UI - extract user ID from Bearer token"""
+    if not credentials or not credentials.credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, 
+            detail="Authorization token required"
+        )
+    return decode_token(credentials.credentials)
 
 
 def get_workspace_id(x_workspace_id: Optional[str] = Header(None, alias="X-Workspace-Id")) -> UUID:

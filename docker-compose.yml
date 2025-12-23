@@ -134,6 +134,7 @@ services:
       CORS_ORIGINS: "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
       CATEGORY_SERVICE_URL: "http://category_service:8000"
       ACCOUNT_SERVICE_URL: "http://account_service:8000"
+      WORKSPACE_SERVICE_URL: "http://workspace_service:8000"
       INTERNAL_SECRET_TOKEN: "my-secret-token"
       DATABASE_URL: "postgresql://postgres:postgres@db:5432/income_db"
       SECRET_KEY: "your-secret-key-here"
@@ -143,6 +144,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      workspace_service:
+        condition: service_started
       category_service:
         condition: service_started
       user_service:
