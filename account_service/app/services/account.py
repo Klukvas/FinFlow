@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from typing import List, Optional
 from datetime import datetime
+from uuid import UUID
 
 from app.models.account import Account
 from app.schemas.account import AccountCreate, AccountUpdate, AccountSummary, AccountTransaction, AccountTransactionSummary
@@ -21,10 +22,12 @@ from app.clients.income_service_client import IncomeServiceClient
 from app.clients.currency_service_client import CurrencyServiceClient
 from app.clients.subscription import SubscriptionClient
 from app.clients.user_service_client import UserServiceClient
+from app.services.workspace_authorization import WorkspaceAuthorizationMixin
 from app.schemas.account import AccountStatisticsResponse
 
-class AccountService:
+class AccountService(WorkspaceAuthorizationMixin):
     def __init__(self, db: Session, expense_client: ExpenseServiceClient = None, income_client: IncomeServiceClient = None, currency_client: CurrencyServiceClient = None):
+        super().__init__()  # Initialize WorkspaceAuthorizationMixin
         self.db = db
         self.logger = get_logger(__name__)
         self.expense_client = expense_client or ExpenseServiceClient()
@@ -33,9 +36,12 @@ class AccountService:
         self.subscription_client = SubscriptionClient()
         self.user_client = UserServiceClient()
 
-    def create_account(self, account_data: AccountCreate, user_id: int) -> Account:
-        """Create a new account for a user"""
+    def create_account(self, account_data: AccountCreate, user_id: int, workspace_id: UUID) -> Account:
+        """Create a new account for a user in a workspace"""
         try:
+            # 1. Authorize workspace access (member role required for create)
+            self.authorize_workspace_access(workspace_id, user_id, "member", "create_account")
+            
             # Check subscription limits before creating
             current_count = self.db.query(Account).filter(Account.owner_id == user_id).count()
             if not self.subscription_client.check_account_limit(user_id, current_count):
@@ -64,7 +70,8 @@ class AccountService:
                 currency=account_data.currency.upper(),
                 balance=account_data.balance,
                 description=sanitize_input(account_data.description) if account_data.description else None,
-                owner_id=user_id
+                owner_id=user_id,
+                workspace_id=workspace_id
             )
             
             self.db.add(account)
@@ -89,11 +96,15 @@ class AccountService:
             self.logger.error(f"Unexpected error creating account: {e}")
             raise AccountValidationError(f"Failed to create account: {str(e)}", AccountErrorCode.UNKNOWN_ERROR)
 
-    def get_account(self, account_id: int, user_id: int) -> Account:
-        """Get a specific account by ID, ensuring user ownership"""
+    def get_account(self, account_id: int, user_id: int, workspace_id: UUID) -> Account:
+        """Get a specific account by ID in the workspace"""
+        # 1. Authorize workspace access (viewer role required for read)
+        self.authorize_workspace_access(workspace_id, user_id, "viewer", "get_account")
+        
+        # 2. Get account filtered by workspace
         account = self.db.query(Account).filter(
             Account.id == account_id,
-            Account.owner_id == user_id
+            Account.workspace_id == workspace_id
         ).first()
         
         if not account:
@@ -101,18 +112,25 @@ class AccountService:
         
         return account
 
-    def get_user_accounts(self, user_id: int, include_archived: bool = False) -> List[Account]:
-        """Get all accounts for a user"""
-        query = self.db.query(Account).filter(Account.owner_id == user_id)
+    def get_user_accounts(self, user_id: int, workspace_id: UUID, include_archived: bool = False) -> List[Account]:
+        """Get all accounts in the workspace"""
+        # 1. Authorize workspace access (viewer role required for read)
+        self.authorize_workspace_access(workspace_id, user_id, "viewer", "list_accounts")
+        
+        # 2. Filter by workspace
+        query = self.db.query(Account).filter(Account.workspace_id == workspace_id)
         
         if not include_archived:
             query = query.filter(Account.is_archived == False)
         
         return query.order_by(Account.created_at.desc()).all()
 
-    def update_account(self, account_id: int, account_data: AccountUpdate, user_id: int) -> Account:
+    def update_account(self, account_id: int, account_data: AccountUpdate, user_id: int, workspace_id: UUID) -> Account:
         """Update an existing account"""
-        account = self.get_account(account_id, user_id)
+        # 1. Authorize workspace access (member role required for update)
+        self.authorize_workspace_access(workspace_id, user_id, "member", "update_account")
+        
+        account = self.get_account(account_id, user_id, workspace_id)
         
         if account.is_archived:
             raise AccountArchivedError(account_id)
@@ -164,9 +182,12 @@ class AccountService:
             self.logger.error(f"Unexpected error updating account: {e}")
             raise AccountValidationError(f"Failed to update account: {str(e)}", AccountErrorCode.UNKNOWN_ERROR)
 
-    def archive_account(self, account_id: int, user_id: int) -> Account:
+    def archive_account(self, account_id: int, user_id: int, workspace_id: UUID) -> Account:
         """Archive an account (soft delete)"""
-        account = self.get_account(account_id, user_id)
+        # 1. Authorize workspace access (member role required)
+        self.authorize_workspace_access(workspace_id, user_id, "member", "archive_account")
+        
+        account = self.get_account(account_id, user_id, workspace_id)
         
         if account.is_archived:
             raise AccountArchivedError(account_id)
@@ -193,9 +214,12 @@ class AccountService:
             self.logger.error(f"Unexpected error archiving account: {e}")
             raise AccountValidationError(f"Failed to archive account: {str(e)}", AccountErrorCode.UNKNOWN_ERROR)
 
-    def update_balance(self, account_id: int, new_balance: float, user_id: int) -> Account:
+    def update_balance(self, account_id: int, new_balance: float, user_id: int, workspace_id: UUID) -> Account:
         """Update account balance"""
-        account = self.get_account(account_id, user_id)
+        # 1. Authorize workspace access (member role required)
+        self.authorize_workspace_access(workspace_id, user_id, "member", "update_balance")
+        
+        account = self.get_account(account_id, user_id, workspace_id)
         
         if account.is_archived:
             raise AccountArchivedError(account_id)
@@ -291,9 +315,9 @@ class AccountService:
             self.logger.error(f"Unexpected error in balance update with conversion: {e}")
             raise AccountBalanceError(f"Failed to update balance with conversion: {str(e)}", AccountErrorCode.UNKNOWN_ERROR)
 
-    def get_account_summary(self, account_id: int, user_id: int) -> AccountSummary:
+    def get_account_summary(self, account_id: int, user_id: int, workspace_id: UUID) -> AccountSummary:
         """Get account summary with transaction counts"""
-        account = self.get_account(account_id, user_id)
+        account = self.get_account(account_id, user_id, workspace_id)
         
         # Get transaction counts from external services
         try:
@@ -331,9 +355,9 @@ class AccountService:
             last_transaction_date=last_transaction_date
         )
 
-    def get_account_transactions(self, account_id: int, user_id: int, limit: int = 100, offset: int = 0) -> AccountTransactionSummary:
+    def get_account_transactions(self, account_id: int, user_id: int, workspace_id: UUID, limit: int = 100, offset: int = 0) -> AccountTransactionSummary:
         """Get account transactions from both expense and income services"""
-        account = self.get_account(account_id, user_id)
+        account = self.get_account(account_id, user_id, workspace_id)
         
         try:
             # Fetch transactions from both services
@@ -396,11 +420,15 @@ class AccountService:
             self.logger.error(f"Failed to fetch account transactions: {e}")
             raise AccountValidationError(f"Failed to fetch transactions: {str(e)}", AccountErrorCode.EXTERNAL_SERVICE_ERROR)
 
-    def get_user_account_summaries(self, user_id: int) -> List[AccountSummary]:
-        """Get summaries for all user accounts"""
+    def get_user_account_summaries(self, user_id: int, workspace_id: UUID) -> List[AccountSummary]:
+        """Get summaries for all accounts in the workspace"""
         try:
+            # 1. Authorize workspace access (viewer role required)
+            self.authorize_workspace_access(workspace_id, user_id, "viewer", "get_account_summaries")
+            
+            # 2. Filter by workspace
             accounts = self.db.query(Account).filter(
-                Account.owner_id == user_id,
+                Account.workspace_id == workspace_id,
                 Account.is_archived == False
             ).all()
             
@@ -465,15 +493,17 @@ class AccountService:
             self.logger.error(f"Error validating account ownership: {e}")
             return False
 
-    async def get_account_statistics(self, user_id: int) -> AccountStatisticsResponse:
-        """Get statistics about user's accounts with currency conversion"""
+    async def get_account_statistics(self, user_id: int, workspace_id: UUID) -> AccountStatisticsResponse:
+        """Get statistics about accounts in the workspace with currency conversion"""
         try:
+            # 1. Authorize workspace access (viewer role required)
+            self.authorize_workspace_access(workspace_id, user_id, "viewer", "get_account_statistics")
             # Get user's base currency
             user_currency = self.user_client.get_user_base_currency(user_id)
             
-            # Get all non-archived accounts for the user
+            # Get all non-archived accounts in the workspace
             accounts = self.db.query(Account).filter(
-                Account.owner_id == user_id,
+                Account.workspace_id == workspace_id,
                 Account.is_archived == False
             ).all()
             

@@ -35,9 +35,11 @@ services:
       - EXPENSE_SERVICE_URL=http://expense_service:8000
       - INCOME_SERVICE_URL=http://income_service:8000
       - CURRENCY_SERVICE_URL=http://currency_service:8000
+      - WORKSPACE_SERVICE_URL=http://workspace_service:8000
       - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
     depends_on:
       - redis
+      - workspace_service
       - user_service
       - currency_service
       - category_service

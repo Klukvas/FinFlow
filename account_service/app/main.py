@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.openapi.utils import get_openapi
 from app.routers import account, internal
 from fastapi.exceptions import RequestValidationError
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -104,10 +105,11 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Account Service",
-    description="Microservice for managing user accounts with transaction integration",
-    version="1.0.0",
+    description="Microservice for managing user accounts with workspace support and transaction integration",
+    version="2.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    swagger_ui_parameters={"persistAuthorization": True}
 )
 
 # Register exception handlers
@@ -155,3 +157,45 @@ async def startup_event():
 async def shutdown_event():
     """Application shutdown event"""
     logger.info("Account Service shutting down...")
+
+def custom_openapi():
+    """Custom OpenAPI schema with workspace and bearer auth"""
+    if app.openapi_schema:
+        return app.openapi_schema
+    
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+    
+    # Add security schemes
+    openapi_schema["components"]["securitySchemes"] = {
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+            "description": "Enter your JWT token"
+        },
+        "WorkspaceId": {
+            "type": "apiKey",
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "description": "Enter your workspace UUID"
+        }
+    }
+    
+    # Apply security to all non-internal endpoints
+    for path, path_item in openapi_schema["paths"].items():
+        if not path.startswith("/internal") and not path.startswith("/health"):
+            for method in path_item:
+                if method in ["get", "post", "put", "patch", "delete"]:
+                    path_item[method]["security"] = [
+                        {"BearerAuth": [], "WorkspaceId": []}
+                    ]
+    
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi

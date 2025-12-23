@@ -305,6 +305,7 @@ services:
       REDIS_URL: "redis://redis:6379"
       DATABASE_URL: "postgresql://postgres:postgres@db:5432/account_db"
       SECRET_KEY: "your-secret-key-here"
+      WORKSPACE_SERVICE_URL: "http://workspace_service:8000"
       INTERNAL_SECRET_TOKEN: "my-secret-token"
       SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
     env_file:
@@ -314,6 +315,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      workspace_service:
+        condition: service_started
       user_service:
         condition: service_started
       currency_service:

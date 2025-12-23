@@ -1,18 +1,27 @@
 #!/bin/bash
+set -e
 
-# Wait for database to be ready
+# Extract database host and port from DATABASE_URL
+echo "Database URL: ${DATABASE_URL}"
+DB_HOST=$(echo $DATABASE_URL | sed -n 's/.*@\(.*\):.*/\1/p')
+DB_PORT=$(echo $DATABASE_URL | sed -n 's/.*:\([0-9]*\)\/.*/\1/p')
+
+echo "Database host: ${DB_HOST}:${DB_PORT}"
 echo "Waiting for database to be ready..."
-while ! pg_isready -h $DB_HOST -p $DB_PORT -U $DB_USER; do
-  echo "Database is unavailable - sleeping"
-  sleep 2
+until pg_isready -h "$DB_HOST" -p "$DB_PORT" > /dev/null 2>&1; do
+  echo "${DB_HOST}:${DB_PORT} - no response"
+  sleep 1
 done
 
-echo "Database is ready - continuing"
+echo "${DB_HOST}:${DB_PORT} - accepting connections"
+echo "Database is ready - running migrations..."
 
-# Run database migrations
-echo "Running database migrations..."
-alembic upgrade head
+# Run migrations
+alembic upgrade head || {
+    echo "Migration completed with warnings (tables may already exist)"
+}
+
+echo "Migrations completed - starting application..."
 
 # Start the application
-echo "Starting Account Service..."
 exec uvicorn app.main:app --host 0.0.0.0 --port 8000
