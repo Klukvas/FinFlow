@@ -1,4 +1,5 @@
 from typing import Dict, Any, Optional, List
+from uuid import UUID
 from app.config import settings
 from .base import BaseServiceClient
 
@@ -9,13 +10,16 @@ class CategoryServiceClient(BaseServiceClient):
     def __init__(self):
         super().__init__(settings.CATEGORY_SERVICE_URL)
 
-    async def get_category(self, category_id: int, user_id: int) -> Dict[str, Any]:
+    async def get_category(self, category_id: int, user_id: int, workspace_id: UUID) -> Dict[str, Any]:
         """Получить категорию по ID"""
-        return await self.get(f"/internal/categories/{category_id}?user_id={user_id}")
+        return await self.get(
+            f"/internal/categories/{category_id}?user_id={user_id}&workspace_id={workspace_id}"
+        )
 
     async def get_categories(
         self,
         user_id: Optional[str] = None,
+        workspace_id: Optional[UUID] = None,
         category_type: Optional[str] = None,
         parent_id: Optional[str] = None,
         page: int = 1,
@@ -29,6 +33,8 @@ class CategoryServiceClient(BaseServiceClient):
         
         if user_id:
             params["user_id"] = user_id
+        if workspace_id:
+            params["workspace_id"] = str(workspace_id)
         if category_type:
             params["type"] = category_type
         if parent_id:
@@ -48,10 +54,10 @@ class CategoryServiceClient(BaseServiceClient):
         """Удалить категорию"""
         return await self.delete(f"/internal/categories/{category_id}")
 
-    async def validate_category_exists(self, category_id: int, user_id: int) -> bool:
+    async def validate_category_exists(self, category_id: int, user_id: int, workspace_id: UUID) -> bool:
         """Проверить существование категории"""
         try:
-            await self.get_category(category_id, user_id)
+            await self.get_category(category_id, user_id, workspace_id)
             return True
         except Exception:
             return False

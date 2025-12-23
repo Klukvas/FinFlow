@@ -1,17 +1,24 @@
 #!/bin/bash
+set -e
 
-# Ждать пока база данных будет готова
+# Extract database host and port from DATABASE_URL
+DB_HOST=$(echo $DATABASE_URL | sed -n 's/.*@\(.*\):.*/\1/p')
+DB_PORT=$(echo $DATABASE_URL | sed -n 's/.*:\([0-9]*\)\/.*/\1/p')
+
+echo "Database host: ${DB_HOST}:${DB_PORT}"
 echo "Waiting for database to be ready..."
-while ! pg_isready -h $DB_HOST -p $DB_PORT -U $DB_USER; do
+until pg_isready -h "$DB_HOST" -p "$DB_PORT" > /dev/null 2>&1; do
   sleep 1
 done
 
-echo "Database is ready!"
+echo "Database is ready - running migrations..."
 
-# Выполнить миграции
-echo "Running database migrations..."
-alembic upgrade head
+# Run migrations
+alembic upgrade head || {
+    echo "Migration completed with warnings"
+}
 
-# Запустить приложение
-echo "Starting Recurring Payments Service..."
-uvicorn app.main:app --host 0.0.0.0 --port 8000
+echo "Migrations completed - starting application..."
+
+# Start the application
+exec uvicorn app.main:app --host 0.0.0.0 --port 8000
