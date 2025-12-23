@@ -125,9 +125,11 @@ services:
       - CATEGORY_SERVICE_URL=http://category_service:8000
       - ACCOUNT_SERVICE_URL=http://account_service:8000
       - CURRENCY_SERVICE_URL=http://currency_service:8000
+      - WORKSPACE_SERVICE_URL=http://workspace_service:8000
       - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
     depends_on:
       - redis
+      - workspace_service
     restart: unless-stopped
     logging:
       driver: "json-file"

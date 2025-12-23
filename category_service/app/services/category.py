@@ -139,7 +139,7 @@ class CategoryService(WorkspaceAuthorizationMixin):
             )
             
             try:
-                self.serializer.validate_category_data(self.db, data, user_id)
+                self.serializer.validate_category_data(self.db, data, user_id, workspace_id=workspace_id)
                 self.logger.info(
                     f"Serializer validation passed for category: {data.name}",
                     category="business",
@@ -382,7 +382,7 @@ class CategoryService(WorkspaceAuthorizationMixin):
             )
             
             # Validate using existing serializer
-            self.serializer.validate_category_data(self.db, category_data, user_id)
+            self.serializer.validate_category_data(self.db, category_data, user_id, workspace_id=workspace_id)
             
             self.logger.info(
                 f"Category validation passed for MCC {data.mcc_code}",
@@ -804,7 +804,7 @@ class CategoryService(WorkspaceAuthorizationMixin):
                 self.validate_workspace_match(new_parent.workspace_id, workspace_id, data.parent_id)
             
             # Comprehensive validation using serializer (with exclude_id for updates)
-            self.serializer.validate_category_data(self.db, data, user_id, exclude_id=category_id)
+            self.serializer.validate_category_data(self.db, data, user_id, exclude_id=category_id, workspace_id=workspace_id)
             
             # Serialize data for update
             update_data = self.serializer.serialize_category_for_update(data)

@@ -102,6 +102,7 @@ services:
       CATEGORY_SERVICE_URL: "http://category_service:8000"
       ACCOUNT_SERVICE_URL: "http://account_service:8000"
       CURRENCY_SERVICE_URL: "http://currency_service:8000"
+      WORKSPACE_SERVICE_URL: "http://workspace_service:8000"
       INTERNAL_SECRET_TOKEN: "my-secret-token"
       DATABASE_URL: "postgresql://postgres:postgres@db:5432/expense_db"
       SECRET_KEY: "your-secret-key-here"
@@ -111,6 +112,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      workspace_service:
+        condition: service_started
     ports:
       - "8003:8000"
     logging:

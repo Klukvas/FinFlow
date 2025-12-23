@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field, ConfigDict, field_validator
 from typing import List, Optional
 from datetime import date as datetime_date
 from decimal import Decimal
+from uuid import UUID
 import re
 
 class ExpenseBase(BaseModel):
@@ -168,6 +169,7 @@ class ExpenseResponse(ExpenseBase):
     """Schema for expense output with all fields"""
     id: int = Field(description="Unique expense identifier", examples=[1, 2, 3])
     user_id: int = Field(description="ID of the user who owns this expense", examples=[1, 2, 3])
+    workspace_id: UUID = Field(description="Workspace ID this expense belongs to")
     
     model_config = ConfigDict(
         from_attributes=True,
@@ -179,7 +181,8 @@ class ExpenseResponse(ExpenseBase):
                 "account_id": 1,
                 "description": "Lunch at restaurant",
                 "date": "2024-01-15",
-                "user_id": 1
+                "user_id": 1,
+                "workspace_id": "550e8400-e29b-41d4-a716-446655440000"
             }
         }
     )
