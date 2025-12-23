@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from typing import List, Optional
 from datetime import datetime
+from uuid import UUID
 
 from app.models.debt import Contact
 from app.schemas.contact import ContactCreate, ContactUpdate, ContactResponse, ContactSummary
@@ -22,14 +23,19 @@ class ContactService:
     """Service for managing contacts"""
     
     def __init__(self, db: Session):
+        super().__init__()  # Initialize WorkspaceAuthorizationMixin
         self.db = db
         self.logger = get_logger(__name__)
 
-    async def create_contact(self, contact: ContactCreate, user_id: int) -> ContactResponse:
+    async def create_contact(self, contact: ContactCreate, user_id: int, workspace_id: UUID) -> ContactResponse:
         """Create a new contact"""
         try:
+            # Authorize workspace access
+            self.authorize_workspace_access(workspace_id, user_id, "member", "create_contact")
+            
             db_contact = Contact(
                 user_id=user_id,
+                workspace_id=workspace_id,
                 name=contact.name,
                 email=contact.email,
                 phone=contact.phone,
@@ -50,18 +56,22 @@ class ContactService:
             self.logger.error(f"Error creating contact: {e}")
             raise ContactCreationFailedError("Failed to create contact")
 
-    def get_contacts(self, user_id: int, skip: int = 0, limit: int = 100) -> List[ContactResponse]:
-        """Get all contacts for a user"""
+    def get_contacts(self, user_id: int, workspace_id: UUID, skip: int = 0, limit: int = 100) -> List[ContactResponse]:
+        """Get all contacts in workspace"""
+        self.authorize_workspace_access(workspace_id, user_id, "viewer", "list_contacts")
+        
         contacts = self.db.query(Contact).filter(
-            Contact.user_id == user_id
+            Contact.workspace_id == workspace_id
         ).offset(skip).limit(limit).all()
         
         return [ContactResponse.model_validate(contact) for contact in contacts]
 
-    def get_contact(self, contact_id: int, user_id: int) -> ContactResponse:
+    def get_contact(self, contact_id: int, user_id: int, workspace_id: UUID) -> ContactResponse:
         """Get a specific contact"""
+        self.authorize_workspace_access(workspace_id, user_id, "viewer", "get_contact")
+        
         contact = self.db.query(Contact).filter(
-            Contact.user_id == user_id,
+            Contact.workspace_id == workspace_id,
             Contact.id == contact_id
         ).first()
         
@@ -70,10 +80,12 @@ class ContactService:
         
         return ContactResponse.model_validate(contact)
 
-    async def update_contact(self, contact_id: int, contact_update: ContactUpdate, user_id: int) -> ContactResponse:
+    async def update_contact(self, contact_id: int, contact_update: ContactUpdate, user_id: int, workspace_id: UUID) -> ContactResponse:
         """Update a contact"""
+        self.authorize_workspace_access(workspace_id, user_id, "member", "update_contact")
+        
         contact = self.db.query(Contact).filter(
-            Contact.user_id == user_id,
+            Contact.workspace_id == workspace_id,
             Contact.id == contact_id
         ).first()
         
@@ -96,10 +108,12 @@ class ContactService:
             self.logger.error(f"Error updating contact: {e}")
             raise ContactUpdateFailedError("Failed to update contact")
 
-    def delete_contact(self, contact_id: int, user_id: int) -> bool:
+    def delete_contact(self, contact_id: int, user_id: int, workspace_id: UUID) -> bool:
         """Delete a contact"""
+        self.authorize_workspace_access(workspace_id, user_id, "member", "delete_contact")
+        
         contact = self.db.query(Contact).filter(
-            Contact.user_id == user_id,
+            Contact.workspace_id == workspace_id,
             Contact.id == contact_id
         ).first()
         

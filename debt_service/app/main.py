@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.openapi.utils import get_openapi
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -123,10 +124,11 @@ except Exception as e:
 
 app = FastAPI(
     title="Debt Service",
-    description="Microservice for managing user debts, contacts, and debt payments",
-    version="1.0.0",
+    description="Microservice for managing user debts, contacts, and debt payments with workspace support",
+    version="2.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    swagger_ui_parameters={"persistAuthorization": True}
 )
 
 # Configure CORS
@@ -225,6 +227,48 @@ async def database_exception_handler(request: Request, exc: SQLAlchemyError):
         status_code=500,
         content=error_response.model_dump()
     )
+
+def custom_openapi():
+    """Custom OpenAPI schema with workspace and bearer auth"""
+    if app.openapi_schema:
+        return app.openapi_schema
+    
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+    
+    # Add security schemes
+    openapi_schema["components"]["securitySchemes"] = {
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+            "description": "Enter your JWT token"
+        },
+        "WorkspaceId": {
+            "type": "apiKey",
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "description": "Enter your workspace UUID"
+        }
+    }
+    
+    # Apply security to all non-internal endpoints
+    for path, path_item in openapi_schema["paths"].items():
+        if not path.startswith("/internal") and not path.startswith("/health"):
+            for method in path_item:
+                if method in ["get", "post", "put", "patch", "delete"]:
+                    path_item[method]["security"] = [
+                        {"BearerAuth": [], "WorkspaceId": []}
+                    ]
+    
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi
 
 if __name__ == "__main__":
     import uvicorn

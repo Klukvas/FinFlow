@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.orm import Session
 from typing import List
+from uuid import UUID
 
 from app.database import get_db
-from app.dependencies import get_current_user_id, get_contact_service
+from app.dependencies import get_current_user_id, get_contact_service, get_workspace_id
 from app.services.contact import ContactService
 from app.schemas.contact import (
     ContactCreate, ContactUpdate, ContactResponse, ContactSummary
@@ -17,48 +18,53 @@ router = APIRouter()
 async def create_contact(
     contact: ContactCreate,
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     service: ContactService = Depends(get_contact_service)
 ):
-    """Create a new contact"""
-    return await service.create_contact(contact, user_id)
+    """Create a new contact. Requires 'member' role."""
+    return await service.create_contact(contact, user_id, workspace_id)
 
 @router.get("/", response_model=List[ContactResponse])
 def get_contacts(
     skip: int = Query(0, ge=0, description="Number of contacts to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of contacts to return"),
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     service: ContactService = Depends(get_contact_service)
 ):
-    """Get all contacts for the user"""
-    return service.get_contacts(user_id, skip, limit)
+    """Get all contacts in workspace. Requires 'viewer' role."""
+    return service.get_contacts(user_id, workspace_id, skip, limit)
 
 @router.get("/{contact_id}", response_model=ContactResponse)
 def get_contact(
     contact_id: int,
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     service: ContactService = Depends(get_contact_service)
 ):
-    """Get a specific contact"""
-    return service.get_contact(contact_id, user_id)
+    """Get a specific contact. Requires 'viewer' role."""
+    return service.get_contact(contact_id, user_id, workspace_id)
 
 @router.put("/{contact_id}", response_model=ContactResponse)
 async def update_contact(
     contact_id: int,
     contact_update: ContactUpdate,
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     service: ContactService = Depends(get_contact_service)
 ):
-    """Update a contact"""
-    return await service.update_contact(contact_id, contact_update, user_id)
+    """Update a contact. Requires 'member' role."""
+    return await service.update_contact(contact_id, contact_update, user_id, workspace_id)
 
 @router.delete("/{contact_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_contact(
     contact_id: int,
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     service: ContactService = Depends(get_contact_service)
 ):
-    """Delete a contact"""
-    service.delete_contact(contact_id, user_id)
+    """Delete a contact. Requires 'member' role."""
+    service.delete_contact(contact_id, user_id, workspace_id)
 
 @router.get("/summaries/", response_model=List[ContactSummary])
 def get_contact_summaries(

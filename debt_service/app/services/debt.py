@@ -4,6 +4,7 @@ from sqlalchemy import and_, func, desc
 from typing import List, Optional
 from datetime import date, datetime
 from decimal import Decimal, ROUND_HALF_UP
+from uuid import UUID
 
 from app.models.debt import Debt, DebtPayment
 from app.schemas.debt import (
@@ -11,6 +12,7 @@ from app.schemas.debt import (
     DebtPaymentCreate, DebtPaymentResponse
 )
 from app.services.contact import ContactService
+from app.services.workspace_authorization import WorkspaceAuthorizationMixin
 from app.clients.subscription import SubscriptionClient
 from app.clients.user_service_client import UserServiceClient
 from app.clients.currency_service_client import CurrencyServiceClient
@@ -31,10 +33,11 @@ from app.config import settings
 
 logger = get_logger(__name__)
 
-class DebtService:
+class DebtService(WorkspaceAuthorizationMixin):
     """Service for managing debts and debt payments"""
     
     def __init__(self, db: Session):
+        super().__init__()  # Initialize WorkspaceAuthorizationMixin
         self.db = db
         self.logger = get_logger(__name__)
         self.contact_service = ContactService(db)
@@ -43,9 +46,11 @@ class DebtService:
         self.currency_client = CurrencyServiceClient()
 
     # Debt Management
-    async def create_debt(self, debt: DebtCreate, user_id: int) -> DebtResponse:
+    async def create_debt(self, debt: DebtCreate, user_id: int, workspace_id: UUID) -> DebtResponse:
         """Create a new debt"""
         try:
+            # 1. Authorize workspace access (member role required)
+            self.authorize_workspace_access(workspace_id, user_id, "member", "create_debt")
             # Check subscription limits before creating
             current_count = self.db.query(Debt).filter(Debt.user_id == user_id).count()
             if not self.subscription_client.check_debt_limit(user_id, current_count):
@@ -63,6 +68,7 @@ class DebtService:
             
             db_debt = Debt(
                 user_id=user_id,
+                workspace_id=workspace_id,
                 name=debt.name,
                 description=debt.description,
                 debt_type=debt.debt_type.value,
@@ -97,9 +103,11 @@ class DebtService:
             self.logger.error(f"Error creating debt: {e}")
             raise DebtCreationFailedError("Failed to create debt")
 
-    def get_debts(self, user_id: int, skip: int = 0, limit: int = 100, 
+    def get_debts(self, user_id: int, workspace_id: UUID, skip: int = 0, limit: int = 100, 
                   active_only: bool = False, paid_off_only: bool = False) -> List[DebtResponse]:
-        """Get all debts for a user"""
+        """Get all debts in the workspace"""
+        # 1. Authorize workspace access (viewer role required)
+        self.authorize_workspace_access(workspace_id, user_id, "viewer", "list_debts")
         query = self.db.query(Debt).options(joinedload(Debt.contact)).filter(
             Debt.user_id == user_id
         )
@@ -123,8 +131,10 @@ class DebtService:
         
         return result
 
-    def get_debt(self, debt_id: int, user_id: int) -> DebtResponse:
+    def get_debt(self, debt_id: int, user_id: int, workspace_id: UUID) -> DebtResponse:
         """Get a specific debt"""
+        # 1. Authorize workspace access (viewer role required)
+        self.authorize_workspace_access(workspace_id, user_id, "viewer", "get_debt")
         from app.models.debt import Contact
         debt = self.db.query(Debt).options(joinedload(Debt.contact)).filter(
             and_(Debt.id == debt_id, Debt.user_id == user_id)
@@ -141,10 +151,14 @@ class DebtService:
         
         return DebtResponse.model_validate(debt_dict)
 
-    async def update_debt(self, debt_id: int, debt_update: DebtUpdate, user_id: int) -> DebtResponse:
+    async def update_debt(self, debt_id: int, debt_update: DebtUpdate, user_id: int, workspace_id: UUID) -> DebtResponse:
         """Update a debt"""
+        # 1. Authorize workspace access (member role required)
+        self.authorize_workspace_access(workspace_id, user_id, "member", "update_debt")
+        
+        # 2. Get debt filtered by workspace
         debt = self.db.query(Debt).filter(
-            and_(Debt.id == debt_id, Debt.user_id == user_id)
+            and_(Debt.id == debt_id, Debt.workspace_id == workspace_id)
         ).first()
         
         if not debt:
@@ -203,10 +217,14 @@ class DebtService:
             self.logger.error(f"Error updating debt: {e}")
             raise DebtUpdateFailedError("Failed to update debt")
 
-    def delete_debt(self, debt_id: int, user_id: int) -> bool:
+    def delete_debt(self, debt_id: int, user_id: int, workspace_id: UUID) -> bool:
         """Delete a debt"""
+        # 1. Authorize workspace access (member role required)
+        self.authorize_workspace_access(workspace_id, user_id, "member", "delete_debt")
+        
+        # 2. Get debt filtered by workspace
         debt = self.db.query(Debt).filter(
-            and_(Debt.id == debt_id, Debt.user_id == user_id)
+            and_(Debt.id == debt_id, Debt.workspace_id == workspace_id)
         ).first()
         
         if not debt:
@@ -228,10 +246,14 @@ class DebtService:
             raise DebtDeletionFailedError("Failed to delete debt")
 
     # Payment Management
-    async def create_payment(self, debt_id: int, payment: DebtPaymentCreate, user_id: int) -> DebtPaymentResponse:
+    async def create_payment(self, debt_id: int, payment: DebtPaymentCreate, user_id: int, workspace_id: UUID) -> DebtPaymentResponse:
         """Create a debt payment"""
+        # 1. Authorize workspace access (member role required)
+        self.authorize_workspace_access(workspace_id, user_id, "member", "create_payment")
+        
+        # 2. Get debt filtered by workspace
         debt = self.db.query(Debt).filter(
-            and_(Debt.id == debt_id, Debt.user_id == user_id)
+            and_(Debt.id == debt_id, Debt.workspace_id == workspace_id)
         ).first()
         
         if not debt:
@@ -281,8 +303,10 @@ class DebtService:
         return [DebtPaymentResponse.model_validate(payment) for payment in payments]
 
     # Summary and Statistics
-    def get_debt_summary(self, user_id: int) -> DebtSummary:
+    def get_debt_summary(self, user_id: int, workspace_id: UUID) -> DebtSummary:
         """Get debt summary statistics with currency conversion"""
+        # 1. Authorize workspace access (viewer role required)
+        self.authorize_workspace_access(workspace_id, user_id, "viewer", "get_debt_summary")
         # Get user's base currency
         try:
             user_currency = self.user_client.get_user_base_currency(user_id)
@@ -291,11 +315,11 @@ class DebtService:
             user_currency = "USD"
         
         active_debts = self.db.query(Debt).filter(
-            and_(Debt.user_id == user_id, Debt.is_active == True)
+            and_(Debt.workspace_id == workspace_id, Debt.is_active == True)
         ).all()
         
         paid_off_debts = self.db.query(Debt).filter(
-            and_(Debt.user_id == user_id, Debt.is_paid_off == True)
+            and_(Debt.workspace_id == workspace_id, Debt.is_paid_off == True)
         ).count()
         
         # Convert and sum all debts to user's currency
@@ -316,7 +340,8 @@ class DebtService:
         
         # Calculate total payments with currency conversion
         # Get all debts (not just active ones) to get payment currencies
-        all_debts = self.db.query(Debt).filter(Debt.user_id == user_id).all()
+        # 2. Get all debts in workspace
+        all_debts = self.db.query(Debt).filter(Debt.workspace_id == workspace_id).all()
         debt_currency_map = {debt.id: debt.currency or "USD" for debt in all_debts}
         
         all_payments = self.db.query(DebtPayment).filter(
