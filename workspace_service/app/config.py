@@ -12,6 +12,7 @@ class Settings(BaseSettings):
 
     # Internal services
     USER_SERVICE_URL: str = "http://user_service:8000"
+    SUBSCRIPTION_SERVICE_URL: str = "http://subscription_service:8080"
     INTERNAL_SECRET_TOKEN: Optional[str] = None
 
     # Invite settings

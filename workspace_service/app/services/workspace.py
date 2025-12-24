@@ -13,12 +13,14 @@ from app.exceptions import (
     WorkspaceValidationError,
     WorkspaceAccessDeniedError,
     WorkspaceArchivedError,
+    WorkspaceLimitExceededError,
     MemberNotFoundError,
     MemberAlreadyExistsError,
     InvalidRoleChangeError,
     OwnerCannotLeaveError,
     PersonalWorkspaceProtectedError,
 )
+from app.clients.subscription import SubscriptionClient
 from app.utils.logger import get_logger, log_operation
 
 logger = get_logger(__name__)
@@ -36,12 +38,30 @@ ROLE_HIERARCHY = {
 class WorkspaceService:
     def __init__(self, db: Session):
         self.db = db
+        self.subscription_client = SubscriptionClient()
 
     # ==================== Workspace Operations ====================
+
+    def _get_user_workspace_count(self, user_id: int) -> int:
+        """Get count of workspaces owned by user (excluding archived)"""
+        return (
+            self.db.query(Workspace)
+            .filter(
+                Workspace.owner_user_id == user_id,
+                Workspace.archived_at.is_(None),
+            )
+            .count()
+        )
 
     def create_workspace(self, user_id: int, data: WorkspaceCreate) -> Workspace:
         """Create a new workspace with the user as owner"""
         try:
+            # Check workspace limit
+            current_count = self._get_user_workspace_count(user_id)
+            if not self.subscription_client.check_workspace_limit(user_id, current_count):
+                limit = self.subscription_client.get_workspace_limit(user_id)
+                raise WorkspaceLimitExceededError(current_count, limit or 1)
+
             workspace = Workspace(
                 name=data.name.strip(),
                 type=data.type,
@@ -64,6 +84,8 @@ class WorkspaceService:
             log_operation(logger, "workspace_created", user_id, f"Workspace: {workspace.id}")
             return workspace
 
+        except WorkspaceLimitExceededError:
+            raise
         except Exception as e:
             self.db.rollback()
             logger.error(f"Error creating workspace: {e}")

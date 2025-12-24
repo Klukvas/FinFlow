@@ -7,6 +7,7 @@ from uuid import UUID
 class WorkspaceServiceError(str, Enum):
     WORKSPACE_NOT_FOUND = "Workspace not found"
     WORKSPACE_ARCHIVED = "Workspace is archived"
+    WORKSPACE_LIMIT_EXCEEDED = "Workspace limit exceeded"
     ACCESS_DENIED = "Access denied to workspace"
     MEMBER_NOT_FOUND = "Member not found"
     MEMBER_ALREADY_EXISTS = "User is already a member of this workspace"
@@ -23,6 +24,7 @@ class WorkspaceServiceError(str, Enum):
 class WorkspaceErrorCode(str, Enum):
     WORKSPACE_NOT_FOUND = "WORKSPACE_NOT_FOUND"
     WORKSPACE_ARCHIVED = "WORKSPACE_ARCHIVED"
+    WORKSPACE_LIMIT_EXCEEDED = "WORKSPACE_LIMIT_EXCEEDED"
     ACCESS_DENIED = "ACCESS_DENIED"
     MEMBER_NOT_FOUND = "MEMBER_NOT_FOUND"
     MEMBER_ALREADY_EXISTS = "MEMBER_ALREADY_EXISTS"
@@ -162,4 +164,15 @@ class PersonalWorkspaceProtectedError(HTTPException):
             detail=detail
         )
         self.error_code = WorkspaceErrorCode.PERSONAL_WORKSPACE_PROTECTED
+
+
+class WorkspaceLimitExceededError(HTTPException):
+    def __init__(self, current_count: int, limit: int):
+        super().__init__(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Workspace limit exceeded. You have {current_count} workspaces, limit is {limit}. Upgrade your plan to create more."
+        )
+        self.error_code = WorkspaceErrorCode.WORKSPACE_LIMIT_EXCEEDED
+        self.current_count = current_count
+        self.limit = limit
 

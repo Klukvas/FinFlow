@@ -413,12 +413,15 @@ services:
       ALGORITHM: "HS256"
       INTERNAL_SECRET_TOKEN: "my-secret-token"
       USER_SERVICE_URL: "http://user_service:8000"
+      SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
       LOG_LEVEL: "INFO"
     depends_on:
       db:
         condition: service_healthy
       user_service:
         condition: service_healthy
+      subscription_service:
+        condition: service_started
     ports:
       - "8012:8000"
     healthcheck:
