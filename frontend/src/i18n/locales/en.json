@@ -45,6 +45,7 @@
     "debts": "Debts",
     "goals": "Goals",
     "pdfParser": "PDF Parser",
+    "workspaces": "Workspaces",
     "profile": "Profile",
     "logout": "Logout",
     "login": "Login",
@@ -1066,6 +1067,59 @@
     "noData": "Subscription information unavailable",
     "errors": {
       "loadFailed": "Failed to load subscription limits"
+    }
+  },
+  "workspace": {
+    "title": "Workspaces",
+    "subtitle": "Manage your workspaces and collaborate with others",
+    "switchWorkspace": "Switch Workspace",
+    "manageWorkspaces": "Manage Workspaces",
+    "personal": "Personal",
+    "shared": "Shared",
+    "members": "members",
+    "createButton": "Create Workspace",
+    "select": "Select",
+    "current": "Current",
+    "archive": "Archive",
+    "leave": "Leave",
+    "created": "Created",
+    "roles": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "member": "Member",
+      "viewer": "Viewer"
+    },
+    "types": {
+      "personal": "Personal",
+      "personalDesc": "Just for you",
+      "shared": "Shared",
+      "sharedDesc": "Collaborate with others"
+    },
+    "form": {
+      "name": "Workspace Name",
+      "namePlaceholder": "e.g., Family Budget, Business Expenses",
+      "nameRequired": "Workspace name is required",
+      "type": "Workspace Type",
+      "create": "Create Workspace",
+      "submitError": "Failed to save workspace"
+    },
+    "createModal": {
+      "title": "Create New Workspace"
+    },
+    "editModal": {
+      "title": "Edit Workspace"
+    },
+    "archiveConfirm": {
+      "title": "Archive Workspace",
+      "message": "Are you sure you want to archive this workspace? This will hide it from your workspace list but data will be preserved."
+    },
+    "leaveConfirm": {
+      "title": "Leave Workspace",
+      "message": "Are you sure you want to leave this workspace? You will lose access to all data in this workspace."
+    },
+    "empty": {
+      "title": "No workspaces yet",
+      "description": "Create your first workspace to get started"
     }
   },
   "profile": {

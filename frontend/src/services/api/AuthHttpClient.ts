@@ -1,4 +1,5 @@
 import { config } from '@/config/env';
+import { getStoredWorkspaceId } from '@/utils/workspaceStorage';
 
 export interface ApiError {
   error: string;
@@ -10,15 +11,18 @@ export class AuthHttpClient {
   private baseUrl: string;
   private getToken: () => string | null;
   private refreshToken: () => Promise<boolean>;
+  private skipWorkspaceHeader: boolean;
 
   constructor(
     baseUrl: string,
     getToken: () => string | null,
-    refreshToken: () => Promise<boolean>
+    refreshToken: () => Promise<boolean>,
+    skipWorkspaceHeader: boolean = false
   ) {
     this.baseUrl = baseUrl;
     this.getToken = getToken;
     this.refreshToken = refreshToken;
+    this.skipWorkspaceHeader = skipWorkspaceHeader;
   }
 
   private async makeRequest<T>(
@@ -41,6 +45,14 @@ export class AuthHttpClient {
       headers.Authorization = `Bearer ${token}`;
     } else {
       console.warn('AuthHttpClient: No token available for request to', url);
+    }
+
+    // Add X-Workspace-Id header if available and not skipped
+    if (!this.skipWorkspaceHeader) {
+      const workspaceId = getStoredWorkspaceId();
+      if (workspaceId) {
+        headers['X-Workspace-Id'] = workspaceId;
+      }
     }
 
     try {

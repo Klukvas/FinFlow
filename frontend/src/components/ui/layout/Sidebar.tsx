@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { WorkspaceSelector } from '@/components/ui/workspace';
 import {
   FaHome,
   FaFolder,
@@ -12,7 +13,8 @@ import {
   FaRedo,
   FaBullseye,
   FaFilePdf,
-  FaWallet
+  FaWallet,
+  FaUsers
 } from 'react-icons/fa';
 
 interface SidebarProps {
@@ -51,6 +53,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     { path: '/recurring', icon: FaRedo, label: t('navigation.recurring') },
     { path: '/goals', icon: FaBullseye, label: t('navigation.goals') },
     { path: '/pdf-parser', icon: FaFilePdf, label: t('navigation.pdfParser') },
+    { path: '/workspaces', icon: FaUsers, label: t('navigation.workspaces') },
   ];
 
   const sidebarContent = (
@@ -66,6 +69,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             <FaTimes className="w-5 h-5 theme-text-primary" />
           </button>
         )}
+      </div>
+
+      {/* Workspace Selector */}
+      <div className="px-4 py-3 theme-border border-b">
+        <WorkspaceSelector compact />
       </div>
 
       {/* Navigation */}

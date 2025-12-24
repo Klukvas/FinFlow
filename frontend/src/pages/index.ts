@@ -8,6 +8,7 @@ import { Recurring } from './Recurring'
 import { Goals } from './Goals'
 import { PdfParser } from './PdfParser'
 import { Debts } from './Debts'
+import { Workspaces } from './Workspaces'
 import Login from "./auth/Login";
 import Register from "./auth/Register";
 import { Home } from './Home';
@@ -29,6 +30,7 @@ export {
   Goals,
   PdfParser,
   Debts,
+  Workspaces,
   Home,
   About,
   Features,

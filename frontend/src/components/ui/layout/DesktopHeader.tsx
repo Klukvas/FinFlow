@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { ThemeToggle } from '../shared/ThemeToggle';
 import { LanguageSelector } from '../shared/LanguageSelector';
+import { WorkspaceSelector } from '../workspace/WorkspaceSelector';
 import {
   FaHome,
   FaFolder,
@@ -65,6 +66,8 @@ export const DesktopHeader = React.memo(() => {
 
           {/* User Menu and Theme Toggle */}
           <div className="flex items-center space-x-4" data-testid="header-actions">
+            <WorkspaceSelector />
+            <div className="w-px h-6 bg-gray-300 dark:bg-gray-600" />
             <ThemeToggle />
             <LanguageSelector />
             

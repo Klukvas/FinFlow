@@ -1,19 +1,30 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Account, Category, CategoryDetail, Expense, Income, Profile, Recurring, Goals, PdfParser, Debts, Home, About, Features, Pricing, Contact } from '@/pages';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
+import { Account, Category, CategoryDetail, Expense, Income, Profile, Recurring, Goals, PdfParser, Debts, Workspaces, Home, About, Features, Pricing, Contact } from '@/pages';
 import { Layout } from './ui/layout/Layout';
 import { PublicLayout } from './ui/layout/PublicLayout';
 import { ProtectedRoute } from './ProtectedRoute';
 
 export const AppRoutes: React.FC = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { currentWorkspaceId, isLoading: workspaceLoading } = useWorkspace();
 
-  // Show loading spinner while checking authentication
-  if (isLoading) {
+  // Show loading spinner while checking authentication or loading workspace
+  if (authLoading || (isAuthenticated && workspaceLoading)) {
     return (
       <div className="min-h-screen theme-bg flex items-center justify-center">
         <div className="theme-text-primary">Загрузка...</div>
+      </div>
+    );
+  }
+
+  // If authenticated but no workspace selected yet, show loading
+  if (isAuthenticated && !currentWorkspaceId && !workspaceLoading) {
+    return (
+      <div className="min-h-screen theme-bg flex items-center justify-center">
+        <div className="theme-text-primary">Загрузка рабочего пространства...</div>
       </div>
     );
   }
@@ -118,6 +129,16 @@ export const AppRoutes: React.FC = () => {
             <ProtectedRoute>
               <Layout>
                 <PdfParser />
+              </Layout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/workspaces" 
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Workspaces />
               </Layout>
             </ProtectedRoute>
           } 

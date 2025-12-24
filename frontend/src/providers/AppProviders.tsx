@@ -7,6 +7,7 @@ import { CategoriesProvider } from '@/contexts/CategoriesContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { ModalProvider } from '@/contexts/ModalContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { WorkspaceProvider } from '@/contexts/WorkspaceContext';
 import { AppRoutes } from '@/components/AppRoutes';
 import '@/i18n';
 
@@ -21,13 +22,15 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
         <ThemeProvider>
           <ModalProvider>
             <AuthProvider>
-              <CategoriesProvider>
-                <CurrencyProvider>
-                  <Router>
-                    {children || <AppRoutes />}
-                  </Router>
-                </CurrencyProvider>
-              </CategoriesProvider>
+              <WorkspaceProvider>
+                <CategoriesProvider>
+                  <CurrencyProvider>
+                    <Router>
+                      {children || <AppRoutes />}
+                    </Router>
+                  </CurrencyProvider>
+                </CategoriesProvider>
+              </WorkspaceProvider>
             </AuthProvider>
           </ModalProvider>
         </ThemeProvider>
