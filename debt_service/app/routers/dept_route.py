@@ -63,10 +63,11 @@ async def update_debt(
 def delete_debt(
     debt_id: int,
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     service: DebtService = Depends(get_debt_service)
 ):
-    """Delete a debt"""
-    service.delete_debt(debt_id, user_id)
+    """Delete a debt. Requires 'member' role."""
+    service.delete_debt(debt_id, user_id, workspace_id)
 
 # Payment Endpoints
 @router.post("/{debt_id}/payments/", response_model=DebtPaymentResponse, status_code=status.HTTP_201_CREATED)
@@ -86,11 +87,12 @@ def get_payments(
     skip: int = Query(0, ge=0, description="Number of payments to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of payments to return"),
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     service: DebtService = Depends(get_debt_service)
 ):
-    """Get all payments for a debt"""
-    # Verify debt exists and belongs to user
-    service.get_debt(debt_id, user_id)
+    """Get all payments for a debt. Requires 'viewer' role."""
+    # Verify debt exists and belongs to workspace
+    service.get_debt(debt_id, user_id, workspace_id)
     return service.get_payments(debt_id, user_id, skip, limit)
 
 # Summary Endpoints
