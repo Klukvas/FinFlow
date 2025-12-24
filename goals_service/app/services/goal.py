@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, func
 from typing import List, Optional, Dict, Any
+from uuid import UUID
 from app.models.goal import Goal, GoalStatus, GoalType, GoalPriority
 from app.models.milestone import Milestone
 from app.schemas.goal import (
@@ -10,6 +11,7 @@ from app.schemas.goal import (
 from app.clients.subscription import SubscriptionClient
 from app.clients.user_service_client import UserServiceClient
 from app.clients.currency_service_client import CurrencyServiceClient
+from app.services.workspace_authorization import WorkspaceAuthorizationMixin
 from app.exceptions.goal_exceptions import (
     GoalNotFoundError, GoalValidationError, GoalCreationError, GoalUpdateError,
     GoalDeletionError, GoalRetrievalError, GoalStatisticsError, GoalProgressError,
@@ -21,18 +23,25 @@ from app.utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-class GoalService:
+class GoalService(WorkspaceAuthorizationMixin):
     def __init__(self, db: Session):
+        super().__init__()  # Initialize WorkspaceAuthorizationMixin
         self.db = db
         self.subscription_client = SubscriptionClient()
         self.user_client = UserServiceClient()
         self.currency_client = CurrencyServiceClient()
 
-    def create_goal(self, user_id: int, goal_data: GoalCreate) -> Goal:
+    def create_goal(self, user_id: int, workspace_id: UUID, goal_data: GoalCreate) -> Goal:
         """Create a new financial goal"""
         try:
+            # Authorize workspace access (member role required for creating)
+            self.authorize_workspace_access(workspace_id, user_id, "member", "create_goal")
+            
             # Check subscription limits before creating
-            current_count = self.db.query(Goal).filter(Goal.user_id == user_id).count()
+            current_count = self.db.query(Goal).filter(
+                Goal.user_id == user_id,
+                Goal.workspace_id == workspace_id
+            ).count()
             if not self.subscription_client.check_goal_limit(user_id, current_count):
                 features = self.subscription_client.get_user_features(user_id)
                 goal_feature = features.get("goals", {})
@@ -41,6 +50,7 @@ class GoalService:
             
             goal = Goal(
                 user_id=user_id,
+                workspace_id=workspace_id,
                 **goal_data.dict()
             )
             
@@ -48,9 +58,13 @@ class GoalService:
             self.db.commit()
             self.db.refresh(goal)
             
-            logger.info(f"Created goal {goal.id} for user {user_id}")
+            logger.info(f"Created goal {goal.id} for user {user_id} in workspace {workspace_id}")
             return goal
             
+        except GoalValidationError:
+            raise
+        except GoalLimitExceededError:
+            raise
         except Exception as e:
             self.db.rollback()
             logger.error(f"Error creating goal for user {user_id}: {str(e)}")
@@ -58,7 +72,8 @@ class GoalService:
 
     def get_goals(
         self, 
-        user_id: int, 
+        user_id: int,
+        workspace_id: UUID,
         skip: int = 0, 
         limit: int = 100,
         status: Optional[GoalStatus] = None,
@@ -67,7 +82,13 @@ class GoalService:
     ) -> List[Goal]:
         """Get user's goals with optional filtering"""
         try:
-            query = self.db.query(Goal).filter(Goal.user_id == user_id)
+            # Authorize workspace access (viewer role sufficient for reading)
+            self.authorize_workspace_access(workspace_id, user_id, "viewer", "get_goals")
+            
+            query = self.db.query(Goal).filter(
+                Goal.user_id == user_id,
+                Goal.workspace_id == workspace_id
+            )
             
             if status:
                 query = query.filter(Goal.status == status)
@@ -79,14 +100,23 @@ class GoalService:
             goals = query.offset(skip).limit(limit).all()
             return goals
             
+        except GoalValidationError:
+            raise
         except Exception as e:
             logger.error(f"Error fetching goals for user {user_id}: {str(e)}")
             raise GoalRetrievalError(f"Failed to fetch goals: {str(e)}")
 
-    def get_goal(self, user_id: int, goal_id: int) -> Goal:
+    def get_goal(self, user_id: int, workspace_id: UUID, goal_id: int) -> Goal:
         """Get a specific goal by ID"""
+        # Authorize workspace access (viewer role sufficient for reading)
+        self.authorize_workspace_access(workspace_id, user_id, "viewer", "get_goal")
+        
         goal = self.db.query(Goal).filter(
-            and_(Goal.id == goal_id, Goal.user_id == user_id)
+            and_(
+                Goal.id == goal_id, 
+                Goal.user_id == user_id,
+                Goal.workspace_id == workspace_id
+            )
         ).first()
         
         if not goal:
@@ -94,10 +124,13 @@ class GoalService:
         
         return goal
 
-    def update_goal(self, user_id: int, goal_id: int, goal_data: GoalUpdate) -> Goal:
+    def update_goal(self, user_id: int, workspace_id: UUID, goal_id: int, goal_data: GoalUpdate) -> Goal:
         """Update an existing goal"""
         try:
-            goal = self.get_goal(user_id, goal_id)
+            # Authorize workspace access (member role required for updating)
+            self.authorize_workspace_access(workspace_id, user_id, "member", "update_goal")
+            
+            goal = self._get_goal_internal(user_id, workspace_id, goal_id)
             
             update_data = goal_data.dict(exclude_unset=True)
             for field, value in update_data.items():
@@ -112,15 +145,35 @@ class GoalService:
             
         except GoalNotFoundError:
             raise
+        except GoalValidationError:
+            raise
         except Exception as e:
             self.db.rollback()
             logger.error(f"Error updating goal {goal_id} for user {user_id}: {str(e)}")
             raise GoalUpdateError(f"Failed to update goal: {str(e)}")
 
-    def update_goal_progress(self, user_id: int, goal_id: int, progress_data: GoalProgressUpdate) -> Goal:
+    def _get_goal_internal(self, user_id: int, workspace_id: UUID, goal_id: int) -> Goal:
+        """Get a specific goal by ID (internal, no authorization check)"""
+        goal = self.db.query(Goal).filter(
+            and_(
+                Goal.id == goal_id, 
+                Goal.user_id == user_id,
+                Goal.workspace_id == workspace_id
+            )
+        ).first()
+        
+        if not goal:
+            raise GoalNotFoundError(f"Goal {goal_id} not found for user {user_id}")
+        
+        return goal
+
+    def update_goal_progress(self, user_id: int, workspace_id: UUID, goal_id: int, progress_data: GoalProgressUpdate) -> Goal:
         """Update goal progress"""
         try:
-            goal = self.get_goal(user_id, goal_id)
+            # Authorize workspace access (member role required for updating)
+            self.authorize_workspace_access(workspace_id, user_id, "member", "update_goal_progress")
+            
+            goal = self._get_goal_internal(user_id, workspace_id, goal_id)
             
             goal.current_amount = progress_data.current_amount
             goal.update_progress()
@@ -133,15 +186,20 @@ class GoalService:
             
         except GoalNotFoundError:
             raise
+        except GoalValidationError:
+            raise
         except Exception as e:
             self.db.rollback()
             logger.error(f"Error updating progress for goal {goal_id}: {str(e)}")
             raise GoalProgressError(f"Failed to update goal progress: {str(e)}")
 
-    def delete_goal(self, user_id: int, goal_id: int) -> bool:
+    def delete_goal(self, user_id: int, workspace_id: UUID, goal_id: int) -> bool:
         """Delete a goal"""
         try:
-            goal = self.get_goal(user_id, goal_id)
+            # Authorize workspace access (member role required for deleting)
+            self.authorize_workspace_access(workspace_id, user_id, "member", "delete_goal")
+            
+            goal = self._get_goal_internal(user_id, workspace_id, goal_id)
             
             self.db.delete(goal)
             self.db.commit()
@@ -151,15 +209,23 @@ class GoalService:
             
         except GoalNotFoundError:
             raise
+        except GoalValidationError:
+            raise
         except Exception as e:
             self.db.rollback()
             logger.error(f"Error deleting goal {goal_id} for user {user_id}: {str(e)}")
             raise GoalDeletionError(f"Failed to delete goal: {str(e)}")
 
-    def get_goal_statistics(self, user_id: int) -> Dict[str, Any]:
+    def get_goal_statistics(self, user_id: int, workspace_id: UUID) -> Dict[str, Any]:
         """Get goal statistics for a user"""
         try:
-            goals = self.db.query(Goal).filter(Goal.user_id == user_id).all()
+            # Authorize workspace access (viewer role sufficient for reading stats)
+            self.authorize_workspace_access(workspace_id, user_id, "viewer", "get_goal_statistics")
+            
+            goals = self.db.query(Goal).filter(
+                Goal.user_id == user_id,
+                Goal.workspace_id == workspace_id
+            ).all()
             
             # Get user's base currency
             try:
@@ -241,16 +307,21 @@ class GoalService:
                 "goals_by_priority": goals_by_priority
             }
             
+        except GoalValidationError:
+            raise
         except Exception as e:
             logger.error(f"Error getting goal statistics for user {user_id}: {str(e)}")
             raise GoalStatisticsError(f"Failed to get goal statistics: {str(e)}")
 
     # Milestone methods
-    def create_milestone(self, user_id: int, goal_id: int, milestone_data: MilestoneCreate) -> Milestone:
+    def create_milestone(self, user_id: int, workspace_id: UUID, goal_id: int, milestone_data: MilestoneCreate) -> Milestone:
         """Create a milestone for a goal"""
         try:
+            # Authorize workspace access (member role required for creating)
+            self.authorize_workspace_access(workspace_id, user_id, "member", "create_milestone")
+            
             # Verify goal ownership
-            goal = self.get_goal(user_id, goal_id)
+            goal = self._get_goal_internal(user_id, workspace_id, goal_id)
             
             milestone = Milestone(
                 goal_id=goal_id,
@@ -266,16 +337,21 @@ class GoalService:
             
         except GoalNotFoundError:
             raise
+        except GoalValidationError:
+            raise
         except Exception as e:
             self.db.rollback()
             logger.error(f"Error creating milestone for goal {goal_id}: {str(e)}")
             raise MilestoneCreationError(f"Failed to create milestone: {str(e)}")
 
-    def get_milestones(self, user_id: int, goal_id: int) -> List[Milestone]:
+    def get_milestones(self, user_id: int, workspace_id: UUID, goal_id: int) -> List[Milestone]:
         """Get milestones for a goal"""
         try:
+            # Authorize workspace access (viewer role sufficient for reading)
+            self.authorize_workspace_access(workspace_id, user_id, "viewer", "get_milestones")
+            
             # Verify goal ownership
-            goal = self.get_goal(user_id, goal_id)
+            goal = self._get_goal_internal(user_id, workspace_id, goal_id)
             
             milestones = self.db.query(Milestone).filter(
                 Milestone.goal_id == goal_id
@@ -285,15 +361,20 @@ class GoalService:
             
         except GoalNotFoundError:
             raise
+        except GoalValidationError:
+            raise
         except Exception as e:
             logger.error(f"Error fetching milestones for goal {goal_id}: {str(e)}")
             raise MilestoneRetrievalError(f"Failed to fetch milestones: {str(e)}")
 
-    def update_milestone_progress(self, user_id: int, goal_id: int, milestone_id: int, progress_data: MilestoneProgressUpdate) -> Milestone:
+    def update_milestone_progress(self, user_id: int, workspace_id: UUID, goal_id: int, milestone_id: int, progress_data: MilestoneProgressUpdate) -> Milestone:
         """Update milestone progress"""
         try:
+            # Authorize workspace access (member role required for updating)
+            self.authorize_workspace_access(workspace_id, user_id, "member", "update_milestone_progress")
+            
             # Verify goal ownership
-            goal = self.get_goal(user_id, goal_id)
+            goal = self._get_goal_internal(user_id, workspace_id, goal_id)
             
             milestone = self.db.query(Milestone).filter(
                 and_(Milestone.id == milestone_id, Milestone.goal_id == goal_id)
@@ -312,6 +393,8 @@ class GoalService:
             return milestone
             
         except (GoalNotFoundError, MilestoneNotFoundError):
+            raise
+        except GoalValidationError:
             raise
         except Exception as e:
             self.db.rollback()

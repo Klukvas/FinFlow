@@ -212,6 +212,7 @@ services:
       SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
       USER_SERVICE_URL: "http://user_service:8000"
       CURRENCY_SERVICE_URL: "http://currency_service:8000"
+      WORKSPACE_SERVICE_URL: "http://workspace_service:8000"
     env_file:
       - ./goals_service/.env.docker
     depends_on:
@@ -220,6 +221,8 @@ services:
       user_service:
         condition: service_healthy
       currency_service:
+        condition: service_healthy
+      workspace_service:
         condition: service_healthy
     ports:
       - "8006:8000"

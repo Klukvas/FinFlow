@@ -152,10 +152,12 @@ services:
       - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
       - USER_SERVICE_URL=http://user_service:8000
       - CURRENCY_SERVICE_URL=http://currency_service:8000
+      - WORKSPACE_SERVICE_URL=http://workspace_service:8000
       - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122,https://finflow.ltd,http://finflow.ltd
     depends_on:
       - user_service
       - currency_service
+      - workspace_service
     restart: unless-stopped
     logging:
       driver: "json-file"

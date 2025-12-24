@@ -1,8 +1,10 @@
-from sqlalchemy import Column, Integer, String, DateTime, Float, Boolean, Text, Enum
+from sqlalchemy import Column, Integer, String, DateTime, Float, Boolean, Text, Enum, Index
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.database import Base
 import enum
+import uuid
 
 
 class GoalType(str, enum.Enum):
@@ -30,9 +32,14 @@ class GoalPriority(str, enum.Enum):
 
 class Goal(Base):
     __tablename__ = "goals"
+    __table_args__ = (
+        Index('idx_goals_workspace_id', 'workspace_id'),
+        Index('idx_goals_workspace_user', 'workspace_id', 'user_id'),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, nullable=False, index=True)
+    workspace_id = Column(UUID(as_uuid=True), nullable=False)
     
     # Basic goal information
     title = Column(String(255), nullable=False)
