@@ -2,7 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
-import { Account, Category, CategoryDetail, Expense, Income, Profile, Recurring, Goals, PdfParser, Debts, Workspaces, Home, About, Features, Pricing, Contact } from '@/pages';
+import { Account, Category, CategoryDetail, Expense, Income, Profile, Recurring, Goals, PdfParser, Debts, Workspaces, MyInvites, Home, About, Features, Pricing, Contact } from '@/pages';
 import { Layout } from './ui/layout/Layout';
 import { PublicLayout } from './ui/layout/PublicLayout';
 import { ProtectedRoute } from './ProtectedRoute';
@@ -139,6 +139,16 @@ export const AppRoutes: React.FC = () => {
             <ProtectedRoute>
               <Layout>
                 <Workspaces />
+              </Layout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/invites" 
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <MyInvites />
               </Layout>
             </ProtectedRoute>
           } 

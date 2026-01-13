@@ -19,9 +19,8 @@ def get_workspace_service(db: Session = Depends(get_db)) -> WorkspaceService:
 
 
 def get_invite_service(db: Session = Depends(get_db)) -> InviteService:
-    """Get invite service instance with workspace service dependency"""
-    workspace_service = WorkspaceService(db)
-    return InviteService(db, workspace_service)
+    """Get invite service instance"""
+    return InviteService(db)
 
 
 def get_current_user_id(

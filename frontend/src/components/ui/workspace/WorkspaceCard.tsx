@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Workspace } from '@/types';
-import { FaUsers, FaUser, FaCrown, FaArchive, FaEdit, FaSignOutAlt, FaTrash } from 'react-icons/fa';
+import { FaUsers, FaUser, FaCrown, FaArchive, FaEdit, FaSignOutAlt, FaUsersCog } from 'react-icons/fa';
 
 interface WorkspaceCardProps {
   workspace: Workspace;
@@ -10,6 +10,7 @@ interface WorkspaceCardProps {
   onEdit: (workspace: Workspace) => void;
   onArchive: (workspace: Workspace) => void;
   onLeave: (workspace: Workspace) => void;
+  onManageMembers?: (workspace: Workspace) => void;
 }
 
 export const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
@@ -19,27 +20,28 @@ export const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
   onEdit,
   onArchive,
   onLeave,
+  onManageMembers,
 }) => {
   const { t } = useTranslation();
 
   const isOwner = workspace.current_user_role === 'owner';
-  const isAdmin = workspace.current_user_role === 'admin';
-  const canEdit = isOwner || isAdmin;
+  const canEdit = isOwner; // Only owner can edit workspace settings
   const canLeave = !isOwner && workspace.type !== 'personal';
   const canArchive = isOwner && workspace.type !== 'personal';
+  const canManageMembers = workspace.type === 'shared'; // Can manage members for shared workspaces
 
   const getRoleBadge = () => {
-    const roleColors: Record<string, string> = {
-      owner: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
-      admin: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
-      member: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-      viewer: 'bg-gray-100 text-gray-800 dark:bg-gray-700/30 dark:text-gray-400',
+    const roleConfig: Record<string, { className: string; icon?: boolean }> = {
+      owner: { className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400', icon: true },
+      full: { className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' },
+      read: { className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' },
     };
 
-    const role = workspace.current_user_role || 'member';
+    const role = workspace.current_user_role || 'read';
+    const config = roleConfig[role] || roleConfig.read;
     return (
-      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${roleColors[role]}`}>
-        {role === 'owner' && <FaCrown className="inline w-3 h-3 mr-1" />}
+      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${config.className}`}>
+        {config.icon && <FaCrown className="inline w-3 h-3 mr-1" />}
         {t(`workspace.roles.${role}`, role)}
       </span>
     );
@@ -104,6 +106,16 @@ export const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
           <span className="flex-1 px-3 py-2 text-sm font-medium text-center theme-text-tertiary">
             {t('workspace.current', 'Current')}
           </span>
+        )}
+        
+        {canManageMembers && onManageMembers && (
+          <button
+            onClick={() => onManageMembers(workspace)}
+            className="p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-500 theme-transition"
+            title={t('workspace.manageMembers', 'Manage Members')}
+          >
+            <FaUsersCog className="w-4 h-4" />
+          </button>
         )}
         
         {canEdit && (

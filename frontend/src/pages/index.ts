@@ -9,6 +9,7 @@ import { Goals } from './Goals'
 import { PdfParser } from './PdfParser'
 import { Debts } from './Debts'
 import { Workspaces } from './Workspaces'
+import { MyInvites } from './MyInvites'
 import Login from "./auth/Login";
 import Register from "./auth/Register";
 import { Home } from './Home';
@@ -31,6 +32,7 @@ export {
   PdfParser,
   Debts,
   Workspaces,
+  MyInvites,
   Home,
   About,
   Features,

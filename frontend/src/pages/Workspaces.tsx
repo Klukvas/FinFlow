@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { setStoredWorkspaceId } from '@/utils/workspaceStorage';
 import { Workspace, WorkspaceCreate, WorkspaceUpdate } from '@/types';
-import { WorkspaceCard, WorkspaceForm } from '@/components/ui/workspace';
+import { WorkspaceCard, WorkspaceForm, WorkspaceMembers } from '@/components/ui/workspace';
 import { FaPlus, FaUsers, FaSpinner } from 'react-icons/fa';
 
 // Modal Component
@@ -104,6 +104,7 @@ export const Workspaces: React.FC = () => {
   const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null);
   const [archivingWorkspace, setArchivingWorkspace] = useState<Workspace | null>(null);
   const [leavingWorkspace, setLeavingWorkspace] = useState<Workspace | null>(null);
+  const [managingWorkspace, setManagingWorkspace] = useState<Workspace | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleCreateWorkspace = async (data: WorkspaceCreate | WorkspaceUpdate) => {
@@ -238,6 +239,7 @@ export const Workspaces: React.FC = () => {
               onEdit={setEditingWorkspace}
               onArchive={setArchivingWorkspace}
               onLeave={setLeavingWorkspace}
+              onManageMembers={setManagingWorkspace}
             />
           ))}
         </div>
@@ -299,6 +301,14 @@ export const Workspaces: React.FC = () => {
         confirmVariant="danger"
         isLoading={isSubmitting}
       />
+
+      {/* Manage Members Modal */}
+      {managingWorkspace && (
+        <WorkspaceMembers
+          workspace={managingWorkspace}
+          onClose={() => setManagingWorkspace(null)}
+        />
+      )}
     </div>
   );
 };

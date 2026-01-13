@@ -17,6 +17,7 @@ security = HTTPBearer()
 
 # Constants
 INTERNAL_USER_ID_PLACEHOLDER = 0  # Placeholder for internal service calls
+BEARER_PREFIX = "Bearer "
 
 def verify_internal_token(request: Request) -> None:
     """Verify internal service token for inter-service communication"""

@@ -7,6 +7,7 @@ from app.routers import (
     workspaces_router,
     members_router,
     invites_router,
+    my_invites_router,
     internal_router,
 )
 from app.exception_handlers import (
@@ -22,7 +23,9 @@ from app.exception_handlers import (
     invite_not_found_handler,
     invite_expired_handler,
     invite_already_used_handler,
-    invalid_invite_token_handler,
+    invite_not_actionable_handler,
+    invitee_not_found_handler,
+    self_invite_not_allowed_handler,
     personal_workspace_protected_handler,
     http_exception_handler,
 )
@@ -38,7 +41,9 @@ from app.exceptions import (
     InviteNotFoundError,
     InviteExpiredError,
     InviteAlreadyUsedError,
-    InvalidInviteTokenError,
+    InviteNotActionableError,
+    InviteeNotFoundError,
+    SelfInviteNotAllowedError,
     PersonalWorkspaceProtectedError,
 )
 from app.database import Base, engine
@@ -49,8 +54,9 @@ import uuid
 
 logger = get_logger(__name__)
 
-# Create database tables
-Base.metadata.create_all(bind=engine)
+# Create database tables (skip in test environment where engine is None)
+if engine is not None:
+    Base.metadata.create_all(bind=engine)
 
 
 # Request logging middleware
@@ -118,7 +124,9 @@ app.add_exception_handler(OwnerCannotLeaveError, owner_cannot_leave_handler)
 app.add_exception_handler(InviteNotFoundError, invite_not_found_handler)
 app.add_exception_handler(InviteExpiredError, invite_expired_handler)
 app.add_exception_handler(InviteAlreadyUsedError, invite_already_used_handler)
-app.add_exception_handler(InvalidInviteTokenError, invalid_invite_token_handler)
+app.add_exception_handler(InviteNotActionableError, invite_not_actionable_handler)
+app.add_exception_handler(InviteeNotFoundError, invitee_not_found_handler)
+app.add_exception_handler(SelfInviteNotAllowedError, self_invite_not_allowed_handler)
 app.add_exception_handler(PersonalWorkspaceProtectedError, personal_workspace_protected_handler)
 app.add_exception_handler(HTTPException, http_exception_handler)
 
@@ -129,6 +137,7 @@ app.add_middleware(RequestLoggingMiddleware)
 app.include_router(workspaces_router)
 app.include_router(members_router)
 app.include_router(invites_router)
+app.include_router(my_invites_router)
 app.include_router(internal_router)
 
 # Configure CORS

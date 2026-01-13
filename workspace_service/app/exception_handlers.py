@@ -14,7 +14,9 @@ from app.exceptions.workspace_errors import (
     InviteNotFoundError,
     InviteExpiredError,
     InviteAlreadyUsedError,
-    InvalidInviteTokenError,
+    InviteNotActionableError,
+    InviteeNotFoundError,
+    SelfInviteNotAllowedError,
     PersonalWorkspaceProtectedError,
     WorkspaceErrorCode,
 )
@@ -155,9 +157,27 @@ async def invite_already_used_handler(request: Request, exc: InviteAlreadyUsedEr
     )
 
 
-async def invalid_invite_token_handler(request: Request, exc: InvalidInviteTokenError):
-    """Handle invalid invite token errors"""
-    logger.warning(f"Invalid invite token: {exc.detail}")
+async def invite_not_actionable_handler(request: Request, exc: InviteNotActionableError):
+    """Handle invite not actionable errors (cannot accept/reject)"""
+    logger.info(f"Invite not actionable: {exc.detail}")
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"error": exc.detail, "errorCode": exc.error_code}
+    )
+
+
+async def invitee_not_found_handler(request: Request, exc: InviteeNotFoundError):
+    """Handle invitee not found errors (user email doesn't exist)"""
+    logger.info(f"Invitee not found: {exc.detail}")
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"error": exc.detail, "errorCode": exc.error_code}
+    )
+
+
+async def self_invite_not_allowed_handler(request: Request, exc: SelfInviteNotAllowedError):
+    """Handle self-invite errors"""
+    logger.warning(f"Self invite attempted: {exc.detail}")
     return JSONResponse(
         status_code=exc.status_code,
         content={"error": exc.detail, "errorCode": exc.error_code}

@@ -14,7 +14,8 @@ import {
   FaBullseye,
   FaFilePdf,
   FaWallet,
-  FaUsers
+  FaUsers,
+  FaEnvelope
 } from 'react-icons/fa';
 
 interface SidebarProps {
@@ -54,6 +55,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     { path: '/goals', icon: FaBullseye, label: t('navigation.goals') },
     { path: '/pdf-parser', icon: FaFilePdf, label: t('navigation.pdfParser') },
     { path: '/workspaces', icon: FaUsers, label: t('navigation.workspaces') },
+    { path: '/invites', icon: FaEnvelope, label: t('navigation.invites', 'Invitations') },
   ];
 
   const sidebarContent = (

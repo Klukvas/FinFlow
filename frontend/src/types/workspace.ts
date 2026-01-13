@@ -1,6 +1,10 @@
 export type WorkspaceType = 'personal' | 'shared';
 
-export type WorkspaceRole = 'owner' | 'admin' | 'member' | 'viewer';
+// Simplified roles: owner (manage), full (edit), read (view only)
+export type WorkspaceRole = 'owner' | 'full' | 'read';
+
+// Role that can be assigned to invites/members (not owner)
+export type AssignableRole = 'full' | 'read';
 
 export interface Workspace {
   id: string;
@@ -34,19 +38,17 @@ export interface WorkspaceMember {
   workspace_id: string;
   user_id: number;
   role: WorkspaceRole;
+  status: 'active' | 'left' | 'removed';
   joined_at: string;
-  invited_by: number | null;
-  username?: string;
-  email?: string;
-}
-
-export interface WorkspaceMemberCreate {
-  user_id: number;
-  role: WorkspaceRole;
+  created_at: string;
+  updated_at: string | null;
+  // User details (fetched from user service)
+  email?: string | null;
+  username?: string | null;
 }
 
 export interface WorkspaceMemberUpdate {
-  role: WorkspaceRole;
+  role: AssignableRole;
 }
 
 export interface WorkspaceMemberListResponse {
@@ -54,20 +56,51 @@ export interface WorkspaceMemberListResponse {
   total: number;
 }
 
+// Invite statuses
+export type InviteStatus = 'pending' | 'accepted' | 'rejected' | 'expired' | 'canceled';
+
+// Invite as seen by workspace owner
 export interface WorkspaceInvite {
-  id: number;
+  id: string;
   workspace_id: string;
-  email: string;
-  role: WorkspaceRole;
-  token: string;
+  inviter_user_id: number;
+  invitee_user_id: number;
+  invitee_email: string;
+  role: AssignableRole;
+  status: InviteStatus;
   expires_at: string;
-  used_at: string | null;
-  created_by: number;
   created_at: string;
+  responded_at: string | null;
+  is_expired: boolean;
+}
+
+// Rich invite response for invitee (includes workspace/inviter info)
+export interface MyInvite {
+  id: string;
+  workspace_id: string;
+  workspace_name: string;
+  inviter_user_id: number;
+  inviter_email: string;
+  inviter_username: string;
+  role: AssignableRole;
+  status: InviteStatus;
+  expires_at: string;
+  created_at: string;
+  is_expired: boolean;
+  is_actionable: boolean;
+}
+
+export interface MyInviteListResponse {
+  invites: MyInvite[];
+  total: number;
+}
+
+export interface WorkspaceInviteListResponse {
+  invites: WorkspaceInvite[];
+  total: number;
 }
 
 export interface WorkspaceInviteCreate {
   email: string;
-  role?: WorkspaceRole;
+  role?: AssignableRole;
 }
-

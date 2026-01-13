@@ -16,7 +16,9 @@ class WorkspaceServiceError(str, Enum):
     INVITE_NOT_FOUND = "Invite not found"
     INVITE_EXPIRED = "Invite has expired"
     INVITE_ALREADY_USED = "Invite has already been used"
-    INVALID_INVITE_TOKEN = "Invalid invite token"
+    INVITE_NOT_ACTIONABLE = "Invite cannot be accepted or rejected"
+    INVITEE_NOT_FOUND = "User with this email not found"
+    SELF_INVITE_NOT_ALLOWED = "Cannot invite yourself"
     VALIDATION_ERROR = "Validation error"
     PERSONAL_WORKSPACE_PROTECTED = "Personal workspace cannot be archived, deleted, or have its type changed"
 
@@ -33,7 +35,9 @@ class WorkspaceErrorCode(str, Enum):
     INVITE_NOT_FOUND = "INVITE_NOT_FOUND"
     INVITE_EXPIRED = "INVITE_EXPIRED"
     INVITE_ALREADY_USED = "INVITE_ALREADY_USED"
-    INVALID_INVITE_TOKEN = "INVALID_INVITE_TOKEN"
+    INVITE_NOT_ACTIONABLE = "INVITE_NOT_ACTIONABLE"
+    INVITEE_NOT_FOUND = "INVITEE_NOT_FOUND"
+    SELF_INVITE_NOT_ALLOWED = "SELF_INVITE_NOT_ALLOWED"
     VALIDATION_ERROR = "VALIDATION_ERROR"
     PERSONAL_WORKSPACE_PROTECTED = "PERSONAL_WORKSPACE_PROTECTED"
     INTERNAL_ERROR = "INTERNAL_ERROR"
@@ -148,15 +152,6 @@ class InviteAlreadyUsedError(HTTPException):
         self.error_code = WorkspaceErrorCode.INVITE_ALREADY_USED
 
 
-class InvalidInviteTokenError(HTTPException):
-    def __init__(self):
-        super().__init__(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid invite token"
-        )
-        self.error_code = WorkspaceErrorCode.INVALID_INVITE_TOKEN
-
-
 class PersonalWorkspaceProtectedError(HTTPException):
     def __init__(self, detail: str = "Personal workspace cannot be archived, deleted, or have its type changed"):
         super().__init__(
@@ -175,4 +170,34 @@ class WorkspaceLimitExceededError(HTTPException):
         self.error_code = WorkspaceErrorCode.WORKSPACE_LIMIT_EXCEEDED
         self.current_count = current_count
         self.limit = limit
+
+
+class InviteNotActionableError(HTTPException):
+    """Raised when trying to accept/reject an invite that is not pending or has expired"""
+    def __init__(self, detail: str = "This invite cannot be accepted or rejected"):
+        super().__init__(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=detail
+        )
+        self.error_code = WorkspaceErrorCode.INVITE_NOT_ACTIONABLE
+
+
+class InviteeNotFoundError(HTTPException):
+    """Raised when trying to invite a user that doesn't exist"""
+    def __init__(self, email: str):
+        super().__init__(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No user found with email: {email}"
+        )
+        self.error_code = WorkspaceErrorCode.INVITEE_NOT_FOUND
+
+
+class SelfInviteNotAllowedError(HTTPException):
+    """Raised when owner tries to invite themselves"""
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You cannot invite yourself to the workspace"
+        )
+        self.error_code = WorkspaceErrorCode.SELF_INVITE_NOT_ALLOWED
 

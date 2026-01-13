@@ -5,8 +5,13 @@ import {
   WorkspaceListResponse,
   WorkspaceMember,
   WorkspaceMemberListResponse,
+  WorkspaceMemberUpdate,
   WorkspaceInvite,
   WorkspaceInviteCreate,
+  WorkspaceInviteListResponse,
+  MyInvite,
+  MyInviteListResponse,
+  InviteStatus,
   ErrorResponse 
 } from '@/types';
 import { AuthHttpClient } from './AuthHttpClient';
@@ -69,38 +74,60 @@ export class WorkspaceApiClient {
     return this.httpClient.get<WorkspaceMemberListResponse>(`/workspaces/${workspaceId}/members`);
   }
 
-  async addMember(workspaceId: string, userId: number, role: string = 'member'): Promise<WorkspaceMember | ErrorResponse> {
-    return this.httpClient.post<WorkspaceMember>(`/workspaces/${workspaceId}/members`, { user_id: userId, role });
-  }
-
-  async updateMemberRole(workspaceId: string, userId: number, role: string): Promise<WorkspaceMember | ErrorResponse> {
-    return this.httpClient.patch<WorkspaceMember>(`/workspaces/${workspaceId}/members/${userId}`, { role });
+  async updateMemberRole(workspaceId: string, userId: number, data: WorkspaceMemberUpdate): Promise<WorkspaceMember | ErrorResponse> {
+    return this.httpClient.patch<WorkspaceMember>(`/workspaces/${workspaceId}/members/${userId}`, data);
   }
 
   async removeMember(workspaceId: string, userId: number): Promise<void | ErrorResponse> {
     return this.httpClient.delete<void>(`/workspaces/${workspaceId}/members/${userId}`);
   }
 
-  // ==================== Invites ====================
+  // ==================== Workspace Invites (Owner Operations) ====================
 
-  async getInvites(workspaceId: string): Promise<WorkspaceInvite[] | ErrorResponse> {
-    return this.httpClient.get<WorkspaceInvite[]>(`/workspaces/${workspaceId}/invites`);
+  /**
+   * Get pending invites for a workspace (owner only)
+   */
+  async getWorkspaceInvites(workspaceId: string, status?: InviteStatus): Promise<WorkspaceInviteListResponse | ErrorResponse> {
+    const params = status ? `?status=${status}` : '';
+    return this.httpClient.get<WorkspaceInviteListResponse>(`/workspaces/${workspaceId}/invites${params}`);
   }
 
+  /**
+   * Create an invite by email (owner only)
+   */
   async createInvite(workspaceId: string, data: WorkspaceInviteCreate): Promise<WorkspaceInvite | ErrorResponse> {
     return this.httpClient.post<WorkspaceInvite>(`/workspaces/${workspaceId}/invites`, data);
   }
 
-  async acceptInvite(token: string): Promise<WorkspaceMember | ErrorResponse> {
-    return this.httpClient.post<WorkspaceMember>(`/invites/${token}/accept`);
-  }
-
-  async declineInvite(token: string): Promise<void | ErrorResponse> {
-    return this.httpClient.post<void>(`/invites/${token}/decline`);
-  }
-
-  async revokeInvite(workspaceId: string, inviteId: number): Promise<void | ErrorResponse> {
+  /**
+   * Cancel a pending invite (owner only)
+   */
+  async cancelInvite(workspaceId: string, inviteId: string): Promise<void | ErrorResponse> {
     return this.httpClient.delete<void>(`/workspaces/${workspaceId}/invites/${inviteId}`);
   }
-}
 
+  // ==================== My Invites (Invitee Operations) ====================
+
+  /**
+   * Get all incoming invites for current user
+   * @param includeAll - If true, includes non-pending invites (accepted, rejected, expired)
+   */
+  async getMyInvites(includeAll: boolean = false): Promise<MyInviteListResponse | ErrorResponse> {
+    const params = includeAll ? '?include_all=true' : '';
+    return this.httpClient.get<MyInviteListResponse>(`/me/invites${params}`);
+  }
+
+  /**
+   * Accept an invite
+   */
+  async acceptInvite(inviteId: string): Promise<WorkspaceInvite | ErrorResponse> {
+    return this.httpClient.post<WorkspaceInvite>(`/me/invites/${inviteId}:accept`);
+  }
+
+  /**
+   * Reject an invite
+   */
+  async rejectInvite(inviteId: string): Promise<void | ErrorResponse> {
+    return this.httpClient.post<void>(`/me/invites/${inviteId}:reject`);
+  }
+}

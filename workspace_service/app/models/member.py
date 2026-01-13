@@ -7,10 +7,15 @@ import enum
 
 
 class MemberRole(str, enum.Enum):
+    """
+    Workspace member roles:
+    - OWNER: Full control + member management (invite/remove/change roles)
+    - FULL: Full data access (view + create/update/delete workspace data)
+    - READ: Read-only access (view workspace data)
+    """
     OWNER = "owner"
-    ADMIN = "admin"
-    MEMBER = "member"
-    VIEWER = "viewer"
+    FULL = "full"
+    READ = "read"
 
 
 class MemberStatus(str, enum.Enum):
@@ -25,7 +30,7 @@ class WorkspaceMember(Base):
     id = Column(Integer, primary_key=True, index=True)
     workspace_id = Column(UUID(as_uuid=True), ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False)
     user_id = Column(Integer, nullable=False, index=True)
-    role = Column(Enum(MemberRole, native_enum=False, length=50), nullable=False, default=MemberRole.MEMBER)
+    role = Column(Enum(MemberRole, native_enum=False, length=50), nullable=False, default=MemberRole.READ)
     status = Column(Enum(MemberStatus, native_enum=False, length=50), nullable=False, default=MemberStatus.ACTIVE)
     
     # Timestamps
@@ -47,19 +52,24 @@ class WorkspaceMember(Base):
         """Check if member is active"""
         return self.status == MemberStatus.ACTIVE
 
+    @property
+    def is_owner(self) -> bool:
+        """Check if member is the workspace owner"""
+        return self.role == MemberRole.OWNER and self.is_active
+
     def can_manage_members(self) -> bool:
-        """Check if member can manage other members"""
-        return self.role in (MemberRole.OWNER, MemberRole.ADMIN) and self.is_active
+        """Check if member can manage other members (owner only)"""
+        return self.role == MemberRole.OWNER and self.is_active
 
     def can_invite(self) -> bool:
-        """Check if member can send invites"""
-        return self.role in (MemberRole.OWNER, MemberRole.ADMIN) and self.is_active
+        """Check if member can send invites (owner only)"""
+        return self.role == MemberRole.OWNER and self.is_active
 
     def can_write(self) -> bool:
-        """Check if member has write access"""
-        return self.role in (MemberRole.OWNER, MemberRole.ADMIN, MemberRole.MEMBER) and self.is_active
+        """Check if member has write access (owner or full)"""
+        return self.role in (MemberRole.OWNER, MemberRole.FULL) and self.is_active
 
     def can_read(self) -> bool:
-        """Check if member has read access"""
+        """Check if member has read access (any active member)"""
         return self.is_active
 

@@ -11,6 +11,7 @@ from app.exceptions import (
     CategoryNameConflictError
 )
 from app.utils.logger import get_logger
+from app.config import settings
 import json
 import traceback
 
@@ -214,6 +215,6 @@ async def general_exception_handler(request: Request, exc: Exception):
         content={
             "error": "Internal server error",
             "errorCode": "INTERNAL_SERVER_ERROR",
-            "message": str(exc) if logger.level == "DEBUG" else "An unexpected error occurred"
+            "message": str(exc) if settings.LOG_LEVEL == "DEBUG" else "An unexpected error occurred"
         }
     )
