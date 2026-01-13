@@ -16,14 +16,19 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onMenuClick, title, isMobi
       isMobile ? 'lg:hidden' : 'hidden lg:block'
     }`} data-testid={isMobile ? "mobile-header" : "desktop-header"}>
       <div className="flex items-center justify-between px-4 py-3">
-        <button
-          onClick={onMenuClick}
-          data-testid={isMobile ? "mobile-menu-toggle" : "sidebar-toggle"}
-          className="p-2 rounded-md hover:theme-accent-hover theme-transition"
-          aria-label={isMobile ? "Открыть меню" : "Переключить сайдбар"}
-        >
-          <FaBars className="w-5 h-5" />
-        </button>
+        {/* Mobile: show burger menu, Desktop: just spacing */}
+        {isMobile ? (
+          <button
+            onClick={onMenuClick}
+            data-testid="mobile-menu-toggle"
+            className="p-2 rounded-md hover:theme-accent-hover theme-transition"
+            aria-label="Открыть меню"
+          >
+            <FaBars className="w-5 h-5" />
+          </button>
+        ) : (
+          <div className="w-9" /> // Spacer for alignment
+        )}
         
         <h1 className="text-lg font-semibold truncate" data-testid="app-title">{title}</h1>
         
