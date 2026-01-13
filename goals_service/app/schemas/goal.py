@@ -1,6 +1,6 @@
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, validator, field_validator
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, date
 from uuid import UUID
 from app.models.goal import GoalType, GoalStatus, GoalPriority
 
@@ -14,6 +14,31 @@ class GoalBase(BaseModel):
     currency: str = Field(default="USD", max_length=3)
     target_date: Optional[datetime] = None
     is_milestone_based: bool = False
+
+    @field_validator('target_date', mode='before')
+    @classmethod
+    def parse_target_date(cls, v):
+        """Accept both date and datetime formats"""
+        if v is None:
+            return v
+        if isinstance(v, datetime):
+            return v
+        if isinstance(v, date):
+            return datetime.combine(v, datetime.min.time())
+        if isinstance(v, str):
+            # Try date-only format first (YYYY-MM-DD)
+            if len(v) == 10 and '-' in v:
+                try:
+                    return datetime.strptime(v, '%Y-%m-%d')
+                except ValueError:
+                    pass
+            # Try datetime format
+            for fmt in ['%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S.%f']:
+                try:
+                    return datetime.strptime(v, fmt)
+                except ValueError:
+                    continue
+        return v  # Let Pydantic handle validation error
 
     @validator('target_amount')
     def validate_target_amount(cls, v):
@@ -36,6 +61,29 @@ class GoalUpdate(BaseModel):
     target_date: Optional[datetime] = None
     status: Optional[GoalStatus] = None
     is_milestone_based: Optional[bool] = None
+
+    @field_validator('target_date', mode='before')
+    @classmethod
+    def parse_target_date(cls, v):
+        """Accept both date and datetime formats"""
+        if v is None:
+            return v
+        if isinstance(v, datetime):
+            return v
+        if isinstance(v, date):
+            return datetime.combine(v, datetime.min.time())
+        if isinstance(v, str):
+            if len(v) == 10 and '-' in v:
+                try:
+                    return datetime.strptime(v, '%Y-%m-%d')
+                except ValueError:
+                    pass
+            for fmt in ['%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S.%f']:
+                try:
+                    return datetime.strptime(v, fmt)
+                except ValueError:
+                    continue
+        return v
 
     @validator('target_amount')
     def validate_target_amount(cls, v):
