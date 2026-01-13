@@ -15,15 +15,18 @@ import {
   FaFilePdf,
   FaWallet,
   FaUsers,
-  FaEnvelope
+  FaEnvelope,
+  FaChevronLeft,
+  FaChevronRight
 } from 'react-icons/fa';
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  onToggle?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onToggle }) => {
   const { logout, user, isLoading } = useAuth();
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(false);
@@ -58,28 +61,43 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     { path: '/invites', icon: FaEnvelope, label: t('navigation.invites', 'Invitations') },
   ];
 
-  const sidebarContent = (
+  // Render sidebar content with expanded/collapsed state
+  const renderSidebarContent = (expanded: boolean) => (
     <div data-testid="sidebar" className="flex flex-col h-full theme-surface theme-shadow theme-transition">
       {/* Header */}
-      <div className="flex-shrink-0 flex items-center justify-between p-4 theme-border border-b">
-        <h1 className="text-lg font-bold theme-text-primary">{t('header.appTitle')}</h1>
-        {isMobile && (
+      <div className={`flex-shrink-0 flex items-center ${expanded ? 'justify-between' : 'justify-center'} p-4 theme-border border-b`}>
+        {expanded && <h1 className="text-lg font-bold theme-text-primary">{t('header.appTitle')}</h1>}
+        {isMobile ? (
           <button
             onClick={onClose}
             className="p-2 rounded-md hover:theme-surface-hover theme-transition"
           >
             <FaTimes className="w-5 h-5 theme-text-primary" />
           </button>
+        ) : onToggle && (
+          <button
+            onClick={onToggle}
+            className="p-2 rounded-md hover:theme-surface-hover theme-transition"
+            aria-label={expanded ? "Свернуть сайдбар" : "Развернуть сайдбар"}
+          >
+            {expanded ? (
+              <FaChevronLeft className="w-4 h-4 theme-text-secondary" />
+            ) : (
+              <FaChevronRight className="w-4 h-4 theme-text-secondary" />
+            )}
+          </button>
         )}
       </div>
 
       {/* Workspace Selector */}
-      <div className="flex-shrink-0 px-4 py-3 theme-border border-b">
-        <WorkspaceSelector compact />
-      </div>
+      {expanded && (
+        <div className="flex-shrink-0 px-4 py-3 theme-border border-b">
+          <WorkspaceSelector compact />
+        </div>
+      )}
 
       {/* Navigation - scrollable if needed */}
-      <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-2">
+      <nav className={`flex-1 overflow-y-auto ${expanded ? 'px-4' : 'px-2'} py-6 space-y-2`}>
         {navigationItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
@@ -90,48 +108,52 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               to={item.path}
               data-testid={`sidebar-${item.path.split('/')[1]}-link`}
               onClick={isMobile ? onClose : undefined}
-              className={`flex items-center px-4 py-3 rounded-lg theme-transition ${
+              title={!expanded ? item.label : undefined}
+              className={`flex items-center ${expanded ? 'px-4' : 'justify-center px-2'} py-3 rounded-lg theme-transition ${
                 isActive
                   ? 'theme-accent-light theme-accent font-medium'
                   : 'theme-text-secondary hover:theme-surface-hover hover:theme-text-primary'
               }`}
             >
-              <Icon className="w-5 h-5 mr-3" />
-              <span className="text-sm">{item.label}</span>
+              <Icon className={`w-5 h-5 ${expanded ? 'mr-3' : ''}`} />
+              {expanded && <span className="text-sm">{item.label}</span>}
             </Link>
           );
         })}
       </nav>
 
       {/* User Section - always at bottom */}
-      <div className="flex-shrink-0 p-4 theme-border border-t" data-testid="user-profile-button-sidebar">
+      <div className={`flex-shrink-0 ${expanded ? 'p-4' : 'p-2'} theme-border border-t`} data-testid="user-profile-button-sidebar">
         <Link
           data-testid="sidebar-profile-link"
           to="/profile"
           onClick={isMobile ? onClose : undefined}
-          className="flex items-center mb-4 hover:theme-surface-hover rounded-lg p-2 -m-2 theme-transition group cursor-pointer"
-          title="Перейти к профилю"
+          className={`flex items-center ${expanded ? 'mb-4' : 'mb-2 justify-center'} hover:theme-surface-hover rounded-lg p-2 ${expanded ? '-m-2' : ''} theme-transition group cursor-pointer`}
+          title={expanded ? "Перейти к профилю" : user?.username || t('header.user')}
         >
           <div className="w-8 h-8 theme-accent-light rounded-full flex items-center justify-center group-hover:theme-accent-hover theme-transition">
             <FaUser className="w-4 h-4 theme-accent" />
           </div>
-          <div className="ml-3">
-            <p className="text-sm font-medium theme-text-primary group-hover:theme-text-secondary" data-testid="user-name">
-              {isLoading ? t('common.loading') : user?.username || t('header.user')}
-            </p>
-            <p className="text-xs theme-text-tertiary" data-testid="user-email">
-              {user?.email || t('navigation.profile')}
-            </p>
-          </div>
+          {expanded && (
+            <div className="ml-3">
+              <p className="text-sm font-medium theme-text-primary group-hover:theme-text-secondary" data-testid="user-name">
+                {isLoading ? t('common.loading') : user?.username || t('header.user')}
+              </p>
+              <p className="text-xs theme-text-tertiary" data-testid="user-email">
+                {user?.email || t('navigation.profile')}
+              </p>
+            </div>
+          )}
         </Link>
         
         <button
           data-testid="logout-button"
           onClick={handleLogout}
-          className="w-full flex items-center px-4 py-2 text-sm theme-error hover:theme-error-light rounded-lg theme-transition"
+          title={!expanded ? t('navigation.logout') : undefined}
+          className={`w-full flex items-center ${expanded ? 'px-4' : 'justify-center px-2'} py-2 text-sm theme-error hover:theme-error-light rounded-lg theme-transition`}
         >
-          <FaSignOutAlt className="w-4 h-4 mr-3" />
-          {t('navigation.logout')}
+          <FaSignOutAlt className={`w-4 h-4 ${expanded ? 'mr-3' : ''}`} />
+          {expanded && t('navigation.logout')}
         </button>
       </div>
     </div>
@@ -148,24 +170,25 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           />
         )}
         
-        {/* Mobile Sidebar */}
+        {/* Mobile Sidebar - always expanded when open */}
         <div
           className={`fixed top-0 left-0 h-full w-64 z-50 transform transition-transform duration-300 ease-in-out ${
             isOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
         >
-          {sidebarContent}
+          {renderSidebarContent(true)}
         </div>
       </>
     );
   }
 
   // Desktop Sidebar - Collapsible & Sticky (full height)
+  // When collapsed: show only icons (w-16), when expanded: full width (w-64)
   return (
     <div className={`sticky top-0 h-screen theme-surface theme-shadow theme-border border-r theme-transition transition-all duration-300 ${
-      isOpen ? 'w-64' : 'w-0 overflow-hidden'
+      isOpen ? 'w-64' : 'w-16'
     }`}>
-      {isOpen && sidebarContent}
+      {renderSidebarContent(isOpen)}
     </div>
   );
 };

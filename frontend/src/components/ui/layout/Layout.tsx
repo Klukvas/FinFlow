@@ -77,7 +77,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       
       <div className="flex min-h-screen relative" style={{ zIndex: 10 }}>
         {/* Sidebar - Full height, starts from top */}
-        <Sidebar isOpen={sidebarOpen} onClose={handleSidebarClose} />
+        <Sidebar isOpen={sidebarOpen} onClose={handleSidebarClose} onToggle={handleSidebarToggle} />
 
         {/* Main Content Area with Header */}
         <div className="flex-1 flex flex-col min-h-screen">
