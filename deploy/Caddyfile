@@ -73,11 +73,15 @@ finflow.ltd {
     reverse_proxy subscription_service:8080
   }
 
-  handle_path /api/workspaces/* {
+  # Workspaces API - strip only /api, keep /workspaces path
+  handle /api/workspaces* {
+    uri strip_prefix /api
     reverse_proxy workspace_service:8000
   }
 
-  handle_path /api/invites/* {
+  # My invites API - strip only /api, keep /me/invites path
+  handle /api/me/invites* {
+    uri strip_prefix /api
     reverse_proxy workspace_service:8000
   }
 
