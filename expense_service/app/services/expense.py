@@ -3,6 +3,7 @@ from sqlalchemy.exc import IntegrityError
 from typing import List, Optional
 from datetime import date, datetime
 from decimal import Decimal, ROUND_HALF_UP
+from uuid import UUID
 
 from app.models.expense import Expense
 from app.schemas.expense import ExpenseCreate, ExpenseUpdate, CategoryExpenseStatistics, ExpensesByCategoryResponse
@@ -11,6 +12,7 @@ from app.clients.account_service_client import AccountServiceClient
 from app.clients.currency_service_client import CurrencyServiceClient
 from app.clients.user_service_client import UserServiceClient
 from app.clients.subscription import SubscriptionClient
+from app.services.workspace_authorization import WorkspaceAuthorizationMixin
 from app.exceptions import (
     ErrorCode,
     ExpenseNotFoundError,
@@ -24,8 +26,9 @@ from app.exceptions import (
 from app.utils.logger import get_logger, log_operation, log_security_event
 from app.config import settings
 
-class ExpenseService:
+class ExpenseService(WorkspaceAuthorizationMixin):
     def __init__(self, db: Session, category_client: CategoryServiceClient, account_client: AccountServiceClient):
+        super().__init__()  # Initialize WorkspaceAuthorizationMixin
         self.db = db
         self.category_client = category_client
         self.account_client = account_client
@@ -34,11 +37,12 @@ class ExpenseService:
         self.logger = get_logger(__name__)
         self.subscription_client = SubscriptionClient()
 
-    def _validate_expense_ownership(self, expense_id: int, user_id: int) -> Expense:
-        """Validate that expense exists and belongs to user"""
+    def _validate_expense_ownership(self, expense_id: int, user_id: int, workspace_id: UUID) -> Expense:
+        """Validate that expense exists and belongs to user and workspace"""
         expense = self.db.query(Expense).filter(
             Expense.id == expense_id,
-            Expense.user_id == user_id
+            Expense.user_id == user_id,
+            Expense.workspace_id == workspace_id
         ).first()
         if not expense:
             raise ExpenseNotFoundError(expense_id)
@@ -85,10 +89,10 @@ class ExpenseService:
         
         return expense_date
 
-    def _validate_category(self, category_id: Optional[int], user_id: int) -> dict:
-        """Validate category exists and belongs to user"""
+    def _validate_category(self, category_id: Optional[int], user_id: int, workspace_id: UUID) -> dict:
+        """Validate category exists and belongs to user in the workspace"""
         try:
-            return self.category_client.validate_category(category_id, user_id)
+            return self.category_client.validate_category(category_id, user_id, workspace_id)
         except Exception as e:
             self.logger.error(f"Category validation failed: {e}")
             raise ExternalServiceError("category_service", str(e), ErrorCode.CATEGORY_VALIDATION_FAILED)
@@ -155,9 +159,12 @@ class ExpenseService:
                 {"original_error": str(e)}
             )
 
-    def create(self, data: ExpenseCreate, user_id: int) -> Expense:
+    def create(self, data: ExpenseCreate, user_id: int, workspace_id: UUID) -> Expense:
         """Create a new expense with proper validation and transaction management"""
         try:
+            # 1. Authorize workspace access (member role required for create)
+            self.authorize_workspace_access(workspace_id, user_id, "member", "create_expense")
+            
             # Check subscription limits before creating
             current_count = self.db.query(Expense).filter(Expense.user_id == user_id).count()
             if not self.subscription_client.check_expense_limit(user_id, current_count):
@@ -179,7 +186,7 @@ class ExpenseService:
             self.logger.info(f"Category ID received: {data.category_id} (type: {type(data.category_id)})")
             if data.category_id is not None and data.category_id > 0:
                 self.logger.info(f"Validating category: {data.category_id}")
-                self._validate_category(data.category_id, user_id)
+                self._validate_category(data.category_id, user_id, workspace_id)
             else:
                 self.logger.info("Skipping category validation - category_id is None, 0, or invalid")
             
@@ -222,7 +229,8 @@ class ExpenseService:
                 account_id=data.account_id,
                 currency=data.currency or "USD",  # Default to USD if None
                 date=validated_date,
-                user_id=user_id
+                user_id=user_id,
+                workspace_id=workspace_id
             )
 
             try:
@@ -262,10 +270,16 @@ class ExpenseService:
                 {"original_error": str(e)}
             )
 
-    def get_all(self, user_id: int) -> List[Expense]:
-        """Get all expenses for the user"""
+    def get_all(self, user_id: int, workspace_id: UUID) -> List[Expense]:
+        """Get all expenses for the user in the workspace"""
         try:
-            return self.db.query(Expense).filter(Expense.user_id == user_id).order_by(Expense.date.desc()).all()
+            # 1. Authorize workspace access (viewer role required for read)
+            self.authorize_workspace_access(workspace_id, user_id, "viewer", "list_expenses")
+            
+            # 2. Filter by workspace
+            return self.db.query(Expense).filter(
+                Expense.workspace_id == workspace_id
+            ).order_by(Expense.date.desc()).all()
         except Exception as e:
             self.logger.error(f"Error retrieving expenses: {e}")
             raise ExpenseValidationError(
@@ -274,18 +288,21 @@ class ExpenseService:
                 {"original_error": str(e)}
             )
 
-    def get_all_paginated(self, user_id: int, page: int = 1, size: int = 50) -> tuple[List[Expense], int]:
-        """Get paginated expenses for the user"""
+    def get_all_paginated(self, user_id: int, workspace_id: UUID, page: int = 1, size: int = 50) -> tuple[List[Expense], int]:
+        """Get paginated expenses for the user in the workspace"""
         try:
+            # 1. Authorize workspace access (viewer role required for read)
+            self.authorize_workspace_access(workspace_id, user_id, "viewer", "list_expenses_paginated")
+            
             # Calculate offset
             offset = (page - 1) * size
             
-            # Get total count
-            total = self.db.query(Expense).filter(Expense.user_id == user_id).count()
+            # 2. Get total count filtered by workspace
+            total = self.db.query(Expense).filter(Expense.workspace_id == workspace_id).count()
             
-            # Get paginated results
+            # 3. Get paginated results filtered by workspace
             expenses = self.db.query(Expense).filter(
-                Expense.user_id == user_id
+                Expense.workspace_id == workspace_id
             ).order_by(Expense.date.desc()).offset(offset).limit(size).all()
             
             return expenses, total
@@ -297,14 +314,22 @@ class ExpenseService:
                 {"original_error": str(e)}
             )
 
-    def get(self, expense_id: int, user_id: int) -> Expense:
+    def get(self, expense_id: int, user_id: int, workspace_id: UUID) -> Expense:
         """Get a specific expense by ID"""
-        return self._validate_expense_ownership(expense_id, user_id)
+        # 1. Authorize workspace access (viewer role required for read)
+        self.authorize_workspace_access(workspace_id, user_id, "viewer", "get_expense")
+        
+        # 2. Get and validate expense belongs to workspace
+        return self._validate_expense_ownership(expense_id, user_id, workspace_id)
 
-    def update(self, expense_id: int, data: ExpenseUpdate, user_id: int) -> Expense:
+    def update(self, expense_id: int, data: ExpenseUpdate, user_id: int, workspace_id: UUID) -> Expense:
         """Update an existing expense with proper validation and transaction management"""
         try:
-            expense = self._validate_expense_ownership(expense_id, user_id)
+            # 1. Authorize workspace access (member role required for update)
+            self.authorize_workspace_access(workspace_id, user_id, "member", "update_expense")
+            
+            # 2. Get and validate expense belongs to workspace
+            expense = self._validate_expense_ownership(expense_id, user_id, workspace_id)
             
             # Track changes for logging
             changes = []
@@ -333,7 +358,7 @@ class ExpenseService:
             # Validate and update category if provided and valid
             if data.category_id is not None and data.category_id > 0:
                 old_category = expense.category_id
-                self._validate_category(data.category_id, user_id)
+                self._validate_category(data.category_id, user_id, workspace_id)
                 expense.category_id = data.category_id
                 changes.append(f"Category: {old_category} -> {data.category_id}")
             elif data.category_id is not None and data.category_id == 0:
@@ -391,10 +416,14 @@ class ExpenseService:
                 {"original_error": str(e)}
             )
 
-    def delete(self, expense_id: int, user_id: int) -> dict:
+    def delete(self, expense_id: int, user_id: int, workspace_id: UUID) -> dict:
         """Delete an expense with proper validation and transaction management"""
         try:
-            expense = self._validate_expense_ownership(expense_id, user_id)
+            # 1. Authorize workspace access (member role required for delete)
+            self.authorize_workspace_access(workspace_id, user_id, "member", "delete_expense")
+            
+            # 2. Get and validate expense belongs to workspace
+            expense = self._validate_expense_ownership(expense_id, user_id, workspace_id)
             
             amount = expense.amount
             category_id = expense.category_id
@@ -430,15 +459,18 @@ class ExpenseService:
                 {"original_error": str(e)}
             )
 
-    def get_by_category(self, category_id: int, user_id: int) -> ExpensesByCategoryResponse:
+    def get_by_category(self, category_id: int, user_id: int, workspace_id: UUID) -> ExpensesByCategoryResponse:
         """Get all expenses for a specific category with statistics"""
         try:
-            # First validate the category belongs to the user
-            self._validate_category(category_id, user_id)
+            # 1. Authorize workspace access (viewer role required for read)
+            self.authorize_workspace_access(workspace_id, user_id, "viewer", "get_expenses_by_category")
             
-            # Get all expenses for this category
+            # 2. Validate the category belongs to the user in the workspace
+            self._validate_category(category_id, user_id, workspace_id)
+            
+            # 3. Get all expenses for this category filtered by workspace
             expenses = self.db.query(Expense).filter(
-                Expense.user_id == user_id,
+                Expense.workspace_id == workspace_id,
                 Expense.category_id == category_id
             ).order_by(Expense.date.desc()).all()
             
@@ -495,9 +527,12 @@ class ExpenseService:
                 {"original_error": str(e), "category_id": category_id}
             )
 
-    def get_by_date_range(self, start_date: date, end_date: date, user_id: int) -> List[Expense]:
+    def get_by_date_range(self, start_date: date, end_date: date, user_id: int, workspace_id: UUID) -> List[Expense]:
         """Get expenses within a date range"""
         try:
+            # 1. Authorize workspace access (viewer role required for read)
+            self.authorize_workspace_access(workspace_id, user_id, "viewer", "get_expenses_by_date_range")
+            
             if start_date > end_date:
                 raise ExpenseValidationError(
                     "Start date cannot be after end date",
@@ -505,8 +540,9 @@ class ExpenseService:
                     {"start_date": str(start_date), "end_date": str(end_date)}
                 )
             
+            # 2. Filter by workspace
             return self.db.query(Expense).filter(
-                Expense.user_id == user_id,
+                Expense.workspace_id == workspace_id,
                 Expense.date >= start_date,
                 Expense.date <= end_date
             ).order_by(Expense.date.desc()).all()

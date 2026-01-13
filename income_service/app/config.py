@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     CATEGORY_SERVICE_URL: str = "http://category_service:8000"
     ACCOUNT_SERVICE_URL: str = "http://account_service:8000"
     CURRENCY_SERVICE_URL: str = "http://currency_service:8000"
+    WORKSPACE_SERVICE_URL: str = "http://workspace_service:8000"
     INTERNAL_SECRET_TOKEN: str
     SUBSCRIPTION_SERVICE_URL: str = "http://subscription_service:8080"
     

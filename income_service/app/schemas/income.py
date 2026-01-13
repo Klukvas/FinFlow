@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, validator
 from typing import Optional, List
 from datetime import datetime, date
+from uuid import UUID
 
 class IncomeBase(BaseModel):
     amount: float = Field(..., gt=0, description="Income amount (must be greater than 0)")
@@ -27,6 +28,7 @@ class IncomeOut(IncomeBase):
     """Schema for income output"""
     id: int
     user_id: int
+    workspace_id: UUID
     date: datetime  # Override the string type from IncomeBase to datetime
     created_at: datetime
     updated_at: datetime

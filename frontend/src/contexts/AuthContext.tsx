@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { UserApiClient } from '@/services/api/userApiClient';
 import { config } from '@/config/env';
+import { clearStoredWorkspaceId } from '@/utils/workspaceStorage';
 
 interface User {
   id: number;
@@ -106,6 +107,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
+    clearStoredWorkspaceId(); // Clear workspace on logout
     
     if (config.debug) {
       // Logged out successfully

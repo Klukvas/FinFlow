@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { useApiClients } from '@/hooks/useApiClients';
 import { useAuth } from '@/contexts/AuthContext';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { Category, CategoryListResponse } from '@/types';
 
 interface CategoriesContextType {
@@ -26,13 +27,14 @@ interface CategoriesProviderProps {
 export const CategoriesProvider: React.FC<CategoriesProviderProps> = ({ children }) => {
   const { category } = useApiClients();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { currentWorkspaceId, isLoading: workspaceLoading } = useWorkspace();
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchCategories = useCallback(async () => {
-    // Don't fetch if not authenticated or auth is still loading
-    if (!isAuthenticated || authLoading) {
+    // Don't fetch if not authenticated, auth is still loading, or workspace is not selected
+    if (!isAuthenticated || authLoading || workspaceLoading || !currentWorkspaceId) {
       return;
     }
 
@@ -62,7 +64,7 @@ export const CategoriesProvider: React.FC<CategoriesProviderProps> = ({ children
     } finally {
       setIsLoading(false);
     }
-  }, [category, isAuthenticated, authLoading]);
+  }, [category, isAuthenticated, authLoading, workspaceLoading, currentWorkspaceId]);
 
   const refreshCategories = useCallback(async () => {
     await fetchCategories();

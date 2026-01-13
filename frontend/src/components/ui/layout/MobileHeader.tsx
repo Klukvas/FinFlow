@@ -2,6 +2,7 @@ import React from 'react';
 import { FaBars } from 'react-icons/fa';
 import { ThemeToggle } from '../shared/ThemeToggle';
 import { LanguageSelector } from '../shared/LanguageSelector';
+import { WorkspaceSelector } from '../workspace/WorkspaceSelector';
 
 interface AppHeaderProps {
   onMenuClick: () => void;
@@ -27,6 +28,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onMenuClick, title, isMobi
         <h1 className="text-lg font-semibold truncate" data-testid="app-title">{title}</h1>
         
         <div className="flex items-center space-x-2">
+          <WorkspaceSelector compact />
           <LanguageSelector />
           <ThemeToggle className="theme-surface theme-text-primary" />
         </div>

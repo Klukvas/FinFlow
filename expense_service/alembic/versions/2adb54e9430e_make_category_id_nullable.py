@@ -1,7 +1,7 @@
 """make_category_id_nullable
 
 Revision ID: 2adb54e9430e
-Revises: c8ce19e9fd1b
+Revises: 009
 Create Date: 2025-10-02 01:24:55.273283
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = '2adb54e9430e'
-down_revision: Union[str, None] = 'c8ce19e9fd1b'
+down_revision: Union[str, None] = '009'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

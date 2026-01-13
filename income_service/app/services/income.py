@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_, func, desc
 from typing import List, Optional
 from datetime import datetime, date
+from uuid import UUID
 from app.models.income import Income
 from app.schemas.income import IncomeCreate, IncomeUpdate, IncomeOut, IncomeSummary, IncomeStats, CategoryIncomeStatistics, IncomesByCategoryResponse
 from app.exceptions import (
@@ -18,24 +19,26 @@ from app.clients.category_service_client import CategoryServiceClient
 from app.clients.account_service_client import AccountServiceClient
 from app.clients.currency_service_client import CurrencyServiceClient
 from app.clients.subscription import SubscriptionClient
+from app.services.workspace_authorization import WorkspaceAuthorizationMixin
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-class IncomeService:
+class IncomeService(WorkspaceAuthorizationMixin):
     """Service for managing incomes"""
     
     def __init__(self, db: Session, account_client: AccountServiceClient = None):
+        super().__init__()  # Initialize WorkspaceAuthorizationMixin
         self.db = db
         self.category_client = CategoryServiceClient()
         self.account_client = account_client or AccountServiceClient()
         self.currency_client = CurrencyServiceClient()
         self.subscription_client = SubscriptionClient()
     
-    async def _validate_category(self, category_id: int, user_id: int) -> dict:
-        """Validate category exists and belongs to user"""
+    async def _validate_category(self, category_id: int, user_id: int, workspace_id: UUID) -> dict:
+        """Validate category exists and belongs to user in the workspace"""
         try:
-            return await self.category_client.validate_category(category_id, user_id)
+            return await self.category_client.validate_category(category_id, user_id, workspace_id)
         except Exception as e:
             logger.error(f"Category validation failed: {e}")
             raise ExternalServiceError(f"Category validation failed: {e}", "category_service", IncomeErrorCodes.CATEGORY_VALIDATION_FAILED)
@@ -68,9 +71,12 @@ class IncomeService:
             logger.error(f"Failed to handle balance updates: {e}")
             raise IncomeValidationError("Failed to update account balances", IncomeErrorCodes.ACCOUNT_BALANCE_UPDATE_FAILED)
     
-    async def create(self, income: IncomeCreate, user_id: int) -> IncomeOut:
+    async def create(self, income: IncomeCreate, user_id: int, workspace_id: UUID) -> IncomeOut:
         """Create a new income"""
         try:
+            # 1. Authorize workspace access (member role required for create)
+            self.authorize_workspace_access(workspace_id, user_id, "member", "create_income")
+            
             # Check subscription limits before creating
             current_count = self.db.query(Income).filter(Income.user_id == user_id).count()
             if not self.subscription_client.check_income_limit(user_id, current_count):
@@ -101,7 +107,7 @@ class IncomeService:
             
             # Validate category if provided
             if income.category_id:
-                await self._validate_category(income.category_id, user_id)
+                await self._validate_category(income.category_id, user_id, workspace_id)
             
             # Validate account if provided and update balance
             if income.account_id is not None:
@@ -119,6 +125,7 @@ class IncomeService:
             
             db_income = Income(
                 user_id=user_id,
+                workspace_id=workspace_id,
                 amount=round(income.amount, 2),
                 category_id=income.category_id,
                 account_id=income.account_id,
@@ -141,10 +148,13 @@ class IncomeService:
             logger.error(f"Error creating income: {e}")
             raise IncomeValidationError("Failed to create income", IncomeErrorCodes.INCOME_VALIDATION_FAILED)
     
-    def get_by_id(self, income_id: int, user_id: int) -> IncomeOut:
+    def get_by_id(self, income_id: int, user_id: int, workspace_id: UUID) -> IncomeOut:
         """Get income by ID"""
+        # 1. Authorize workspace access (viewer role required for read)
+        self.authorize_workspace_access(workspace_id, user_id, "viewer", "get_income")
+        
         income = self.db.query(Income).filter(
-            and_(Income.id == income_id, Income.user_id == user_id)
+            and_(Income.id == income_id, Income.workspace_id == workspace_id)
         ).first()
         
         if not income:
@@ -152,10 +162,14 @@ class IncomeService:
         
         return IncomeOut.from_orm(income)
     
-    def get_all(self, user_id: int, skip: int = 0, limit: int = 100) -> List[IncomeOut]:
-        """Get all incomes for user"""
+    def get_all(self, user_id: int, workspace_id: UUID, skip: int = 0, limit: int = 100) -> List[IncomeOut]:
+        """Get all incomes in the workspace"""
+        # 1. Authorize workspace access (viewer role required for read)
+        self.authorize_workspace_access(workspace_id, user_id, "viewer", "list_incomes")
+        
+        # 2. Filter by workspace
         incomes = self.db.query(Income).filter(
-            Income.user_id == user_id
+            Income.workspace_id == workspace_id
         ).order_by(desc(Income.date)).offset(skip).limit(limit).all()
         
         return [IncomeOut.from_orm(income) for income in incomes]
@@ -211,10 +225,13 @@ class IncomeService:
             statistics=statistics
         )
     
-    async def update(self, income_id: int, income_update: IncomeUpdate, user_id: int) -> IncomeOut:
+    async def update(self, income_id: int, income_update: IncomeUpdate, user_id: int, workspace_id: UUID) -> IncomeOut:
         """Update income"""
+        # 1. Authorize workspace access (member role required for update)
+        self.authorize_workspace_access(workspace_id, user_id, "member", "update_income")
+        
         db_income = self.db.query(Income).filter(
-            and_(Income.id == income_id, Income.user_id == user_id)
+            and_(Income.id == income_id, Income.workspace_id == workspace_id)
         ).first()
         
         if not db_income:
@@ -280,10 +297,13 @@ class IncomeService:
             logger.error(f"Error updating income: {e}")
             raise IncomeValidationError("Failed to update income", IncomeErrorCodes.INCOME_VALIDATION_FAILED)
     
-    async def delete(self, income_id: int, user_id: int) -> bool:
+    async def delete(self, income_id: int, user_id: int, workspace_id: UUID) -> bool:
         """Delete income"""
+        # 1. Authorize workspace access (member role required for delete)
+        self.authorize_workspace_access(workspace_id, user_id, "member", "delete_income")
+        
         db_income = self.db.query(Income).filter(
-            and_(Income.id == income_id, Income.user_id == user_id)
+            and_(Income.id == income_id, Income.workspace_id == workspace_id)
         ).first()
         
         if not db_income:

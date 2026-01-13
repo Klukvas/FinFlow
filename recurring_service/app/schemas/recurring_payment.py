@@ -70,6 +70,7 @@ class RecurringPaymentUpdate(BaseModel):
 class RecurringPaymentResponse(RecurringPaymentBase):
     id: UUID
     user_id: int
+    workspace_id: UUID
     status: str
     last_executed: Optional[datetime]
     next_execution: date

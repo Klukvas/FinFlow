@@ -1,14 +1,18 @@
 from sqlalchemy.orm import Session
-from fastapi import Depends, Request, HTTPException, status
+from fastapi import Depends, Request, HTTPException, status, Header
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 from app.config import settings
+from typing import Optional
+from uuid import UUID
 
 from app.database import get_db
 from app.utils.logger import get_logger, log_security_event
 
 logger = get_logger(__name__)
 
-BEARER_PREFIX = "Bearer "
+# Security scheme for Swagger UI
+security = HTTPBearer()
 
 def get_database_session() -> Session:
     """Get database session dependency"""
@@ -44,29 +48,30 @@ def decode_token(token: str) -> int:
             detail="Invalid token"
         )
 
-def get_current_user_id(request: Request) -> int:
-    """Extract and validate user ID from Authorization header"""
-    auth_header = request.headers.get("Authorization")
-    if not auth_header:
-        log_security_event(logger, "Missing authorization header")
+def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(security)) -> int:
+    """Extract and validate user ID from Bearer token"""
+    if not credentials or not credentials.credentials:
+        log_security_event(logger, "Missing authorization token")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, 
-            detail="Authorization header required"
+            detail="Authorization token required"
         )
     
-    if not auth_header.startswith(BEARER_PREFIX):
-        log_security_event(logger, "Invalid authorization format", details=f"Expected Bearer token, got: {auth_header[:10]}...")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, 
-            detail="Invalid token format. Expected 'Bearer <token>'"
-        )
+    return decode_token(credentials.credentials)
 
-    token = auth_header[len(BEARER_PREFIX):].strip()
-    if not token:
-        log_security_event(logger, "Empty token in authorization header")
+def get_workspace_id(
+    x_workspace_id: Optional[str] = Header(None, alias="X-Workspace-Id")
+) -> UUID:
+    """Extract and validate workspace ID from header"""
+    if not x_workspace_id:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, 
-            detail="Token cannot be empty"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="X-Workspace-Id header required"
         )
-    
-    return decode_token(token)
+    try:
+        return UUID(x_workspace_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid workspace ID format"
+        )

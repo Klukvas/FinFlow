@@ -39,6 +39,7 @@ services:
       ENV_FILE: .env.docker
       CORS_ORIGINS: "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
       SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
+      WORKSPACE_SERVICE_URL: "http://workspace_service:8000"
       INTERNAL_SECRET_TOKEN: "my-secret-token"
     env_file:
       - ./user_service/.env.docker
@@ -71,6 +72,7 @@ services:
       ENV_FILE: .env.docker
       CORS_ORIGINS: "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
       SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
+      WORKSPACE_SERVICE_URL: "http://workspace_service:8000"
       DATABASE_URL: "postgresql://postgres:postgres@db:5432/category_db"
       SECRET_KEY: "your-secret-key-here"
       ALGORITHM: "HS256"
@@ -100,6 +102,7 @@ services:
       CATEGORY_SERVICE_URL: "http://category_service:8000"
       ACCOUNT_SERVICE_URL: "http://account_service:8000"
       CURRENCY_SERVICE_URL: "http://currency_service:8000"
+      WORKSPACE_SERVICE_URL: "http://workspace_service:8000"
       INTERNAL_SECRET_TOKEN: "my-secret-token"
       DATABASE_URL: "postgresql://postgres:postgres@db:5432/expense_db"
       SECRET_KEY: "your-secret-key-here"
@@ -109,6 +112,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      workspace_service:
+        condition: service_started
     ports:
       - "8003:8000"
     logging:
@@ -129,6 +134,7 @@ services:
       CORS_ORIGINS: "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
       CATEGORY_SERVICE_URL: "http://category_service:8000"
       ACCOUNT_SERVICE_URL: "http://account_service:8000"
+      WORKSPACE_SERVICE_URL: "http://workspace_service:8000"
       INTERNAL_SECRET_TOKEN: "my-secret-token"
       DATABASE_URL: "postgresql://postgres:postgres@db:5432/income_db"
       SECRET_KEY: "your-secret-key-here"
@@ -138,6 +144,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      workspace_service:
+        condition: service_started
       category_service:
         condition: service_started
       user_service:
@@ -164,6 +172,7 @@ services:
       CORS_ORIGINS: "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
       DATABASE_URL: "postgresql://postgres:postgres@db:5432/recurring_db"
       SECRET_KEY: "your-secret-key-here"
+      WORKSPACE_SERVICE_URL: "http://workspace_service:8000"
       INTERNAL_SECRET_TOKEN: "my-secret-token"
       SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
     env_file:
@@ -171,6 +180,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      workspace_service:
+        condition: service_started
       expense_service:
         condition: service_started
       income_service:
@@ -201,6 +212,7 @@ services:
       SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
       USER_SERVICE_URL: "http://user_service:8000"
       CURRENCY_SERVICE_URL: "http://currency_service:8000"
+      WORKSPACE_SERVICE_URL: "http://workspace_service:8000"
     env_file:
       - ./goals_service/.env.docker
     depends_on:
@@ -209,6 +221,8 @@ services:
       user_service:
         condition: service_healthy
       currency_service:
+        condition: service_healthy
+      workspace_service:
         condition: service_healthy
     ports:
       - "8006:8000"
@@ -260,6 +274,7 @@ services:
       CORS_ORIGINS: "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
       DATABASE_URL: "postgresql://postgres:postgres@db:5432/debt_db"
       SECRET_KEY: "your-secret-key-here"
+      WORKSPACE_SERVICE_URL: "http://workspace_service:8000"
       INTERNAL_SECRET_TOKEN: "my-secret-token"
       USER_SERVICE_URL: "http://user_service:8000"
       CURRENCY_SERVICE_URL: "http://currency_service:8000"
@@ -297,6 +312,7 @@ services:
       REDIS_URL: "redis://redis:6379"
       DATABASE_URL: "postgresql://postgres:postgres@db:5432/account_db"
       SECRET_KEY: "your-secret-key-here"
+      WORKSPACE_SERVICE_URL: "http://workspace_service:8000"
       INTERNAL_SECRET_TOKEN: "my-secret-token"
       SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
     env_file:
@@ -306,6 +322,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      workspace_service:
+        condition: service_started
       user_service:
         condition: service_started
       currency_service:
@@ -395,12 +413,15 @@ services:
       ALGORITHM: "HS256"
       INTERNAL_SECRET_TOKEN: "my-secret-token"
       USER_SERVICE_URL: "http://user_service:8000"
+      SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
       LOG_LEVEL: "INFO"
     depends_on:
       db:
         condition: service_healthy
       user_service:
         condition: service_healthy
+      subscription_service:
+        condition: service_started
     ports:
       - "8012:8000"
     healthcheck:

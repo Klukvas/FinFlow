@@ -5,6 +5,7 @@ from .workspace_errors import (
     WorkspaceValidationError,
     WorkspaceAccessDeniedError,
     WorkspaceArchivedError,
+    WorkspaceLimitExceededError,
     MemberNotFoundError,
     MemberAlreadyExistsError,
     InvalidRoleChangeError,
@@ -12,7 +13,10 @@ from .workspace_errors import (
     InviteNotFoundError,
     InviteExpiredError,
     InviteAlreadyUsedError,
-    InvalidInviteTokenError,
+    InviteNotActionableError,
+    InviteeNotFoundError,
+    SelfInviteNotAllowedError,
+    PersonalWorkspaceProtectedError,
 )
 
 __all__ = [
@@ -22,6 +26,7 @@ __all__ = [
     "WorkspaceValidationError",
     "WorkspaceAccessDeniedError",
     "WorkspaceArchivedError",
+    "WorkspaceLimitExceededError",
     "MemberNotFoundError",
     "MemberAlreadyExistsError",
     "InvalidRoleChangeError",
@@ -29,6 +34,9 @@ __all__ = [
     "InviteNotFoundError",
     "InviteExpiredError",
     "InviteAlreadyUsedError",
-    "InvalidInviteTokenError",
+    "InviteNotActionableError",
+    "InviteeNotFoundError",
+    "SelfInviteNotAllowedError",
+    "PersonalWorkspaceProtectedError",
 ]
 

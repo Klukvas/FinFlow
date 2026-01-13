@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from uuid import UUID
 from app.database import get_db
-from app.dependencies import get_current_user_id
+from app.dependencies import get_current_user_id, get_workspace_id
 from app.services.goal import GoalService
 from app.schemas.goal import (
     GoalCreate, GoalUpdate, GoalResponse, GoalListResponse, GoalStatistics,
@@ -25,11 +26,12 @@ router = APIRouter()
 async def create_goal(
     goal_data: GoalCreate,
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     db: Session = Depends(get_db)
 ):
     """Create a new financial goal"""
     service = GoalService(db)
-    goal = service.create_goal(user_id, goal_data)
+    goal = service.create_goal(user_id, workspace_id, goal_data)
     return goal
 
 
@@ -41,11 +43,12 @@ async def get_goals(
     goal_type: Optional[GoalType] = Query(None),
     priority: Optional[GoalPriority] = Query(None),
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     db: Session = Depends(get_db)
 ):
     """Get user's financial goals with optional filtering"""
     service = GoalService(db)
-    goals = service.get_goals(user_id, skip, limit, status, goal_type, priority)
+    goals = service.get_goals(user_id, workspace_id, skip, limit, status, goal_type, priority)
     
     # Get total count for pagination
     total = len(goals)
@@ -64,11 +67,12 @@ async def get_goals(
 async def get_goal(
     goal_id: int,
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     db: Session = Depends(get_db)
 ):
     """Get a specific financial goal"""
     service = GoalService(db)
-    goal = service.get_goal(user_id, goal_id)
+    goal = service.get_goal(user_id, workspace_id, goal_id)
     return goal
 
 
@@ -77,11 +81,12 @@ async def update_goal(
     goal_id: int,
     goal_data: GoalUpdate,
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     db: Session = Depends(get_db)
 ):
     """Update a financial goal"""
     service = GoalService(db)
-    goal = service.update_goal(user_id, goal_id, goal_data)
+    goal = service.update_goal(user_id, workspace_id, goal_id, goal_data)
     return goal
 
 
@@ -90,11 +95,12 @@ async def update_goal_progress(
     goal_id: int,
     progress_data: GoalProgressUpdate,
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     db: Session = Depends(get_db)
 ):
     """Update goal progress"""
     service = GoalService(db)
-    goal = service.update_goal_progress(user_id, goal_id, progress_data)
+    goal = service.update_goal_progress(user_id, workspace_id, goal_id, progress_data)
     return goal
 
 
@@ -102,21 +108,23 @@ async def update_goal_progress(
 async def delete_goal(
     goal_id: int,
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     db: Session = Depends(get_db)
 ):
     """Delete a financial goal"""
     service = GoalService(db)
-    service.delete_goal(user_id, goal_id)
+    service.delete_goal(user_id, workspace_id, goal_id)
 
 
 @router.get("/statistics/overview", response_model=GoalStatistics)
 async def get_goal_statistics(
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     db: Session = Depends(get_db)
 ):
     """Get goal statistics for the user"""
     service = GoalService(db)
-    stats = service.get_goal_statistics(user_id)
+    stats = service.get_goal_statistics(user_id, workspace_id)
     return stats
 
 
@@ -126,11 +134,12 @@ async def create_milestone(
     goal_id: int,
     milestone_data: MilestoneCreate,
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     db: Session = Depends(get_db)
 ):
     """Create a milestone for a goal"""
     service = GoalService(db)
-    milestone = service.create_milestone(user_id, goal_id, milestone_data)
+    milestone = service.create_milestone(user_id, workspace_id, goal_id, milestone_data)
     return milestone
 
 
@@ -138,11 +147,12 @@ async def create_milestone(
 async def get_milestones(
     goal_id: int,
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     db: Session = Depends(get_db)
 ):
     """Get milestones for a goal"""
     service = GoalService(db)
-    milestones = service.get_milestones(user_id, goal_id)
+    milestones = service.get_milestones(user_id, workspace_id, goal_id)
     return milestones
 
 
@@ -152,9 +162,10 @@ async def update_milestone_progress(
     milestone_id: int,
     progress_data: MilestoneProgressUpdate,
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     db: Session = Depends(get_db)
 ):
     """Update milestone progress"""
     service = GoalService(db)
-    milestone = service.update_milestone_progress(user_id, goal_id, milestone_id, progress_data)
+    milestone = service.update_milestone_progress(user_id, workspace_id, goal_id, milestone_id, progress_data)
     return milestone

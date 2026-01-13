@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, validator
 from typing import Optional, List
 from datetime import datetime
+from uuid import UUID
 from app.models.account import AccountType
 
 class AccountBase(BaseModel):
@@ -36,6 +37,7 @@ class AccountUpdate(BaseModel):
 class AccountResponse(AccountBase):
     id: int
     owner_id: int
+    workspace_id: UUID
     is_active: bool
     is_archived: bool
     created_at: datetime

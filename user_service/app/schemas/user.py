@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr, ConfigDict, Field, field_validator
 from typing import Optional
+from uuid import UUID
 import re
 
 class UserCreate(BaseModel):
@@ -93,6 +94,10 @@ class UserOut(BaseModel):
     email: EmailStr = Field(description="User's email address", examples=["user@example.com"])
     username: str = Field(description="User's username", examples=["john_doe"])
     base_currency: str = Field(description="User's base currency code", examples=["UAH", "USD", "EUR"])
+    default_workspace_id: Optional[UUID] = Field(
+        None, 
+        description="User's default workspace ID"
+    )
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -101,7 +106,8 @@ class UserOut(BaseModel):
                 "id": 1,
                 "email": "john.doe@example.com",
                 "username": "john_doe",
-                "base_currency": "UAH"
+                "base_currency": "UAH",
+                "default_workspace_id": "550e8400-e29b-41d4-a716-446655440000"
             }
         }
     )

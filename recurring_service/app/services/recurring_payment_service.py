@@ -18,6 +18,7 @@ from app.schemas.payment_schedule import (
     PaymentScheduleListResponse
 )
 from app.services.payment_calculator import PaymentCalculator
+from app.services.workspace_authorization import WorkspaceAuthorizationMixin
 from app.clients.expense_client import ExpenseServiceClient
 from app.clients.income_client import IncomeServiceClient
 from app.clients.category_client import CategoryServiceClient
@@ -36,10 +37,11 @@ from app.utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-class RecurringPaymentService:
+class RecurringPaymentService(WorkspaceAuthorizationMixin):
     """Сервис для управления повторяющимися платежами"""
     
     def __init__(self):
+        super().__init__()  # Initialize WorkspaceAuthorizationMixin
         self.expense_client = ExpenseServiceClient()
         self.income_client = IncomeServiceClient()
         self.category_client = CategoryServiceClient()
@@ -48,25 +50,32 @@ class RecurringPaymentService:
     async def create_recurring_payment(
         self, 
         payment_data: RecurringPaymentCreate, 
-        user_id: int, 
+        user_id: int,
+        workspace_id: UUID, 
         db: Session
     ) -> RecurringPayment:
         """Создать новый повторяющийся платеж"""
         # Check subscription limits before creating
-        current_count = db.query(RecurringPayment).filter(RecurringPayment.user_id == user_id).count()
+        current_count = db.query(RecurringPayment).filter(RecurringPayment.workspace_id == workspace_id).count()
         if not self.subscription_client.check_recurring_limit(user_id, current_count):
             features = self.subscription_client.get_user_features(user_id)
             recurring_feature = features.get("recurring", {})
             limit = recurring_feature.get("limit_value", 0)
             raise RecurringLimitExceededError(current_count, limit)
         
+        # Authorize workspace access first
+        self.authorize_workspace_access(workspace_id, user_id, "member", "create_recurring_payment")
+        
         # Валидировать существование категории
-        if not await self.category_client.validate_category_exists(payment_data.category_id, user_id):
+        if not await self.category_client.validate_category_exists(payment_data.category_id, user_id, workspace_id):
             raise CategoryNotFoundError("Category not found")
 
+        # Already authorized above - removed duplicate
+        
         # Создать модель
         recurring_payment = RecurringPayment(
             user_id=user_id,
+            workspace_id=workspace_id,
             name=payment_data.name,
             description=payment_data.description,
             amount=payment_data.amount,
@@ -94,6 +103,7 @@ class RecurringPaymentService:
     def get_recurring_payments(
         self,
         user_id: int,
+        workspace_id: UUID,
         db: Session,
         status: Optional[str] = None,
         payment_type: Optional[str] = None,
@@ -101,7 +111,11 @@ class RecurringPaymentService:
         size: int = 50
     ) -> RecurringPaymentListResponse:
         """Получить список повторяющихся платежей пользователя"""
-        query = db.query(RecurringPayment).filter(RecurringPayment.user_id == user_id)
+        # Authorize workspace access
+        self.authorize_workspace_access(workspace_id, user_id, "viewer", "list_recurring_payments")
+        
+        # Filter by workspace
+        query = db.query(RecurringPayment).filter(RecurringPayment.workspace_id == workspace_id)
 
         if status:
             query = query.filter(RecurringPayment.status == status)
@@ -122,13 +136,14 @@ class RecurringPaymentService:
     def get_recurring_payment(
         self, 
         payment_id: UUID, 
-        user_id: int, 
+        user_id: int,
+        workspace_id: UUID, 
         db: Session
     ) -> RecurringPayment:
         """Получить повторяющийся платеж по ID"""
         payment = db.query(RecurringPayment).filter(
             RecurringPayment.id == payment_id,
-            RecurringPayment.user_id == user_id
+            RecurringPayment.workspace_id == workspace_id
         ).first()
 
         if not payment:
@@ -141,12 +156,13 @@ class RecurringPaymentService:
         payment_id: UUID,
         payment_data: RecurringPaymentUpdate,
         user_id: int,
+        workspace_id: UUID,
         db: Session
     ) -> RecurringPayment:
         """Обновить повторяющийся платеж"""
         payment = db.query(RecurringPayment).filter(
             RecurringPayment.id == payment_id,
-            RecurringPayment.user_id == user_id
+            RecurringPayment.workspace_id == workspace_id
         ).first()
 
         if not payment:
@@ -154,7 +170,7 @@ class RecurringPaymentService:
 
         # Валидировать категорию если она изменилась
         if payment_data.category_id and payment_data.category_id != payment.category_id:
-            if not await self.category_client.validate_category_exists(payment_data.category_id, user_id):
+            if not await self.category_client.validate_category_exists(payment_data.category_id, user_id, workspace_id):
                 raise CategoryNotFoundError("Category not found")
 
         # Обновить поля
@@ -179,13 +195,14 @@ class RecurringPaymentService:
     def delete_recurring_payment(
         self, 
         payment_id: UUID, 
-        user_id: int, 
+        user_id: int,
+        workspace_id: UUID, 
         db: Session
     ) -> None:
         """Удалить повторяющийся платеж"""
         payment = db.query(RecurringPayment).filter(
             RecurringPayment.id == payment_id,
-            RecurringPayment.user_id == user_id
+            RecurringPayment.workspace_id == workspace_id
         ).first()
 
         if not payment:
@@ -205,7 +222,7 @@ class RecurringPaymentService:
         """Приостановить повторяющийся платеж"""
         payment = db.query(RecurringPayment).filter(
             RecurringPayment.id == payment_id,
-            RecurringPayment.user_id == user_id
+            RecurringPayment.workspace_id == workspace_id
         ).first()
         
         if not payment:
@@ -229,7 +246,7 @@ class RecurringPaymentService:
         """Возобновить повторяющийся платеж"""
         payment = db.query(RecurringPayment).filter(
             RecurringPayment.id == payment_id,
-            RecurringPayment.user_id == user_id
+            RecurringPayment.workspace_id == workspace_id
         ).first()
         
         if not payment:
@@ -259,7 +276,7 @@ class RecurringPaymentService:
         # Проверить что платеж принадлежит пользователю
         payment = db.query(RecurringPayment).filter(
             RecurringPayment.id == payment_id,
-            RecurringPayment.user_id == user_id
+            RecurringPayment.workspace_id == workspace_id
         ).first()
 
         if not payment:
@@ -315,16 +332,16 @@ class RecurringPaymentService:
         """Получить статистику по повторяющимся платежам"""
         # Общая статистика
         total_payments = db.query(RecurringPayment).filter(
-            RecurringPayment.user_id == user_id
+            RecurringPayment.workspace_id == workspace_id
         ).count()
 
         active_payments = db.query(RecurringPayment).filter(
-            RecurringPayment.user_id == user_id,
+            RecurringPayment.workspace_id == workspace_id,
             RecurringPayment.status == "active"
         ).count()
 
         paused_payments = db.query(RecurringPayment).filter(
-            RecurringPayment.user_id == user_id,
+            RecurringPayment.workspace_id == workspace_id,
             RecurringPayment.status == "paused"
         ).count()
 
@@ -332,13 +349,13 @@ class RecurringPaymentService:
         month_ago = datetime.utcnow() - timedelta(days=30)
         
         executed_this_month = db.query(PaymentSchedule).join(RecurringPayment).filter(
-            RecurringPayment.user_id == user_id,
+            RecurringPayment.workspace_id == workspace_id,
             PaymentSchedule.status == "executed",
             PaymentSchedule.executed_at >= month_ago
         ).count()
 
         failed_this_month = db.query(PaymentSchedule).join(RecurringPayment).filter(
-            RecurringPayment.user_id == user_id,
+            RecurringPayment.workspace_id == workspace_id,
             PaymentSchedule.status == "failed",
             PaymentSchedule.executed_at >= month_ago
         ).count()

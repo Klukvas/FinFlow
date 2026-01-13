@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request
+from fastapi.openapi.utils import get_openapi
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -127,9 +128,10 @@ async def lifespan(app: FastAPI):
 # Создать приложение FastAPI
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    version="1.0.0",
-    description="Сервис для управления повторяющимися платежами",
-    lifespan=lifespan
+    version="2.0.0",
+    description="Сервис для управления повторяющимися платежами с поддержкой workspace",
+    lifespan=lifespan,
+    swagger_ui_parameters={"persistAuthorization": True}
 )
 
 # Настроить CORS
@@ -181,6 +183,48 @@ async def health_check():
         "version": "1.0.0"
     }
 
+
+def custom_openapi():
+    """Custom OpenAPI schema with workspace and bearer auth"""
+    if app.openapi_schema:
+        return app.openapi_schema
+    
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+    
+    # Add security schemes
+    openapi_schema["components"]["securitySchemes"] = {
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+            "description": "Enter your JWT token"
+        },
+        "WorkspaceId": {
+            "type": "apiKey",
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "description": "Enter your workspace UUID"
+        }
+    }
+    
+    # Apply security to all non-internal endpoints
+    for path, path_item in openapi_schema["paths"].items():
+        if not path.startswith("/internal") and not path.startswith("/health"):
+            for method in path_item:
+                if method in ["get", "post", "put", "patch", "delete"]:
+                    path_item[method]["security"] = [
+                        {"BearerAuth": [], "WorkspaceId": []}
+                    ]
+    
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi
 
 if __name__ == "__main__":
     import uvicorn

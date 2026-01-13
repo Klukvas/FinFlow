@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 from datetime import datetime
+from uuid import UUID
 
 # Contact Schemas
 class ContactBase(BaseModel):
@@ -39,6 +40,7 @@ class ContactResponse(ContactBase):
     """Schema for contact output"""
     id: int = Field(description="Unique contact identifier")
     user_id: int = Field(description="ID of the user who owns this contact")
+    workspace_id: UUID = Field(description="Workspace ID this contact belongs to")
     created_at: datetime
     updated_at: datetime
     

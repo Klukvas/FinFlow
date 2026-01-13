@@ -12,11 +12,11 @@ class Settings(BaseSettings):
 
     # Internal services
     USER_SERVICE_URL: str = "http://user_service:8000"
+    SUBSCRIPTION_SERVICE_URL: str = "http://subscription_service:8080"
     INTERNAL_SECRET_TOKEN: Optional[str] = None
 
     # Invite settings
-    INVITE_TOKEN_EXPIRE_DAYS: int = 7
-    MAX_INVITE_ATTEMPTS: int = 5
+    INVITE_EXPIRE_DAYS: int = 3  # Invites expire after 3 days
 
     model_config = {
         "env_file": ".env",

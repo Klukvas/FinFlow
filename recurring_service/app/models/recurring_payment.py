@@ -3,7 +3,7 @@ from decimal import Decimal
 from typing import Optional, Dict, Any
 from uuid import UUID, uuid4
 
-from sqlalchemy import Column, String, DateTime, Date, Text, JSON, Enum, Numeric, Integer
+from sqlalchemy import Column, String, DateTime, Date, Text, JSON, Enum, Numeric, Integer, Index
 from sqlalchemy.dialects.postgresql import UUID as PostgresUUID
 from sqlalchemy.orm import relationship
 
@@ -15,6 +15,7 @@ class RecurringPayment(Base):
 
     id = Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid4)
     user_id = Column(Integer, nullable=False, index=True)
+    workspace_id = Column(PostgresUUID(as_uuid=True), nullable=False, index=True)
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     amount = Column(Numeric(15, 2), nullable=False)
@@ -33,6 +34,11 @@ class RecurringPayment(Base):
 
     # Relationships
     payment_schedules = relationship("PaymentSchedule", back_populates="recurring_payment", cascade="all, delete-orphan")
+    
+    # Composite indexes
+    __table_args__ = (
+        Index('idx_recurring_payments_workspace_user', 'workspace_id', 'user_id'),
+    )
 
     def __repr__(self):
         return f"<RecurringPayment(id={self.id}, name='{self.name}', type='{self.payment_type}')>"

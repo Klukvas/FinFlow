@@ -6,6 +6,7 @@ including ownership, uniqueness, and hierarchical relationship validation.
 """
 
 from typing import Optional, List, Any, Dict
+from uuid import UUID
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
@@ -49,7 +50,7 @@ class CategorySerializer(OwnershipValidator, UniquenessValidator, HierarchyValid
         """Return list of fields that must be unique per user."""
         return ["name"]
     
-    def validate_category_data(self, db: Session, data: CategoryCreate, user_id: int, exclude_id: Optional[int] = None) -> None:
+    def validate_category_data(self, db: Session, data: CategoryCreate, user_id: int, exclude_id: Optional[int] = None, workspace_id: Optional[Any] = None) -> None:
         """
         Comprehensive validation of category data.
         
@@ -58,6 +59,7 @@ class CategorySerializer(OwnershipValidator, UniquenessValidator, HierarchyValid
             data: Category data to validate
             user_id: ID of the user
             exclude_id: ID to exclude from uniqueness validation (for updates)
+            workspace_id: UUID of the workspace (for workspace-scoped uniqueness)
             
         Raises:
             CategoryValidationError: If validation fails
@@ -73,16 +75,16 @@ class CategorySerializer(OwnershipValidator, UniquenessValidator, HierarchyValid
             raise CategoryValidationError(f"Category type validation failed: {str(e)}")
         
         try:
-            # Validate name uniqueness
+            # Validate name uniqueness (scoped to workspace)
             data_dict = {
                 "name": data.name
             }
-            self.validate_uniqueness(db, user_id, data_dict, exclude_id)
+            self.validate_uniqueness(db, user_id, data_dict, exclude_id, workspace_id)
         except CategoryNameConflictError as e:
-            Logger.error(f"Category name uniqueness validation failed: {str(e)}", extra={"category_name": data.name, "user_id": user_id})
+            Logger.error(f"Category name uniqueness validation failed: {str(e)}", extra={"category_name": data.name, "user_id": user_id, "workspace_id": str(workspace_id) if workspace_id else None})
             raise
         except Exception as e:
-            Logger.error(f"Name uniqueness validation error: {str(e)}", extra={"category_name": data.name, "user_id": user_id})
+            Logger.error(f"Name uniqueness validation error: {str(e)}", extra={"category_name": data.name, "user_id": user_id, "workspace_id": str(workspace_id) if workspace_id else None})
             raise CategoryValidationError(f"Name uniqueness validation failed: {str(e)}")
         
         # Validate parent category if provided

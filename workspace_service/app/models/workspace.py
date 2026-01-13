@@ -17,7 +17,7 @@ class Workspace(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String(255), nullable=False)
-    type = Column(Enum(WorkspaceType), nullable=False, default=WorkspaceType.PERSONAL)
+    type = Column(Enum(WorkspaceType, native_enum=False, length=50), nullable=False, default=WorkspaceType.PERSONAL)
     owner_user_id = Column(Integer, nullable=False, index=True)
     
     # Timestamps

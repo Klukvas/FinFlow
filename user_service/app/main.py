@@ -154,7 +154,10 @@ async def startup_event():
         category="application",
         operation="service_startup",
         service_name="user_service",
-        version="1.0.0"
+        version="1.0.0",
+        workspace_service_url=settings.WORKSPACE_SERVICE_URL,
+        has_internal_token=bool(settings.INTERNAL_SECRET_TOKEN),
+        token_length=len(settings.INTERNAL_SECRET_TOKEN) if settings.INTERNAL_SECRET_TOKEN else 0
     )
 
 @app.on_event("shutdown")

@@ -76,7 +76,11 @@ class PaymentExecutor:
 
         try:
             # Валидировать категорию
-            await self.category_client.get_category(recurring_payment.category_id, recurring_payment.user_id)
+            await self.category_client.get_category(
+                recurring_payment.category_id, 
+                recurring_payment.user_id,
+                recurring_payment.workspace_id
+            )
 
             # Создать expense или income
             if recurring_payment.payment_type == "EXPENSE":

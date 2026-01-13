@@ -1,12 +1,12 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Header
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
+from jose import jwt, JWTError
 from app.database import get_db
 from app.config import settings
 from app.services.workspace import WorkspaceService
 from app.services.invite import InviteService
 from app.utils.logger import get_logger
-import jwt
 from typing import Optional
 
 logger = get_logger(__name__)
@@ -19,9 +19,8 @@ def get_workspace_service(db: Session = Depends(get_db)) -> WorkspaceService:
 
 
 def get_invite_service(db: Session = Depends(get_db)) -> InviteService:
-    """Get invite service instance with workspace service dependency"""
-    workspace_service = WorkspaceService(db)
-    return InviteService(db, workspace_service)
+    """Get invite service instance"""
+    return InviteService(db)
 
 
 def get_current_user_id(
@@ -42,7 +41,7 @@ def get_current_user_id(
                 headers={"WWW-Authenticate": "Bearer"},
             )
         return int(user_id)
-    except jwt.PyJWTError as e:
+    except JWTError as e:
         logger.warning(f"JWT decode error: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -52,13 +51,20 @@ def get_current_user_id(
 
 
 def verify_internal_token(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    x_internal_token: Optional[str] = Header(None)
 ) -> None:
     """Verify internal service token for inter-service communication"""
-    if credentials.credentials != settings.INTERNAL_SECRET_TOKEN:
+    if not x_internal_token:
+        logger.warning("Missing internal token in request")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authenticated"
+        )
+    
+    if x_internal_token != settings.INTERNAL_SECRET_TOKEN:
         logger.warning("Invalid internal token attempt")
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid internal token"
         )
 

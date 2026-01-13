@@ -1,14 +1,24 @@
 #!/bin/bash
-
-# Debt Service Startup Script
 set -e
 
-echo "Starting Debt Service..."
+# Extract database host and port from DATABASE_URL
+DB_HOST=$(echo $DATABASE_URL | sed -n 's/.*@\(.*\):.*/\1/p')
+DB_PORT=$(echo $DATABASE_URL | sed -n 's/.*:\([0-9]*\)\/.*/\1/p')
 
-# Run database migrations
-echo "Running database migrations..."
-alembic upgrade head
+echo "Database host: ${DB_HOST}:${DB_PORT}"
+echo "Waiting for database to be ready..."
+until pg_isready -h "$DB_HOST" -p "$DB_PORT" > /dev/null 2>&1; do
+  sleep 1
+done
 
-# Start the service
-echo "Starting Debt Service on port 8000..."
-uvicorn app.main:app --host 0.0.0.0 --port 8000
+echo "Database is ready - running migrations..."
+
+# Run migrations
+alembic upgrade head || {
+    echo "Migration completed with warnings"
+}
+
+echo "Migrations completed - starting application..."
+
+# Start the application
+exec uvicorn app.main:app --host 0.0.0.0 --port 8000

@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, status, Query, Path
 from typing import List, Annotated, Optional
+from uuid import UUID
 
 from app.schemas.category import CategoryCreate, CategoryCreateFromMCC, CategoryCreateFromMCCBatch, CategoryBatchCreateResponse, CategoryOut, CategoryListResponse, SupportedLanguage, CategoryStatisticsResponse
 from app.services.category import CategoryService
-from app.dependencies import get_category_service, get_current_user_id
+from app.dependencies import get_category_service, get_current_user_id, get_workspace_id
 from app.exceptions import (
     CategoryNotFoundError,
     CategoryValidationError,
@@ -13,8 +14,10 @@ from app.exceptions import (
     CategoryNameConflictError,
     CategoryLimitExceededError
 )
+from app.utils.logger import get_logger
 
 router = APIRouter(prefix="/categories", tags=["Categories"])
+logger = get_logger(__name__)
 
 @router.post(
     "/", 
@@ -32,7 +35,8 @@ router = APIRouter(prefix="/categories", tags=["Categories"])
 def create_category(
     category: CategoryCreate,
     service: CategoryService = Depends(get_category_service),
-    user_id: int = Depends(get_current_user_id)
+    user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id)
 ) -> CategoryOut:
     """
     Create a new category.
@@ -40,9 +44,47 @@ def create_category(
     - **name**: Category name (minimum 3 characters)
     - **parent_id**: Optional parent category ID for hierarchical organization
     
+    Requires X-Workspace-Id header with workspace UUID.
     Returns the created category with its ID and user association.
     """
-    return service.create(category, user_id)
+    logger.info(
+        f"[ROUTER] POST /categories - Creating category",
+        category="api",
+        operation="create_category_endpoint",
+        user_id=user_id,
+        workspace_id=str(workspace_id),
+        category_name=category.name,
+        category_type=category.type.value if hasattr(category.type, 'value') else str(category.type),
+        parent_id=category.parent_id,
+        category_data=category.dict() if hasattr(category, 'dict') else str(category)
+    )
+    
+    try:
+        result = service.create(category, user_id, workspace_id)
+        
+        logger.info(
+            f"[ROUTER] POST /categories - Category created successfully",
+            category="api",
+            operation="create_category_success",
+            user_id=user_id,
+            workspace_id=str(workspace_id),
+            category_id=result.id,
+            category_name=result.name
+        )
+        
+        return result
+    except Exception as e:
+        logger.error(
+            f"[ROUTER] POST /categories - Failed to create category: {e.__class__.__name__}",
+            category="api",
+            operation="create_category_error",
+            user_id=user_id,
+            workspace_id=str(workspace_id),
+            exception_type=e.__class__.__name__,
+            exception_message=str(e),
+            category_data=category.dict() if hasattr(category, 'dict') else str(category)
+        )
+        raise
 
 @router.post(
     "/from-mcc", 
@@ -61,7 +103,8 @@ def create_category_from_mcc(
     category: CategoryCreateFromMCC,
     language: Annotated[Optional[SupportedLanguage], Query(description="Language for MCC translation (ru, uk, en)")] = None,
     service: CategoryService = Depends(get_category_service),
-    user_id: int = Depends(get_current_user_id)
+    user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id)
 ) -> CategoryOut:
     """
     Create a new category from an MCC code.
@@ -79,9 +122,10 @@ def create_category_from_mcc(
     - Mark the category as system-created (created_by: SYSTEM)
     - Prevent duplicate categories for the same MCC code per user
     
+    Requires X-Workspace-Id header with workspace UUID.
     Returns the created category with its ID and user association.
     """
-    return service.create_from_mcc(category, user_id, language.value if language else None)
+    return service.create_from_mcc(category, user_id, workspace_id, language.value if language else None)
 
 @router.post(
     "/from-mcc/batch", 
@@ -99,7 +143,8 @@ def create_category_from_mcc(
 def create_categories_from_mcc_batch(
     batch_data: CategoryCreateFromMCCBatch,
     service: CategoryService = Depends(get_category_service),
-    user_id: int = Depends(get_current_user_id)
+    user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id)
 ) -> CategoryBatchCreateResponse:
     """
     Create multiple categories from MCC codes in a single request.
@@ -125,8 +170,10 @@ def create_categories_from_mcc_batch(
     - Individual results for each category
     - Summary statistics (total, successful, failed)
     - Detailed error messages for failed categories
+    
+    Requires X-Workspace-Id header with workspace UUID.
     """
-    return service.create_from_mcc_batch(batch_data, user_id)
+    return service.create_from_mcc_batch(batch_data, user_id, workspace_id)
 
 @router.get(
     "/", 
@@ -143,7 +190,8 @@ def read_categories(
     page: Annotated[int, Query(description="Page number", ge=1)] = 1,
     size: Annotated[int, Query(description="Number of items per page", ge=1, le=100)] = 50,
     service: CategoryService = Depends(get_category_service),
-    user_id: int = Depends(get_current_user_id)
+    user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id)
 ) -> CategoryListResponse:
     """
     Get all categories for the authenticated user with pagination support.
@@ -153,12 +201,13 @@ def read_categories(
     - **page**: Page number (starts from 1)
     - **size**: Number of items per page (1-100, default 50)
     
+    Requires X-Workspace-Id header with workspace UUID.
     Returns paginated results with metadata including total count, current page, and total pages.
     """
     if flat:
-        categories, total = service.get_all_flat(user_id, page, size)
+        categories, total = service.get_all_flat(user_id, workspace_id, page, size)
     else:
-        categories, total = service.get_all(user_id, page, size)
+        categories, total = service.get_all(user_id, workspace_id, page, size)
     
     pages = (total + size - 1) // size  # Calculate total pages
     
@@ -182,7 +231,8 @@ def read_categories(
 )
 def get_category_statistics(
     service: CategoryService = Depends(get_category_service),
-    user_id: int = Depends(get_current_user_id)
+    user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id)
 ) -> CategoryStatisticsResponse:
     """
     Get category statistics for the authenticated user.
@@ -193,8 +243,10 @@ def get_category_statistics(
     - **income_categories**: Number of income categories
     - **parent_categories**: Number of parent categories (categories without a parent)
     - **child_categories**: Number of child categories (categories with a parent)
+    
+    Requires X-Workspace-Id header with workspace UUID.
     """
-    statistics = service.get_statistics(user_id)
+    statistics = service.get_statistics(user_id, workspace_id)
     return CategoryStatisticsResponse(**statistics)
 
 @router.get(
@@ -211,14 +263,16 @@ def get_category_statistics(
 def read_category(
     category_id: Annotated[int, Path(description="Category ID", gt=0)],
     service: CategoryService = Depends(get_category_service),
-    user_id: int = Depends(get_current_user_id)
+    user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id)
 ) -> CategoryOut:
     """
     Get a specific category by ID.
     
+    Requires X-Workspace-Id header with workspace UUID.
     Returns the category details if it exists and belongs to the authenticated user.
     """
-    return service.get(category_id, user_id)
+    return service.get(category_id, user_id, workspace_id)
 
 @router.get(
     "/{category_id}/children", 
@@ -234,14 +288,16 @@ def read_category(
 def read_category_children(
     category_id: Annotated[int, Path(description="Category ID", gt=0)],
     service: CategoryService = Depends(get_category_service),
-    user_id: int = Depends(get_current_user_id)
+    user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id)
 ) -> List[CategoryOut]:
     """
     Get direct children of a category.
     
+    Requires X-Workspace-Id header with workspace UUID.
     Returns a list of categories that have the specified category as their parent.
     """
-    return service.get_children(category_id, user_id)
+    return service.get_children(category_id, user_id, workspace_id)
 
 @router.put(
     "/{category_id}", 
@@ -259,7 +315,8 @@ def update_category(
     category_id: Annotated[int, Path(description="Category ID", gt=0)],
     updated: CategoryCreate,
     service: CategoryService = Depends(get_category_service),
-    user_id: int = Depends(get_current_user_id)
+    user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id)
 ) -> CategoryOut:
     """
     Update an existing category.
@@ -267,9 +324,10 @@ def update_category(
     - **name**: New category name (minimum 3 characters)
     - **parent_id**: New parent category ID (can be null for root category)
     
+    Requires X-Workspace-Id header with workspace UUID.
     Validates against circular relationships and name uniqueness.
     """
-    return service.update(category_id, updated, user_id)
+    return service.update(category_id, updated, user_id, workspace_id)
 
 @router.delete(
     "/{category_id}",
@@ -285,11 +343,13 @@ def update_category(
 def delete_category(
     category_id: Annotated[int, Path(description="Category ID", gt=0)],
     service: CategoryService = Depends(get_category_service),
-    user_id: int = Depends(get_current_user_id)
+    user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id)
 ) -> dict:
     """
     Delete a category.
     
+    Requires X-Workspace-Id header with workspace UUID.
     The category must not have any children. Delete child categories first.
     """
-    return service.delete(category_id, user_id)
+    return service.delete(category_id, user_id, workspace_id)

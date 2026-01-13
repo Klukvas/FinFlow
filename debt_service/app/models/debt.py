@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Float, Date, DateTime, ForeignKey, Text, Boolean
+from sqlalchemy import Column, Integer, String, Float, Date, DateTime, ForeignKey, Text, Boolean, Index
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.database import Base
@@ -9,6 +10,7 @@ class Contact(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, nullable=False, index=True)
+    workspace_id = Column(UUID(as_uuid=True), nullable=False, index=True)
     name = Column(String(255), nullable=False)
     email = Column(String(255), nullable=True)
     phone = Column(String(50), nullable=True)
@@ -20,6 +22,11 @@ class Contact(Base):
     
     # Relationships
     debts = relationship("Debt", back_populates="contact")
+    
+    # Composite indexes
+    __table_args__ = (
+        Index('idx_contacts_workspace_user', 'workspace_id', 'user_id'),
+    )
 
 class Debt(Base):
     """Debt model for managing debts"""
@@ -27,6 +34,7 @@ class Debt(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, nullable=False, index=True)
+    workspace_id = Column(UUID(as_uuid=True), nullable=False, index=True)
     contact_id = Column(Integer, ForeignKey("contacts.id"), nullable=True)
     category_id = Column(Integer, nullable=True)  # Reference to category service
     
@@ -58,6 +66,11 @@ class Debt(Base):
     # Relationships
     contact = relationship("Contact", back_populates="debts")
     payments = relationship("DebtPayment", back_populates="debt")
+    
+    # Composite indexes
+    __table_args__ = (
+        Index('idx_debts_workspace_user', 'workspace_id', 'user_id'),
+    )
 
 class DebtPayment(Base):
     """Debt payment model for tracking individual payments"""

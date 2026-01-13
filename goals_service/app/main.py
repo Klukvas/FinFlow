@@ -99,10 +99,25 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    description="Microservice for managing financial goals and milestones",
+    description="""Microservice for managing financial goals and milestones.
+
+## Authorization
+
+All endpoints require:
+- **Bearer Token**: JWT token in Authorization header
+- **X-Workspace-Id**: UUID of the workspace to operate in
+
+### Roles
+- **viewer**: Can read goals and milestones
+- **member**: Can create, update, delete goals and milestones
+- **admin/owner**: Full workspace access
+""",
     version=settings.VERSION,
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    swagger_ui_parameters={
+        "persistAuthorization": True
+    }
 )
 
 # Register exception handlers

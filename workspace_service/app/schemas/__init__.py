@@ -14,7 +14,8 @@ from .invite import (
     InviteCreate,
     InviteResponse,
     InviteListResponse,
-    InviteAcceptRequest,
+    MyInviteResponse,
+    MyInviteListResponse,
 )
 from .internal import (
     AuthorizeRequest,
@@ -37,7 +38,8 @@ __all__ = [
     "InviteCreate",
     "InviteResponse",
     "InviteListResponse",
-    "InviteAcceptRequest",
+    "MyInviteResponse",
+    "MyInviteListResponse",
     "AuthorizeRequest",
     "AuthorizeResponse",
     "UserWorkspacesResponse",

@@ -1,10 +1,11 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Header
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.config import settings
 import jwt
 from typing import Optional
+from uuid import UUID
 
 security = HTTPBearer()
 
@@ -30,6 +31,17 @@ def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(secu
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication credentials",
             headers={"WWW-Authenticate": "Bearer"},
+        )
+
+
+def get_workspace_id(x_workspace_id: str = Header(..., alias="X-Workspace-Id")) -> UUID:
+    """Extract workspace ID from header"""
+    try:
+        return UUID(x_workspace_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid workspace ID format"
         )
 
 

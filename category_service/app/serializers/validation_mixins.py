@@ -92,15 +92,16 @@ class UniquenessValidator(ABC):
         """Return list of field names that must be unique per user."""
         pass
     
-    def validate_uniqueness(self, db: Session, user_id: int, data: dict, exclude_id: Optional[int] = None) -> None:
+    def validate_uniqueness(self, db: Session, user_id: int, data: dict, exclude_id: Optional[int] = None, workspace_id: Optional[Any] = None) -> None:
         """
-        Validate that entity fields are unique for the user.
+        Validate that entity fields are unique for the user in the workspace.
         
         Args:
             db: Database session
             user_id: ID of the user
             data: Dictionary of field values to validate
             exclude_id: ID to exclude from validation (for updates)
+            workspace_id: UUID of the workspace (for workspace-scoped uniqueness)
             
         Raises:
             CategoryNameConflictError: If uniqueness constraint is violated
@@ -111,11 +112,12 @@ class UniquenessValidator(ABC):
         for field_name in self.get_unique_fields():
             if field_name in data:
                 Logger.debug(
-                    f"Validating uniqueness for field '{field_name}' with value '{data[field_name]}' for user {user_id}",
+                    f"Validating uniqueness for field '{field_name}' with value '{data[field_name]}' for user {user_id} in workspace {workspace_id}",
                     extra={
                         "field_name": field_name,
                         "field_value": data[field_name],
                         "user_id": user_id,
+                        "workspace_id": str(workspace_id) if workspace_id else None,
                         "exclude_id": exclude_id
                     }
                 )
@@ -125,17 +127,23 @@ class UniquenessValidator(ABC):
                     user_id_field == user_id
                 )
                 
+                # Add workspace_id filter if provided
+                if workspace_id is not None and hasattr(entity_class, 'workspace_id'):
+                    workspace_id_field = getattr(entity_class, 'workspace_id')
+                    query = query.filter(workspace_id_field == workspace_id)
+                
                 if exclude_id:
                     query = query.filter(entity_class.id != exclude_id)
                 
                 existing = query.first()
                 if existing:
                     Logger.warning(
-                        f"Uniqueness violation: {field_name}='{data[field_name]}' already exists for user {user_id}",
+                        f"Uniqueness violation: {field_name}='{data[field_name]}' already exists for user {user_id} in workspace {workspace_id}",
                         extra={
                             "field_name": field_name,
                             "field_value": data[field_name],
                             "user_id": user_id,
+                            "workspace_id": str(workspace_id) if workspace_id else None,
                             "existing_id": existing.id if hasattr(existing, 'id') else None
                         }
                     )

@@ -16,7 +16,7 @@ from app.schemas.payment_schedule import (
 )
 from app.services.recurring_payment_service import recurring_payment_service
 from app.utils.logger import get_logger
-from app.dependencies import get_current_user_id
+from app.dependencies import get_current_user_id, get_workspace_id
 
 logger = get_logger(__name__)
 
@@ -27,24 +27,26 @@ router = APIRouter(prefix="/recurring-payments", tags=["recurring-payments"])
 async def create_recurring_payment(
     payment_data: RecurringPaymentCreate,
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     db: Session = Depends(get_db)
 ):
-    """Create a new recurring payment"""
-    return await recurring_payment_service.create_recurring_payment(payment_data, user_id, db)
+    """Create a new recurring payment. Requires 'member' role."""
+    return await recurring_payment_service.create_recurring_payment(payment_data, user_id, workspace_id, db)
 
 
 @router.get("/", response_model=RecurringPaymentListResponse)
 async def get_recurring_payments(
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     status: Optional[str] = Query(None, description="Filter by status"),
     payment_type: Optional[str] = Query(None, description="Фильтр по типу платежа"),
     page: int = Query(1, ge=1, description="Номер страницы"),
     size: int = Query(50, ge=1, le=100, description="Размер страницы"),
     db: Session = Depends(get_db)
 ):
-    """Get list of recurring payments for the user"""
+    """Get list of recurring payments in workspace. Requires 'viewer' role."""
     return recurring_payment_service.get_recurring_payments(
-        user_id, db, status, payment_type, page, size
+        user_id, workspace_id, db, status, payment_type, page, size
     )
 
 
@@ -52,10 +54,11 @@ async def get_recurring_payments(
 async def get_recurring_payment(
     payment_id: UUID,
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     db: Session = Depends(get_db)
 ):
-    """Get recurring payment by ID"""
-    return recurring_payment_service.get_recurring_payment(payment_id, user_id, db)
+    """Get recurring payment by ID. Requires 'viewer' role."""
+    return recurring_payment_service.get_recurring_payment(payment_id, user_id, workspace_id, db)
 
 
 @router.put("/{payment_id}", response_model=RecurringPaymentResponse)
@@ -63,10 +66,12 @@ async def update_recurring_payment(
     payment_id: UUID,
     payment_data: RecurringPaymentUpdate,
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     db: Session = Depends(get_db)
 ):
-    """Update recurring payment"""
+    """Update recurring payment. Requires 'member' role."""
     return await recurring_payment_service.update_recurring_payment(
+        payment_id, payment_data, user_id, workspace_id,
         payment_id, payment_data, user_id, db
     )
 
@@ -75,10 +80,11 @@ async def update_recurring_payment(
 async def delete_recurring_payment(
     payment_id: UUID,
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     db: Session = Depends(get_db)
 ):
-    """Delete recurring payment"""
-    recurring_payment_service.delete_recurring_payment(payment_id, user_id, db)
+    """Delete recurring payment. Requires 'member' role."""
+    recurring_payment_service.delete_recurring_payment(payment_id, user_id, workspace_id, db)
     return {"message": "Recurring payment deleted successfully"}
 
 

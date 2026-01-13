@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Header
+from fastapi import APIRouter, Depends, HTTPException, status, Header, Query
 from app.services.auth import AuthService
 from app.dependencies import get_auth_service
 from app.exceptions import UserNotFoundError
@@ -51,4 +51,32 @@ async def get_user_internal(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"User {user_id} not found"
         )
+
+
+@router.get("/users/by-email/{email}", response_model=UserOut)
+async def get_user_by_email_internal(
+    email: str,
+    service: AuthService = Depends(get_auth_service),
+    _: None = Depends(verify_internal_token)
+) -> UserOut:
+    """
+    Internal endpoint to get user information by email.
+    Used by workspace service for invite creation.
+    
+    Args:
+        email: The email address of the user
+        
+    Returns:
+        User information
+        
+    Raises:
+        HTTPException: If user not found
+    """
+    user = service.get_user_by_email(email.lower().strip())
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User with email {email} not found"
+        )
+    return user
 

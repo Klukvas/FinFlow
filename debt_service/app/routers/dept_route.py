@@ -2,9 +2,10 @@
 from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from uuid import UUID
 
 from app.database import get_db
-from app.dependencies import get_debt_service, get_current_user_id
+from app.dependencies import get_debt_service, get_current_user_id, get_workspace_id
 from app.services.debt import DebtService
 from app.schemas.debt import (
     DebtCreate, DebtUpdate, DebtResponse, DebtSummary,
@@ -18,10 +19,11 @@ router = APIRouter()
 async def create_debt(
     debt: DebtCreate,
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     service: DebtService = Depends(get_debt_service)
 ):
-    """Create a new debt"""
-    return await service.create_debt(debt, user_id)
+    """Create a new debt. Requires 'member' role."""
+    return await service.create_debt(debt, user_id, workspace_id)
 
 @router.get("/", response_model=List[DebtResponse])
 def get_debts(
@@ -30,38 +32,42 @@ def get_debts(
     active_only: bool = Query(False, description="Show only active debts"),
     paid_off_only: bool = Query(False, description="Show only paid off debts"),
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     service: DebtService = Depends(get_debt_service)
 ):
-    """Get all debts for the user"""
-    return service.get_debts(user_id, skip, limit, active_only, paid_off_only)
+    """Get all debts in the workspace. Requires 'viewer' role."""
+    return service.get_debts(user_id, workspace_id, skip, limit, active_only, paid_off_only)
 
 @router.get("/{debt_id}", response_model=DebtResponse)
 def get_debt(
     debt_id: int,
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     service: DebtService = Depends(get_debt_service)
 ):
-    """Get a specific debt"""
-    return service.get_debt(debt_id, user_id)
+    """Get a specific debt. Requires 'viewer' role."""
+    return service.get_debt(debt_id, user_id, workspace_id)
 
 @router.put("/{debt_id}", response_model=DebtResponse)
 async def update_debt(
     debt_id: int,
     debt_update: DebtUpdate,
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     service: DebtService = Depends(get_debt_service)
 ):
-    """Update a debt"""
-    return await service.update_debt(debt_id, debt_update, user_id)
+    """Update a debt. Requires 'member' role."""
+    return await service.update_debt(debt_id, debt_update, user_id, workspace_id)
 
 @router.delete("/{debt_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_debt(
     debt_id: int,
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     service: DebtService = Depends(get_debt_service)
 ):
-    """Delete a debt"""
-    service.delete_debt(debt_id, user_id)
+    """Delete a debt. Requires 'member' role."""
+    service.delete_debt(debt_id, user_id, workspace_id)
 
 # Payment Endpoints
 @router.post("/{debt_id}/payments/", response_model=DebtPaymentResponse, status_code=status.HTTP_201_CREATED)
@@ -69,10 +75,11 @@ async def create_payment(
     debt_id: int,
     payment: DebtPaymentCreate,
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     service: DebtService = Depends(get_debt_service)
 ):
-    """Create a debt payment"""
-    return await service.create_payment(debt_id, payment, user_id)
+    """Create a debt payment. Requires 'member' role."""
+    return await service.create_payment(debt_id, payment, user_id, workspace_id)
 
 @router.get("/{debt_id}/payments/", response_model=List[DebtPaymentResponse])
 def get_payments(
@@ -80,18 +87,20 @@ def get_payments(
     skip: int = Query(0, ge=0, description="Number of payments to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of payments to return"),
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     service: DebtService = Depends(get_debt_service)
 ):
-    """Get all payments for a debt"""
-    # Verify debt exists and belongs to user
-    service.get_debt(debt_id, user_id)
+    """Get all payments for a debt. Requires 'viewer' role."""
+    # Verify debt exists and belongs to workspace
+    service.get_debt(debt_id, user_id, workspace_id)
     return service.get_payments(debt_id, user_id, skip, limit)
 
 # Summary Endpoints
 @router.get("/summary/", response_model=DebtSummary)
 def get_debt_summary(
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     service: DebtService = Depends(get_debt_service)
 ):
-    """Get debt summary statistics"""
-    return service.get_debt_summary(user_id)
+    """Get debt summary statistics. Requires 'viewer' role."""
+    return service.get_debt_summary(user_id, workspace_id)

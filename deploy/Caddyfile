@@ -73,6 +73,14 @@ finflow.ltd {
     reverse_proxy subscription_service:8080
   }
 
+  handle_path /api/workspaces/* {
+    reverse_proxy workspace_service:8000
+  }
+
+  handle_path /api/invites/* {
+    reverse_proxy workspace_service:8000
+  }
+
   # Frontend - SPA routing with fallback to index.html
   handle /* {
     reverse_proxy frontend:80 {

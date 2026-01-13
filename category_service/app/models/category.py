@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Enum, DateTime, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, Enum, DateTime, Boolean, Index
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
@@ -18,6 +19,7 @@ class Category(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
     user_id = Column(Integer, index=True)
+    workspace_id = Column(UUID(as_uuid=True), nullable=False, index=True)
     parent_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
     type = Column(Enum(CategoryType), nullable=False, default=CategoryType.EXPENSE)
     
@@ -30,3 +32,9 @@ class Category(Base):
     # Self-referential relationship for parent-child categories
     parent = relationship("Category", remote_side=[id], back_populates="children")
     children = relationship("Category", back_populates="parent", cascade="all, delete-orphan")
+    
+    # Add composite index for workspace queries
+    __table_args__ = (
+        Index('idx_categories_workspace_user', 'workspace_id', 'user_id'),
+        Index('idx_categories_workspace_name_type', 'workspace_id', 'name', 'type'),
+    )

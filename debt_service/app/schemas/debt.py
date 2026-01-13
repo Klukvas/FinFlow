@@ -3,6 +3,7 @@ from typing import Optional, List
 from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
+from uuid import UUID
 
 # Import contact schemas for relationships
 from .contact import ContactResponse
@@ -93,6 +94,7 @@ class DebtResponse(DebtBase):
     """Schema for debt output"""
     id: int = Field(description="Unique debt identifier")
     user_id: int = Field(description="ID of the user who owns this debt")
+    workspace_id: UUID = Field(description="Workspace ID this debt belongs to")
     current_balance: float = Field(description="Current outstanding balance")
     last_payment_date: Optional[date] = Field(description="Date of last payment")
     is_active: bool = Field(description="Whether debt is active")

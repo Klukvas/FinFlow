@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, validator
 from typing import Optional, List
 from datetime import datetime
+from uuid import UUID
 from app.models.goal import GoalType, GoalStatus, GoalPriority
 
 
@@ -54,6 +55,7 @@ class GoalProgressUpdate(BaseModel):
 class GoalResponse(GoalBase):
     id: int
     user_id: int
+    workspace_id: UUID
     current_amount: float
     progress_percentage: float
     status: GoalStatus
