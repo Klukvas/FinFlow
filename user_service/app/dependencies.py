@@ -2,6 +2,7 @@ from fastapi import Depends, Request, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app.services.auth import AuthService
+from app.models.user import User
 from app.utils.logger import get_logger, log_security_event
 from typing import Generator
 
@@ -59,3 +60,41 @@ def get_current_user_id(request: Request, service: AuthService = Depends(get_aut
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token"
         )
+
+
+def get_current_user(
+    user_id: int = Depends(get_current_user_id),
+    service: AuthService = Depends(get_auth_service)
+) -> User:
+    """Get the current authenticated user object"""
+    return service.get_user_by_id(user_id)
+
+
+def get_current_admin_user(
+    user: User = Depends(get_current_user)
+) -> User:
+    """Verify user is authenticated AND has admin role"""
+    if user.role != "admin":
+        log_security_event(
+            logger, 
+            "Admin access denied - insufficient role",
+            user_id=user.id,
+            details=f"User role: {user.role}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required"
+        )
+    
+    if user.status != "active":
+        log_security_event(
+            logger,
+            "Admin access denied - account disabled",
+            user_id=user.id
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account is disabled"
+        )
+    
+    return user

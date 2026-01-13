@@ -6,6 +6,7 @@ from uuid import UUID
 
 from app.models.debt import Contact
 from app.schemas.contact import ContactCreate, ContactUpdate, ContactResponse, ContactSummary
+from app.services.workspace_authorization import WorkspaceAuthorizationMixin
 from app.exceptions import (
     ContactNotFoundError,
     ContactValidationError,
@@ -19,7 +20,7 @@ from app.utils.logger import get_logger, log_operation
 
 logger = get_logger(__name__)
 
-class ContactService:
+class ContactService(WorkspaceAuthorizationMixin):
     """Service for managing contacts"""
     
     def __init__(self, db: Session):

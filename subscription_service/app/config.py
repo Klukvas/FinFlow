@@ -17,6 +17,10 @@ class Settings(BaseSettings):
 
     # Internal service authentication
     internal_secret_token: str = Field(default="my-secret-token")
+    
+    # JWT configuration (shared with user_service for token verification)
+    jwt_secret_key: str = Field(default="")
+    jwt_algorithm: str = Field(default="HS256")
 
     class Config:
         env_file = ".env"

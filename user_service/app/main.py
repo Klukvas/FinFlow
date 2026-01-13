@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Request
 from starlette.middleware.base import BaseHTTPMiddleware
-from app.routers import auth, logging, internal
+from app.routers import auth, logging, internal, admin
 from fastapi.exceptions import RequestValidationError
 from app.exception_handlers import (
     custom_validation_exception_handler,
@@ -124,20 +124,22 @@ app.add_exception_handler(AccountLockedError, account_locked_handler)
 app.add_exception_handler(RateLimitError, rate_limit_handler)
 app.add_exception_handler(HTTPException, http_exception_handler)
 
-# Add middleware
-app.add_middleware(RequestLoggingMiddleware)
-
 # Include routers
 app.include_router(auth.router)
 app.include_router(logging.router)
 app.include_router(internal.router)
+app.include_router(admin.router)
 
-# Configure CORS
+# Middleware order matters! Added LAST = runs FIRST
+# 1. RequestLoggingMiddleware (added first, runs last)
+app.add_middleware(RequestLoggingMiddleware)
+
+# 2. CORS (added last, runs first - handles preflight OPTIONS)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
+    allow_origins=["*"],  # Allow all for now
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 

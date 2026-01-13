@@ -242,7 +242,8 @@ class AuthService:
                 "iat": datetime.now(timezone.utc),
                 "email": user.email,
                 "username": user.username,
-                "default_workspace_id": str(user.default_workspace_id) if user.default_workspace_id else None
+                "default_workspace_id": str(user.default_workspace_id) if user.default_workspace_id else None,
+                "role": user.role
             }
             token = jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
             

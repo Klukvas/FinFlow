@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr, ConfigDict, Field, field_validator
-from typing import Optional
+from typing import Optional, List
 from uuid import UUID
+from datetime import datetime
 import re
 
 class UserCreate(BaseModel):
@@ -102,6 +103,10 @@ class UserOut(BaseModel):
         default=0,
         description="Tutorial completion version (0 = not completed, >0 = completed version)"
     )
+    role: str = Field(
+        default="user",
+        description="User role (user or admin)"
+    )
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -112,7 +117,8 @@ class UserOut(BaseModel):
                 "username": "john_doe",
                 "base_currency": "UAH",
                 "default_workspace_id": "550e8400-e29b-41d4-a716-446655440000",
-                "tutorial_version": 1
+                "tutorial_version": 1,
+                "role": "user"
             }
         }
     )
@@ -237,5 +243,52 @@ class TutorialUpdate(BaseModel):
             "example": {
                 "tutorial_version": 1
             }
+        }
+    )
+
+
+# Admin-specific schemas
+class AdminUserOut(BaseModel):
+    """Full user details for admin view"""
+    id: int
+    email: EmailStr
+    username: str
+    base_currency: str
+    role: str
+    status: str
+    tutorial_version: int
+    default_workspace_id: Optional[UUID] = None
+    created_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AdminUserListResponse(BaseModel):
+    """Paginated user list response for admin"""
+    items: List[AdminUserOut]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
+class RoleUpdate(BaseModel):
+    """Schema for updating user role"""
+    role: str = Field(..., pattern="^(user|admin)$", description="User role")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {"role": "admin"}
+        }
+    )
+
+
+class StatusUpdate(BaseModel):
+    """Schema for updating user status"""
+    status: str = Field(..., pattern="^(active|disabled)$", description="User status")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {"status": "disabled"}
         }
     )
