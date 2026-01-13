@@ -30,12 +30,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onMenuClick, title, isMobi
           <div className="w-9" /> // Spacer for alignment
         )}
         
-        <h1 className="text-lg font-semibold truncate" data-testid="app-title">{title}</h1>
+        <h1 className="text-lg font-semibold truncate flex-1 text-center" data-testid="app-title">{title}</h1>
         
-        <div className="flex items-center space-x-2">
-          <WorkspaceSelector compact />
-          <LanguageSelector />
-          <ThemeToggle className="theme-surface theme-text-primary" />
+        <div className="flex items-center space-x-1">
+          {/* Desktop: show workspace selector, Mobile: hide (it's in sidebar) */}
+          {!isMobile && <WorkspaceSelector compact />}
+          <LanguageSelector compact={isMobile} />
+          <ThemeToggle className="theme-surface theme-text-primary" compact={isMobile} />
         </div>
       </div>
     </header>

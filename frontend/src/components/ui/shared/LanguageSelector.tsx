@@ -2,7 +2,11 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaGlobe, FaChevronDown } from 'react-icons/fa';
 
-export const LanguageSelector: React.FC = () => {
+interface LanguageSelectorProps {
+  compact?: boolean;
+}
+
+export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ compact = false }) => {
   const { i18n, t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -23,14 +27,18 @@ export const LanguageSelector: React.FC = () => {
     <div className="relative" data-testid="language-selector">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 px-3 py-2 text-sm font-medium bg-gray-800 hover:bg-gray-700 text-white rounded-lg theme-transition border border-gray-700 hover:border-gray-600 hover:shadow-lg"
+        className={`flex items-center ${compact ? 'space-x-1 px-2 py-2' : 'space-x-2 px-3 py-2'} text-sm font-medium bg-gray-800 hover:bg-gray-700 text-white rounded-lg theme-transition border border-gray-700 hover:border-gray-600 hover:shadow-lg`}
         title={t('language.select')}
         data-testid="language-selector-button"
       >
         <FaGlobe className="w-4 h-4 text-white" />
-        <span className="text-lg">{currentLanguage.flag}</span>
-        <span className="hidden sm:inline text-white">{currentLanguage.name}</span>
-        <FaChevronDown className={`w-3 h-3 transition-transform text-white ${isOpen ? 'rotate-180' : ''}`} />
+        <span className={compact ? 'text-base' : 'text-lg'}>{currentLanguage.flag}</span>
+        {!compact && (
+          <>
+            <span className="hidden sm:inline text-white">{currentLanguage.name}</span>
+            <FaChevronDown className={`w-3 h-3 transition-transform text-white ${isOpen ? 'rotate-180' : ''}`} />
+          </>
+        )}
       </button>
 
       {isOpen && (
