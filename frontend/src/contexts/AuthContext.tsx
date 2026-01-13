@@ -8,6 +8,7 @@ interface User {
   email: string;
   username: string;
   base_currency: string;
+  tutorial_version: number;
 }
 
 interface AuthContextType {

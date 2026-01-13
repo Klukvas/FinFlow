@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTutorial } from '@/contexts/TutorialContext';
 import { useApiClients } from '@/hooks/useApiClients';
 import { UserUpdate } from '@/services/api/userApiClient';
 import { Modal } from '@/components/ui/shared/Modal';
 import { Button } from '@/components/ui/shared/Button';
 import { FormField } from '@/components/ui/forms/FormField';
 import { Input } from '@/components/ui/forms/Input';
-import { FaUser, FaEdit, FaSave, FaTimes, FaEnvelope, FaCalendarAlt, FaWallet, FaCrown } from 'react-icons/fa';
+import { FaUser, FaEdit, FaSave, FaTimes, FaEnvelope, FaCalendarAlt, FaWallet, FaCrown, FaGraduationCap } from 'react-icons/fa';
 import { config } from '@/config/env';
 import { CurrencySelect } from '@/components/ui/forms/CurrencySelect';
 import { ProfileSkeleton } from '@/components/ui/profile/ProfileSkeleton';
@@ -17,6 +18,7 @@ import { SubscriptionResponse } from '@/types/subscription';
 export const Profile = () => {
   const { t } = useTranslation();
   const { user, isLoading, refreshUserProfile } = useAuth();
+  const { startTutorial } = useTutorial();
   const { user: userApi, subscription: subscriptionApi } = useApiClients();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -152,13 +154,23 @@ export const Profile = () => {
           </p>
         </div>
         
-        <Button
-          onClick={() => setIsEditModalOpen(true)}
-          className="flex items-center gap-2"
-        >
-          <FaEdit className="w-4 h-4" />
-          {t('profile.editButton')}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={startTutorial}
+            className="flex items-center gap-2"
+          >
+            <FaGraduationCap className="w-4 h-4" />
+            {t('profile.restartTutorial')}
+          </Button>
+          <Button
+            onClick={() => setIsEditModalOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <FaEdit className="w-4 h-4" />
+            {t('profile.editButton')}
+          </Button>
+        </div>
       </div>
 
       {/* Profile Information */}

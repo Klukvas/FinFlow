@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, status, HTTPException
 from app.schemas.user import (
     UserCreate, UserLogin, UserOut, UserUpdate, 
-    PasswordChange, TokenResponse, RefreshTokenRequest
+    PasswordChange, TokenResponse, RefreshTokenRequest, TutorialUpdate
 )
 from app.services.auth import AuthService
 from app.dependencies import get_auth_service, get_current_user_id
@@ -263,3 +263,37 @@ def refresh_token(
         raise
     except Exception as e:
         raise UserAuthenticationError("Failed to refresh token")
+
+@router.put(
+    "/tutorial",
+    response_model=UserOut,
+    summary="Update tutorial completion status",
+    description="Mark tutorial as completed with a specific version",
+    responses={
+        200: {"description": "Tutorial status updated successfully"},
+        401: {"description": "Unauthorized - invalid or missing token"},
+    }
+)
+def update_tutorial(
+    tutorial_data: TutorialUpdate,
+    user_id: int = Depends(get_current_user_id),
+    service: AuthService = Depends(get_auth_service)
+) -> UserOut:
+    """
+    Update tutorial completion status.
+    
+    - **tutorial_version**: Version of the tutorial completed (0 to reset, >0 for completed version)
+    
+    Returns the updated user information.
+    """
+    try:
+        user = service.get_user_by_id(user_id)
+        user.tutorial_version = tutorial_data.tutorial_version
+        service.db.commit()
+        service.db.refresh(user)
+        return user
+    except UserNotFoundError:
+        raise
+    except Exception as e:
+        service.db.rollback()
+        raise UserValidationError("Failed to update tutorial status")

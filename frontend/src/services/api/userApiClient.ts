@@ -25,6 +25,7 @@ export interface UserProfile {
   email: string;
   username: string;
   base_currency: string;
+  tutorial_version: number;
 }
 
 export interface UserUpdate {
@@ -36,6 +37,10 @@ export interface UserUpdate {
 export interface PasswordChange {
   current_password: string;
   new_password: string;
+}
+
+export interface TutorialUpdate {
+  tutorial_version: number;
 }
 
 export type ApiResponse<T> = T | ApiError;
@@ -72,5 +77,9 @@ export class UserApiClient {
 
   async changePassword(passwordData: PasswordChange): Promise<ApiResponse<{ detail: string }>> {
     return this.httpClient.post<{ detail: string }>('/change-password', passwordData);
+  }
+
+  async updateTutorial(tutorialData: TutorialUpdate): Promise<ApiResponse<UserProfile>> {
+    return this.httpClient.put<UserProfile>('/tutorial', tutorialData);
   }
 }

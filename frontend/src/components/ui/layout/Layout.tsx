@@ -5,6 +5,7 @@ import { Sidebar } from './Sidebar';
 import { AppHeader } from './MobileHeader';
 import { PublicFooter } from './PublicFooter';
 import { AnimatedBackground } from './AnimatedBackground';
+import { useTutorial } from '@/contexts/TutorialContext';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -15,6 +16,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [isMobile, setIsMobile] = useState(false);
   const location = useLocation();
   const { t } = useTranslation();
+  const { isActive: isTutorialActive } = useTutorial();
 
   useLayoutEffect(() => {
     const checkMobile = () => {
@@ -33,6 +35,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Open sidebar when tutorial is active on mobile
+  useEffect(() => {
+    if (isTutorialActive && isMobile && !sidebarOpen) {
+      setSidebarOpen(true);
+    }
+  }, [isTutorialActive, isMobile, sidebarOpen]);
 
   // Update document title when location or language changes
   useEffect(() => {

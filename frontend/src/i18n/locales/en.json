@@ -1140,6 +1140,61 @@
     "recently": "Recently",
     "emailVerified": "Email Verified",
     "profileUpdated": "Profile updated successfully!",
-    "profileUpdateError": "Error updating profile"
+    "profileUpdateError": "Error updating profile",
+    "restartTutorial": "Restart Tutorial"
+  },
+  "tutorial": {
+    "step": "Step",
+    "next": "Next",
+    "back": "Back",
+    "skip": "Skip",
+    "complete": "Complete",
+    "pressEscToSkip": "Press Esc to skip tutorial",
+    "steps": {
+      "welcome": {
+        "title": "Welcome to FinFlow! 👋",
+        "description": "Let's take a quick tour of the main features. This will help you get started with managing your finances effectively."
+      },
+      "categories": {
+        "title": "Categories",
+        "description": "Organize your finances by creating budget categories like Food, Transport, Entertainment, or Salary. Categories help you understand where your money goes."
+      },
+      "accounts": {
+        "title": "Accounts",
+        "description": "Add your bank accounts, credit cards, cash wallets, and crypto wallets. Track balances across all your money in one place."
+      },
+      "expenses": {
+        "title": "Expenses",
+        "description": "Log your daily spending here. Each expense is linked to a category and deducted from an account. See analytics and charts of your spending patterns."
+      },
+      "income": {
+        "title": "Income",
+        "description": "Record your earnings — salary, freelance income, bonuses, gifts, or any money coming in. Keep track of all your income sources."
+      },
+      "debts": {
+        "title": "Debts",
+        "description": "Track money you owe to others or money others owe you. Never forget who owes what and manage your debt payments."
+      },
+      "recurring": {
+        "title": "Recurring Payments",
+        "description": "Set up recurring payments like rent, subscriptions, utility bills, or regular income. They will be automatically recorded for you."
+      },
+      "goals": {
+        "title": "Financial Goals",
+        "description": "Create savings goals and track your progress. Whether it's a vacation, new gadget, or emergency fund — visualize your journey."
+      },
+      "pdfParser": {
+        "title": "PDF Parser",
+        "description": "Import transactions automatically by uploading your bank statements in PDF format. Save time on manual data entry."
+      },
+      "workspaces": {
+        "title": "Workspaces",
+        "description": "Create shared spaces to manage finances together with family members or team. Collaborate and share financial data securely."
+      },
+      "complete": {
+        "title": "You're All Set! 🎉",
+        "description": "That's the basics! Start by creating some categories, adding your accounts, and recording your first transactions. Happy budgeting!"
+      }
+    }
   }
 }

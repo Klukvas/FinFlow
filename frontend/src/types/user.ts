@@ -3,6 +3,7 @@ export interface User {
   email: string;
   username: string;
   base_currency: string;
+  tutorial_version: number;
 }
 
 export interface UserCreate {

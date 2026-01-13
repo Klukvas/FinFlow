@@ -8,7 +8,9 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { ModalProvider } from '@/contexts/ModalContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { WorkspaceProvider } from '@/contexts/WorkspaceContext';
+import { TutorialProvider } from '@/contexts/TutorialContext';
 import { AppRoutes } from '@/components/AppRoutes';
+import { TutorialOverlay } from '@/components/ui/tutorial';
 import '@/i18n';
 
 interface AppProvidersProps {
@@ -25,9 +27,12 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
               <WorkspaceProvider>
                 <CategoriesProvider>
                   <CurrencyProvider>
-                    <Router>
-                      {children || <AppRoutes />}
-                    </Router>
+                    <TutorialProvider>
+                      <Router>
+                        {children || <AppRoutes />}
+                        <TutorialOverlay />
+                      </Router>
+                    </TutorialProvider>
                   </CurrencyProvider>
                 </CategoriesProvider>
               </WorkspaceProvider>

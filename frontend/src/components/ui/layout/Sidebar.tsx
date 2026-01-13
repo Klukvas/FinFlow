@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTutorial } from '@/contexts/TutorialContext';
 import { WorkspaceSelector } from '@/components/ui/workspace';
 import {
   FaHome,
@@ -28,9 +29,18 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onToggle }) => {
   const { logout, user, isLoading } = useAuth();
+  const { isActive: isTutorialActive } = useTutorial();
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(false);
   const { t } = useTranslation();
+
+  // Force sidebar open on mobile when tutorial is active
+  useEffect(() => {
+    if (isTutorialActive && isMobile && !isOpen) {
+      // We don't directly open here as parent controls state
+      // But the tutorial will handle opening the sidebar via Layout
+    }
+  }, [isTutorialActive, isMobile, isOpen]);
 
   useEffect(() => {
     const checkMobile = () => {

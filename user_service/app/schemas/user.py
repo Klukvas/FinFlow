@@ -98,6 +98,10 @@ class UserOut(BaseModel):
         None, 
         description="User's default workspace ID"
     )
+    tutorial_version: int = Field(
+        default=0,
+        description="Tutorial completion version (0 = not completed, >0 = completed version)"
+    )
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -107,7 +111,8 @@ class UserOut(BaseModel):
                 "email": "john.doe@example.com",
                 "username": "john_doe",
                 "base_currency": "UAH",
-                "default_workspace_id": "550e8400-e29b-41d4-a716-446655440000"
+                "default_workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+                "tutorial_version": 1
             }
         }
     )
@@ -215,6 +220,22 @@ class RefreshTokenRequest(BaseModel):
         json_schema_extra={
             "example": {
                 "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            }
+        }
+    )
+
+class TutorialUpdate(BaseModel):
+    """Schema for updating tutorial completion status"""
+    tutorial_version: int = Field(
+        ...,
+        ge=0,
+        description="Tutorial version that user has completed"
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "tutorial_version": 1
             }
         }
     )
