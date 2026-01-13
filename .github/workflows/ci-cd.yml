@@ -13,6 +13,8 @@ on:
       - '**/package.json'
       - '.github/workflows/**'
       - '.github/actions/**'
+      - 'deploy/**'
+      - 'init/**'
   workflow_dispatch:
     inputs:
       environment:
