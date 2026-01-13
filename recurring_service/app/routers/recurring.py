@@ -71,8 +71,7 @@ async def update_recurring_payment(
 ):
     """Update recurring payment. Requires 'member' role."""
     return await recurring_payment_service.update_recurring_payment(
-        payment_id, payment_data, user_id, workspace_id,
-        payment_id, payment_data, user_id, db
+        payment_id, payment_data, user_id, workspace_id, db
     )
 
 
@@ -92,10 +91,11 @@ async def delete_recurring_payment(
 async def pause_recurring_payment(
     payment_id: UUID,
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     db: Session = Depends(get_db),
 ):
     """Pause recurring payment"""
-    recurring_payment_service.pause_recurring_payment(payment_id, user_id, db)
+    recurring_payment_service.pause_recurring_payment(payment_id, user_id, workspace_id, db)
     return {"message": "Recurring payment paused successfully"}
 
 
@@ -103,10 +103,11 @@ async def pause_recurring_payment(
 async def resume_recurring_payment(
     payment_id: UUID,
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     db: Session = Depends(get_db)
 ):
     """Resume recurring payment"""
-    recurring_payment_service.resume_recurring_payment(payment_id, user_id, db)
+    recurring_payment_service.resume_recurring_payment(payment_id, user_id, workspace_id, db)
     return {"message": "Recurring payment resumed successfully"}
 
 
@@ -114,6 +115,7 @@ async def resume_recurring_payment(
 async def get_payment_schedules(
     payment_id: UUID,
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     status: Optional[str] = Query(None, description="Фильтр по статусу"),
     execution_date_from: Optional[date] = Query(None, description="Дата выполнения от"),
     execution_date_to: Optional[date] = Query(None, description="Дата выполнения до"),
@@ -125,6 +127,7 @@ async def get_payment_schedules(
     return recurring_payment_service.get_payment_schedules(
         payment_id, 
         user_id, 
+        workspace_id,
         db, 
         status, 
         execution_date_from, 
@@ -137,7 +140,8 @@ async def get_payment_schedules(
 @router.get("/statistics/summary")
 async def get_payment_statistics(
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     db: Session = Depends(get_db)
 ):
     """Get statistics of recurring payments"""
-    return recurring_payment_service.get_payment_statistics(user_id, db)
+    return recurring_payment_service.get_payment_statistics(user_id, workspace_id, db)

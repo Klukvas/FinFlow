@@ -217,6 +217,7 @@ class RecurringPaymentService(WorkspaceAuthorizationMixin):
         self, 
         payment_id: UUID, 
         user_id: int, 
+        workspace_id: UUID,
         db: Session
     ) -> None:
         """Приостановить повторяющийся платеж"""
@@ -241,6 +242,7 @@ class RecurringPaymentService(WorkspaceAuthorizationMixin):
         self, 
         payment_id: UUID, 
         user_id: int, 
+        workspace_id: UUID,
         db: Session
     ) -> None:
         """Возобновить повторяющийся платеж"""
@@ -265,6 +267,7 @@ class RecurringPaymentService(WorkspaceAuthorizationMixin):
         self,
         payment_id: UUID,
         user_id: int,
+        workspace_id: UUID,
         db: Session,
         status: Optional[str] = None,
         execution_date_from: Optional[date] = None,
@@ -327,6 +330,7 @@ class RecurringPaymentService(WorkspaceAuthorizationMixin):
     def get_payment_statistics(
         self, 
         user_id: int, 
+        workspace_id: UUID,
         db: Session
     ) -> dict:
         """Получить статистику по повторяющимся платежам"""

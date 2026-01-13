@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
-import { recurringApiService, RecurringPayment, PaymentStatistics } from '@/services/api/recurringApi';
+import { useApiClients } from '@/hooks/useApiClients';
+import { RecurringPayment, PaymentStatistics } from '@/services/api/recurringApi';
 import { CreateRecurringPayment, RecurringPaymentCard, RecurringPaymentStats } from '@/components/ui/recurring';
 import { FaPlus } from 'react-icons/fa';
 import { toast } from 'sonner';
@@ -9,6 +10,7 @@ import { toast } from 'sonner';
 export const Recurring: React.FC = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { recurring } = useApiClients();
   const [payments, setPayments] = useState<RecurringPayment[]>([]);
   const [stats, setStats] = useState<PaymentStatistics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -16,15 +18,20 @@ export const Recurring: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const fetchPayments = async () => {
+  const fetchPayments = useCallback(async () => {
     if (!user?.id) return;
 
     try {
       setLoading(true);
-      const response = await recurringApiService.getRecurringPayments(user.id, {
+      const response = await recurring.getRecurringPayments({
         page: currentPage,
         size: 10,
       });
+      
+      if ('error' in response) {
+        console.error('Failed to fetch recurring payments:', response.error);
+        return;
+      }
       
       setPayments(response.items);
       setTotalPages(response.pages);
@@ -33,25 +40,29 @@ export const Recurring: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id, currentPage, recurring]);
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     if (!user?.id) return;
 
     try {
-      const response = await recurringApiService.getPaymentStatistics(user.id);
+      const response = await recurring.getPaymentStatistics();
+      if ('error' in response) {
+        console.error('Failed to fetch payment statistics:', response.error);
+        return;
+      }
       setStats(response);
     } catch (error) {
       console.error('Failed to fetch payment statistics:', error);
     }
-  };
+  }, [user?.id, recurring]);
 
   useEffect(() => {
     if (user?.id) {
       fetchPayments();
       fetchStats();
     }
-  }, [user?.id, currentPage]);
+  }, [user?.id, currentPage, fetchPayments, fetchStats]);
 
   const handleCreateSuccess = () => {
     setShowCreateModal(false);
@@ -63,7 +74,11 @@ export const Recurring: React.FC = () => {
     if (!user?.id) return;
     
     try {
-      await recurringApiService.deleteRecurringPayment(user.id, paymentId);
+      const response = await recurring.deleteRecurringPayment(paymentId);
+      if (response && 'error' in response) {
+        toast.error(response.error);
+        return;
+      }
       fetchPayments();
       fetchStats();
       toast.success(t('recurring.messages.paymentDeleted'));
@@ -77,7 +92,11 @@ export const Recurring: React.FC = () => {
     if (!user?.id) return;
 
     try {
-      await recurringApiService.pauseRecurringPayment(user.id, paymentId);
+      const response = await recurring.pauseRecurringPayment(paymentId);
+      if (response && 'error' in response) {
+        toast.error(response.error);
+        return;
+      }
       fetchPayments();
       toast.success(t('recurring.messages.paymentPaused'));
     } catch (error) {
@@ -90,7 +109,11 @@ export const Recurring: React.FC = () => {
     if (!user?.id) return;
 
     try {
-      await recurringApiService.resumeRecurringPayment(user.id, paymentId);
+      const response = await recurring.resumeRecurringPayment(paymentId);
+      if (response && 'error' in response) {
+        toast.error(response.error);
+        return;
+      }
       fetchPayments();
       toast.success(t('recurring.messages.paymentResumed'));
     } catch (error) {

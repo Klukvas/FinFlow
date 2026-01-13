@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
-import { recurringApiService, CreateRecurringPaymentRequest } from '@/services/api/recurringApi';
+import { useApiClients } from '@/hooks/useApiClients';
+import { CreateRecurringPaymentRequest } from '@/services/api/recurringApi';
 import { FormattedNumberInput } from '../forms/FormattedNumberInput';
 import { CurrencySelect, CategorySelect } from '../forms';
 import { toast } from 'sonner';
@@ -18,6 +19,7 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
 }) => {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { recurring } = useApiClients();
   const [loading, setLoading] = useState(false);
   const [amountDisplay, setAmountDisplay] = useState('');
   const [formData, setFormData] = useState<CreateRecurringPaymentRequest>({
@@ -45,7 +47,11 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
 
     setLoading(true);
     try {
-      await recurringApiService.createRecurringPayment(user.id, formData);
+      const response = await recurring.createRecurringPayment(formData);
+      if ('error' in response) {
+        toast.error(response.error);
+        return;
+      }
       toast.success(t('recurringPage.createModal.success'));
       onSuccess();
     } catch (error) {

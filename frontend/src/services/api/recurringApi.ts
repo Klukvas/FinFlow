@@ -1,7 +1,5 @@
-import { HttpClient } from './httpClient';
+import { AuthHttpClient, ApiError } from './AuthHttpClient';
 import { config } from '@/config/env';
-
-const recurringApiClient = new HttpClient(config.api.recurringServiceUrl);
 
 export interface RecurringPayment {
   id: string;
@@ -87,69 +85,78 @@ export interface PaymentStatistics {
   failed_this_month: number;
 }
 
-class RecurringApiService {
+export class RecurringApiClient {
+  private httpClient: AuthHttpClient;
   private baseUrl = '/recurring-payments';
+
+  constructor(
+    getToken: () => string | null,
+    refreshToken: () => Promise<boolean>
+  ) {
+    this.httpClient = new AuthHttpClient(
+      config.api.recurringServiceUrl,
+      getToken,
+      refreshToken
+    );
+  }
 
   // Создать повторяющийся платеж
   async createRecurringPayment(
-    userId: number,
     data: CreateRecurringPaymentRequest
-  ): Promise<RecurringPayment> {
-    return await recurringApiClient.post(`${this.baseUrl}/?user_id=${userId}`, data);
+  ): Promise<RecurringPayment | ApiError> {
+    return this.httpClient.post<RecurringPayment>(`${this.baseUrl}/`, data);
   }
 
   // Получить список повторяющихся платежей
   async getRecurringPayments(
-    userId: number,
     params?: {
       status?: string;
       payment_type?: string;
       page?: number;
       size?: number;
     }
-  ): Promise<RecurringPaymentListResponse> {
-    const queryParams = new URLSearchParams({ user_id: userId.toString() });
+  ): Promise<RecurringPaymentListResponse | ApiError> {
+    const queryParams = new URLSearchParams();
     
     if (params?.status) queryParams.append('status', params.status);
     if (params?.payment_type) queryParams.append('payment_type', params.payment_type);
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.size) queryParams.append('size', params.size.toString());
 
-    return await recurringApiClient.get(`${this.baseUrl}/?${queryParams}`);
+    const query = queryParams.toString();
+    return this.httpClient.get<RecurringPaymentListResponse>(`${this.baseUrl}/${query ? `?${query}` : ''}`);
   }
 
   // Получить повторяющийся платеж по ID
-  async getRecurringPayment(userId: number, paymentId: string): Promise<RecurringPayment> {
-    return await recurringApiClient.get(`${this.baseUrl}/${paymentId}?user_id=${userId}`);
+  async getRecurringPayment(paymentId: string): Promise<RecurringPayment | ApiError> {
+    return this.httpClient.get<RecurringPayment>(`${this.baseUrl}/${paymentId}`);
   }
 
   // Обновить повторяющийся платеж
   async updateRecurringPayment(
-    userId: number,
     paymentId: string,
     data: UpdateRecurringPaymentRequest
-  ): Promise<RecurringPayment> {
-    return await recurringApiClient.put(`${this.baseUrl}/${paymentId}?user_id=${userId}`, data);
+  ): Promise<RecurringPayment | ApiError> {
+    return this.httpClient.put<RecurringPayment>(`${this.baseUrl}/${paymentId}`, data);
   }
 
   // Удалить повторяющийся платеж
-  async deleteRecurringPayment(userId: number, paymentId: string): Promise<void> {
-    await recurringApiClient.delete(`${this.baseUrl}/${paymentId}?user_id=${userId}`);
+  async deleteRecurringPayment(paymentId: string): Promise<void | ApiError> {
+    return this.httpClient.delete<void>(`${this.baseUrl}/${paymentId}`);
   }
 
   // Приостановить повторяющийся платеж
-  async pauseRecurringPayment(userId: number, paymentId: string): Promise<void> {
-    await recurringApiClient.post(`${this.baseUrl}/${paymentId}/pause?user_id=${userId}`);
+  async pauseRecurringPayment(paymentId: string): Promise<void | ApiError> {
+    return this.httpClient.post<void>(`${this.baseUrl}/${paymentId}/pause`);
   }
 
   // Возобновить повторяющийся платеж
-  async resumeRecurringPayment(userId: number, paymentId: string): Promise<void> {
-    await recurringApiClient.post(`${this.baseUrl}/${paymentId}/resume?user_id=${userId}`);
+  async resumeRecurringPayment(paymentId: string): Promise<void | ApiError> {
+    return this.httpClient.post<void>(`${this.baseUrl}/${paymentId}/resume`);
   }
 
   // Получить расписание платежа
   async getPaymentSchedules(
-    userId: number,
     paymentId: string,
     params?: {
       status?: string;
@@ -158,8 +165,8 @@ class RecurringApiService {
       page?: number;
       size?: number;
     }
-  ): Promise<PaymentScheduleListResponse> {
-    const queryParams = new URLSearchParams({ user_id: userId.toString() });
+  ): Promise<PaymentScheduleListResponse | ApiError> {
+    const queryParams = new URLSearchParams();
     
     if (params?.status) queryParams.append('status', params.status);
     if (params?.execution_date_from) queryParams.append('execution_date_from', params.execution_date_from);
@@ -167,13 +174,12 @@ class RecurringApiService {
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.size) queryParams.append('size', params.size.toString());
 
-    return await recurringApiClient.get(`${this.baseUrl}/${paymentId}/schedules?${queryParams}`);
+    const query = queryParams.toString();
+    return this.httpClient.get<PaymentScheduleListResponse>(`${this.baseUrl}/${paymentId}/schedules${query ? `?${query}` : ''}`);
   }
 
   // Получить статистику платежей
-  async getPaymentStatistics(userId: number): Promise<PaymentStatistics> {
-    return await recurringApiClient.get(`${this.baseUrl}/statistics/summary?user_id=${userId}`);
+  async getPaymentStatistics(): Promise<PaymentStatistics | ApiError> {
+    return this.httpClient.get<PaymentStatistics>(`${this.baseUrl}/statistics/summary`);
   }
 }
-
-export const recurringApiService = new RecurringApiService();

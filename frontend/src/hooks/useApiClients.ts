@@ -9,6 +9,7 @@ import { UserApiClient } from '@/services/api/userApiClient';
 import { GoalsApiClient } from '@/services/api/goalsApi';
 import { PDFParserApiClient } from '@/services/api/pdfParserApiClient';
 import { SubscriptionApiClient } from '@/services/api/subscriptionApiClient';
+import { RecurringApiClient } from '@/services/api/recurringApi';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMemo } from 'react';
 
@@ -28,6 +29,7 @@ export const useApiClients = () => {
   const goals = useMemo(() => new GoalsApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
   const pdfParser = useMemo(() => new PDFParserApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
   const subscription = useMemo(() => new SubscriptionApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
+  const recurring = useMemo(() => new RecurringApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
   
   return {
     account,
@@ -40,6 +42,7 @@ export const useApiClients = () => {
     income,
     goals,
     pdfParser,
-    subscription
+    subscription,
+    recurring
   };
 }; 
