@@ -75,19 +75,19 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Animated background layers */}
       <AnimatedBackground />
       
-      {/* App Header - Shows on both mobile and desktop */}
-      <AppHeader
-        onMenuClick={handleSidebarToggle}
-        title={getPageTitle()}
-        isMobile={isMobile}
-      />
-
-      <div className="flex min-h-[calc(100vh-4rem)] relative" style={{ zIndex: 10 }}>
-        {/* Sidebar - Always visible, but collapsible on desktop */}
+      <div className="flex min-h-screen relative" style={{ zIndex: 10 }}>
+        {/* Sidebar - Full height, starts from top */}
         <Sidebar isOpen={sidebarOpen} onClose={handleSidebarClose} />
 
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col">
+        {/* Main Content Area with Header */}
+        <div className="flex-1 flex flex-col min-h-screen">
+          {/* App Header - Only above content, not sidebar */}
+          <AppHeader
+            onMenuClick={handleSidebarToggle}
+            title={getPageTitle()}
+            isMobile={isMobile}
+          />
+          
           {/* Page Content */}
           <main className="flex-1">
             <div className="p-4 sm:p-6 lg:p-6 min-h-[calc(100vh-8rem)] main-content">
@@ -98,7 +98,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           {/* Footer */}
           <PublicFooter />
         </div>
-        
       </div>
     </div>
   );

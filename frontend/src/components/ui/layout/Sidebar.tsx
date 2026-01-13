@@ -61,7 +61,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const sidebarContent = (
     <div data-testid="sidebar" className="flex flex-col h-full theme-surface theme-shadow theme-transition">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 theme-border border-b">
+      <div className="flex-shrink-0 flex items-center justify-between p-4 theme-border border-b">
         <h1 className="text-lg font-bold theme-text-primary">{t('header.appTitle')}</h1>
         {isMobile && (
           <button
@@ -74,12 +74,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       </div>
 
       {/* Workspace Selector */}
-      <div className="px-4 py-3 theme-border border-b">
+      <div className="flex-shrink-0 px-4 py-3 theme-border border-b">
         <WorkspaceSelector compact />
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-4 py-6 space-y-2">
+      {/* Navigation - scrollable if needed */}
+      <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-2">
         {navigationItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
@@ -103,8 +103,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         })}
       </nav>
 
-      {/* User Section */}
-      <div className="p-4 theme-border border-t" data-testid="user-profile-button-sidebar">
+      {/* User Section - always at bottom */}
+      <div className="flex-shrink-0 p-4 theme-border border-t" data-testid="user-profile-button-sidebar">
         <Link
           data-testid="sidebar-profile-link"
           to="/profile"
@@ -160,9 +160,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     );
   }
 
-  // Desktop Sidebar - Collapsible
+  // Desktop Sidebar - Collapsible & Sticky (full height)
   return (
-    <div className={`theme-surface theme-shadow theme-border border-r theme-transition transition-all duration-300 ${
+    <div className={`sticky top-0 h-screen theme-surface theme-shadow theme-border border-r theme-transition transition-all duration-300 ${
       isOpen ? 'w-64' : 'w-0 overflow-hidden'
     }`}>
       {isOpen && sidebarContent}
