@@ -444,6 +444,7 @@ cython_debug/
 *.dev
 *.staging
 *.prod
+.prompt
 
 # Receipt scanning service specific
 receipt_service/uploads/

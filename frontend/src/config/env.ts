@@ -15,6 +15,7 @@ export const config = {
     currencyServiceUrl: import.meta.env.VITE_CURRENCY_SERVICE_URL || (import.meta.env.PROD ? '/api/currencies' : 'http://localhost:8010'),
     subscriptionServiceUrl: import.meta.env.VITE_SUBSCRIPTION_SERVICE_URL || (import.meta.env.PROD ? '/api/subscription' : 'http://localhost:8011'),
     workspaceServiceUrl: import.meta.env.VITE_WORKSPACE_SERVICE_URL || (import.meta.env.PROD ? '/api/workspaces' : 'http://localhost:8012'),
+    paymentServiceUrl: import.meta.env.VITE_PAYMENT_SERVICE_URL || (import.meta.env.PROD ? '/api/payments' : 'http://localhost:8013'),
   },
   app: {
     name: import.meta.env.VITE_APP_NAME || 'Financial Accounting',

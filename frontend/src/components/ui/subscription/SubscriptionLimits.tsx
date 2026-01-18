@@ -4,7 +4,9 @@ import { useApiClients } from '@/hooks/useApiClients';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserFeature } from '@/types/subscription';
 import { Card } from '@/components/ui/shared/Card';
+import { Button } from '@/components/ui/shared/Button';
 import { LoadingSpinner } from '@/components/ui/shared/LoadingSpinner';
+import { UpgradePlanModal } from '@/components/payment/UpgradePlanModal';
 import { 
   FaFolder, 
   FaWallet, 
@@ -15,7 +17,8 @@ import {
   FaBullseye,
   FaCrown,
   FaCheckCircle,
-  FaTimesCircle
+  FaTimesCircle,
+  FaRocket
 } from 'react-icons/fa';
 
 interface SubscriptionLimitsProps {
@@ -50,6 +53,7 @@ export const SubscriptionLimits: React.FC<SubscriptionLimitsProps> = ({ classNam
   const [currentCounts, setCurrentCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
   useEffect(() => {
     const loadSubscriptionLimits = async () => {
@@ -111,15 +115,38 @@ export const SubscriptionLimits: React.FC<SubscriptionLimitsProps> = ({ classNam
   }
 
   return (
+    <>
     <Card className={`p-6 ${className}`}>
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-          <FaCrown className="w-5 h-5 text-white" />
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+            <FaCrown className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold theme-text-primary">{t('subscription.title')}</h3>
+            <p className="text-sm theme-text-secondary">{t('subscription.subtitle')}</p>
+          </div>
         </div>
-        <div>
-          <h3 className="text-lg font-semibold theme-text-primary">{t('subscription.title')}</h3>
-          <p className="text-sm theme-text-secondary">{t('subscription.subtitle')}</p>
-        </div>
+        <button
+          onClick={() => setIsUpgradeModalOpen(true)}
+          className="relative px-4 py-2 rounded-lg font-medium text-white text-sm flex items-center gap-2 overflow-hidden group transition-transform hover:scale-105 active:scale-95"
+          style={{
+            background: 'linear-gradient(90deg, #8b5cf6, #ec4899, #f97316, #8b5cf6)',
+            backgroundSize: '300% 100%',
+            animation: 'gradient-shift 3s ease infinite',
+          }}
+        >
+          <span className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <FaRocket className="w-4 h-4 relative z-10" />
+          <span className="relative z-10">{t('subscription.upgradePlan')}</span>
+        </button>
+        <style>{`
+          @keyframes gradient-shift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+          }
+        `}</style>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -220,5 +247,11 @@ export const SubscriptionLimits: React.FC<SubscriptionLimitsProps> = ({ classNam
         </div>
       )}
     </Card>
+
+    <UpgradePlanModal
+      isOpen={isUpgradeModalOpen}
+      onClose={() => setIsUpgradeModalOpen(false)}
+    />
+    </>
   );
 };

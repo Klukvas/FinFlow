@@ -405,6 +405,7 @@
     "plans": [
       {
         "name": "Basic",
+        "code": "basic-free",
         "price": "0",
         "period": "forever",
         "description": "Perfect to start managing your personal finances",
@@ -423,6 +424,7 @@
       },
       {
         "name": "Professional",
+        "code": "pro-monthly",
         "price": "9.99",
         "period": "per month",
         "description": "For those serious about financial management",
@@ -437,10 +439,11 @@
           "Payment reminders"
         ],
         "limitations": [],
-        "available": false
+        "available": true
       },
       {
         "name": "Enterprise",
+        "code": "enterprise-monthly",
         "price": "29.99",
         "period": "per month",
         "description": "For teams and small business",
@@ -455,7 +458,7 @@
           "SLA 99.9%"
         ],
         "limitations": [],
-        "available": false
+        "available": true
       }
     ],
     "ctaFree": "Start for free",
@@ -1048,6 +1051,10 @@
   "subscription": {
     "title": "Subscription Limits",
     "subtitle": "Your current plan and limits",
+    "upgradePlan": "Upgrade Plan",
+    "upgradeDescription": "Choose a plan that fits your needs and unlock more features",
+    "currentPlan": "Current Plan",
+    "moreFeatures": "more features",
     "features": {
       "categories": "Categories",
       "accounts": "Accounts", 
@@ -1195,6 +1202,58 @@
         "title": "You're All Set! 🎉",
         "description": "That's the basics! Start by creating some categories, adding your accounts, and recording your first transactions. Happy budgeting!"
       }
+    }
+  },
+  "payment": {
+    "choosePlan": "Choose Plan",
+    "processing": "Processing...",
+    "redirecting": "Redirecting to payment...",
+    "doNotClose": "Please do not close this window...",
+    "checkingStatus": "Checking payment status...",
+    "history": "Payment History",
+    "historyTitle": "Payment History",
+    "historyDescription": "View all your past payments",
+    "noPayments": "No payments yet",
+    "amount": "Amount",
+    "plan": "Plan",
+    "orderRef": "Order Reference",
+    "paidAt": "Paid At",
+    "oneTime": "One-time Payment",
+    "backToPricing": "Back to Pricing",
+    "tryAgain": "Try Again",
+    "goToProfile": "Go to Profile",
+    "backToHome": "Back to Home",
+    "status": {
+      "created": "Created",
+      "pending": "Pending",
+      "paid": "Paid",
+      "failed": "Failed",
+      "expired": "Expired",
+      "refunded": "Refunded",
+      "partiallyRefunded": "Partially Refunded",
+      "canceled": "Canceled"
+    },
+    "success": {
+      "title": "Payment Successful!",
+      "message": "Your subscription has been activated. Thank you!"
+    },
+    "failed": {
+      "title": "Payment Failed"
+    },
+    "pending": {
+      "title": "Payment Processing",
+      "message": "Your payment is being processed. This may take a few moments.",
+      "detail": "If the status doesn't update, please check back in a few minutes."
+    },
+    "errors": {
+      "notAuthenticated": "Please log in to continue",
+      "createFailed": "Failed to create payment",
+      "noPaymentUrl": "Payment URL not available",
+      "unexpected": "An unexpected error occurred",
+      "noPaymentId": "Payment ID not found",
+      "statusCheckFailed": "Failed to check payment status",
+      "title": "Payment Error",
+      "failed": "Payment failed"
     }
   }
 }

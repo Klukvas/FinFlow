@@ -3,6 +3,9 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { Account, Category, CategoryDetail, Expense, Income, Profile, Recurring, Goals, PdfParser, Debts, Workspaces, MyInvites, Home, About, Features, Pricing, Contact } from '@/pages';
+import { PaymentReturn } from '@/pages/payment/PaymentReturn';
+import { PaymentHistory } from '@/pages/payment/PaymentHistory';
+import { PaymentCheckoutSimple } from '@/pages/payment/PaymentCheckoutSimple';
 import { Layout } from './ui/layout/Layout';
 import { PublicLayout } from './ui/layout/PublicLayout';
 import { ProtectedRoute } from './ProtectedRoute';
@@ -153,6 +156,42 @@ export const AppRoutes: React.FC = () => {
             </ProtectedRoute>
           } 
         />
+        <Route 
+          path="/payment/checkout" 
+          element={
+            <ProtectedRoute>
+              <PaymentCheckoutSimple />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/payment/return" 
+          element={
+            <ProtectedRoute>
+              <PaymentReturn />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/payment/history" 
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <PaymentHistory />
+              </Layout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/pricing" 
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Pricing />
+              </Layout>
+            </ProtectedRoute>
+          } 
+        />
         <Route path="/" element={<Navigate to="/category" replace />} />
         <Route path="*" element={<Navigate to="/category" replace />} />
       </Routes>
@@ -187,6 +226,8 @@ export const AppRoutes: React.FC = () => {
           <Contact />
         </PublicLayout>
       } />
+      <Route path="/payment/checkout" element={<PaymentCheckoutSimple />} />
+      <Route path="/payment/return" element={<PaymentReturn />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

@@ -112,10 +112,11 @@ export class AuthHttpClient {
     return this.makeRequest<T>(endpoint, { method: 'GET' });
   }
 
-  async post<T>(endpoint: string, data?: any): Promise<T | ApiError> {
+  async post<T>(endpoint: string, data?: any, customHeaders?: Record<string, string>): Promise<T | ApiError> {
     return this.makeRequest<T>(endpoint, {
       method: 'POST',
       body: data ? (data instanceof FormData ? data : JSON.stringify(data)) : null,
+      headers: customHeaders,
     });
   }
 

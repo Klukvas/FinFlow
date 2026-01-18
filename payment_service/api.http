@@ -1,0 +1,119 @@
+### Variables
+@baseUrl = http://localhost:8006
+@token = your-jwt-token-here
+@internalToken = my-secret-token
+
+### Health Check - Live
+GET {{baseUrl}}/health/live
+
+### Health Check - Ready
+GET {{baseUrl}}/health/ready
+
+### Prometheus Metrics
+GET {{baseUrl}}/metrics
+
+### Root
+GET {{baseUrl}}/
+
+#####################
+# Public API (JWT required)
+#####################
+
+### Create Payment
+POST {{baseUrl}}/v1/payments
+Authorization: Bearer {{token}}
+Idempotency-Key: unique-key-123
+Content-Type: application/json
+
+{
+  "user_id": "123e4567-e89b-12d3-a456-426614174000",
+  "workspace_id": "123e4567-e89b-12d3-a456-426614174001",
+  "purpose": "SUBSCRIPTION",
+  "plan_code": "pro-monthly",
+  "amount": 299.00,
+  "currency": "UAH",
+  "return_url": "https://example.com/payment/return",
+  "metadata": {
+    "campaign": "summer-2026"
+  }
+}
+
+### Get Payment by ID
+GET {{baseUrl}}/v1/payments/123e4567-e89b-12d3-a456-426614174000
+Authorization: Bearer {{token}}
+
+### List User Payments
+GET {{baseUrl}}/v1/payments?limit=50&offset=0
+Authorization: Bearer {{token}}
+
+#####################
+# Internal API (X-Internal-Token required)
+#####################
+
+### Create Payment (Internal)
+POST {{baseUrl}}/v1/internal/payments
+X-Internal-Token: {{internalToken}}
+Content-Type: application/json
+
+{
+  "user_id": "123e4567-e89b-12d3-a456-426614174000",
+  "workspace_id": "123e4567-e89b-12d3-a456-426614174001",
+  "purpose": "SUBSCRIPTION",
+  "plan_code": "pro-monthly",
+  "amount": 299.00,
+  "currency": "UAH"
+}
+
+### Get Payment by ID (Internal)
+GET {{baseUrl}}/v1/internal/payments/123e4567-e89b-12d3-a456-426614174000
+X-Internal-Token: {{internalToken}}
+
+### Refund Payment (Internal)
+POST {{baseUrl}}/v1/internal/payments/123e4567-e89b-12d3-a456-426614174000/refund
+X-Internal-Token: {{internalToken}}
+Content-Type: application/json
+
+{
+  "amount": 299.00,
+  "reason": "User requested refund"
+}
+
+#####################
+# Webhooks (No auth - signature verification)
+#####################
+
+### WayForPay Webhook (Approved)
+POST {{baseUrl}}/v1/webhooks/wayforpay
+Content-Type: application/json
+
+{
+  "merchantAccount": "test_merchant",
+  "orderReference": "ORDER_1234567890",
+  "merchantSignature": "signature-here",
+  "amount": 299.00,
+  "currency": "UAH",
+  "authCode": "123456",
+  "cardPan": "4***1111",
+  "transactionStatus": "Approved",
+  "reasonCode": 1100,
+  "createdDate": 1705244400,
+  "processingDate": 1705244401,
+  "fee": 5.98,
+  "paymentSystem": "card"
+}
+
+### WayForPay Webhook (Declined)
+POST {{baseUrl}}/v1/webhooks/wayforpay
+Content-Type: application/json
+
+{
+  "merchantAccount": "test_merchant",
+  "orderReference": "ORDER_1234567890",
+  "merchantSignature": "signature-here",
+  "amount": 299.00,
+  "currency": "UAH",
+  "transactionStatus": "Declined",
+  "reasonCode": 1101,
+  "reason": "Insufficient funds",
+  "createdDate": 1705244400
+}

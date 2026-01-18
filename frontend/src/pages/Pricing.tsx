@@ -1,11 +1,17 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { FaCheck, FaCrown, FaRocket } from 'react-icons/fa';
 import { Button } from '@/components/ui/shared/Button';
+import { PaymentButton } from '@/components/payment/PaymentButton';
 import { SEOHead, SEOConfigs } from '@/components/seo/SEOHead';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const Pricing: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  
   const plans = t('pricingPage.plans', { returnObjects: true }) as Array<{
     name: string;
     price: string;
@@ -16,6 +22,7 @@ export const Pricing: React.FC = () => {
     popular?: boolean;
     icon?: React.ComponentType<{ className?: string }>;
     available?: boolean;
+    code?: string;
   }>;
 
   return (
@@ -98,19 +105,35 @@ export const Pricing: React.FC = () => {
                 ))}
               </div>
 
-              <Button
-                variant={plan.available ? (plan.name === t('pricingPage.plans.0.name') ? 'primary' : 'outline') : 'outline'}
-                fullWidth
-                size="lg"
-                disabled={!plan.available}
-              >
-                {!plan.available 
-                  ? t('pricingPage.inDevelopment')
-                  : plan.price === '0' 
-                    ? t('pricingPage.ctaFree') 
-                    : t('pricingPage.ctaChoose')
-                }
-              </Button>
+              {plan.price === '0' ? (
+                <Button
+                  variant="outline"
+                  fullWidth
+                  size="lg"
+                  onClick={() => user ? navigate('/') : navigate('/register')}
+                >
+                  {t('pricingPage.ctaFree')}
+                </Button>
+              ) : plan.available ? (
+                <PaymentButton
+                  planCode={plan.code || plan.name.toLowerCase().replace(/\s+/g, '-')}
+                  planName={plan.name}
+                  amount={parseFloat(plan.price)}
+                  currency="UAH"
+                  variant={plan.name === t('pricingPage.plans.0.name') ? 'primary' : 'outline'}
+                  size="lg"
+                  fullWidth
+                />
+              ) : (
+                <Button
+                  variant="outline"
+                  fullWidth
+                  size="lg"
+                  disabled
+                >
+                  {t('pricingPage.inDevelopment')}
+                </Button>
+              )}
             </div>
           ))}
         </div>

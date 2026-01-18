@@ -9,6 +9,7 @@ interface User {
   username: string;
   base_currency: string;
   tutorial_version: number;
+  default_workspace_id?: string | null;
 }
 
 interface AuthContextType {

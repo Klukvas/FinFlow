@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTutorial } from '@/contexts/TutorialContext';
 import { useApiClients } from '@/hooks/useApiClients';
@@ -8,7 +9,7 @@ import { Modal } from '@/components/ui/shared/Modal';
 import { Button } from '@/components/ui/shared/Button';
 import { FormField } from '@/components/ui/forms/FormField';
 import { Input } from '@/components/ui/forms/Input';
-import { FaUser, FaEdit, FaSave, FaTimes, FaEnvelope, FaCalendarAlt, FaWallet, FaCrown, FaGraduationCap } from 'react-icons/fa';
+import { FaUser, FaEdit, FaSave, FaTimes, FaEnvelope, FaCalendarAlt, FaWallet, FaCrown, FaGraduationCap, FaReceipt, FaArrowRight } from 'react-icons/fa';
 import { config } from '@/config/env';
 import { CurrencySelect } from '@/components/ui/forms/CurrencySelect';
 import { ProfileSkeleton } from '@/components/ui/profile/ProfileSkeleton';
@@ -17,6 +18,7 @@ import { SubscriptionResponse } from '@/types/subscription';
 
 export const Profile = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { user, isLoading, refreshUserProfile } = useAuth();
   const { startTutorial } = useTutorial();
   const { user: userApi, subscription: subscriptionApi } = useApiClients();
@@ -230,27 +232,38 @@ export const Profile = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-3">
-                  <FaCrown className="w-5 h-5 theme-text-tertiary" />
-                  <div>
-                    <p className="text-sm font-medium theme-text-tertiary">{t('profile.subscription')}</p>
-                    {subscriptionLoading ? (
-                      <p className="theme-text-secondary">{t('common.loading')}</p>
-                    ) : subscription ? (
-                      <div className="flex items-center gap-2">
-                        <span className="theme-text-primary font-medium capitalize">{subscription.plan_code}</span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          subscription.status === 'active' 
-                            ? 'theme-success-light theme-success' 
-                            : 'theme-error-light theme-error'
-                        }`}>
-                          {subscription.status}
-                        </span>
-                      </div>
-                    ) : (
-                      <p className="theme-text-secondary">{t('profile.noSubscription')}</p>
-                    )}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <FaCrown className="w-5 h-5 theme-text-tertiary" />
+                    <div>
+                      <p className="text-sm font-medium theme-text-tertiary">{t('profile.subscription')}</p>
+                      {subscriptionLoading ? (
+                        <p className="theme-text-secondary">{t('common.loading')}</p>
+                      ) : subscription ? (
+                        <div className="flex items-center gap-2">
+                          <span className="theme-text-primary font-medium capitalize">{subscription.plan_code}</span>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            subscription.status === 'active' 
+                              ? 'theme-success-light theme-success' 
+                              : 'theme-error-light theme-error'
+                          }`}>
+                            {subscription.status}
+                          </span>
+                        </div>
+                      ) : (
+                        <p className="theme-text-secondary">{t('profile.noSubscription')}</p>
+                      )}
+                    </div>
                   </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate('/payment/history')}
+                    className="ml-2"
+                  >
+                    <FaReceipt className="mr-1" />
+                    {t('payment.history')}
+                  </Button>
                 </div>
               </div>
 

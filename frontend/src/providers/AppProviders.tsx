@@ -9,6 +9,7 @@ import { ModalProvider } from '@/contexts/ModalContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { WorkspaceProvider } from '@/contexts/WorkspaceContext';
 import { TutorialProvider } from '@/contexts/TutorialContext';
+import { PaymentProvider } from '@/contexts/PaymentContext';
 import { AppRoutes } from '@/components/AppRoutes';
 import { TutorialOverlay } from '@/components/ui/tutorial';
 import '@/i18n';
@@ -24,18 +25,20 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
         <ThemeProvider>
           <ModalProvider>
             <AuthProvider>
-              <WorkspaceProvider>
-                <CategoriesProvider>
-                  <CurrencyProvider>
-                    <TutorialProvider>
-                      <Router>
-                        {children || <AppRoutes />}
-                        <TutorialOverlay />
-                      </Router>
-                    </TutorialProvider>
-                  </CurrencyProvider>
-                </CategoriesProvider>
-              </WorkspaceProvider>
+              <PaymentProvider>
+                <WorkspaceProvider>
+                  <CategoriesProvider>
+                    <CurrencyProvider>
+                      <TutorialProvider>
+                        <Router>
+                          {children || <AppRoutes />}
+                          <TutorialOverlay />
+                        </Router>
+                      </TutorialProvider>
+                    </CurrencyProvider>
+                  </CategoriesProvider>
+                </WorkspaceProvider>
+              </PaymentProvider>
             </AuthProvider>
           </ModalProvider>
         </ThemeProvider>
