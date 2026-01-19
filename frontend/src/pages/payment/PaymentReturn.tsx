@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { usePayment } from '@/contexts/PaymentContext';
@@ -63,15 +63,32 @@ export const PaymentReturn: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { pollPaymentStatus } = usePayment();
+  const { pollPaymentStatus, getPayment, getPaymentByOrderRef } = usePayment();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [payment, setPayment] = useState<Payment | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Prevent double execution due to dependency changes
+  const hasCheckedRef = useRef(false);
+  const paymentIdRef = useRef<string | null>(null);
+  const orderRefRef = useRef<string | null>(null);
+
+  // Capture payment identifiers on mount (before they might be cleared)
+  useEffect(() => {
+    if (!paymentIdRef.current) {
+      // Check URL params first (most reliable after redirect), then localStorage
+      paymentIdRef.current = searchParams.get('paymentId') || localStorage.getItem('pending_payment_id');
+    }
+    if (!orderRefRef.current) {
+      orderRefRef.current = searchParams.get('orderReference');
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const checkPaymentStatus = async () => {
-      if (authLoading) return;
+      // Skip if already checked or still loading auth
+      if (hasCheckedRef.current || authLoading) return;
 
       if (!isAuthenticated) {
         setError(t('payment.errors.notAuthenticated'));
@@ -79,10 +96,14 @@ export const PaymentReturn: React.FC = () => {
         return;
       }
 
-      const paymentId = sessionStorage.getItem('pending_payment_id');
+      // Use captured refs, with URL params taking priority (most reliable after redirect)
+      const paymentIdFromUrl = searchParams.get('paymentId');
+      const paymentId = paymentIdRef.current || paymentIdFromUrl || localStorage.getItem('pending_payment_id');
+      const orderRef = orderRefRef.current || searchParams.get('orderReference');
       
-      // Also check URL params (from WayForPay redirect)
-      const orderRef = searchParams.get('orderReference');
+      console.log('PaymentReturn: paymentId from URL:', paymentIdFromUrl);
+      console.log('PaymentReturn: paymentId (combined):', paymentId);
+      console.log('PaymentReturn: orderRef from URL:', orderRef);
       
       if (!paymentId && !orderRef) {
         setError(t('payment.errors.noPaymentId'));
@@ -90,8 +111,31 @@ export const PaymentReturn: React.FC = () => {
         return;
       }
 
+      // Mark as checked to prevent double execution
+      hasCheckedRef.current = true;
+
       try {
-        const result = await pollPaymentStatus(paymentId!);
+        let result = null;
+
+        // Try to get payment by ID first if available
+        if (paymentId) {
+          result = await pollPaymentStatus(paymentId);
+          console.log('PaymentReturn: pollPaymentStatus result:', result);
+        }
+
+        // If no result from polling by ID, try to get by orderReference
+        if (!result && orderRef) {
+          console.log('PaymentReturn: Trying to get payment by orderReference:', orderRef);
+          result = await getPaymentByOrderRef(orderRef);
+          console.log('PaymentReturn: getPaymentByOrderRef result:', result);
+        }
+
+        // If still no result, try direct getPayment as last resort
+        if (!result && paymentId) {
+          console.log('PaymentReturn: Polling returned null, fetching payment directly...');
+          result = await getPayment(paymentId);
+          console.log('PaymentReturn: Direct getPayment result:', result);
+        }
 
         if (!result) {
           setError(t('payment.errors.statusCheckFailed'));
@@ -106,12 +150,14 @@ export const PaymentReturn: React.FC = () => {
           toast.success(t('payment.success.title'), {
             description: t('payment.success.message'),
           });
-          sessionStorage.removeItem('pending_payment_id');
-          sessionStorage.removeItem('pending_plan_code');
+          localStorage.removeItem('pending_payment_id');
+          localStorage.removeItem('pending_plan_code');
         } else if (result.status === PaymentStatus.FAILED) {
           toast.error(t('payment.failed.title'));
-          sessionStorage.removeItem('pending_payment_id');
-          sessionStorage.removeItem('pending_plan_code');
+          localStorage.removeItem('pending_payment_id');
+          localStorage.removeItem('pending_plan_code');
+        } else if (result.status === PaymentStatus.CREATED || result.status === PaymentStatus.PENDING) {
+          toast.info(t('payment.pending.message'));
         }
       } catch (err) {
         console.error('Failed to check payment status:', err);
@@ -122,7 +168,7 @@ export const PaymentReturn: React.FC = () => {
     };
 
     checkPaymentStatus();
-  }, [pollPaymentStatus, t, authLoading, isAuthenticated, searchParams]);
+  }, [pollPaymentStatus, getPayment, getPaymentByOrderRef, t, authLoading, isAuthenticated, searchParams]);
 
   // Loading state
   if (loading) {

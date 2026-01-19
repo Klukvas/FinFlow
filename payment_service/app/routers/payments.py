@@ -89,6 +89,31 @@ async def create_payment(
     return response
 
 
+@router.get("/payments/by-order/{order_reference}", response_model=PaymentOut)
+async def get_payment_by_order_reference(
+    order_reference: str,
+    db: Session = Depends(get_db),
+    current_user: JWTPayload = Depends(get_current_user),
+):
+    """
+    Get payment details by order reference
+    
+    Requires JWT authentication.
+    Users can only access their own payments.
+    """
+    service = PaymentService(db)
+    payment = service.payment_repo.get_by_order_reference_or_raise(order_reference)
+
+    # Verify user owns the payment
+    if str(payment.user_id) != str(current_user.user_id):
+        raise AuthError(
+            "Cannot access another user's payment",
+            error_code="@payment_service/UNAUTHORIZED_ACCESS",
+        )
+
+    return PaymentOut.model_validate(payment)
+
+
 @router.get("/payments/{payment_id}", response_model=PaymentOut)
 async def get_payment(
     payment_id: UUID,

@@ -41,3 +41,20 @@ def set_plan(user_id: str, payload: SetPlanIn, db: Session = Depends(get_db), id
     return SubscriptionOut.model_validate(sub, from_attributes=True)
 
 
+@router.post("/subscriptions/{user_id}:cancel", response_model=SubscriptionOut)
+def cancel_subscription(user_id: str, db: Session = Depends(get_db)):
+    """
+    Cancel user's subscription.
+    
+    The subscription will be marked as canceled but the user keeps
+    their benefits until the expires_at date (end of billing period).
+    """
+    repo = SubscriptionRepository(db)
+    subscription = repo.cancel_subscription(user_id)
+    
+    if subscription is None:
+        raise NotFoundError("Subscription not found", error_code="@subscription_service/SUBSCRIPTION_NOT_FOUND")
+    
+    return SubscriptionOut.model_validate(subscription, from_attributes=True)
+
+

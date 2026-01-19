@@ -74,9 +74,9 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
         return;
       }
 
-      // Store payment ID in session storage for return page
-      sessionStorage.setItem('pending_payment_id', payment.id);
-      sessionStorage.setItem('pending_plan_code', planCode);
+      // Store payment ID in localStorage for return page (survives external redirects better)
+      localStorage.setItem('pending_payment_id', payment.id);
+      localStorage.setItem('pending_plan_code', planCode);
 
       // Check if we have form fields to POST
       const formFields = (payment as any).provider_form_fields;

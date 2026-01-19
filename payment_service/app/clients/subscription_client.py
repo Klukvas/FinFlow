@@ -153,3 +153,70 @@ class SubscriptionClient:
                 extra={"payment_id": str(payment_id), "error": str(e)},
             )
             return False
+
+    async def notify_payment_refunded(
+        self,
+        payment_id: UUID,
+        user_id: str,
+        reason: Optional[str] = None,
+    ) -> bool:
+        """
+        Notify subscription_service about refunded/chargebacked payment.
+        
+        This will cancel the user's subscription.
+        
+        Args:
+            payment_id: Payment ID
+            user_id: User ID
+            reason: Refund reason
+        
+        Returns:
+            True if notification was successful
+        """
+        url = f"{self.base_url}/v1/internal/subscriptions/payment-refunded"
+        
+        payload = {
+            "payment_id": str(payment_id),
+            "user_id": str(user_id),
+            "reason": reason,
+        }
+
+        headers = {
+            "X-Internal-Token": self.internal_token,
+            "Content-Type": "application/json",
+        }
+
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                response = await client.post(url, json=payload, headers=headers)
+                response.raise_for_status()
+
+                logger.info(
+                    f"Notified subscription_service about payment refund {payment_id}",
+                    extra={
+                        "payment_id": str(payment_id),
+                        "user_id": str(user_id),
+                    },
+                )
+                return True
+
+        except httpx.HTTPStatusError as e:
+            logger.error(
+                f"Failed to notify subscription_service about refund (HTTP {e.response.status_code}): {e}",
+                extra={
+                    "payment_id": str(payment_id),
+                    "status_code": e.response.status_code,
+                    "error": str(e),
+                },
+            )
+            return False
+
+        except Exception as e:
+            logger.error(
+                f"Failed to notify subscription_service about refund: {e}",
+                extra={
+                    "payment_id": str(payment_id),
+                    "error": str(e),
+                },
+            )
+            return False

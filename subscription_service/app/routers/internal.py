@@ -80,62 +80,37 @@ async def activate_subscription_after_payment(
     )
     
     try:
-        # Get plan
-        plan_repo = PlanRepository(db)
-        plan = plan_repo.get_by_code(notification.plan_code)
-        
-        if not plan:
-            logger.error(f"Plan {notification.plan_code} not found")
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Plan {notification.plan_code} not found"
-            )
-        
-        # Create or extend subscription
+        # Use upsert_subscription which handles create/update properly
         subscription_repo = SubscriptionRepository(db)
         
-        from datetime import datetime, timedelta
+        # Check existing subscription first for logging
+        existing = subscription_repo.get_active_subscription(notification.user_id)
+        old_plan = existing.plan_code if existing else None
         
-        # Check if user already has subscription
-        existing_subscription = subscription_repo.get_active_by_user(notification.user_id)
+        # Upsert subscription (creates new or updates existing)
+        subscription = subscription_repo.upsert_subscription(
+            user_id=notification.user_id,
+            plan_code=notification.plan_code,
+            status="active"
+        )
         
-        if existing_subscription:
-            # Extend existing subscription
-            if existing_subscription.expires_at:
-                new_expires = existing_subscription.expires_at + timedelta(days=plan.period_days)
-            else:
-                new_expires = datetime.utcnow() + timedelta(days=plan.period_days)
-            
-            existing_subscription.expires_at = new_expires
-            db.commit()
-            
+        if old_plan:
             logger.info(
-                f"Extended subscription for user {notification.user_id}",
+                f"Updated subscription for user {notification.user_id}",
                 extra={
-                    "subscription_id": existing_subscription.id,
-                    "new_expires_at": new_expires.isoformat(),
+                    "subscription_id": subscription.id,
+                    "old_plan": old_plan,
+                    "new_plan": notification.plan_code,
+                    "expires_at": subscription.expires_at.isoformat() if subscription.expires_at else None,
                 }
             )
         else:
-            # Create new subscription
-            from ..models.models import Subscription
-            
-            new_subscription = Subscription(
-                user_id=notification.user_id,
-                plan_code=notification.plan_code,
-                status="active",
-                started_at=datetime.utcnow(),
-                expires_at=datetime.utcnow() + timedelta(days=plan.period_days),
-            )
-            
-            db.add(new_subscription)
-            db.commit()
-            
             logger.info(
                 f"Created subscription for user {notification.user_id}",
                 extra={
-                    "subscription_id": new_subscription.id,
+                    "subscription_id": subscription.id,
                     "plan_code": notification.plan_code,
+                    "expires_at": subscription.expires_at.isoformat() if subscription.expires_at else None,
                 }
             )
         
@@ -143,6 +118,9 @@ async def activate_subscription_after_payment(
             "status": "success",
             "message": "Subscription activated",
             "payment_id": notification.payment_id,
+            "subscription_id": subscription.id,
+            "plan_code": subscription.plan_code,
+            "expires_at": subscription.expires_at.isoformat() if subscription.expires_at else None,
         }
         
     except Exception as e:
@@ -193,3 +171,62 @@ async def handle_payment_failure(
         "message": "Payment failure recorded",
         "payment_id": notification.payment_id,
     }
+
+
+class PaymentRefundNotification(BaseModel):
+    """Notification about refunded payment"""
+    payment_id: str
+    user_id: str
+    reason: Optional[str] = None
+
+
+@router.post("/internal/subscriptions/payment-refunded", status_code=status.HTTP_200_OK)
+async def handle_payment_refund(
+    notification: PaymentRefundNotification,
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_internal_token)
+):
+    """
+    Internal endpoint for payment_service to notify about refunded/chargebacked payment.
+    
+    Cancels the subscription (user loses benefits at period end, not immediately).
+    """
+    logger.warning(
+        f"Received payment refund notification for user {notification.user_id}",
+        extra={
+            "payment_id": notification.payment_id,
+            "user_id": notification.user_id,
+            "reason": notification.reason,
+        }
+    )
+    
+    # Cancel subscription - user keeps benefits until expires_at
+    subscription_repo = SubscriptionRepository(db)
+    subscription = subscription_repo.cancel_subscription(notification.user_id)
+    
+    if subscription:
+        logger.info(
+            f"Subscription canceled due to refund for user {notification.user_id}",
+            extra={
+                "payment_id": notification.payment_id,
+                "user_id": notification.user_id,
+                "subscription_id": subscription.id,
+                "expires_at": subscription.expires_at.isoformat() if subscription.expires_at else None,
+            }
+        )
+        return {
+            "status": "canceled",
+            "message": "Subscription canceled due to refund",
+            "payment_id": notification.payment_id,
+            "expires_at": subscription.expires_at.isoformat() if subscription.expires_at else None,
+        }
+    else:
+        logger.info(
+            f"No active subscription found for user {notification.user_id} (refund notification)",
+            extra={"payment_id": notification.payment_id, "user_id": notification.user_id}
+        )
+        return {
+            "status": "no_subscription",
+            "message": "No active subscription found",
+            "payment_id": notification.payment_id,
+        }

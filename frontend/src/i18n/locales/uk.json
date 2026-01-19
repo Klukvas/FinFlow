@@ -953,6 +953,8 @@
     "baseCurrency": "Базова валюта",
     "userId": "ID користувача",
     "subscription": "Підписка",
+    "subscriptionStarted": "Початок",
+    "nextBilling": "Наступна оплата",
     "notSpecified": "Не вказано",
     "noSubscription": "Немає підписки",
     "accountStatus": "Статус акаунта",

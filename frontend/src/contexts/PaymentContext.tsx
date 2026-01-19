@@ -11,6 +11,7 @@ interface PaymentContextType {
   state: PaymentUIState;
   createPayment: (request: CreatePaymentRequest) => Promise<Payment | null>;
   getPayment: (paymentId: string) => Promise<Payment | null>;
+  getPaymentByOrderRef: (orderReference: string) => Promise<Payment | null>;
   pollPaymentStatus: (paymentId: string) => Promise<Payment | null>;
   redirectToPayment: (paymentUrl: string) => void;
   clearError: () => void;
@@ -138,6 +139,39 @@ export const PaymentProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   }, [paymentApi]);
 
+  const getPaymentByOrderRef = useCallback(async (orderReference: string): Promise<Payment | null> => {
+    setState((prev) => ({ ...prev, isProcessing: true, error: undefined }));
+
+    try {
+      const response = await paymentApi.getPaymentByOrderRef(orderReference);
+
+      if ('error' in response) {
+        setState((prev) => ({
+          ...prev,
+          isProcessing: false,
+          error: response.error,
+        }));
+        return null;
+      }
+
+      setState((prev) => ({
+        ...prev,
+        isProcessing: false,
+        currentPayment: response,
+      }));
+
+      return response;
+    } catch (error) {
+      console.error('Failed to get payment by order ref:', error);
+      setState((prev) => ({
+        ...prev,
+        isProcessing: false,
+        error: error instanceof Error ? error.message : 'Failed to get payment',
+      }));
+      return null;
+    }
+  }, [paymentApi]);
+
   const pollPaymentStatus = useCallback(async (paymentId: string): Promise<Payment | null> => {
     setState((prev) => ({ ...prev, isProcessing: true, error: undefined }));
 
@@ -180,6 +214,7 @@ export const PaymentProvider: React.FC<{ children: ReactNode }> = ({ children })
     state,
     createPayment,
     getPayment,
+    getPaymentByOrderRef,
     pollPaymentStatus,
     redirectToPayment,
     clearError,

@@ -79,8 +79,9 @@ class PaymentService:
         # Generate WayForPay payment form
         # Use payment service as return URL proxy (WayForPay might POST)
         # Extract base URL from callback URL and use /v1/payment/return
+        # Include orderReference and paymentId in return URL so frontend always has them
         callback_base = settings.wayforpay_callback_url.rsplit('/v1/', 1)[0]
-        return_url = f"{callback_base}/v1/payment/return"
+        return_url = f"{callback_base}/v1/payment/return?orderReference={order_reference}&paymentId={payment.id}"
         callback_url = settings.wayforpay_callback_url
         
         # Store original frontend return URL in payment metadata
@@ -198,7 +199,7 @@ class PaymentService:
             event_type=PaymentEventType.CALLBACK,
             provider_event_id=provider_event_id,
             signature_valid=signature_valid,
-            payload_raw=callback.model_dump(exclude_none=True),
+            payload_raw=callback.model_dump(mode="json", exclude_none=True),
             status_before=old_status.value,
             status_after=new_status.value,
         )
@@ -214,6 +215,8 @@ class PaymentService:
                 await self._notify_payment_success(payment)
             elif new_status in (PaymentStatus.FAILED, PaymentStatus.EXPIRED):
                 await self._notify_payment_failure(payment, reason)
+            elif new_status == PaymentStatus.REFUNDED:
+                await self._notify_payment_refunded(payment, reason)
 
         logger.info(
             f"Processed callback for payment {payment.id}",
@@ -264,6 +267,28 @@ class PaymentService:
             plan_code=payment.plan_code,
             reason=reason,
         )
+
+    async def _notify_payment_refunded(self, payment: Payment, reason: Optional[str]):
+        """Notify subscription_service about refunded payment (cancels subscription)"""
+        if payment.purpose != PaymentPurpose.SUBSCRIPTION:
+            logger.info(
+                f"Payment {payment.id} is not a subscription payment, skipping refund notification",
+                extra={"payment_id": str(payment.id), "purpose": payment.purpose.value},
+            )
+            return
+
+        success = await self.subscription_client.notify_payment_refunded(
+            payment_id=payment.id,
+            user_id=payment.user_id,
+            reason=reason,
+        )
+
+        if not success:
+            logger.error(
+                f"Failed to notify subscription_service about refund for payment {payment.id}",
+                extra={"payment_id": str(payment.id)},
+            )
+            # In production: store in outbox for retry
 
     def _map_wayforpay_status(self, transaction_status: str) -> PaymentStatus:
         """Map WayForPay transaction status to internal payment status"""

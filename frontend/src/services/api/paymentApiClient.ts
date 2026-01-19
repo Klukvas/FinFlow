@@ -50,6 +50,13 @@ export class PaymentApiClient {
   }
 
   /**
+   * Get payment by order reference
+   */
+  async getPaymentByOrderRef(orderReference: string): Promise<Payment | PaymentErrorResponse> {
+    return this.httpClient.get<Payment>(`/payments/by-order/${orderReference}`);
+  }
+
+  /**
    * List user's payments
    */
   async listPayments(
@@ -70,8 +77,8 @@ export class PaymentApiClient {
    */
   async pollPaymentStatus(
     paymentId: string,
-    maxAttempts: number = 10,
-    intervalMs: number = 2000
+    maxAttempts: number = 30,
+    intervalMs: number = 5000
   ): Promise<Payment | PaymentErrorResponse> {
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       const result = await this.getPayment(paymentId);

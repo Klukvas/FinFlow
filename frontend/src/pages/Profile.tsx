@@ -240,15 +240,27 @@ export const Profile = () => {
                       {subscriptionLoading ? (
                         <p className="theme-text-secondary">{t('common.loading')}</p>
                       ) : subscription ? (
-                        <div className="flex items-center gap-2">
-                          <span className="theme-text-primary font-medium capitalize">{subscription.plan_code}</span>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            subscription.status === 'active' 
-                              ? 'theme-success-light theme-success' 
-                              : 'theme-error-light theme-error'
-                          }`}>
-                            {subscription.status}
-                          </span>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="theme-text-primary font-medium capitalize">{subscription.plan_code}</span>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              subscription.status === 'active' 
+                                ? 'theme-success-light theme-success' 
+                                : 'theme-error-light theme-error'
+                            }`}>
+                              {subscription.status}
+                            </span>
+                          </div>
+                          <div className="text-xs theme-text-secondary space-y-0.5">
+                            <p>
+                              {t('profile.subscriptionStarted')}: {new Date(subscription.started_at).toLocaleDateString()}
+                            </p>
+                            {subscription.expires_at && (
+                              <p>
+                                {t('profile.nextBilling')}: {new Date(subscription.expires_at).toLocaleDateString()}
+                              </p>
+                            )}
+                          </div>
                         </div>
                       ) : (
                         <p className="theme-text-secondary">{t('profile.noSubscription')}</p>

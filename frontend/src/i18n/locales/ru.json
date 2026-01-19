@@ -1132,6 +1132,8 @@
     "baseCurrency": "Базовая валюта",
     "userId": "ID пользователя",
     "subscription": "Подписка",
+    "subscriptionStarted": "Начало",
+    "nextBilling": "Следующая оплата",
     "notSpecified": "Не указано",
     "noSubscription": "Нет подписки",
     "accountStatus": "Статус аккаунта",

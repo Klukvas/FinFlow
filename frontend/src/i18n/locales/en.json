@@ -1140,6 +1140,8 @@
     "baseCurrency": "Base Currency",
     "userId": "User ID",
     "subscription": "Subscription",
+    "subscriptionStarted": "Started",
+    "nextBilling": "Next billing",
     "notSpecified": "Not specified",
     "noSubscription": "No subscription",
     "accountStatus": "Account Status",
