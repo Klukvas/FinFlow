@@ -77,8 +77,17 @@ class PaymentService:
         )
 
         # Generate WayForPay payment form
-        return_url = request.return_url or settings.wayforpay_return_url
+        # Use payment service as return URL proxy (WayForPay might POST)
+        # Extract base URL from callback URL and use /v1/payment/return
+        callback_base = settings.wayforpay_callback_url.rsplit('/v1/', 1)[0]
+        return_url = f"{callback_base}/v1/payment/return"
         callback_url = settings.wayforpay_callback_url
+        
+        # Store original frontend return URL in payment metadata
+        if request.return_url:
+            if payment.extra_data is None:
+                payment.extra_data = {}
+            payment.extra_data['frontend_return_url'] = request.return_url
 
         product_name = self._get_product_name(request)
         
@@ -281,5 +290,5 @@ class PaymentService:
 
     def _compute_payload_hash(self, payload: dict) -> str:
         """Compute hash of payload for idempotency"""
-        payload_str = json.dumps(payload, sort_keys=True)
+        payload_str = json.dumps(payload, sort_keys=True, default=str)
         return hashlib.sha256(payload_str.encode()).hexdigest()

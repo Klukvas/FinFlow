@@ -1,18 +1,68 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { usePayment } from '@/contexts/PaymentContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Payment, PaymentStatus } from '@/types/payment';
-import { LoadingSpinner } from '@/components/ui/shared/LoadingSpinner';
-import { PaymentStatusBadge } from '@/components/payment/PaymentStatus';
-import { Button } from '@/components/ui/shared/Button';
-import { FaCheckCircle, FaTimesCircle, FaClock } from 'react-icons/fa';
+import { 
+  FaCheckCircle, 
+  FaTimesCircle, 
+  FaClock, 
+  FaSpinner,
+  FaUser,
+  FaCreditCard,
+  FaReceipt
+} from 'react-icons/fa';
 import { toast } from 'sonner';
+
+// Status configuration for cleaner code
+const STATUS_CONFIG = {
+  [PaymentStatus.PAID]: {
+    icon: FaCheckCircle,
+    iconBg: 'bg-emerald-500',
+    iconColor: 'text-white',
+    titleKey: 'payment.success.title',
+    messageKey: 'payment.success.message',
+    gradient: 'from-emerald-500 to-teal-500',
+  },
+  [PaymentStatus.FAILED]: {
+    icon: FaTimesCircle,
+    iconBg: 'bg-red-500',
+    iconColor: 'text-white',
+    titleKey: 'payment.failed.title',
+    messageKey: 'payment.failed.message',
+    gradient: 'from-red-500 to-rose-500',
+  },
+  [PaymentStatus.EXPIRED]: {
+    icon: FaTimesCircle,
+    iconBg: 'bg-orange-500',
+    iconColor: 'text-white',
+    titleKey: 'payment.expired.title',
+    messageKey: 'payment.expired.message',
+    gradient: 'from-orange-500 to-amber-500',
+  },
+  [PaymentStatus.PENDING]: {
+    icon: FaClock,
+    iconBg: 'bg-blue-500',
+    iconColor: 'text-white',
+    titleKey: 'payment.pending.title',
+    messageKey: 'payment.pending.detail',
+    gradient: 'from-blue-500 to-indigo-500',
+  },
+  [PaymentStatus.CREATED]: {
+    icon: FaClock,
+    iconBg: 'bg-gray-500',
+    iconColor: 'text-white',
+    titleKey: 'payment.processing.title',
+    messageKey: 'payment.processing.message',
+    gradient: 'from-gray-500 to-slate-500',
+  },
+};
 
 export const PaymentReturn: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { pollPaymentStatus } = usePayment();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [payment, setPayment] = useState<Payment | null>(null);
@@ -21,32 +71,27 @@ export const PaymentReturn: React.FC = () => {
 
   useEffect(() => {
     const checkPaymentStatus = async () => {
-      // Wait for auth to load
-      if (authLoading) {
-        return;
-      }
+      if (authLoading) return;
 
-      // Check if user is authenticated
       if (!isAuthenticated) {
-        console.warn('User not authenticated on payment return');
-        setError('Please log in to view payment status');
+        setError(t('payment.errors.notAuthenticated'));
         setLoading(false);
         return;
       }
 
-      // Get payment ID from session storage
       const paymentId = sessionStorage.getItem('pending_payment_id');
-      const planCode = sessionStorage.getItem('pending_plan_code');
-
-      if (!paymentId) {
+      
+      // Also check URL params (from WayForPay redirect)
+      const orderRef = searchParams.get('orderReference');
+      
+      if (!paymentId && !orderRef) {
         setError(t('payment.errors.noPaymentId'));
         setLoading(false);
         return;
       }
 
       try {
-        // Poll payment status (WayForPay webhook might take a moment)
-        const result = await pollPaymentStatus(paymentId);
+        const result = await pollPaymentStatus(paymentId!);
 
         if (!result) {
           setError(t('payment.errors.statusCheckFailed'));
@@ -56,16 +101,17 @@ export const PaymentReturn: React.FC = () => {
 
         setPayment(result);
 
-        // Show appropriate toast based on status
+        // Handle status-specific actions
         if (result.status === PaymentStatus.PAID) {
-          toast.success(t('payment.success.title'));
-          // Clear pending payment from storage
+          toast.success(t('payment.success.title'), {
+            description: t('payment.success.message'),
+          });
           sessionStorage.removeItem('pending_payment_id');
           sessionStorage.removeItem('pending_plan_code');
         } else if (result.status === PaymentStatus.FAILED) {
-          toast.error(t('payment.errors.failed'));
-        } else if (result.status === PaymentStatus.PENDING) {
-          toast.info(t('payment.pending.message'));
+          toast.error(t('payment.failed.title'));
+          sessionStorage.removeItem('pending_payment_id');
+          sessionStorage.removeItem('pending_plan_code');
         }
       } catch (err) {
         console.error('Failed to check payment status:', err);
@@ -76,153 +122,218 @@ export const PaymentReturn: React.FC = () => {
     };
 
     checkPaymentStatus();
-  }, [pollPaymentStatus, t, authLoading, isAuthenticated]);
+  }, [pollPaymentStatus, t, authLoading, isAuthenticated, searchParams]);
 
-  const handleContinue = () => {
-    if (payment?.status === PaymentStatus.PAID) {
-      navigate('/profile');
-    } else {
-      navigate('/pricing');
-    }
-  };
-
+  // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
-        <div className="text-center bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-xl">
-          <LoadingSpinner size="lg" />
-          <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
+      <div 
+        className="fixed inset-0 flex items-center justify-center"
+        style={{ background: '#0a192f' }}
+      >
+        <div 
+          className="max-w-md w-full mx-4 rounded-2xl p-8 text-center"
+          style={{ backgroundColor: '#112240', border: '1px solid #233554', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}
+        >
+          <div className="w-20 h-20 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto mb-6">
+            <FaSpinner className="w-10 h-10 text-blue-400 animate-spin" />
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-2">
             {t('payment.checkingStatus')}
+          </h1>
+          <p className="text-gray-400 mb-4">
+            {t('payment.pleaseWait')}
           </p>
+          <div className="flex justify-center gap-1">
+            {[0, 1, 2].map(i => (
+              <div
+                key={i}
+                className="w-2 h-2 rounded-full bg-blue-400 animate-bounce"
+                style={{ animationDelay: `${i * 0.15}s` }}
+              />
+            ))}
+          </div>
         </div>
       </div>
     );
   }
 
+  // Error state
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 px-4">
-        <div className="max-w-md w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-8 text-center shadow-xl">
-          <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-            <FaTimesCircle className="w-8 h-8 text-red-500" />
+      <div 
+        className="fixed inset-0 flex items-center justify-center"
+        style={{ background: '#0a192f' }}
+      >
+        <div 
+          className="max-w-md w-full mx-4 rounded-2xl p-8 text-center"
+          style={{ backgroundColor: '#112240', border: '1px solid #233554', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}
+        >
+          <div className="w-20 h-20 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-6">
+            <FaTimesCircle className="w-10 h-10 text-red-400" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+          <h1 className="text-2xl font-bold text-white mb-2">
             {t('payment.errors.title')}
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
-          <Button onClick={() => navigate('/pricing')} variant="primary" fullWidth>
-            {t('payment.backToPricing')}
-          </Button>
+          <p className="text-gray-400 mb-6">{error}</p>
+          <button
+            onClick={() => navigate('/profile')}
+            className="w-full py-3 px-4 rounded-lg font-semibold text-white flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            style={{ 
+              background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
+              boxShadow: '0 4px 15px rgba(59, 130, 246, 0.3)'
+            }}
+          >
+            <FaUser className="w-4 h-4" />
+            {t('payment.goToProfile')}
+          </button>
         </div>
       </div>
     );
   }
 
-  if (!payment) {
-    return null;
-  }
+  if (!payment) return null;
 
+  const config = STATUS_CONFIG[payment.status] || STATUS_CONFIG[PaymentStatus.CREATED];
+  const StatusIcon = config.icon;
   const isPaid = payment.status === PaymentStatus.PAID;
-  const isFailed = payment.status === PaymentStatus.FAILED || payment.status === PaymentStatus.EXPIRED;
-  const isPending = payment.status === PaymentStatus.PENDING;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 px-4">
-      <div className="max-w-md w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-xl">
-        <div className="text-center mb-6">
+    <div 
+      className="fixed inset-0 flex items-center justify-center overflow-y-auto py-8"
+      style={{ background: '#0a192f' }}
+    >
+      <div 
+        className="max-w-lg w-full mx-4 rounded-2xl overflow-hidden"
+        style={{ backgroundColor: '#112240', border: '1px solid #233554', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}
+      >
+        {/* Gradient header */}
+        <div className={`h-2 bg-gradient-to-r ${config.gradient}`} />
+        
+        <div className="p-8">
+          {/* Status icon with animation */}
+          <div className="text-center mb-6">
+            <div 
+              className={`w-20 h-20 rounded-full ${config.iconBg} flex items-center justify-center mx-auto mb-4 ${isPaid ? 'animate-bounce' : ''}`}
+              style={{ animationDuration: '1s', animationIterationCount: isPaid ? 3 : 0 }}
+            >
+              <StatusIcon className={`w-10 h-10 ${config.iconColor}`} />
+            </div>
+            
+            <h1 className="text-2xl font-bold text-white mb-2">
+              {t(config.titleKey)}
+            </h1>
+            
+            {/* Status badge */}
+            <span 
+              className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r ${config.gradient} text-white`}
+            >
+              {payment.status}
+            </span>
+          </div>
+
+          {/* Payment details card */}
+          <div 
+            className="rounded-xl p-5 mb-6 space-y-4"
+            style={{ backgroundColor: '#0a192f', border: '1px solid #233554' }}
+          >
+            {/* Amount - highlighted */}
+            <div className="text-center pb-4" style={{ borderBottom: '1px solid #233554' }}>
+              <p className="text-gray-400 text-sm mb-1">{t('payment.amount')}</p>
+              <p className="text-3xl font-bold text-white">
+                {new Intl.NumberFormat('uk-UA', {
+                  style: 'currency',
+                  currency: payment.currency,
+                }).format(payment.amount)}
+              </p>
+            </div>
+
+            {/* Details grid */}
+            <div className="space-y-3">
+              {payment.plan_code && (
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-400 flex items-center gap-2">
+                    <FaCreditCard className="w-4 h-4" />
+                    {t('payment.plan')}
+                  </span>
+                  <span className="text-white font-medium capitalize">
+                    {payment.plan_code.replace(/-/g, ' ')}
+                  </span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400 flex items-center gap-2">
+                  <FaReceipt className="w-4 h-4" />
+                  {t('payment.orderRef')}
+                </span>
+                <span className="text-gray-300 font-mono text-xs">
+                  {payment.order_reference.slice(-12)}
+                </span>
+              </div>
+
+              {payment.paid_at && (
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-400">{t('payment.paidAt')}</span>
+                  <span className="text-white">
+                    {new Date(payment.paid_at).toLocaleString('uk-UA')}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Failure reason */}
+          {payment.failure_reason && (
+            <div 
+              className="rounded-lg p-4 mb-6"
+              style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)' }}
+            >
+              <p className="text-red-400 text-sm text-center">{payment.failure_reason}</p>
+            </div>
+          )}
+
+          {/* Success message */}
           {isPaid && (
-            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FaCheckCircle className="w-8 h-8 text-green-500" />
-            </div>
-          )}
-          {isFailed && (
-            <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FaTimesCircle className="w-8 h-8 text-red-500" />
-            </div>
-          )}
-          {isPending && (
-            <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FaClock className="w-8 h-8 text-blue-500" />
+            <div 
+              className="rounded-lg p-4 mb-6"
+              style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)' }}
+            >
+              <p className="text-emerald-400 text-sm text-center">
+                {t(config.messageKey)}
+              </p>
             </div>
           )}
 
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            {isPaid && t('payment.success.title')}
-            {isFailed && t('payment.failed.title')}
-            {isPending && t('payment.pending.title')}
-          </h1>
+          {/* Pending message */}
+          {payment.status === PaymentStatus.PENDING && (
+            <div 
+              className="rounded-lg p-4 mb-6"
+              style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)' }}
+            >
+              <p className="text-blue-400 text-sm text-center">
+                {t(config.messageKey)}
+              </p>
+            </div>
+          )}
 
-          <PaymentStatusBadge status={payment.status} size="lg" className="mx-auto" />
+          {/* Action button */}
+          <button
+            onClick={() => navigate('/profile')}
+            className="w-full py-3 px-4 rounded-lg font-semibold text-white flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            style={{ 
+              background: isPaid 
+                ? 'linear-gradient(135deg, #10b981 0%, #14b8a6 100%)'
+                : 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
+              boxShadow: isPaid 
+                ? '0 4px 15px rgba(16, 185, 129, 0.3)'
+                : '0 4px 15px rgba(59, 130, 246, 0.3)'
+            }}
+          >
+            <FaUser className="w-4 h-4" />
+            {t('payment.goToProfile')}
+          </button>
         </div>
-
-        <div className="space-y-4 mb-6 bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600 dark:text-gray-400">{t('payment.amount')}:</span>
-            <span className="font-medium text-gray-900 dark:text-white">
-              {new Intl.NumberFormat(undefined, {
-                style: 'currency',
-                currency: payment.currency,
-              }).format(payment.amount)}
-            </span>
-          </div>
-
-          {payment.plan_code && (
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">{t('payment.plan')}:</span>
-              <span className="font-medium text-gray-900 dark:text-white">{payment.plan_code}</span>
-            </div>
-          )}
-
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600 dark:text-gray-400">{t('payment.orderRef')}:</span>
-            <span className="font-mono text-xs text-gray-500 dark:text-gray-400">
-              {payment.order_reference}
-            </span>
-          </div>
-
-          {payment.paid_at && (
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">{t('payment.paidAt')}:</span>
-              <span className="text-gray-900 dark:text-white">
-                {new Date(payment.paid_at).toLocaleString()}
-              </span>
-            </div>
-          )}
-        </div>
-
-        {payment.failure_reason && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 mb-6">
-            <p className="text-sm text-red-600 dark:text-red-400">{payment.failure_reason}</p>
-          </div>
-        )}
-
-        <div className="space-y-3">
-          <Button onClick={handleContinue} variant="primary" fullWidth size="lg">
-            {isPaid ? t('payment.goToProfile') : t('payment.tryAgain')}
-          </Button>
-
-          {!isPaid && (
-            <Button onClick={() => navigate('/')} variant="outline" fullWidth>
-              {t('payment.backToHome')}
-            </Button>
-          )}
-        </div>
-
-        {isPaid && (
-          <div className="mt-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-            <p className="text-sm text-green-600 dark:text-green-400 text-center">
-              {t('payment.success.message')}
-            </p>
-          </div>
-        )}
-
-        {isPending && (
-          <div className="mt-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-            <p className="text-sm text-blue-600 dark:text-blue-400 text-center">
-              {t('payment.pending.detail')}
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );

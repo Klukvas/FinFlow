@@ -10,6 +10,7 @@
     "yes": "Yes",
     "no": "No",
     "confirm": "Confirm",
+    "retry": "Retry",
     "search": "Search",
     "filter": "Filter",
     "sort": "Sort",
@@ -1210,6 +1211,7 @@
     "redirecting": "Redirecting to payment...",
     "doNotClose": "Please do not close this window...",
     "checkingStatus": "Checking payment status...",
+    "pleaseWait": "Please wait while we verify your payment",
     "history": "Payment History",
     "historyTitle": "Payment History",
     "historyDescription": "View all your past payments",
@@ -1235,15 +1237,24 @@
     },
     "success": {
       "title": "Payment Successful!",
-      "message": "Your subscription has been activated. Thank you!"
+      "message": "Your subscription has been activated. Thank you for your purchase!"
     },
     "failed": {
-      "title": "Payment Failed"
+      "title": "Payment Failed",
+      "message": "Your payment could not be processed. Please try again."
+    },
+    "expired": {
+      "title": "Payment Expired",
+      "message": "This payment has expired. Please start a new payment."
     },
     "pending": {
       "title": "Payment Processing",
       "message": "Your payment is being processed. This may take a few moments.",
       "detail": "If the status doesn't update, please check back in a few minutes."
+    },
+    "processing": {
+      "title": "Processing Payment",
+      "message": "We are processing your payment. Please wait..."
     },
     "errors": {
       "notAuthenticated": "Please log in to continue",

@@ -50,6 +50,7 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
       const returnUrl = `${window.location.origin}/payment/return`;
 
       console.log('PaymentButton: Creating payment for user', user.id);
+      console.log('PaymentButton: Return URL will be:', returnUrl);
       
       const payment = await createPayment({
         user_id: String(user.id),
