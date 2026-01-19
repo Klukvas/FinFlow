@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaEnvelope, FaPhone, FaMapMarkerAlt, FaClock } from 'react-icons/fa';
+import { FaEnvelope, FaGlobe, FaMapMarkerAlt, FaBuilding } from 'react-icons/fa';
 import { Button } from '@/components/ui/shared/Button';
 import { useTranslation } from 'react-i18next';
 import { SEOHead, SEOConfigs } from '@/components/seo/SEOHead';
@@ -11,28 +11,32 @@ export const Contact: React.FC = () => {
 
   const contactInfo = [
     {
-      icon: FaEnvelope,
-      title: t('contactPage.contactInfo.email.title'),
-      value: 'support@financial-app.com',
-      description: t('contactPage.contactInfo.email.description')
+      icon: FaBuilding,
+      title: t('contactPage.contactInfo.company.title'),
+      value: t('contactPage.contactInfo.company.value'),
+      description: t('contactPage.contactInfo.company.description')
     },
     {
-      icon: FaPhone,
-      title: t('contactPage.contactInfo.phone.title'),
-      value: '+7 (800) 123-45-67',
-      description: t('contactPage.contactInfo.phone.description')
+      icon: FaEnvelope,
+      title: t('contactPage.contactInfo.email.title'),
+      value: 'finflow@flux-lab.dev',
+      description: t('contactPage.contactInfo.email.description'),
+      isLink: true,
+      href: 'mailto:finflow@flux-lab.dev'
+    },
+    {
+      icon: FaGlobe,
+      title: t('contactPage.contactInfo.website.title'),
+      value: 'https://finflow.ltd',
+      description: t('contactPage.contactInfo.website.description'),
+      isLink: true,
+      href: 'https://finflow.ltd'
     },
     {
       icon: FaMapMarkerAlt,
       title: t('contactPage.contactInfo.address.title'),
-      value: 'Москва, ул. Примерная, 123',
+      value: t('contactPage.contactInfo.address.value'),
       description: t('contactPage.contactInfo.address.description')
-    },
-    {
-      icon: FaClock,
-      title: t('contactPage.contactInfo.hours.title'),
-      value: '24/7',
-      description: t('contactPage.contactInfo.hours.description')
     }
   ];
 
@@ -69,9 +73,20 @@ export const Contact: React.FC = () => {
                       <h3 className="text-lg font-semibold theme-text-primary mb-1">
                         {info.title}
                       </h3>
-                      <p className="theme-text-primary font-medium mb-1">
-                        {info.value}
-                      </p>
+                      {info.isLink && info.href ? (
+                        <a 
+                          href={info.href}
+                          target={info.href.startsWith('http') ? '_blank' : undefined}
+                          rel={info.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                          className="text-blue-600 dark:text-blue-400 hover:underline font-medium mb-1 block"
+                        >
+                          {info.value}
+                        </a>
+                      ) : (
+                        <p className="theme-text-primary font-medium mb-1">
+                          {info.value}
+                        </p>
+                      )}
                       <p className="theme-text-secondary text-sm">
                         {info.description}
                       </p>

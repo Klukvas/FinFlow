@@ -17,6 +17,8 @@ import { About } from './About';
 import { Features } from './Features';
 import { Pricing } from './Pricing';
 import { Contact } from './Contact';
+import { Terms } from './Terms';
+import { Refund } from './Refund';
 
 export { 
   Account,
@@ -37,5 +39,7 @@ export {
   About,
   Features,
   Pricing,
-  Contact
+  Contact,
+  Terms,
+  Refund
 };

@@ -2,7 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
-import { Account, Category, CategoryDetail, Expense, Income, Profile, Recurring, Goals, PdfParser, Debts, Workspaces, MyInvites, Home, About, Features, Pricing, Contact } from '@/pages';
+import { Account, Category, CategoryDetail, Expense, Income, Profile, Recurring, Goals, PdfParser, Debts, Workspaces, MyInvites, Home, About, Features, Pricing, Contact, Terms, Refund } from '@/pages';
 import { PaymentReturn } from '@/pages/payment/PaymentReturn';
 import { PaymentHistory } from '@/pages/payment/PaymentHistory';
 import { PaymentCheckoutSimple } from '@/pages/payment/PaymentCheckoutSimple';
@@ -192,6 +192,22 @@ export const AppRoutes: React.FC = () => {
             </ProtectedRoute>
           } 
         />
+        <Route 
+          path="/terms" 
+          element={
+            <PublicLayout>
+              <Terms />
+            </PublicLayout>
+          } 
+        />
+        <Route 
+          path="/refund" 
+          element={
+            <PublicLayout>
+              <Refund />
+            </PublicLayout>
+          } 
+        />
         <Route path="/" element={<Navigate to="/category" replace />} />
         <Route path="*" element={<Navigate to="/category" replace />} />
       </Routes>
@@ -224,6 +240,16 @@ export const AppRoutes: React.FC = () => {
       <Route path="/contact" element={
         <PublicLayout>
           <Contact />
+        </PublicLayout>
+      } />
+      <Route path="/terms" element={
+        <PublicLayout>
+          <Terms />
+        </PublicLayout>
+      } />
+      <Route path="/refund" element={
+        <PublicLayout>
+          <Refund />
         </PublicLayout>
       } />
       <Route path="/payment/checkout" element={<PaymentCheckoutSimple />} />

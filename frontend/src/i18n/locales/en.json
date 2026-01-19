@@ -495,21 +495,23 @@
     "subtitle": "Have questions? We are always ready to help and answer any questions",
     "contactInfo": {
       "title": "Contact Information",
+      "company": {
+        "title": "Service Provider",
+        "value": "FOP Pavlenko Andrii Volodymyrovych",
+        "description": "Individual Entrepreneur, Ukraine"
+      },
       "email": {
         "title": "Email",
         "description": "Write to us anytime"
       },
-      "phone": {
-        "title": "Phone",
-        "description": "Mon-Fri 9:00-18:00"
+      "website": {
+        "title": "Website",
+        "description": "Visit our website"
       },
       "address": {
         "title": "Address",
-        "description": "Office in the city center"
-      },
-      "hours": {
-        "title": "Working Hours",
-        "description": "24/7 support"
+        "value": "Kyiv region, Brovary, Olimpiiska Street 6, Ukraine",
+        "description": "Legal and actual address"
       }
     },
     "faq": {
@@ -1040,6 +1042,7 @@
       "legal": {
         "privacy": "Privacy Policy",
         "terms": "Terms of Use",
+        "refund": "Refund Policy",
         "cookies": "Cookie",
         "gdpr": "GDPR"
       }
@@ -1267,6 +1270,94 @@
       "statusCheckFailed": "Failed to check payment status",
       "title": "Payment Error",
       "failed": "Payment failed"
+    }
+  },
+  "termsPage": {
+    "title": "Terms and Conditions",
+    "lastUpdated": "Last updated",
+    "updateDate": "January 19, 2026",
+    "backToHome": "Back to Home",
+    "intro": "These Terms and Conditions govern the use of the online platform FinFlow, available at https://finflow.ltd (the \"Platform\").",
+    "acceptance": "By accessing or using the Platform, the user confirms acceptance of these Terms and Conditions.",
+    "footer": "If you have any questions about these Terms, please contact us at finflow@flux-lab.dev",
+    "sections": {
+      "provider": {
+        "title": "Service Provider",
+        "fop": "Individual Entrepreneur (FOP): Pavlenko Andrii Volodymyrovych",
+        "tax": "Tax Identification Number (ІПН): 3650600237",
+        "country": "Registered in: Ukraine"
+      },
+      "services": {
+        "title": "Description of Services",
+        "item1": "The Platform provides access to digital services on a monthly subscription basis.",
+        "item2": "Access to the Platform is granted after successful payment or activation of a free trial, if available.",
+        "item3": "The service is considered fully rendered at the moment access to the Platform is granted."
+      },
+      "trial": {
+        "title": "Trial Period",
+        "item1": "The Platform may offer a free trial period.",
+        "item2": "During the trial period, users are granted limited or full access to the Platform without charge.",
+        "item3": "The trial period may be converted into a paid subscription unless canceled before its expiration."
+      },
+      "subscription": {
+        "title": "Subscription and Payments",
+        "item1": "The Platform operates on a recurring monthly subscription model.",
+        "item2": "All payments are processed via the payment service provider WayForPay.",
+        "item3": "By purchasing a subscription, the user agrees to automatic recurring charges for each billing period until the subscription is canceled.",
+        "item4": "The user may cancel the subscription at any time via the personal account dashboard.",
+        "item5": "Upon cancellation, access to the Platform remains available until the end of the paid billing period."
+      },
+      "refund": {
+        "title": "Refund Policy",
+        "item1": "Refunds are not provided for subscription payments.",
+        "item2": "Since the service is considered rendered upon granting access, all payments are non-refundable, including cases of partial use.",
+        "item3": "By completing the payment, the user explicitly agrees to these refund conditions."
+      },
+      "liability": {
+        "title": "Limitation of Liability",
+        "item1": "The Platform is provided on an \"as is\" basis.",
+        "item2": "The service provider shall not be liable for any indirect, incidental, or consequential damages, including but not limited to loss of profit, data, or business opportunities.",
+        "item3": "Any potential liability of the service provider is limited to the amount paid by the user for the last subscription period."
+      },
+      "law": {
+        "title": "Governing Law",
+        "item1": "These Terms and Conditions are governed by and construed in accordance with the laws of Ukraine."
+      },
+      "contact": {
+        "title": "Contact",
+        "item1": "For any questions regarding these Terms and Conditions, please contact us at: finflow@flux-lab.dev"
+      }
+    }
+  },
+  "refundPage": {
+    "title": "Refund Policy",
+    "lastUpdated": "Last updated",
+    "updateDate": "January 19, 2026",
+    "backToHome": "Back to Home",
+    "intro": "This Refund Policy applies to all payments made on the FinFlow platform.",
+    "footer": "If you have any questions about refunds, please contact us at finflow@flux-lab.dev",
+    "sections": {
+      "noRefund": {
+        "title": "No Refund Policy",
+        "item1": "FinFlow operates as a digital subscription-based service.",
+        "item2": "Refunds are not available for any subscription payments.",
+        "item3": "The service is considered fully rendered once access to the Platform is granted."
+      },
+      "cancellation": {
+        "title": "Subscription Cancellation",
+        "item1": "Users may cancel their subscription at any time via their personal account.",
+        "item2": "Cancellation prevents future charges but does not entitle the user to a refund for the current billing period.",
+        "item3": "Access to the Platform remains available until the end of the paid subscription period."
+      },
+      "payment": {
+        "title": "Payment Processing",
+        "item1": "All payments are processed via WayForPay.",
+        "item2": "By completing a payment, the user confirms acceptance of this Refund Policy."
+      },
+      "contact": {
+        "title": "Contact",
+        "item1": "For refund-related questions, please contact: finflow@flux-lab.dev"
+      }
     }
   }
 }

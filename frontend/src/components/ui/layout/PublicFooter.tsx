@@ -29,6 +29,7 @@ export const PublicFooter: React.FC = () => {
     legal: [
       { label: t('footer.links.legal.privacy'), href: '/privacy' },
       { label: t('footer.links.legal.terms'), href: '/terms' },
+      { label: t('footer.links.legal.refund'), href: '/refund' },
       { label: t('footer.links.legal.cookies'), href: '/cookies' },
       { label: t('footer.links.legal.gdpr'), href: '/gdpr' },
     ],
@@ -38,7 +39,7 @@ export const PublicFooter: React.FC = () => {
     { icon: FaGithub, href: 'https://github.com', label: 'GitHub' },
     { icon: FaLinkedin, href: 'https://linkedin.com', label: 'LinkedIn' },
     { icon: FaTwitter, href: 'https://twitter.com', label: 'Twitter' },
-    { icon: FaEnvelope, href: 'mailto:support@example.com', label: 'Email' },
+    { icon: FaEnvelope, href: 'mailto:finflow@flux-lab.dev', label: 'Email' },
   ];
 
   return (
@@ -53,7 +54,7 @@ export const PublicFooter: React.FC = () => {
             <p className="theme-text-secondary text-sm mb-4">
               {t('footer.brand.description')}
             </p>
-            <div className="flex space-x-4">
+            <div className="flex space-x-4 mb-4">
               {socialLinks.map((social) => {
                 const Icon = social.icon;
                 return (
@@ -70,6 +71,14 @@ export const PublicFooter: React.FC = () => {
                 );
               })}
             </div>
+            {/* Contact Email */}
+            <a
+              href="mailto:finflow@flux-lab.dev"
+              className="inline-flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              <FaEnvelope className="w-4 h-4" />
+              finflow@flux-lab.dev
+            </a>
           </div>
 
           {/* Product Links */}
