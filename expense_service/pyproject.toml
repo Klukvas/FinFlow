@@ -42,7 +42,7 @@ tzdata = "2025.2"
 pytest = "8.3.5"
 Faker = "37.1.0"
 iniconfig = "2.1.0"
-pluggy = "1.5.0"
+pluggy = "1.6.0"
 
 [build-system]
 requires = ["poetry-core"]
