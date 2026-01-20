@@ -59,6 +59,7 @@ class Subscription(Base):
     __tablename__ = "subscriptions"
     __table_args__ = (
         CheckConstraint("status IN ('active','past_due','canceled','paused')", name="ck_subscription_status"),
+        UniqueConstraint("user_id", name="uq_subscriptions_user_id"),
     )
 
     id = Column(Integer, primary_key=True)

@@ -255,7 +255,7 @@ export const Profile = () => {
                             <p>
                               {t('profile.subscriptionStarted')}: {new Date(subscription.started_at).toLocaleDateString()}
                             </p>
-                            {subscription.expires_at && (
+                            {subscription.expires_at && subscription.plan_code !== 'basic' && !subscription.plan_code.startsWith('basic-') && (
                               <p>
                                 {t('profile.nextBilling')}: {new Date(subscription.expires_at).toLocaleDateString()}
                               </p>

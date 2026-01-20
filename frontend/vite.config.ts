@@ -9,6 +9,13 @@ export default defineConfig({
     port: 3000,
     host: true,
     open: true,
+    allowedHosts: [
+      'localhost',
+      '127.0.0.1',
+      '.ngrok-free.app',
+      '.ngrok.io',
+      '.ngrok.app',
+    ],
   },
   build: {
     outDir: 'dist',

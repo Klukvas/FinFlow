@@ -21,7 +21,8 @@ class SubscriptionRepository:
         - Different plan (upgrade/downgrade): start new period from NOW
         - New subscription: start from NOW
         """
-        sub = self.db.query(Subscription).filter(Subscription.user_id == user_id).first()
+        # Order by id DESC to get the most recent subscription if multiple exist
+        sub = self.db.query(Subscription).filter(Subscription.user_id == user_id).order_by(Subscription.id.desc()).first()
         plan = self.db.query(Plan).filter(Plan.code == plan_code).first()
         if plan is None:
             raise ValueError("PLAN_NOT_FOUND")
@@ -98,7 +99,8 @@ class SubscriptionRepository:
 
     def get_subscription_by_user(self, user_id: str) -> Optional[Subscription]:
         """Get subscription by user ID (any status)"""
-        return self.db.query(Subscription).filter(Subscription.user_id == user_id).first()
+        # Order by id DESC to get the most recent subscription if multiple exist
+        return self.db.query(Subscription).filter(Subscription.user_id == user_id).order_by(Subscription.id.desc()).first()
 
     def cancel_subscription(self, user_id: str) -> Optional[Subscription]:
         """

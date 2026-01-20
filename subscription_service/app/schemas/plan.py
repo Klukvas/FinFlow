@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Dict
 
 
 class FeatureRule(BaseModel):
@@ -20,4 +20,21 @@ class PlanOut(BaseModel):
     class Config:
         from_attributes = True
 
+
+class PlanFeatureOut(BaseModel):
+    """Feature limits for a plan"""
+    code: str
+    name: str
+    enabled: bool
+    limit_value: Optional[int] = None
+
+
+class PlanWithFeaturesOut(BaseModel):
+    """Plan with its feature limits"""
+    code: str
+    name: str
+    period_days: int
+    is_active: bool
+    version: int
+    features: Dict[str, PlanFeatureOut]
 

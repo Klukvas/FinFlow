@@ -61,10 +61,6 @@ export class SubscriptionApiClient {
     return this.httpClient.get<PlanResponse[]>('/v1/plans');
   }
 
-  async getPlansWithFeatures(): Promise<PlanWithFeatures[] | ApiError> {
-    return this.httpClient.get<PlanWithFeatures[]>('/v1/plans/with-features');
-  }
-
   async getUserSubscription(userId: number): Promise<SubscriptionResponse | ApiError> {
     return this.httpClient.get<SubscriptionResponse>(`/v1/subscriptions/${userId}`);
   }

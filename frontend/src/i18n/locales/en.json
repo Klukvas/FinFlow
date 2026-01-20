@@ -11,6 +11,7 @@
     "no": "No",
     "confirm": "Confirm",
     "retry": "Retry",
+    "email": "Email",
     "search": "Search",
     "filter": "Filter",
     "sort": "Sort",
@@ -406,37 +407,43 @@
     "plans": [
       {
         "name": "Basic",
-        "code": "basic-free",
-        "price": "0",
+        "code": "basic",
+        "price": "Free",
         "period": "forever",
         "description": "Perfect to start managing your personal finances",
         "features": [
-          "Up to 5 expense categories",
+          "Up to 10 categories",
+          "2 bank accounts",
+          "100 transactions/month",
+          "2 goals",
+          "3 recurring payments",
+          "1 workspace",
           "Basic reports",
-          "Mobile version",
-          "Email support",
-          "Data sync"
+          "Mobile version"
         ],
         "limitations": [
           "Limited analytics",
-          "No data export"
+          "No data export",
+          "Basic support"
         ],
         "available": true
       },
       {
         "name": "Professional",
-        "code": "pro-monthly",
+        "code": "professional",
         "price": "9.99",
         "period": "per month",
         "description": "For those serious about financial management",
         "features": [
-          "Unlimited categories",
+          "Up to 50 categories",
+          "10 bank accounts",
+          "5000 transactions/month",
+          "20 goals",
+          "50 recurring payments",
+          "3 workspaces",
           "Advanced analytics",
           "Export to Excel/PDF",
-          "Recurring payments",
           "Priority support",
-          "Family access (up to 4)",
-          "Automatic categorization",
           "Payment reminders"
         ],
         "limitations": [],
@@ -444,19 +451,23 @@
       },
       {
         "name": "Enterprise",
-        "code": "enterprise-monthly",
+        "code": "enterprise",
         "price": "29.99",
         "period": "per month",
         "description": "For teams and small business",
         "features": [
-          "All Professional features",
-          "Unlimited users",
+          "Unlimited categories",
+          "Unlimited accounts",
+          "Unlimited transactions",
+          "Unlimited goals",
+          "Unlimited recurring payments",
+          "10 workspaces",
           "API access",
           "Bank integrations",
-          "Dedicated manager",
+          "Dedicated support manager",
           "Custom reports",
-          "White label",
-          "SLA 99.9%"
+          "SLA 99.9%",
+          "Priority feature requests"
         ],
         "limitations": [],
         "available": true

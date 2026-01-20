@@ -57,17 +57,6 @@ export class SubscriptionApiClient {
     return features;
   }
 
-  async getPlans(): Promise<PlanResponse[] | ApiError> {
-    return this.httpClient.get<PlanResponse[]>('/v1/plans');
-  }
-
-  async getPlansWithFeatures(): Promise<PlanWithFeatures[] | ApiError> {
-    return this.httpClient.get<PlanWithFeatures[]>('/v1/plans/with-features');
-  }
-
-  async getUserSubscription(userId: number): Promise<SubscriptionResponse | ApiError> {
-    return this.httpClient.get<SubscriptionResponse>(`/v1/subscriptions/${userId}`);
-  }
 
   // Methods to get current counts for each feature type
   async getCurrentCounts(userId: number): Promise<Record<string, number> | ApiError> {

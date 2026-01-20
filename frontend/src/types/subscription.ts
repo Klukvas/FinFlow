@@ -33,3 +33,19 @@ export interface SubscriptionResponse {
   expires_at: string | null;
   canceled_at: string | null;
 }
+
+export interface PlanFeature {
+  code: string;
+  name: string;
+  enabled: boolean;
+  limit_value: number | null;
+}
+
+export interface PlanWithFeatures {
+  code: string;
+  name: string;
+  period_days: number;
+  is_active: boolean;
+  version: number;
+  features: Record<string, PlanFeature>;
+}
