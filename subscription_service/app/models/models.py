@@ -69,6 +69,14 @@ class Subscription(Base):
     started_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     expires_at = Column(DateTime, nullable=True)
     canceled_at = Column(DateTime, nullable=True)
+    
+    # Recurring payment fields
+    recurring_token = Column(String(255), nullable=True)  # Token for auto-renewal
+    payment_provider = Column(String(32), nullable=True)  # Provider: WAYFORPAY
+    last_payment_id = Column(String(128), nullable=True)  # Last successful payment ID
+    next_billing_date = Column(DateTime, nullable=True)  # When next charge will occur
+    auto_renew = Column(Boolean, default=True, nullable=False)  # Auto-renewal enabled
+    
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 

@@ -85,6 +85,74 @@ async def get_payment_internal(
     return PaymentOut.model_validate(payment)
 
 
+@router.post("/internal/payments:recurring", response_model=CreatePaymentResponse, status_code=status.HTTP_201_CREATED)
+async def create_recurring_payment_internal(
+    request: dict,
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_internal_token),
+):
+    """
+    Create and execute recurring payment using stored token
+    
+    Requires X-Internal-Token header.
+    
+    Request body:
+    {
+        "user_id": "string",
+        "subscription_id": int,
+        "plan_code": "string",
+        "amount": "decimal_string",
+        "currency": "string",
+        "recurring_token": "string"
+    }
+    """
+    service = PaymentService(db)
+    
+    try:
+        payment = await service.create_recurring_payment(
+            user_id=request["user_id"],
+            subscription_id=request.get("subscription_id"),
+            plan_code=request["plan_code"],
+            amount=request["amount"],
+            currency=request["currency"],
+            recurring_token=request["recurring_token"],
+        )
+        
+        response = CreatePaymentResponse(
+            payment_id=payment.id,
+            order_reference=payment.order_reference,
+            provider=payment.provider,
+            amount=payment.amount,
+            currency=payment.currency,
+            status=payment.status,
+            payment_url=None,  # No URL for recurring
+            provider_form_fields=None,
+            created_at=payment.created_at,
+        )
+        
+        logger.info(
+            f"Recurring payment created: {payment.id}",
+            extra={
+                "payment_id": str(payment.id),
+                "user_id": request["user_id"],
+                "subscription_id": request.get("subscription_id"),
+                "status": payment.status.value,
+            },
+        )
+        
+        return response
+        
+    except Exception as e:
+        logger.error(
+            f"Failed to create recurring payment: {e}",
+            extra={
+                "user_id": request.get("user_id"),
+                "error": str(e),
+            },
+        )
+        raise
+
+
 @router.post("/internal/payments/{payment_id}/refund", response_model=RefundResponse)
 async def refund_payment_internal(
     payment_id: UUID,

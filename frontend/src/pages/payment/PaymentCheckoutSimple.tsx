@@ -24,13 +24,27 @@ export const PaymentCheckoutSimple: React.FC = () => {
 
     // Log data for debugging
     console.log('Payment Form Data:', paymentData.formFields);
+    console.log('Payment URL (form action):', paymentData.paymentUrl);
+    console.log('recToken in form:', paymentData.formFields.recToken);
 
     // Auto-submit after 1.5 seconds to give user time to see the page
     const timer = setTimeout(() => {
       if (formRef.current && !autoSubmitted) {
         console.log('Auto-submitting form to WayForPay...');
+        console.log('Form action:', formRef.current.action);
+        console.log('Form method:', formRef.current.method);
+        console.log('Form elements count:', formRef.current.elements.length);
+        
+        // Log all form fields
+        const formData = new FormData(formRef.current);
+        console.log('Form data to be submitted:');
+        for (const [key, value] of formData.entries()) {
+          console.log(`  ${key}: ${value}`);
+        }
+        
         formRef.current.submit();
         setAutoSubmitted(true);
+        console.log('✅ Form submitted successfully');
       }
     }, 1500);
 
@@ -114,12 +128,12 @@ export const PaymentCheckoutSimple: React.FC = () => {
         >
           {Object.entries(paymentData.formFields).map(([key, value]) => {
             if (Array.isArray(value)) {
-              // WayForPay expects multiple inputs with same name for arrays
+              // WayForPay expects array fields with [] suffix
               return value.map((item, index) => (
                 <input
                   key={`${key}_${index}`}
                   type="hidden"
-                  name={key}
+                  name={`${key}[]`}
                   value={String(item)}
                 />
               ));

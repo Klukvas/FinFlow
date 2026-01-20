@@ -10,6 +10,7 @@ CREATE DATABASE debt_db;
 CREATE DATABASE account_db;
 CREATE DATABASE subscription_db;
 CREATE DATABASE payment_db;
+CREATE DATABASE scheduler_db;
 CREATE DATABASE currency_db;
 CREATE DATABASE workspace_db;
 
@@ -24,5 +25,6 @@ GRANT ALL PRIVILEGES ON DATABASE debt_db TO postgres;
 GRANT ALL PRIVILEGES ON DATABASE account_db TO postgres;
 GRANT ALL PRIVILEGES ON DATABASE subscription_db TO postgres;
 GRANT ALL PRIVILEGES ON DATABASE payment_db TO postgres;
+GRANT ALL PRIVILEGES ON DATABASE scheduler_db TO postgres;
 GRANT ALL PRIVILEGES ON DATABASE currency_db TO postgres;
 GRANT ALL PRIVILEGES ON DATABASE workspace_db TO postgres;

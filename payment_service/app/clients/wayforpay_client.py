@@ -64,6 +64,7 @@ class WayForPayClient:
         product_price: Decimal,
         return_url: str,
         service_url: str,
+        request_recurring_token: bool = False,
     ) -> dict[str, Any]:
         """
         Generate payment form data for WayForPay
@@ -113,6 +114,10 @@ class WayForPayClient:
             "serviceUrl": service_url,
             "language": "UA",
         }
+        
+        # Request recurring token for subscription payments
+        if request_recurring_token:
+            form_data["recToken"] = 1  # Request WayForPay to return recurring token
 
         logger.info(
             f"Generated payment form for order {order_reference}",
@@ -200,6 +205,77 @@ class WayForPayClient:
         except Exception as e:
             logger.error(
                 f"Failed to check payment status for order {order_reference}: {e}",
+                extra={"order_reference": order_reference, "error": str(e)},
+            )
+            return None
+
+    async def charge_recurring(
+        self,
+        order_reference: str,
+        amount: Decimal,
+        currency: str,
+        recurring_token: str,
+        product_name: str,
+    ) -> Optional[dict[str, Any]]:
+        """
+        Charge using recurring token
+        
+        Args:
+            order_reference: New unique order reference
+            amount: Amount to charge
+            currency: Currency code
+            recurring_token: Recurring payment token from initial payment
+            product_name: Product description
+        
+        Returns:
+            Charge response or None if failed
+        """
+        order_date = int(datetime.utcnow().timestamp())
+        
+        # Fields for signature
+        signature_fields = [
+            self.merchant_account,
+            order_reference,
+            str(amount),
+            currency,
+        ]
+        
+        signature = self.generate_signature(signature_fields)
+
+        request_data = {
+            "transactionType": "CHARGE",
+            "merchantAccount": self.merchant_account,
+            "orderReference": order_reference,
+            "orderDate": order_date,
+            "amount": str(amount),
+            "currency": currency,
+            "productName": [product_name],
+            "productCount": [1],
+            "productPrice": [str(amount)],
+            "recToken": recurring_token,
+            "merchantSignature": signature,
+        }
+
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(self.api_url, json=request_data)
+                response.raise_for_status()
+                data = response.json()
+
+                logger.info(
+                    f"Recurring charge for order {order_reference}",
+                    extra={
+                        "order_reference": order_reference,
+                        "amount": str(amount),
+                        "status": data.get("transactionStatus"),
+                        "reason_code": data.get("reasonCode"),
+                    },
+                )
+
+                return data
+        except Exception as e:
+            logger.error(
+                f"Failed to charge recurring payment for order {order_reference}: {e}",
                 extra={"order_reference": order_reference, "error": str(e)},
             )
             return None

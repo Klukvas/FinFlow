@@ -93,7 +93,8 @@ class WebhookWayForPayRequest(BaseModel):
     processingDate: Optional[int] = None
     fee: Optional[Decimal] = None
     paymentSystem: Optional[str] = None
-
+    recToken: Optional[str] = None  # Recurring payment token
+    
     model_config = ConfigDict(from_attributes=True)
 
 

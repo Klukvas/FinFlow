@@ -10,7 +10,7 @@ from ..database import get_db
 from ..services.payment_service import PaymentService
 from ..schemas.payment import CreatePaymentRequest, CreatePaymentResponse, PaymentOut
 from ..utils.jwt import get_current_user, JWTPayload
-from ..utils.errors import AuthError, NotFoundError
+from ..utils.errors import AuthError, NotFoundError, ValidationError
 from ..utils.idempotency import (
     check_idempotency,
     store_idempotency,
@@ -87,6 +87,103 @@ async def create_payment(
     )
 
     return response
+
+
+@router.get("/payments/{payment_id}/redirect")
+async def redirect_to_payment_provider(
+    payment_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: JWTPayload = Depends(get_current_user),
+):
+    """
+    Generate HTML page that auto-submits payment form to WayForPay
+    
+    This is a helper endpoint for frontend to redirect user to payment provider.
+    """
+    from fastapi.responses import HTMLResponse
+    
+    service = PaymentService(db)
+    payment = service.payment_repo.get_by_id_or_raise(payment_id)
+    
+    # Verify user owns the payment
+    if str(payment.user_id) != str(current_user.user_id):
+        raise AuthError(
+            "Cannot access another user's payment",
+            error_code="@payment_service/UNAUTHORIZED_ACCESS",
+        )
+    
+    if not payment.provider_payment_url or not payment.provider_payload:
+        raise ValidationError(
+            "Payment provider data not available",
+            error_code="@payment_service/PAYMENT_DATA_MISSING",
+        )
+    
+    # Generate HTML form that auto-submits
+    form_fields = ""
+    for key, value in payment.provider_payload.items():
+        if isinstance(value, list):
+            for item in value:
+                form_fields += f'<input type="hidden" name="{key}[]" value="{item}">\n'
+        else:
+            form_fields += f'<input type="hidden" name="{key}" value="{value}">\n'
+    
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Redirecting to Payment...</title>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                margin: 0;
+                background: #f5f5f5;
+            }}
+            .container {{
+                text-align: center;
+                background: white;
+                padding: 40px;
+                border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            }}
+            .spinner {{
+                border: 4px solid #f3f3f3;
+                border-top: 4px solid #3498db;
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                animation: spin 1s linear infinite;
+                margin: 20px auto;
+            }}
+            @keyframes spin {{
+                0% {{ transform: rotate(0deg); }}
+                100% {{ transform: rotate(360deg); }}
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h2>Redirecting to Payment Gateway...</h2>
+            <div class="spinner"></div>
+            <p>Please wait, you will be redirected shortly.</p>
+        </div>
+        <form id="paymentForm" method="POST" action="{payment.provider_payment_url}">
+            {form_fields}
+        </form>
+        <script>
+            // Auto-submit form after a brief delay
+            setTimeout(function() {{
+                document.getElementById('paymentForm').submit();
+            }}, 1000);
+        </script>
+    </body>
+    </html>
+    """
+    
+    return HTMLResponse(content=html)
 
 
 @router.get("/payments/by-order/{order_reference}", response_model=PaymentOut)

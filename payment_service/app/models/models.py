@@ -89,6 +89,10 @@ class Payment(Base):
     provider_payload = Column(JSONB, nullable=True)
     provider_response = Column(JSONB, nullable=True)
     
+    # Recurring payment support
+    recurring_token = Column(String(255), nullable=True)  # Token for recurring payments
+    is_recurring = Column(Boolean, default=False, nullable=False)  # Is this a recurring payment?
+    
     paid_at = Column(DateTime, nullable=True)
     failed_at = Column(DateTime, nullable=True)
     refunded_at = Column(DateTime, nullable=True)

@@ -94,6 +94,8 @@ async def wayforpay_webhook(
             "order_reference": callback.orderReference,
             "transaction_status": callback.transactionStatus,
             "merchant_account": callback.merchantAccount,
+            "has_rec_token": callback.recToken is not None,
+            "rec_token_preview": callback.recToken[:20] + "..." if callback.recToken and len(callback.recToken) > 20 else callback.recToken,
         },
     )
 

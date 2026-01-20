@@ -26,6 +26,7 @@ class SubscriptionClient:
         plan_code: str,
         amount: Decimal,
         currency: str,
+        recurring_token: Optional[str] = None,
     ) -> bool:
         """
         Notify subscription_service about successful payment
@@ -51,6 +52,10 @@ class SubscriptionClient:
             "amount": str(amount),
             "currency": currency,
         }
+        
+        # Include recurring token if available
+        if recurring_token:
+            payload["recurring_token"] = recurring_token
 
         headers = {
             "X-Internal-Token": self.internal_token,

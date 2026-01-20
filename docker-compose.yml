@@ -451,6 +451,54 @@ services:
       - default
       - logging
 
+  scheduler_service:
+    build:
+      context: ./scheduler_service
+      dockerfile: ./Dockerfile
+    environment:
+      DATABASE_URL: "postgresql://postgres:postgres@db:5432/scheduler_db"
+      REDIS_URL: "redis://redis:6379/0"
+      LOG_LEVEL: "INFO"
+      INTERNAL_SECRET_TOKEN: "my-secret-token"
+      # Service URLs
+      SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
+      PAYMENT_SERVICE_URL: "http://payment_service:8000"
+      # Scheduler Configuration
+      SCHEDULER_TIMEZONE: "UTC"
+      RENEWAL_CHECK_CRON: "0 */1 * * *"  # Every hour
+      RENEWAL_WINDOW_DAYS: "1"
+      MAX_RETRY_ATTEMPTS: "3"
+      RETRY_DELAY_SECONDS: "300"
+      JOB_MAX_INSTANCES: "1"
+      JOB_COALESCE: "true"
+      JOB_MISFIRE_GRACE_TIME: "300"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      subscription_service:
+        condition: service_started
+      payment_service:
+        condition: service_healthy
+    ports:
+      - "8014:8090"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8090/health/live').read()"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service=scheduler_service,logging=promtail"
+    networks:
+      - default
+      - logging
+
   workspace_service:
     build:
       context: .

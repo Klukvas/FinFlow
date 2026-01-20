@@ -67,6 +67,8 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
       });
 
       console.log('PaymentButton: Payment response:', payment);
+      console.log('PaymentButton: Payment type:', typeof payment);
+      console.log('PaymentButton: Payment keys:', payment ? Object.keys(payment) : 'null');
 
       if (!payment) {
         console.error('PaymentButton: Payment creation returned null');
@@ -80,22 +82,30 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
 
       // Check if we have form fields to POST
       const formFields = (payment as any).provider_form_fields;
+      const paymentUrl = (payment as any).provider_payment_url || (payment as any).payment_url;
       
-      if (formFields && payment.provider_payment_url) {
-        console.log('Payment created successfully:', payment);
-        console.log('Form fields:', formFields);
+      console.log('PaymentButton: Extracted formFields:', formFields);
+      console.log('PaymentButton: Extracted paymentUrl:', paymentUrl);
+      console.log('PaymentButton: Condition check - formFields?', !!formFields);
+      console.log('PaymentButton: Condition check - paymentUrl?', !!paymentUrl);
+      
+      if (formFields && paymentUrl) {
+        console.log('✅ PaymentButton: Navigating to /payment/checkout');
         
         toast.success(t('payment.redirecting'));
         
         // Navigate to checkout page which will POST to WayForPay
         navigate('/payment/checkout', {
           state: {
-            paymentUrl: payment.provider_payment_url,
+            paymentUrl: paymentUrl,
             formFields: formFields,
           },
         });
       } else {
-        console.error('PaymentButton: Missing form fields or payment URL', { formFields, url: payment.provider_payment_url });
+        console.error('❌ PaymentButton: Missing form fields or payment URL');
+        console.error('formFields:', formFields);
+        console.error('paymentUrl:', paymentUrl);
+        console.error('Full payment object:', payment);
         toast.error(t('payment.errors.noPaymentUrl'));
       }
     } catch (error) {

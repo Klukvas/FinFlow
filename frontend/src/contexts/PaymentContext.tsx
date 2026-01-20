@@ -57,6 +57,8 @@ export const PaymentProvider: React.FC<{ children: ReactNode }> = ({ children })
         console.log('PaymentContext: Calling API to create payment', requestWithStringId);
         const response = await paymentApi.createPayment(requestWithStringId, idempotencyKey);
         console.log('PaymentContext: API response:', response);
+        console.log('PaymentContext: response.payment_url:', response.payment_url);
+        console.log('PaymentContext: response.provider_form_fields:', response.provider_form_fields);
 
         if ('error' in response) {
           setState((prev) => ({
@@ -85,6 +87,10 @@ export const PaymentProvider: React.FC<{ children: ReactNode }> = ({ children })
           created_at: response.created_at,
           updated_at: response.created_at,
         };
+        
+        console.log('PaymentContext: Created payment object:', payment);
+        console.log('PaymentContext: payment.provider_payment_url:', payment.provider_payment_url);
+        console.log('PaymentContext: payment.provider_form_fields:', payment.provider_form_fields);
 
         setState((prev) => ({
           ...prev,

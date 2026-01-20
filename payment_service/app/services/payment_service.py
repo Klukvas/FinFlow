@@ -92,6 +92,9 @@ class PaymentService:
 
         product_name = self._get_product_name(request)
         
+        # Request recurring token for subscription payments
+        request_recurring = (request.purpose == PaymentPurpose.SUBSCRIPTION)
+        
         form_data = self.wayforpay_client.create_payment_form(
             order_reference=order_reference,
             amount=request.amount,
@@ -101,6 +104,7 @@ class PaymentService:
             product_price=request.amount,
             return_url=return_url,
             service_url=callback_url,
+            request_recurring_token=request_recurring,
         )
 
         # Store form data and payment URL
@@ -134,6 +138,171 @@ class PaymentService:
         )
 
         return payment
+
+    async def create_recurring_payment(
+        self,
+        user_id: str,
+        subscription_id: Optional[int],
+        plan_code: str,
+        amount: str,
+        currency: str,
+        recurring_token: str,
+    ) -> Payment:
+        """
+        Create and execute recurring payment using stored token
+        
+        Args:
+            user_id: User ID
+            subscription_id: Subscription ID
+            plan_code: Plan code
+            amount: Amount as string
+            currency: Currency code
+            recurring_token: Recurring payment token
+        
+        Returns:
+            Created payment with status from WayForPay
+        """
+        # Generate unique order reference
+        order_reference = self._generate_order_reference()
+        
+        # Convert amount to Decimal
+        amount_decimal = Decimal(amount)
+        
+        # Create payment record
+        payment = Payment(
+            id=uuid4(),
+            provider=PaymentProvider.WAYFORPAY,
+            order_reference=order_reference,
+            user_id=user_id,
+            workspace_id=None,  # Subscription payments don't need workspace_id
+            purpose=PaymentPurpose.SUBSCRIPTION,
+            plan_code=plan_code,
+            amount=amount_decimal,
+            currency=currency,
+            status=PaymentStatus.PENDING,
+            recurring_token=recurring_token,
+            is_recurring=True,
+            extra_data={"subscription_id": subscription_id} if subscription_id else None,
+        )
+        
+        # Save payment first
+        payment = self.payment_repo.create(payment)
+        
+        # Create initial event
+        event = PaymentEvent(
+            id=uuid4(),
+            payment_id=payment.id,
+            event_type=PaymentEventType.CREATED,
+            signature_valid=None,
+            payload_raw={
+                "type": "recurring",
+                "subscription_id": subscription_id,
+                "plan_code": plan_code,
+            },
+            status_before=None,
+            status_after=PaymentStatus.PENDING.value,
+        )
+        self.event_repo.create(event)
+        
+        logger.info(
+            f"Attempting recurring payment: {payment.id}",
+            extra={
+                "payment_id": str(payment.id),
+                "order_reference": order_reference,
+                "user_id": user_id,
+                "subscription_id": subscription_id,
+            },
+        )
+        
+        # Execute recurring charge via WayForPay
+        try:
+            product_name = f"Subscription Renewal: {plan_code}"
+            charge_result = await self.wayforpay_client.charge_recurring(
+                order_reference=order_reference,
+                amount=amount_decimal,
+                currency=currency,
+                recurring_token=recurring_token,
+                product_name=product_name,
+            )
+            
+            if not charge_result:
+                # Charge failed
+                self.payment_repo.update_status(
+                    payment,
+                    PaymentStatus.FAILED,
+                    reason="WayForPay recurring charge failed"
+                )
+                
+                logger.error(
+                    f"Recurring charge failed for payment {payment.id}",
+                    extra={"payment_id": str(payment.id)},
+                )
+                
+                return payment
+            
+            # Parse WayForPay response
+            transaction_status = charge_result.get("transactionStatus")
+            reason_code = charge_result.get("reasonCode")
+            
+            # Map to internal status
+            new_status = self._map_wayforpay_status(transaction_status)
+            
+            # Store provider response
+            payment.provider_response = charge_result
+            
+            # Update status
+            failure_reason = None
+            if new_status != PaymentStatus.PAID:
+                failure_reason = f"WayForPay: {transaction_status} (code: {reason_code})"
+            
+            self.payment_repo.update_status(payment, new_status, reason=failure_reason)
+            
+            # Create callback event
+            event = PaymentEvent(
+                id=uuid4(),
+                payment_id=payment.id,
+                event_type=PaymentEventType.CALLBACK,
+                provider_event_id=f"{order_reference}_recurring_{int(datetime.utcnow().timestamp())}",
+                signature_valid=True,
+                payload_raw=charge_result,
+                status_before=PaymentStatus.PENDING.value,
+                status_after=new_status.value,
+            )
+            self.event_repo.create(event)
+            
+            # Notify downstream if successful
+            if new_status == PaymentStatus.PAID:
+                await self._notify_payment_success(payment)
+            else:
+                await self._notify_payment_failure(payment, failure_reason)
+            
+            logger.info(
+                f"Recurring payment processed: {payment.id} - {new_status.value}",
+                extra={
+                    "payment_id": str(payment.id),
+                    "status": new_status.value,
+                    "transaction_status": transaction_status,
+                },
+            )
+            
+            return payment
+            
+        except Exception as e:
+            # Charge exception
+            logger.error(
+                f"Exception during recurring charge for payment {payment.id}: {e}",
+                extra={"payment_id": str(payment.id), "error": str(e)},
+            )
+            
+            self.payment_repo.update_status(
+                payment,
+                PaymentStatus.FAILED,
+                reason=f"Exception: {str(e)}"
+            )
+            
+            await self._notify_payment_failure(payment, str(e))
+            
+            return payment
 
     async def process_wayforpay_callback(self, callback: WebhookWayForPayRequest) -> Payment:
         """
@@ -205,6 +374,21 @@ class PaymentService:
         )
         self.event_repo.create(event)
 
+        # Extract recurring token from callback if present (before status update)
+        if callback.recToken and new_status == PaymentStatus.PAID:
+            payment.recurring_token = callback.recToken
+            # Commit immediately to ensure token is saved
+            self.payment_repo.db.commit()
+            self.payment_repo.db.refresh(payment)
+            logger.info(
+                f"Stored recurring token for payment {payment.id}",
+                extra={
+                    "payment_id": str(payment.id), 
+                    "has_token": True,
+                    "token_length": len(callback.recToken),
+                },
+            )
+        
         # Update payment status if changed
         if new_status != old_status:
             reason = callback.reason if callback.reason else None
@@ -247,6 +431,7 @@ class PaymentService:
             plan_code=payment.plan_code,
             amount=payment.amount,
             currency=payment.currency,
+            recurring_token=payment.recurring_token,
         )
 
         if not success:
