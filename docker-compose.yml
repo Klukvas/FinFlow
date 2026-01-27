@@ -404,10 +404,18 @@ services:
       - default
       - logging
 
+  # IMPORTANT: Payment Service requires WayForPay configuration
+  # Before using, you MUST:
+  # 1. Get real WayForPay merchant credentials (not test_merch_n1)
+  # 2. Configure payment_service/.env.docker with your credentials
+  # 3. Run diagnostic: docker-compose exec payment_service python check_wayforpay_config.py
+  # See: WAYFORPAY_SETUP.md for complete setup instructions
   payment_service:
     build:
       context: ./payment_service
       dockerfile: ./Dockerfile
+    env_file:
+      - ./payment_service/.env.docker
     environment:
       CORS_ORIGINS: "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
       DATABASE_URL: "postgresql://postgres:postgres@db:5432/payment_db"
@@ -416,13 +424,6 @@ services:
       INTERNAL_SECRET_TOKEN: "my-secret-token"
       JWT_SECRET_KEY: "your-secret-key-here"
       JWT_ALGORITHM: "HS256"
-      # WayForPay Configuration (use your real credentials in production)
-      WAYFORPAY_MERCHANT_ACCOUNT: "test_merch_n1"
-      WAYFORPAY_MERCHANT_SECRET_KEY: "flk3409refn54t54t*FNJRET"
-      WAYFORPAY_MERCHANT_DOMAIN: "www.market.ua"
-      WAYFORPAY_RETURN_URL: "http://localhost:3000/payment/return"
-      WAYFORPAY_CALLBACK_URL: "https://ac939656fe5c.ngrok-free.app/v1/webhooks/wayforpay"
-      WAYFORPAY_API_URL: "https://api.wayforpay.com/api"
       SERVICE_BASE_URL: "http://payment_service:8000"
       SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
       IDEMPOTENCY_TTL_SECONDS: "86400"

@@ -21,6 +21,61 @@ class WayForPayClient:
         self.secret_key = settings.wayforpay_merchant_secret_key
         self.merchant_domain = settings.wayforpay_merchant_domain
         self.api_url = settings.wayforpay_api_url
+        
+        # Validate configuration on init
+        self._validate_configuration()
+
+    def _validate_configuration(self):
+        """
+        Validate WayForPay configuration on initialization.
+        Logs configuration info for debugging.
+        """
+        # Check for test credentials (informational only - they may work in some cases)
+        if not self.merchant_account:
+            logger.warning(
+                "⚠️ WAYFORPAY_MERCHANT_ACCOUNT is not configured!"
+            )
+        elif self.merchant_account == "test_merch_n1":
+            logger.info(
+                "Using test_merch_n1 merchant account. "
+                "If payment form is skipped, this might be due to: "
+                "1) Expired/unreachable callback URL (check ngrok), "
+                "2) Domain mismatch, "
+                "3) Network issues. "
+                "Run ./test_wayforpay_credentials.sh to diagnose."
+            )
+        
+        if not self.secret_key:
+            logger.warning(
+                "⚠️ WAYFORPAY_MERCHANT_SECRET_KEY is not configured!"
+            )
+        elif self.secret_key == "flk3409refn54t54t*FNJRET":
+            logger.info(
+                "Using default test secret key. "
+                "If this worked before, ensure callback URL is reachable."
+            )
+        
+        if not self.merchant_domain:
+            logger.warning(
+                "⚠️ WAYFORPAY_MERCHANT_DOMAIN is not configured!"
+            )
+        elif self.merchant_domain == "www.market.ua":
+            logger.info(
+                "Using www.market.ua merchant domain. "
+                "This should work with test_merch_n1 credentials."
+            )
+        
+        # Log configuration status (without exposing secrets)
+        logger.info(
+            "WayForPay client initialized",
+            extra={
+                "merchant_account": self.merchant_account,
+                "merchant_domain": self.merchant_domain,
+                "api_url": self.api_url,
+                "has_secret_key": bool(self.secret_key),
+                "secret_key_length": len(self.secret_key) if self.secret_key else 0,
+            }
+        )
 
     def generate_signature(self, fields: list[str]) -> str:
         """
@@ -30,7 +85,7 @@ class WayForPayClient:
             fields: List of field values to sign (in specific order)
         
         Returns:
-            HMAC SHA1 signature
+            HMAC MD5 signature (as hex string)
         """
         string_to_sign = ";".join(str(f) for f in fields)
         signature = hmac.new(
@@ -38,6 +93,17 @@ class WayForPayClient:
             string_to_sign.encode("utf-8"),
             hashlib.md5,
         ).hexdigest()
+        
+        # Log signature generation for debugging (first attempt)
+        logger.debug(
+            "Generated signature",
+            extra={
+                "string_to_sign_preview": string_to_sign[:100] + "..." if len(string_to_sign) > 100 else string_to_sign,
+                "signature_preview": signature[:20] + "...",
+                "field_count": len(fields),
+            }
+        )
+        
         return signature
 
     def verify_signature(self, signature: str, fields: list[str]) -> bool:
@@ -113,6 +179,7 @@ class WayForPayClient:
             "returnUrl": return_url,
             "serviceUrl": service_url,
             "language": "UA",
+            "straightforward": 1,  # Force payment form display (required for test accounts)
         }
         
         # Request recurring token for subscription payments

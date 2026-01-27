@@ -85,29 +85,49 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
       const paymentUrl = (payment as any).provider_payment_url || (payment as any).payment_url;
       
       console.log('PaymentButton: Extracted formFields:', formFields);
+      console.log('PaymentButton: Form fields keys:', formFields ? Object.keys(formFields) : 'null');
       console.log('PaymentButton: Extracted paymentUrl:', paymentUrl);
       console.log('PaymentButton: Condition check - formFields?', !!formFields);
       console.log('PaymentButton: Condition check - paymentUrl?', !!paymentUrl);
       
-      if (formFields && paymentUrl) {
-        console.log('✅ PaymentButton: Navigating to /payment/checkout');
-        
-        toast.success(t('payment.redirecting'));
-        
-        // Navigate to checkout page which will POST to WayForPay
-        navigate('/payment/checkout', {
-          state: {
-            paymentUrl: paymentUrl,
-            formFields: formFields,
-          },
-        });
-      } else {
-        console.error('❌ PaymentButton: Missing form fields or payment URL');
-        console.error('formFields:', formFields);
-        console.error('paymentUrl:', paymentUrl);
-        console.error('Full payment object:', payment);
-        toast.error(t('payment.errors.noPaymentUrl'));
+      // Validate form fields
+      if (!formFields || typeof formFields !== 'object') {
+        console.error('❌ PaymentButton: formFields is missing or invalid');
+        console.error('Full payment object:', JSON.stringify(payment, null, 2));
+        toast.error('Payment data is incomplete. Please try again or contact support.');
+        return;
       }
+
+      if (!paymentUrl || typeof paymentUrl !== 'string') {
+        console.error('❌ PaymentButton: paymentUrl is missing or invalid');
+        console.error('Full payment object:', JSON.stringify(payment, null, 2));
+        toast.error('Payment URL is missing. Please try again or contact support.');
+        return;
+      }
+
+      // Validate required WayForPay fields
+      const requiredFields = ['merchantAccount', 'merchantSignature', 'orderReference', 'amount', 'currency'];
+      const missingFields = requiredFields.filter(field => !formFields[field]);
+      
+      if (missingFields.length > 0) {
+        console.error('❌ PaymentButton: Missing required WayForPay fields:', missingFields);
+        console.error('Available fields:', Object.keys(formFields));
+        toast.error(`Payment setup incomplete: missing ${missingFields.join(', ')}`);
+        return;
+      }
+      
+      console.log('✅ PaymentButton: Payment data validated successfully');
+      console.log('✅ PaymentButton: Navigating to /payment/checkout');
+      
+      toast.success(t('payment.redirecting'));
+      
+      // Navigate to checkout page which will POST to WayForPay
+      navigate('/payment/checkout', {
+        state: {
+          paymentUrl: paymentUrl,
+          formFields: formFields,
+        },
+      });
     } catch (error) {
       console.error('Payment creation failed:', error);
       toast.error(t('payment.errors.unexpected'));

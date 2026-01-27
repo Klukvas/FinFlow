@@ -35,7 +35,17 @@ async def payment_return_redirect(request: Request):
         except:
             pass
     
-    logger.info(f"Payment return redirect with params: {params}")
+    logger.info(
+        f"Payment return redirect - Method: {request.method}, Params: {params}",
+        extra={
+            "method": request.method,
+            "params_count": len(params),
+            "param_keys": list(params.keys()),
+            "has_error": "error" in params or "reasonCode" in params,
+            "reason_code": params.get("reasonCode"),
+            "reason": params.get("reason"),
+        }
+    )
     
     # Build redirect URL to frontend
     frontend_url = settings.wayforpay_return_url

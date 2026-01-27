@@ -93,7 +93,8 @@ class PaymentService:
         product_name = self._get_product_name(request)
         
         # Request recurring token for subscription payments
-        request_recurring = (request.purpose == PaymentPurpose.SUBSCRIPTION)
+        # TEMPORARILY DISABLED FOR TESTING - test accounts might not support recToken
+        request_recurring = False  # (request.purpose == PaymentPurpose.SUBSCRIPTION)
         
         form_data = self.wayforpay_client.create_payment_form(
             order_reference=order_reference,
@@ -110,6 +111,45 @@ class PaymentService:
         # Store form data and payment URL
         payment.provider_payload = form_data
         payment.provider_payment_url = "https://secure.wayforpay.com/pay"  # WayForPay checkout URL
+
+        # Validate form data completeness
+        required_fields = [
+            'merchantAccount', 'merchantDomainName', 'orderReference', 
+            'orderDate', 'amount', 'currency', 'productName', 
+            'productCount', 'productPrice', 'merchantSignature', 
+            'returnUrl', 'serviceUrl'
+        ]
+        missing_fields = [field for field in required_fields if not form_data.get(field)]
+        
+        if missing_fields:
+            logger.error(
+                f"⚠️ Form data incomplete for order {order_reference}! Missing fields: {missing_fields}",
+                extra={
+                    "order_reference": order_reference,
+                    "missing_fields": missing_fields,
+                    "available_fields": list(form_data.keys()),
+                }
+            )
+            raise ValidationError(
+                f"Payment form data incomplete: missing {', '.join(missing_fields)}",
+                error_code="@payment_service/INCOMPLETE_FORM_DATA",
+            )
+
+        logger.info(
+            f"WayForPay form data generated for order {order_reference}",
+            extra={
+                "order_reference": order_reference,
+                "payment_url": payment.provider_payment_url,
+                "has_form_data": bool(form_data),
+                "form_fields_count": len(form_data) if form_data else 0,
+                "form_fields": list(form_data.keys()) if form_data else [],
+                "merchant_account": form_data.get('merchantAccount'),
+                "has_signature": bool(form_data.get('merchantSignature')),
+                "signature_preview": form_data.get('merchantSignature', '')[:20] + '...' if form_data.get('merchantSignature') else None,
+                "request_recurring": request_recurring,
+                "straightforward_flag": form_data.get('straightforward'),
+            },
+        )
 
         # Save payment
         payment = self.payment_repo.create(payment)
@@ -134,8 +174,24 @@ class PaymentService:
                 "user_id": str(request.user_id),
                 "amount": str(request.amount),
                 "purpose": request.purpose.value,
+                "has_provider_payload": bool(payment.provider_payload),
+                "has_provider_payment_url": bool(payment.provider_payment_url),
             },
         )
+        
+        # Log info if using test credentials
+        if (self.wayforpay_client.merchant_account == "test_merch_n1" or 
+            self.wayforpay_client.secret_key == "flk3409refn54t54t*FNJRET"):
+            logger.info(
+                f"Payment {payment.id} created with test_merch_n1 credentials. "
+                "If payment form is skipped, check: 1) Ngrok URL is current and reachable, "
+                "2) Callback URL matches ngrok, 3) Payment service is accessible. "
+                "Run ./test_wayforpay_credentials.sh to diagnose.",
+                extra={
+                    "payment_id": str(payment.id),
+                    "order_reference": order_reference,
+                }
+            )
 
         return payment
 

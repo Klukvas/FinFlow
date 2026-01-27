@@ -17,10 +17,93 @@ from ..utils.idempotency import (
     compute_request_hash,
     get_idempotency_key,
 )
+from ..config import settings
 
 logger = logging.getLogger("payment_service.payments_router")
 
 router = APIRouter()
+
+
+@router.get("/config/check")
+async def check_wayforpay_config():
+    """
+    Check WayForPay configuration status.
+    Useful for debugging payment form issues.
+    
+    NOTE: Does not expose secret values, only validation status.
+    """
+    # Check for default/test credentials
+    is_using_test_merchant = (
+        not settings.wayforpay_merchant_account or 
+        settings.wayforpay_merchant_account == "test_merch_n1"
+    )
+    is_using_test_secret = (
+        not settings.wayforpay_merchant_secret_key or 
+        settings.wayforpay_merchant_secret_key == "flk3409refn54t54t*FNJRET"
+    )
+    is_using_test_domain = (
+        not settings.wayforpay_merchant_domain or 
+        settings.wayforpay_merchant_domain == "www.market.ua"
+    )
+    
+    has_callback_url = bool(settings.wayforpay_callback_url)
+    has_return_url = bool(settings.wayforpay_return_url)
+    
+    # Overall configuration status
+    is_production_ready = not (
+        is_using_test_merchant or 
+        is_using_test_secret or 
+        is_using_test_domain
+    ) and has_callback_url and has_return_url
+    
+    config_status = {
+        "status": "ok" if is_production_ready else "configuration_needed",
+        "checks": {
+            "merchant_account": {
+                "configured": not is_using_test_merchant,
+                "value_preview": settings.wayforpay_merchant_account[:10] + "..." if settings.wayforpay_merchant_account and len(settings.wayforpay_merchant_account) > 10 else settings.wayforpay_merchant_account,
+                "warning": "Using default test credentials - will not work!" if is_using_test_merchant else None,
+            },
+            "merchant_secret_key": {
+                "configured": not is_using_test_secret,
+                "has_value": bool(settings.wayforpay_merchant_secret_key),
+                "length": len(settings.wayforpay_merchant_secret_key) if settings.wayforpay_merchant_secret_key else 0,
+                "warning": "Using default test credentials - will not work!" if is_using_test_secret else None,
+            },
+            "merchant_domain": {
+                "configured": not is_using_test_domain,
+                "value": settings.wayforpay_merchant_domain,
+                "warning": "Using default test domain - must match your WayForPay merchant domain!" if is_using_test_domain else None,
+            },
+            "callback_url": {
+                "configured": has_callback_url,
+                "value": settings.wayforpay_callback_url,
+                "is_https": settings.wayforpay_callback_url.startswith("https://") if has_callback_url else False,
+                "warning": "Not configured!" if not has_callback_url else ("Must be HTTPS for webhooks to work!" if not settings.wayforpay_callback_url.startswith("https://") else None),
+            },
+            "return_url": {
+                "configured": has_return_url,
+                "value": settings.wayforpay_return_url,
+                "warning": "Not configured!" if not has_return_url else None,
+            },
+        },
+        "production_ready": is_production_ready,
+        "documentation": "See WAYFORPAY_SETUP.md for configuration instructions",
+    }
+    
+    if not is_production_ready:
+        logger.warning(
+            "WayForPay configuration is incomplete or using test credentials!",
+            extra={
+                "using_test_merchant": is_using_test_merchant,
+                "using_test_secret": is_using_test_secret,
+                "using_test_domain": is_using_test_domain,
+                "has_callback_url": has_callback_url,
+                "has_return_url": has_return_url,
+            }
+        )
+    
+    return config_status
 
 
 @router.post("/payments", response_model=CreatePaymentResponse, status_code=status.HTTP_201_CREATED)
@@ -83,6 +166,10 @@ async def create_payment(
             "payment_id": str(payment.id),
             "user_id": str(current_user.user_id),
             "amount": str(payment.amount),
+            "order_reference": payment.order_reference,
+            "payment_url_in_response": response.payment_url,
+            "has_form_fields_in_response": bool(response.provider_form_fields),
+            "form_fields_count": len(response.provider_form_fields) if response.provider_form_fields else 0,
         },
     )
 

@@ -156,7 +156,32 @@ export const PaymentReturn: React.FC = () => {
           toast.error(t('payment.failed.title'));
           localStorage.removeItem('pending_payment_id');
           localStorage.removeItem('pending_plan_code');
-        } else if (result.status === PaymentStatus.CREATED || result.status === PaymentStatus.PENDING) {
+        } else if (result.status === PaymentStatus.CREATED) {
+          // CREATED status on return page indicates WayForPay configuration issue
+          // If we're on the return page with CREATED status, it means:
+          // 1. WayForPay immediately redirected without showing payment form
+          // 2. Merchant credentials are invalid or test credentials
+          // 3. Payment form had validation errors
+          console.error('⚠️ Payment status is CREATED on return page - WayForPay configuration issue!');
+          console.error('This means WayForPay rejected the payment WITHOUT showing the payment form');
+          console.error('');
+          console.error('Root causes:');
+          console.error('1. Invalid merchant credentials (using default test_merch_n1)');
+          console.error('2. Merchant domain mismatch (not matching WayForPay registration)');
+          console.error('3. Invalid signature generation');
+          console.error('4. WayForPay account not configured for the domain');
+          console.error('');
+          console.error('Next steps:');
+          console.error('1. Check payment service configuration: GET /v1/config/check');
+          console.error('2. Verify merchant credentials in .env.docker');
+          console.error('3. Review WAYFORPAY_SETUP.md for proper configuration');
+          console.error('4. Check payment_service logs for signature/validation errors');
+          
+          toast.error('Payment configuration error', {
+            description: 'The payment form was not displayed. This indicates invalid WayForPay merchant credentials or configuration. Please contact support.',
+            duration: 15000,
+          });
+        } else if (result.status === PaymentStatus.PENDING) {
           toast.info(t('payment.pending.message'));
         }
       } catch (err) {
@@ -360,6 +385,29 @@ export const PaymentReturn: React.FC = () => {
               <p className="text-blue-400 text-sm text-center">
                 {t(config.messageKey)}
               </p>
+            </div>
+          )}
+
+          {/* CREATED status warning - possible config issue */}
+          {payment.status === PaymentStatus.CREATED && (
+            <div 
+              className="rounded-lg p-4 mb-6"
+              style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)' }}
+            >
+              <div className="flex items-start gap-3">
+                <FaTimesCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                <div className="text-left">
+                  <p className="text-amber-400 text-sm font-semibold mb-2">
+                    Payment Not Processed
+                  </p>
+                  <p className="text-amber-300 text-xs mb-2">
+                    The payment form was not displayed. This usually indicates a configuration issue with the payment gateway.
+                  </p>
+                  <p className="text-amber-300 text-xs">
+                    Please contact support or check <code className="bg-black/30 px-1 py-0.5 rounded">WAYFORPAY_SETUP.md</code> for troubleshooting steps.
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 
