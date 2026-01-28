@@ -17,6 +17,9 @@ class SubscriptionOut(BaseModel):
     started_at: datetime
     expires_at: Optional[datetime] = None
     canceled_at: Optional[datetime] = None
+    auto_renew: bool = True  # CRITICAL: Required for frontend to determine if subscription is canceled
+    recurring_token: Optional[str] = None
+    next_billing_date: Optional[datetime] = None
 
     class Config:
         from_attributes = True

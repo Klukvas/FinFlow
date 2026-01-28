@@ -10,6 +10,8 @@ from sqlalchemy import (
     ForeignKey,
     UniqueConstraint,
     CheckConstraint,
+    Text,
+    JSON,
 )
 from sqlalchemy.orm import relationship
 
@@ -77,7 +79,37 @@ class Subscription(Base):
     next_billing_date = Column(DateTime, nullable=True)  # When next charge will occur
     auto_renew = Column(Boolean, default=True, nullable=False)  # Auto-renewal enabled
     
+    # Consent fields (WayForPay compliance)
+    consent_given = Column(Boolean, default=False, nullable=False)
+    consent_version = Column(String(16), nullable=True)
+    consent_timestamp = Column(DateTime, nullable=True)
+    consent_ip_address = Column(String(45), nullable=True)
+    consent_user_agent = Column(Text, nullable=True)
+    
+    # Cancellation fields (audit trail)
+    cancellation_reason = Column(String(32), nullable=True)
+    cancellation_comment = Column(Text, nullable=True)
+    cancellation_ip_address = Column(String(45), nullable=True)
+    
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
+class SubscriptionConsentLog(Base):
+    """Immutable audit log of user consent events"""
+    __tablename__ = "subscription_consent_log"
+
+    id = Column(Integer, primary_key=True)
+    subscription_id = Column(Integer, ForeignKey("subscriptions.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(String(128), nullable=False, index=True)
+    consent_version = Column(String(16), nullable=False)
+    consent_text = Column(Text, nullable=False)  # Full consent text at time of consent
+    consent_language = Column(String(8), nullable=False)  # 'en', 'uk'
+    consent_given_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    ip_address = Column(String(45), nullable=True)
+    user_agent = Column(Text, nullable=True)
+    browser_fingerprint = Column(String(64), nullable=True)
+    consent_metadata = Column(JSON, nullable=True)  # Renamed from 'metadata' (reserved in SQLAlchemy)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
 

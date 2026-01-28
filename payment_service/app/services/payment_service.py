@@ -24,6 +24,7 @@ from ..clients.subscription_client import SubscriptionClient
 from ..schemas.payment import CreatePaymentRequest, WebhookWayForPayRequest
 from ..config import settings
 from ..utils.errors import ValidationError, ConflictError
+from ..utils.consent import validate_subscription_consent
 
 logger = logging.getLogger("payment_service.payment_service")
 
@@ -57,6 +58,10 @@ class PaymentService:
                 "plan_code is required for SUBSCRIPTION purpose",
                 error_code="@payment_service/MISSING_PLAN_CODE",
             )
+        
+        # CRITICAL: Validate user consent for subscription payments (WayForPay compliance)
+        if request.purpose == PaymentPurpose.SUBSCRIPTION:
+            validate_subscription_consent(request.metadata)
 
         # Generate unique order reference
         order_reference = self._generate_order_reference()
@@ -93,8 +98,10 @@ class PaymentService:
         product_name = self._get_product_name(request)
         
         # Request recurring token for subscription payments
-        # TEMPORARILY DISABLED FOR TESTING - test accounts might not support recToken
-        request_recurring = False  # (request.purpose == PaymentPurpose.SUBSCRIPTION)
+        # Note: Some test accounts (like test_merch_n1) don't support recToken
+        # Set WAYFORPAY_ENABLE_RECURRING=false in .env to disable for testing
+        enable_recurring = getattr(settings, 'wayforpay_enable_recurring', True)
+        request_recurring = (request.purpose == PaymentPurpose.SUBSCRIPTION) and enable_recurring
         
         form_data = self.wayforpay_client.create_payment_form(
             order_reference=order_reference,

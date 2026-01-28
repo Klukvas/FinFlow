@@ -174,6 +174,32 @@ class SubscriptionRenewalJob:
             },
         )
 
+        # CRITICAL: Check if subscription is canceled (auto_renew=false)
+        # This prevents charging users who have canceled their subscription
+        auto_renew = subscription.get("auto_renew", True)
+        if not auto_renew:
+            logger.info(
+                f"Subscription {subscription_id} has auto_renew=false (canceled), skipping renewal",
+                extra={
+                    "subscription_id": subscription_id,
+                    "user_id": user_id,
+                    "auto_renew": False,
+                },
+            )
+            
+            job_repo.create_renewal_attempt(
+                job_execution_id=job_execution_id,
+                subscription_id=subscription_id,
+                user_id=user_id,
+                amount=subscription.get("plan_amount", "0"),
+                currency=subscription.get("currency", "UAH"),
+                status="SKIPPED",
+                failure_reason="subscription_canceled_auto_renew_false",
+            )
+            
+            metrics.record_renewal_skipped("canceled")
+            return False
+
         # Check if subscription has recurring token
         recurring_token = subscription.get("recurring_token")
         if not recurring_token:

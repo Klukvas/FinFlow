@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/shared/Card';
 import { Button } from '@/components/ui/shared/Button';
 import { LoadingSpinner } from '@/components/ui/shared/LoadingSpinner';
 import { UpgradePlanModal } from '@/components/payment/UpgradePlanModal';
+import { CancelSubscriptionModal } from '@/components/subscription/CancelSubscriptionModal';
 import { 
   FaFolder, 
   FaWallet, 
@@ -18,7 +19,9 @@ import {
   FaCrown,
   FaCheckCircle,
   FaTimesCircle,
-  FaRocket
+  FaRocket,
+  FaBan,
+  FaExclamationTriangle
 } from 'react-icons/fa';
 
 interface SubscriptionLimitsProps {
@@ -45,15 +48,27 @@ const featureNames: Record<string, string> = {
   goals: 'subscription.features.goals',
 };
 
+interface Subscription {
+  id: number;
+  user_id: string;
+  plan_code: string;
+  status: string;
+  auto_renew: boolean;
+  expires_at: string | null;
+  canceled_at: string | null;
+}
+
 export const SubscriptionLimits: React.FC<SubscriptionLimitsProps> = ({ className = '' }) => {
   const { t } = useTranslation();
   const { subscription: subscriptionApi } = useApiClients();
   const { user } = useAuth();
   const [features, setFeatures] = useState<UserFeature[]>([]);
   const [currentCounts, setCurrentCounts] = useState<Record<string, number>>({});
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
 
   useEffect(() => {
     const loadSubscriptionLimits = async () => {
@@ -63,10 +78,11 @@ export const SubscriptionLimits: React.FC<SubscriptionLimitsProps> = ({ classNam
         setLoading(true);
         setError(null);
         
-        // Load features and current counts in parallel
-        const [featuresResponse, countsResponse] = await Promise.all([
+        // Load features, current counts, and subscription in parallel
+        const [featuresResponse, countsResponse, subscriptionResponse] = await Promise.all([
           subscriptionApi.getUserFeatures(user.id),
-          subscriptionApi.getCurrentCounts(user.id)
+          subscriptionApi.getCurrentCounts(user.id),
+          subscriptionApi.getUserSubscription(user.id).catch(() => null),
         ]);
         
         if ('error' in featuresResponse) {
@@ -82,6 +98,11 @@ export const SubscriptionLimits: React.FC<SubscriptionLimitsProps> = ({ classNam
         }
 
         setFeatures(featuresResponse);
+        
+        // Set subscription if exists and not an error
+        if (subscriptionResponse && !('error' in subscriptionResponse)) {
+          setSubscription(subscriptionResponse);
+        }
       } catch (err) {
         setError(t('subscription.errors.loadFailed'));
         console.error('Failed to load subscription limits:', err);
@@ -92,6 +113,16 @@ export const SubscriptionLimits: React.FC<SubscriptionLimitsProps> = ({ classNam
 
     loadSubscriptionLimits();
   }, [user?.id, subscriptionApi]);
+
+  const handleCancelSuccess = async () => {
+    // Reload subscription data after cancellation
+    if (user?.id) {
+      const subscriptionResponse = await subscriptionApi.getUserSubscription(user.id).catch(() => null);
+      if (subscriptionResponse && !('error' in subscriptionResponse)) {
+        setSubscription(subscriptionResponse);
+      }
+    }
+  };
 
   if (loading) {
     return (
@@ -114,6 +145,10 @@ export const SubscriptionLimits: React.FC<SubscriptionLimitsProps> = ({ classNam
     );
   }
 
+  const isPaidPlan = subscription && subscription.plan_code !== 'basic';
+  const isCanceled = subscription && !subscription.auto_renew;
+  const expiresAt = subscription?.expires_at ? new Date(subscription.expires_at) : null;
+
   return (
     <>
     <Card className={`p-6 ${className}`}>
@@ -125,21 +160,44 @@ export const SubscriptionLimits: React.FC<SubscriptionLimitsProps> = ({ classNam
           <div>
             <h3 className="text-lg font-semibold theme-text-primary">{t('subscription.title')}</h3>
             <p className="text-sm theme-text-secondary">{t('subscription.subtitle')}</p>
+            {subscription && (
+              <p className="text-xs theme-text-secondary mt-1">
+                {t('subscription.currentPlan')}: <span className="font-semibold theme-text-primary">{subscription.plan_code}</span>
+                {isCanceled && (
+                  <span className="ml-2 text-orange-600">
+                    ({t('subscription.canceled')} - {t('subscription.accessUntil')} {expiresAt?.toLocaleDateString()})
+                  </span>
+                )}
+              </p>
+            )}
           </div>
         </div>
-        <button
-          onClick={() => setIsUpgradeModalOpen(true)}
-          className="relative px-4 py-2 rounded-lg font-medium text-white text-sm flex items-center gap-2 overflow-hidden group transition-transform hover:scale-105 active:scale-95"
-          style={{
-            background: 'linear-gradient(90deg, #8b5cf6, #ec4899, #f97316, #8b5cf6)',
-            backgroundSize: '300% 100%',
-            animation: 'gradient-shift 3s ease infinite',
-          }}
-        >
-          <span className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-          <FaRocket className="w-4 h-4 relative z-10" />
-          <span className="relative z-10">{t('subscription.upgradePlan')}</span>
-        </button>
+        <div className="flex gap-2">
+          {isPaidPlan && !isCanceled && (
+            <button
+              onClick={() => setIsCancelModalOpen(true)}
+              className="px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-all hover:scale-105 active:scale-95 border-2 border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+            >
+              <FaBan className="w-4 h-4" />
+              <span>{t('subscription.cancelButton')}</span>
+            </button>
+          )}
+          <button
+            onClick={() => setIsUpgradeModalOpen(true)}
+            className="relative px-4 py-2 rounded-lg font-medium text-white text-sm flex items-center gap-2 overflow-hidden group transition-transform hover:scale-105 active:scale-95"
+            style={{
+              background: 'linear-gradient(90deg, #8b5cf6, #ec4899, #f97316, #8b5cf6)',
+              backgroundSize: '300% 100%',
+              animation: 'gradient-shift 3s ease infinite',
+            }}
+          >
+            <span className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <FaRocket className="w-4 h-4 relative z-10" />
+            <span className="relative z-10">
+              {isPaidPlan ? t('subscription.changePlan') : t('subscription.upgradePlan')}
+            </span>
+          </button>
+        </div>
         <style>{`
           @keyframes gradient-shift {
             0% { background-position: 0% 50%; }
@@ -148,6 +206,21 @@ export const SubscriptionLimits: React.FC<SubscriptionLimitsProps> = ({ classNam
           }
         `}</style>
       </div>
+
+      {/* Cancellation Warning Banner */}
+      {isCanceled && expiresAt && (
+        <div className="mb-4 p-4 rounded-lg bg-orange-50 dark:bg-orange-950 border-2 border-orange-500 flex items-start gap-3">
+          <FaExclamationTriangle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="font-semibold text-orange-900 dark:text-orange-200 mb-1">
+              {t('subscription.subscriptionCanceled')}
+            </p>
+            <p className="text-sm text-orange-800 dark:text-orange-300">
+              {t('subscription.accessUntilDate', { date: expiresAt.toLocaleDateString() })}
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {features.map((feature) => {
@@ -251,6 +324,17 @@ export const SubscriptionLimits: React.FC<SubscriptionLimitsProps> = ({ classNam
     <UpgradePlanModal
       isOpen={isUpgradeModalOpen}
       onClose={() => setIsUpgradeModalOpen(false)}
+    />
+    
+    <CancelSubscriptionModal
+      isOpen={isCancelModalOpen}
+      onClose={() => setIsCancelModalOpen(false)}
+      subscription={subscription ? {
+        id: subscription.id,
+        plan_code: subscription.plan_code,
+        expires_at: subscription.expires_at,
+      } : null}
+      onCancelSuccess={handleCancelSuccess}
     />
     </>
   );

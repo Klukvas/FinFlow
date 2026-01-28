@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     wayforpay_return_url: str = Field(default="")
     wayforpay_callback_url: str = Field(default="")
     wayforpay_api_url: str = Field(default="https://api.wayforpay.com/api")
+    wayforpay_enable_recurring: bool = Field(default=False)  # Set to True when using real merchant account
     
     # Service URLs
     service_base_url: str = Field(default="http://localhost:8000")

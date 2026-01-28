@@ -8,6 +8,13 @@ import { PaymentPurpose } from '@/types/payment';
 import { FaSpinner, FaCrown } from 'react-icons/fa';
 import { toast } from 'sonner';
 
+interface ConsentData {
+  consent_given: boolean;
+  consent_version: string;
+  consent_timestamp: string;
+  consent_language: string;
+}
+
 interface PaymentButtonProps {
   planCode: string;
   planName: string;
@@ -18,6 +25,7 @@ interface PaymentButtonProps {
   fullWidth?: boolean;
   disabled?: boolean;
   className?: string;
+  consentData?: ConsentData;
 }
 
 export const PaymentButton: React.FC<PaymentButtonProps> = ({
@@ -30,6 +38,7 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
   fullWidth = false,
   disabled = false,
   className = '',
+  consentData,
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -63,6 +72,8 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
         metadata: {
           plan_name: planName,
           user_email: user.email,
+          // Include consent data for WayForPay compliance
+          ...(consentData || {}),
         },
       });
 
