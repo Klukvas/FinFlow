@@ -118,9 +118,10 @@ jobs:
             if git diff --name-only HEAD^..HEAD | grep -q "^account_service/"; then
               ACCOUNT_SERVICE="true"
             fi
-            if git diff --name-only HEAD^..HEAD | grep -q "^admin_panel/"; then
-              ADMIN_PANEL="true"
-            fi
+            # admin_panel disabled for now
+            # if git diff --name-only HEAD^..HEAD | grep -q "^admin_panel/"; then
+            #   ADMIN_PANEL="true"
+            # fi
             if git diff --name-only HEAD^..HEAD | grep -q "^category_service/"; then
               CATEGORY_SERVICE="true"
             fi
@@ -181,7 +182,7 @@ jobs:
               echo "No changes detected, building all services"
               FRONTEND="true"
               ACCOUNT_SERVICE="true"
-              ADMIN_PANEL="true"
+              # ADMIN_PANEL="true"  # disabled for now
               CATEGORY_SERVICE="true"
               CURRENCY_SERVICE="true"
               DEBT_SERVICE="true"
@@ -220,7 +221,7 @@ jobs:
           SERVICES_LIST=""
           [[ "$FRONTEND" == "true" ]] && SERVICES_LIST="$SERVICES_LIST frontend"
           [[ "$ACCOUNT_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST account_service"
-          [[ "$ADMIN_PANEL" == "true" ]] && SERVICES_LIST="$SERVICES_LIST admin_panel"
+          # [[ "$ADMIN_PANEL" == "true" ]] && SERVICES_LIST="$SERVICES_LIST admin_panel"  # disabled for now
           [[ "$CATEGORY_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST category_service"
           [[ "$CURRENCY_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST currency_service"
           [[ "$DEBT_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST debt_service"

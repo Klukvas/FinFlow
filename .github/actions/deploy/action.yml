@@ -51,7 +51,7 @@ inputs:
   services:
     description: Space-separated services to deploy
     required: true
-    default: "caddy redis frontend account_service admin_panel category_service currency_service debt_service expense_service goals_service income_service payment_service pdf_parser_service recurring_service scheduler_service subscription_service user_service workspace_service"
+    default: "caddy redis frontend account_service category_service currency_service debt_service expense_service goals_service income_service payment_service pdf_parser_service recurring_service scheduler_service subscription_service user_service workspace_service"
 
 runs:
   using: "composite"
@@ -315,7 +315,7 @@ runs:
 
         # Use default services if empty
         if [ -z "${SERVICES:-}" ]; then
-          SERVICES="caddy redis frontend account_service admin_panel category_service currency_service debt_service expense_service goals_service income_service payment_service pdf_parser_service recurring_service scheduler_service subscription_service user_service workspace_service"
+          SERVICES="caddy redis frontend account_service category_service currency_service debt_service expense_service goals_service income_service payment_service pdf_parser_service recurring_service scheduler_service subscription_service user_service workspace_service"
           echo "Using default services: $SERVICES"
         fi
 
