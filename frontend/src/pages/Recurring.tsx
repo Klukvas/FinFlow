@@ -59,15 +59,13 @@ export const Recurring: React.FC = () => {
 
   useEffect(() => {
     if (user?.id) {
-      fetchPayments();
-      fetchStats();
+      Promise.all([fetchPayments(), fetchStats()]);
     }
   }, [user?.id, currentPage, fetchPayments, fetchStats]);
 
   const handleCreateSuccess = () => {
     setShowCreateModal(false);
-    fetchPayments();
-    fetchStats();
+    Promise.all([fetchPayments(), fetchStats()]);
   };
 
   const handleDelete = async (paymentId: string) => {
@@ -79,8 +77,7 @@ export const Recurring: React.FC = () => {
         toast.error(response.error);
         return;
       }
-      fetchPayments();
-      fetchStats();
+      Promise.all([fetchPayments(), fetchStats()]);
       toast.success(t('recurring.messages.paymentDeleted'));
     } catch (error) {
       console.error('Failed to delete recurring payment:', error);

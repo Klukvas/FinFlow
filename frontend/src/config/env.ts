@@ -21,6 +21,10 @@ export const config = {
     name: import.meta.env.VITE_APP_NAME || 'Financial Accounting',
     version: import.meta.env.VITE_APP_VERSION || '1.0.0',
   },
+  features: {
+    // Payments are disabled by default until Wayforpay approval is received
+    paymentsEnabled: import.meta.env.VITE_PAYMENTS_ENABLED === 'true',
+  },
   debug: import.meta.env.VITE_DEBUG === 'true' || import.meta.env.DEV,
 } as const;
 

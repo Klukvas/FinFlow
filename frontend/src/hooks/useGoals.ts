@@ -69,10 +69,14 @@ export const useGoals = () => {
         throw new Error(response.error);
       }
       
-      await Promise.all([fetchGoals(), fetchStatistics()]);
+      // Optimistic update: add new goal to the list and only refetch statistics
+      setGoals(prev => [...prev, response]);
+      await fetchStatistics();
       return true;
     } catch (error) {
       ErrorHandler.handleApiError(error, 'Ошибка при создании цели');
+      // On error, refetch to ensure consistency
+      await fetchGoals();
       return false;
     }
   }, [user?.id, goalsApi, fetchGoals, fetchStatistics]);
@@ -84,10 +88,14 @@ export const useGoals = () => {
         throw new Error(response.error);
       }
       
-      await Promise.all([fetchGoals(), fetchStatistics()]);
+      // Optimistic update: update the goal in the list and only refetch statistics
+      setGoals(prev => prev.map(g => g.id === goalId ? response : g));
+      await fetchStatistics();
       return true;
     } catch (error) {
       ErrorHandler.handleApiError(error, 'Ошибка при обновлении цели');
+      // On error, refetch to ensure consistency
+      await fetchGoals();
       return false;
     }
   }, [goalsApi, fetchGoals, fetchStatistics]);
@@ -99,10 +107,14 @@ export const useGoals = () => {
         throw new Error(response.error);
       }
       
-      await Promise.all([fetchGoals(), fetchStatistics()]);
+      // Optimistic update: remove the goal from the list and only refetch statistics
+      setGoals(prev => prev.filter(g => g.id !== goalId));
+      await fetchStatistics();
       return true;
     } catch (error) {
       ErrorHandler.handleApiError(error, 'Ошибка при удалении цели');
+      // On error, refetch to ensure consistency
+      await fetchGoals();
       return false;
     }
   }, [goalsApi, fetchGoals, fetchStatistics]);
@@ -114,10 +126,14 @@ export const useGoals = () => {
         throw new Error(response.error);
       }
       
-      await Promise.all([fetchGoals(), fetchStatistics()]);
+      // Optimistic update: update the goal in the list and only refetch statistics
+      setGoals(prev => prev.map(g => g.id === goalId ? response : g));
+      await fetchStatistics();
       return true;
     } catch (error) {
       ErrorHandler.handleApiError(error, 'Ошибка при обновлении прогресса');
+      // On error, refetch to ensure consistency
+      await fetchGoals();
       return false;
     }
   }, [goalsApi, fetchGoals, fetchStatistics]);
@@ -133,8 +149,7 @@ export const useGoals = () => {
 
   useEffect(() => {
     if (user?.id) {
-      fetchGoals();
-      fetchStatistics();
+      Promise.all([fetchGoals(), fetchStatistics()]);
     }
   }, [user?.id, fetchGoals, fetchStatistics]);
 

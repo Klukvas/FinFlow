@@ -130,7 +130,7 @@ class WayForPayClient:
         product_price: Decimal,
         return_url: str,
         service_url: str,
-        request_recurring_token: bool = False,
+        request_recurring_token: bool = False,  # Deprecated: WayForPay returns token automatically
     ) -> dict[str, Any]:
         """
         Generate payment form data for WayForPay
@@ -182,9 +182,9 @@ class WayForPayClient:
             "straightforward": 1,  # Force payment form display (required for test accounts)
         }
         
-        # Request recurring token for subscription payments
-        if request_recurring_token:
-            form_data["recToken"] = 1  # Request WayForPay to return recurring token
+        # Note: WayForPay returns recToken automatically in the webhook callback
+        # when a successful payment is processed. No need to request it in form data.
+        # The token will be included in the serviceUrl (webhook) response.
 
         logger.info(
             f"Generated payment form for order {order_reference}",
@@ -192,6 +192,8 @@ class WayForPayClient:
                 "order_reference": order_reference,
                 "amount": str(amount),
                 "currency": currency,
+                "request_recurring_token": request_recurring_token,
+                "has_recToken": "recToken" in form_data,
             },
         )
 

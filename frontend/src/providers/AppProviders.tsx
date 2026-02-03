@@ -4,6 +4,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { CategoriesProvider } from '@/contexts/CategoriesContext';
+import { AccountsProvider } from '@/contexts/AccountsContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { ModalProvider } from '@/contexts/ModalContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
@@ -28,14 +29,16 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
               <PaymentProvider>
                 <WorkspaceProvider>
                   <CategoriesProvider>
-                    <CurrencyProvider>
-                      <TutorialProvider>
-                        <Router>
-                          {children || <AppRoutes />}
-                          <TutorialOverlay />
-                        </Router>
-                      </TutorialProvider>
-                    </CurrencyProvider>
+                    <AccountsProvider>
+                      <CurrencyProvider>
+                        <TutorialProvider>
+                          <Router>
+                            {children || <AppRoutes />}
+                            <TutorialOverlay />
+                          </Router>
+                        </TutorialProvider>
+                      </CurrencyProvider>
+                    </AccountsProvider>
                   </CategoriesProvider>
                 </WorkspaceProvider>
               </PaymentProvider>

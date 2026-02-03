@@ -118,12 +118,12 @@ export const GoalForm: React.FC<GoalFormProps> = ({
           id="title"
           value={formData.title}
           onChange={(e) => handleInputChange('title', e.target.value)}
-          className={`w-full px-3 py-3 sm:py-2 text-base sm:text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 theme-transition touch-manipulation ${
-            errors.title ? 'border-red-500' : 'theme-border'
+          className={`w-full px-3 py-3 sm:py-2 text-base sm:text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-accent theme-transition touch-manipulation theme-bg theme-text-primary ${
+            errors.title ? 'theme-error-light theme-border' : 'theme-border'
           }`}
           placeholder={t('goalsPage.form.titlePlaceholder')}
         />
-        {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
+        {errors.title && <p className="mt-1 text-sm theme-error">{errors.title}</p>}
       </div>
 
       {/* Description */}
@@ -136,7 +136,7 @@ export const GoalForm: React.FC<GoalFormProps> = ({
           value={formData.description}
           onChange={(e) => handleInputChange('description', e.target.value)}
           rows={3}
-          className="w-full px-3 py-3 sm:py-2 text-base sm:text-sm theme-border border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 theme-transition touch-manipulation"
+          className="w-full px-3 py-3 sm:py-2 text-base sm:text-sm theme-border border rounded-md focus:outline-none focus:ring-2 focus:ring-accent theme-transition touch-manipulation theme-bg theme-text-primary"
           placeholder={t('goalsPage.form.descriptionPlaceholder')}
         />
       </div>
@@ -151,7 +151,7 @@ export const GoalForm: React.FC<GoalFormProps> = ({
             id="goal_type"
             value={formData.goal_type}
             onChange={(e) => handleInputChange('goal_type', e.target.value)}
-            className="w-full px-3 py-3 sm:py-2 text-base sm:text-sm theme-border border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 theme-transition touch-manipulation"
+            className="w-full px-3 py-3 sm:py-2 text-base sm:text-sm theme-border border rounded-md focus:outline-none focus:ring-2 focus:ring-accent theme-transition touch-manipulation theme-bg theme-text-primary"
           >
             {GOAL_TYPES.map((type) => {
               // Convert DEBT_PAYOFF -> debtPayoff
@@ -173,7 +173,7 @@ export const GoalForm: React.FC<GoalFormProps> = ({
             id="priority"
             value={formData.priority}
             onChange={(e) => handleInputChange('priority', e.target.value)}
-            className="w-full px-3 py-3 sm:py-2 text-base sm:text-sm theme-border border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 theme-transition touch-manipulation"
+            className="w-full px-3 py-3 sm:py-2 text-base sm:text-sm theme-border border rounded-md focus:outline-none focus:ring-2 focus:ring-accent theme-transition touch-manipulation theme-bg theme-text-primary"
           >
             {GOAL_PRIORITIES.map((priority) => {
               const priorityKey = priority.toLowerCase();
@@ -228,11 +228,11 @@ export const GoalForm: React.FC<GoalFormProps> = ({
           id="target_date"
           value={formData.target_date}
           onChange={(e) => handleInputChange('target_date', e.target.value)}
-          className={`w-full px-3 py-3 sm:py-2 text-base sm:text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 theme-transition touch-manipulation ${
-            errors.target_date ? 'border-red-500' : 'theme-border'
+          className={`w-full px-3 py-3 sm:py-2 text-base sm:text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-accent theme-transition touch-manipulation theme-bg theme-text-primary ${
+            errors.target_date ? 'theme-error-light theme-border' : 'theme-border'
           }`}
         />
-        {errors.target_date && <p className="mt-1 text-sm text-red-600">{errors.target_date}</p>}
+        {errors.target_date && <p className="mt-1 text-sm theme-error">{errors.target_date}</p>}
       </div>
 
       {/* Milestone Based */}
@@ -242,7 +242,7 @@ export const GoalForm: React.FC<GoalFormProps> = ({
           id="is_milestone_based"
           checked={formData.is_milestone_based}
           onChange={(e) => handleInputChange('is_milestone_based', e.target.checked)}
-          className="h-5 w-5 mt-0.5 sm:mt-0 text-blue-600 focus:ring-blue-500 theme-border border rounded touch-manipulation"
+          className="h-5 w-5 mt-0.5 sm:mt-0 theme-accent focus:ring-accent theme-border border rounded touch-manipulation"
         />
         <label htmlFor="is_milestone_based" className="block text-sm theme-text-primary leading-relaxed">
           {t('goalsPage.form.useMilestones')}

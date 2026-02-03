@@ -107,16 +107,66 @@ class BasePDFParser(ABC):
     
     def _extract_tables_from_pdf(self, file_path: str) -> List[List[List[str]]]:
         """Extract all tables from PDF file"""
+        from app.exceptions import InvalidPDFError, FileProcessingError, ErrorCodes
+        
         tables = []
         try:
             with pdfplumber.open(file_path) as pdf:
-                for page in pdf.pages:
-                    page_tables = page.extract_tables()
-                    if page_tables:
-                        tables.extend(page_tables)
-        except Exception as e:
-            self.logger.error(f"Failed to extract tables from PDF: {e}")
+                # Check if PDF has any pages
+                if not pdf.pages:
+                    self.logger.error("PDF file has no pages")
+                    raise InvalidPDFError(file_path)
+                
+                for page_num, page in enumerate(pdf.pages, start=1):
+                    try:
+                        page_tables = page.extract_tables()
+                        if page_tables:
+                            tables.extend(page_tables)
+                    except Exception as page_error:
+                        self.logger.warning(f"Failed to extract tables from page {page_num}: {page_error}")
+                        # Continue processing other pages
+                        continue
+                        
+        except InvalidPDFError:
+            # Re-raise our custom exceptions
             raise
+        except FileNotFoundError:
+            self.logger.error(f"PDF file not found: {file_path}")
+            raise FileProcessingError(f"PDF file not found: {file_path}", ErrorCodes.FILE_NOT_FOUND)
+        except PermissionError:
+            self.logger.error(f"Permission denied when accessing PDF: {file_path}")
+            raise FileProcessingError(f"Permission denied when accessing PDF", ErrorCodes.FILE_PROCESSING_FAILED)
+        except Exception as e:
+            error_msg = str(e).lower()
+            
+            # Handle password-protected PDFs
+            if "password" in error_msg or "encrypted" in error_msg:
+                self.logger.error(f"PDF is password-protected or encrypted: {file_path}")
+                raise FileProcessingError(
+                    "PDF is password-protected. Please provide an unprotected PDF.",
+                    ErrorCodes.INVALID_PDF_FORMAT
+                )
+            
+            # Handle corrupted PDFs
+            elif "invalid" in error_msg or "corrupt" in error_msg or "damaged" in error_msg:
+                self.logger.error(f"PDF file appears to be corrupted: {file_path}")
+                raise InvalidPDFError(file_path)
+            
+            # Handle other pdfplumber-specific errors
+            elif "pdf" in error_msg:
+                self.logger.error(f"PDF processing error: {e}")
+                raise FileProcessingError(
+                    f"Failed to process PDF file: {str(e)}",
+                    ErrorCodes.INVALID_PDF_FORMAT
+                )
+            
+            # Generic error
+            else:
+                self.logger.error(f"Unexpected error extracting tables from PDF: {e}")
+                raise FileProcessingError(
+                    f"Failed to extract data from PDF: {str(e)}",
+                    ErrorCodes.PDF_PARSING_FAILED
+                )
             
         return tables
     
@@ -165,11 +215,12 @@ class BasePDFParser(ABC):
                 
             mcc_code = int(cleaned_mcc)
             
-            # Validate MCC code range (typically 4 digits)
-            if 1000 <= mcc_code <= 9999:
+            # Validate MCC code range (0001-9999, 4 digits)
+            # Valid MCC codes can start with 0 (e.g., 0742 for veterinary services)
+            if 1 <= mcc_code <= 9999:
                 return mcc_code
             else:
-                self.logger.warning(f"MCC code {mcc_code} is outside valid range (1000-9999)")
+                self.logger.warning(f"MCC code {mcc_code} is outside valid range (0001-9999)")
                 return None
                 
         except (ValueError, TypeError) as e:

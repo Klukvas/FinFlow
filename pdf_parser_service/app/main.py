@@ -143,3 +143,10 @@ async def startup_event():
 async def shutdown_event():
     """Application shutdown event"""
     logger.info("PDF Parser Service shutting down...")
+    # Cleanup resources
+    from app.routers.pdf_parser import pdf_parser_service
+    try:
+        await pdf_parser_service.cleanup()
+        logger.info("Successfully cleaned up service resources")
+    except Exception as e:
+        logger.error(f"Error during service cleanup: {e}")

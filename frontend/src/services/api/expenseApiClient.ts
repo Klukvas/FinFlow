@@ -55,4 +55,8 @@ export class ExpenseApiClient {
   async getExpensesByCategory(category_id: number): Promise<ExpensesByCategoryResponse | ErrorResponse> {
     return this.httpClient.get<ExpensesByCategoryResponse>(`/category/${category_id}`);
   }
+
+  async getCurrentMonthCount(): Promise<{ count: number; limit: number | null } | ErrorResponse> {
+    return this.httpClient.get<{ count: number; limit: number | null }>('/current-month-count');
+  }
 }

@@ -16,6 +16,14 @@ export interface ParsedTransaction {
   category_id?: number;
 }
 
+export interface PDFLimitInfo {
+  uploads_per_month: number | null; // null = unlimited
+  records_per_upload: number | null; // null = unlimited
+  uploads_used_this_month: number;
+  uploads_remaining: number | null; // null = unlimited
+  plan_code: string;
+}
+
 export interface PDFParseResponse {
   transactions: ParsedTransaction[];
   bank_detected: string;
@@ -27,6 +35,7 @@ export interface PDFParseResponse {
     parsing_method: string;
     confidence_threshold: number;
   };
+  limit_info?: PDFLimitInfo;
 }
 
 export interface TransactionValidation {

@@ -63,16 +63,16 @@ export const GoalProgressModal: React.FC<GoalProgressModalProps> = ({
     >
       <div className="space-y-6">
         {/* Goal Info */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h3 className="font-semibold text-gray-900 mb-2">{goal.title}</h3>
+        <div className="theme-bg-secondary rounded-lg p-4">
+          <h3 className="font-semibold theme-text-primary mb-2">{goal.title}</h3>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="text-gray-500">{t('goalsPage.progressModal.currentAmount')}:</span>
-              <p className="font-medium">{goal.current_amount.toLocaleString()} {goal.currency}</p>
+              <span className="theme-text-secondary">{t('goalsPage.progressModal.currentAmount')}:</span>
+              <p className="font-medium theme-text-primary">{goal.current_amount.toLocaleString()} {goal.currency}</p>
             </div>
             <div>
-              <span className="text-gray-500">{t('goalsPage.progressModal.targetAmount')}:</span>
-              <p className="font-medium">{goal.target_amount.toLocaleString()} {goal.currency}</p>
+              <span className="theme-text-secondary">{t('goalsPage.progressModal.targetAmount')}:</span>
+              <p className="font-medium theme-text-primary">{goal.target_amount.toLocaleString()} {goal.currency}</p>
             </div>
           </div>
         </div>
@@ -80,12 +80,12 @@ export const GoalProgressModal: React.FC<GoalProgressModalProps> = ({
         {/* Progress Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="current_amount" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="current_amount" className="block text-sm font-medium theme-text-primary mb-2">
               {t('goalsPage.progressModal.newCurrentAmount')}
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaDollarSign className="h-5 w-5 text-gray-400" />
+                <FaDollarSign className="h-5 w-5 theme-text-tertiary" />
               </div>
               <input
                 type="number"
@@ -98,30 +98,30 @@ export const GoalProgressModal: React.FC<GoalProgressModalProps> = ({
                 step="0.01"
                 min="0"
                 max={goal.target_amount}
-                className={`w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  error ? 'border-red-500' : 'border-gray-300'
+                className={`w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-accent theme-bg theme-text-primary ${
+                  error ? 'theme-error-light theme-border' : 'theme-border'
                 }`}
                 placeholder="0.00"
               />
             </div>
-            {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+            {error && <p className="mt-1 text-sm theme-error">{error}</p>}
           </div>
 
           {/* Progress Preview */}
-          <div className="bg-blue-50 rounded-lg p-4">
+          <div className="theme-accent-light rounded-lg p-4">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-medium text-gray-700">{t('goalsPage.progressModal.newProgress')}</span>
-              <span className="text-sm font-bold text-blue-600">
+              <span className="text-sm font-medium theme-text-primary">{t('goalsPage.progressModal.newProgress')}</span>
+              <span className="text-sm font-bold theme-accent">
                 {getProgressPercentage().toFixed(1)}%
               </span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full theme-bg-tertiary rounded-full h-2">
               <div
-                className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                className="theme-accent-bg h-2 rounded-full transition-all duration-300"
                 style={{ width: `${getProgressPercentage()}%` }}
               />
             </div>
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-xs theme-text-secondary mt-2">
               {t('goalsPage.progressModal.remaining')}: {(goal.target_amount - parseFloat(currentAmount || '0')).toLocaleString()} {goal.currency}
             </p>
           </div>

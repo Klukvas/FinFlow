@@ -13,7 +13,11 @@ class Settings(BaseSettings):
     
     # External Services Configuration
     category_service_url: str = "http://localhost:8001"
+    subscription_service_url: str = "http://localhost:8080"
     internal_service_token: str = "my-secret-token"
+
+    # Database Configuration
+    database_url: str = "postgresql://postgres:postgres@localhost:5432/pdf_parser_db"
     
     # CORS Configuration
     cors_origins: str

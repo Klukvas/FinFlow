@@ -26,6 +26,12 @@ class PDFParserService:
     def __init__(self):
         self.monobank_parser = MonobankParser()
     
+    async def cleanup(self):
+        """Cleanup resources (close HTTP clients, etc.)"""
+        if hasattr(self.monobank_parser, 'category_client'):
+            await self.monobank_parser.category_client.close()
+            logger.info("Closed category service HTTP client")
+    
     async def parse_pdf(self, file_path: str, bank_type: Optional[BankType] = None, language: str = "en", user_id: int = None) -> PDFParseResponse:
         """Parse PDF file and extract transactions (Monobank only)"""
         try:

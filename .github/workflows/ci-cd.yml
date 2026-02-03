@@ -45,14 +45,17 @@ jobs:
     outputs:
       frontend: ${{ steps.detect.outputs.frontend }}
       account_service: ${{ steps.detect.outputs.account_service }}
+      admin_panel: ${{ steps.detect.outputs.admin_panel }}
       category_service: ${{ steps.detect.outputs.category_service }}
       currency_service: ${{ steps.detect.outputs.currency_service }}
       debt_service: ${{ steps.detect.outputs.debt_service }}
       expense_service: ${{ steps.detect.outputs.expense_service }}
       goals_service: ${{ steps.detect.outputs.goals_service }}
       income_service: ${{ steps.detect.outputs.income_service }}
+      payment_service: ${{ steps.detect.outputs.payment_service }}
       pdf_parser_service: ${{ steps.detect.outputs.pdf_parser_service }}
       recurring_service: ${{ steps.detect.outputs.recurring_service }}
+      scheduler_service: ${{ steps.detect.outputs.scheduler_service }}
       user_service: ${{ steps.detect.outputs.user_service }}
       subscription_service: ${{ steps.detect.outputs.subscription_service }}
       workspace_service: ${{ steps.detect.outputs.workspace_service }}
@@ -69,14 +72,17 @@ jobs:
           # Initialize all services as false
           FRONTEND="false"
           ACCOUNT_SERVICE="false"
+          ADMIN_PANEL="false"
           CATEGORY_SERVICE="false"
           CURRENCY_SERVICE="false"
           DEBT_SERVICE="false"
           EXPENSE_SERVICE="false"
           GOALS_SERVICE="false"
           INCOME_SERVICE="false"
+          PAYMENT_SERVICE="false"
           PDF_PARSER_SERVICE="false"
           RECURRING_SERVICE="false"
+          SCHEDULER_SERVICE="false"
           USER_SERVICE="false"
           SUBSCRIPTION_SERVICE="false"
           WORKSPACE_SERVICE="false"
@@ -88,15 +94,19 @@ jobs:
               case $svc in
                 frontend) FRONTEND="true" ;;
                 account_service) ACCOUNT_SERVICE="true" ;;
+                admin_panel) ADMIN_PANEL="true" ;;
                 category_service) CATEGORY_SERVICE="true" ;;
                 currency_service) CURRENCY_SERVICE="true" ;;
                 debt_service) DEBT_SERVICE="true" ;;
                 expense_service) EXPENSE_SERVICE="true" ;;
                 goals_service) GOALS_SERVICE="true" ;;
                 income_service) INCOME_SERVICE="true" ;;
+                payment_service) PAYMENT_SERVICE="true" ;;
                 pdf_parser_service) PDF_PARSER_SERVICE="true" ;;
                 recurring_service) RECURRING_SERVICE="true" ;;
+                scheduler_service) SCHEDULER_SERVICE="true" ;;
                 user_service) USER_SERVICE="true" ;;
+                subscription_service) SUBSCRIPTION_SERVICE="true" ;;
                 workspace_service) WORKSPACE_SERVICE="true" ;;
               esac
             done
@@ -107,6 +117,9 @@ jobs:
             fi
             if git diff --name-only HEAD^..HEAD | grep -q "^account_service/"; then
               ACCOUNT_SERVICE="true"
+            fi
+            if git diff --name-only HEAD^..HEAD | grep -q "^admin_panel/"; then
+              ADMIN_PANEL="true"
             fi
             if git diff --name-only HEAD^..HEAD | grep -q "^category_service/"; then
               CATEGORY_SERVICE="true"
@@ -126,11 +139,17 @@ jobs:
             if git diff --name-only HEAD^..HEAD | grep -q "^income_service/"; then
               INCOME_SERVICE="true"
             fi
+            if git diff --name-only HEAD^..HEAD | grep -q "^payment_service/"; then
+              PAYMENT_SERVICE="true"
+            fi
             if git diff --name-only HEAD^..HEAD | grep -q "^pdf_parser_service/"; then
               PDF_PARSER_SERVICE="true"
             fi
             if git diff --name-only HEAD^..HEAD | grep -q "^recurring_service/"; then
               RECURRING_SERVICE="true"
+            fi
+            if git diff --name-only HEAD^..HEAD | grep -q "^scheduler_service/"; then
+              SCHEDULER_SERVICE="true"
             fi
             if git diff --name-only HEAD^..HEAD | grep -q "^user_service/"; then
               USER_SERVICE="true"
@@ -145,27 +164,34 @@ jobs:
             # If nothing changed, build all
             if [[ "$FRONTEND" == "false" ]] && \
                [[ "$ACCOUNT_SERVICE" == "false" ]] && \
+               [[ "$ADMIN_PANEL" == "false" ]] && \
                [[ "$CATEGORY_SERVICE" == "false" ]] && \
                [[ "$CURRENCY_SERVICE" == "false" ]] && \
                [[ "$DEBT_SERVICE" == "false" ]] && \
                [[ "$EXPENSE_SERVICE" == "false" ]] && \
                [[ "$GOALS_SERVICE" == "false" ]] && \
                [[ "$INCOME_SERVICE" == "false" ]] && \
+               [[ "$PAYMENT_SERVICE" == "false" ]] && \
                [[ "$PDF_PARSER_SERVICE" == "false" ]] && \
                [[ "$RECURRING_SERVICE" == "false" ]] && \
+               [[ "$SCHEDULER_SERVICE" == "false" ]] && \
                [[ "$USER_SERVICE" == "false" ]] && \
+               [[ "$SUBSCRIPTION_SERVICE" == "false" ]] && \
                [[ "$WORKSPACE_SERVICE" == "false" ]]; then
               echo "No changes detected, building all services"
               FRONTEND="true"
               ACCOUNT_SERVICE="true"
+              ADMIN_PANEL="true"
               CATEGORY_SERVICE="true"
               CURRENCY_SERVICE="true"
               DEBT_SERVICE="true"
               EXPENSE_SERVICE="true"
               GOALS_SERVICE="true"
               INCOME_SERVICE="true"
+              PAYMENT_SERVICE="true"
               PDF_PARSER_SERVICE="true"
               RECURRING_SERVICE="true"
+              SCHEDULER_SERVICE="true"
               USER_SERVICE="true"
               SUBSCRIPTION_SERVICE="true"
               WORKSPACE_SERVICE="true"
@@ -175,14 +201,17 @@ jobs:
           # Output individual services
           echo "frontend=$FRONTEND" >> $GITHUB_OUTPUT
           echo "account_service=$ACCOUNT_SERVICE" >> $GITHUB_OUTPUT
+          echo "admin_panel=$ADMIN_PANEL" >> $GITHUB_OUTPUT
           echo "category_service=$CATEGORY_SERVICE" >> $GITHUB_OUTPUT
           echo "currency_service=$CURRENCY_SERVICE" >> $GITHUB_OUTPUT
           echo "debt_service=$DEBT_SERVICE" >> $GITHUB_OUTPUT
           echo "expense_service=$EXPENSE_SERVICE" >> $GITHUB_OUTPUT
           echo "goals_service=$GOALS_SERVICE" >> $GITHUB_OUTPUT
           echo "income_service=$INCOME_SERVICE" >> $GITHUB_OUTPUT
+          echo "payment_service=$PAYMENT_SERVICE" >> $GITHUB_OUTPUT
           echo "pdf_parser_service=$PDF_PARSER_SERVICE" >> $GITHUB_OUTPUT
           echo "recurring_service=$RECURRING_SERVICE" >> $GITHUB_OUTPUT
+          echo "scheduler_service=$SCHEDULER_SERVICE" >> $GITHUB_OUTPUT
           echo "user_service=$USER_SERVICE" >> $GITHUB_OUTPUT
           echo "subscription_service=$SUBSCRIPTION_SERVICE" >> $GITHUB_OUTPUT
           echo "workspace_service=$WORKSPACE_SERVICE" >> $GITHUB_OUTPUT
@@ -191,14 +220,17 @@ jobs:
           SERVICES_LIST=""
           [[ "$FRONTEND" == "true" ]] && SERVICES_LIST="$SERVICES_LIST frontend"
           [[ "$ACCOUNT_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST account_service"
+          [[ "$ADMIN_PANEL" == "true" ]] && SERVICES_LIST="$SERVICES_LIST admin_panel"
           [[ "$CATEGORY_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST category_service"
           [[ "$CURRENCY_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST currency_service"
           [[ "$DEBT_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST debt_service"
           [[ "$EXPENSE_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST expense_service"
           [[ "$GOALS_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST goals_service"
           [[ "$INCOME_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST income_service"
+          [[ "$PAYMENT_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST payment_service"
           [[ "$PDF_PARSER_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST pdf_parser_service"
           [[ "$RECURRING_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST recurring_service"
+          [[ "$SCHEDULER_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST scheduler_service"
           [[ "$USER_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST user_service"
           [[ "$SUBSCRIPTION_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST subscription_service"
           [[ "$WORKSPACE_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST workspace_service"
@@ -232,6 +264,8 @@ jobs:
           context: .
           file: ./frontend/Dockerfile
           push: true
+          build-args: |
+            VITE_PAYMENTS_ENABLED=${{ secrets.PAYMENTS_ENABLED || 'false' }}
           tags: |
             ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/frontend:latest
             ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/frontend:${{ github.sha }}
@@ -622,6 +656,102 @@ jobs:
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/workspace_service:latest
           cache-to: type=inline
 
+  # Stage 14: Admin Panel Build
+  stage14-admin-panel:
+    name: "Stage 14: Build Admin Panel"
+    needs: detect-changes
+    if: needs.detect-changes.outputs.admin_panel == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./admin_panel/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/admin_panel:latest
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/admin_panel:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/admin_panel:latest
+          cache-to: type=inline
+
+  # Stage 15: Payment Service Build
+  stage15-payment-service:
+    name: "Stage 15: Build Payment Service"
+    needs: detect-changes
+    if: needs.detect-changes.outputs.payment_service == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./payment_service/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/payment_service:latest
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/payment_service:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/payment_service:latest
+          cache-to: type=inline
+
+  # Stage 16: Scheduler Service Build
+  stage16-scheduler-service:
+    name: "Stage 16: Build Scheduler Service"
+    needs: detect-changes
+    if: needs.detect-changes.outputs.scheduler_service == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./scheduler_service/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/scheduler_service:latest
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/scheduler_service:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/scheduler_service:latest
+          cache-to: type=inline
+
   # Final Stage: Deploy
   deploy:
     name: Deploy to ${{ github.event.inputs.environment || 'production' }}
@@ -640,6 +770,9 @@ jobs:
       - stage11-user-service
       - stage12-subscription-service
       - stage13-workspace-service
+      - stage14-admin-panel
+      - stage15-payment-service
+      - stage16-scheduler-service
     # Deploy only after ALL builds complete successfully (or skip if no changes)
     # This ensures we don't deploy while builds are still running
     # Run if: on main/manual dispatch, no failures/cancellations, and at least one service built
@@ -672,6 +805,7 @@ jobs:
           db-user: ${{ secrets.DB_USER }}
           db-password: ${{ secrets.DB_PASSWORD }}
           cors-origins: ${{ secrets.CORS_ORIGINS || format('http://{0},https://{0}', secrets.HZ_HOST) }}
+          payments-enabled: ${{ secrets.PAYMENTS_ENABLED || 'false' }}
           services: ${{ needs.detect-changes.outputs.services_list }}
 
       - name: Build Summary
@@ -694,9 +828,12 @@ jobs:
           [[ "${{ needs.stage11-user-service.result }}" == "success" ]] && echo "- ✅ User Service" >> $GITHUB_STEP_SUMMARY
           [[ "${{ needs.stage12-subscription-service.result }}" == "success" ]] && echo "- ✅ Subscription Service" >> $GITHUB_STEP_SUMMARY
           [[ "${{ needs.stage13-workspace-service.result }}" == "success" ]] && echo "- ✅ Workspace Service" >> $GITHUB_STEP_SUMMARY
+          [[ "${{ needs.stage14-admin-panel.result }}" == "success" ]] && echo "- ✅ Admin Panel" >> $GITHUB_STEP_SUMMARY
+          [[ "${{ needs.stage15-payment-service.result }}" == "success" ]] && echo "- ✅ Payment Service" >> $GITHUB_STEP_SUMMARY
+          [[ "${{ needs.stage16-scheduler-service.result }}" == "success" ]] && echo "- ✅ Scheduler Service" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Environment**: ${{ github.event.inputs.environment || 'production' }}" >> $GITHUB_STEP_SUMMARY
           echo "**Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
 
 
-# trigger ci at 2025-10-07T13:58:16Z
+# trigger ci at 2026-01-31T00:00:00Z - Added admin_panel, payment_service, scheduler_service

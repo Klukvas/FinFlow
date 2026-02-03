@@ -36,7 +36,7 @@ export const GoalsList = React.memo<GoalsListProps>(({
   if (goals.length === 0) {
     return (
       <div className="text-center py-12" data-testid="goals-empty-state">
-        <div className="text-gray-400 text-6xl mb-4">🎯</div>
+        <div className="theme-text-tertiary text-6xl mb-4">🎯</div>
         <h3 className="text-lg font-medium theme-text-primary mb-2">
           {t('goalsPage.noGoals')}
         </h3>

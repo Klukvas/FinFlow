@@ -136,28 +136,8 @@ export interface MilestoneFormData {
 }
 
 // Constants for UI
-export const GOAL_TYPE_LABELS: Record<GoalType, string> = {
-  SAVINGS: 'Накопления',
-  DEBT_PAYOFF: 'Погашение долга',
-  INVESTMENT: 'Инвестиции',
-  EXPENSE_REDUCTION: 'Сокращение расходов',
-  INCOME_INCREASE: 'Увеличение дохода',
-  EMERGENCY_FUND: 'Резервный фонд'
-};
-
-export const GOAL_STATUS_LABELS: Record<GoalStatus, string> = {
-  ACTIVE: 'Активная',
-  COMPLETED: 'Завершена',
-  PAUSED: 'Приостановлена',
-  CANCELLED: 'Отменена'
-};
-
-export const GOAL_PRIORITY_LABELS: Record<GoalPriority, string> = {
-  LOW: 'Низкий',
-  MEDIUM: 'Средний',
-  HIGH: 'Высокий',
-  CRITICAL: 'Критический'
-};
+// Note: Label translations should use i18n keys from goalsPage.filters
+// Example: t('goalsPage.filters.savings') instead of hardcoded strings
 
 export const GOAL_PRIORITY_COLORS: Record<GoalPriority, string> = {
   LOW: 'text-gray-500',

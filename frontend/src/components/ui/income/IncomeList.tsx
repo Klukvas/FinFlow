@@ -1,42 +1,38 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApiClients } from '@/hooks/useApiClients';
-import { IncomeOut, Category, CategoryListResponse } from '@/types';
-import { DeleteButton } from '@/components/ui';
+import { useCategories } from '@/contexts/CategoriesContext';
+import { IncomeOut } from '@/types';
+import { DeleteButton, Pagination } from '@/components/ui';
 
 export const IncomeList: React.FC = () => {
   const { t } = useTranslation();
-  const { income, category } = useApiClients();
+  const { income } = useApiClients();
+  const { categories } = useCategories();
   const [incomes, setIncomes] = useState<IncomeOut[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const [incomesResponse, categoriesResponse] = await Promise.all([
-          income.getIncomes(),
-          category.getCategoriesPaginated({
-            flat: true,
-            page: 1,
-            size: 100 // Максимальный размер страницы
-          })
-        ]);
+        const incomesResponse = await income.getIncomesPaginated({
+          page: currentPage,
+          size: pageSize
+        });
 
         if ('error' in incomesResponse) {
           setError(incomesResponse.error);
         } else {
-          setIncomes(incomesResponse);
-        }
-
-        if ('error' in categoriesResponse) {
-          console.error('Failed to fetch categories:', categoriesResponse.error);
-        } else {
-          const paginatedResponse = categoriesResponse as CategoryListResponse;
-          setCategories(paginatedResponse.items || []);
+          setIncomes(incomesResponse.items);
+          setTotalItems(incomesResponse.total);
+          setTotalPages(incomesResponse.pages);
         }
       } catch (err) {
         console.error('Error fetching data:', err);
@@ -47,7 +43,7 @@ export const IncomeList: React.FC = () => {
     };
 
     fetchData();
-  }, [income, category]);
+  }, [income, currentPage, pageSize]);
 
   const getCategoryName = (categoryId: number | null | undefined) => {
     if (!categoryId) return 'Без категории';
@@ -59,7 +55,14 @@ export const IncomeList: React.FC = () => {
     return new Date(dateString).toLocaleDateString('uk-UA');
   };
 
-  const totalIncomes = incomes.reduce((sum, income) => sum + income.amount, 0);
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1);
+  };
 
   const handleDelete = async (id: number) => {
     setDeletingId(id);
@@ -113,7 +116,7 @@ export const IncomeList: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
           <h2 className="text-lg sm:text-xl font-bold text-white">Список доходов</h2>
           <div className="text-white text-sm sm:text-base">
-            Всего: <span className="font-bold text-lg sm:text-xl">{totalIncomes.toLocaleString('uk-UA')}</span>
+            Всего записей: <span className="font-bold text-lg sm:text-xl">{totalItems}</span>
           </div>
         </div>
       </div>
@@ -253,6 +256,22 @@ export const IncomeList: React.FC = () => {
                 </div>
               ))}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-6">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  itemsPerPage={pageSize}
+                  totalItems={totalItems}
+                  onPageChange={handlePageChange}
+                  onPageSizeChange={handlePageSizeChange}
+                  showPageSizeSelector={true}
+                  pageSizeOptions={[5, 10, 25, 50]}
+                />
+              </div>
+            )}
           </>
         )}
       </div>

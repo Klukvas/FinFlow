@@ -111,5 +111,3 @@ class SubscriptionConsentLog(Base):
     browser_fingerprint = Column(String(64), nullable=True)
     consent_metadata = Column(JSON, nullable=True)  # Renamed from 'metadata' (reserved in SQLAlchemy)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-
-

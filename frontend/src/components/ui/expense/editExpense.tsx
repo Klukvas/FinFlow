@@ -1,10 +1,11 @@
-import { ExpenseResponse, ExpenseUpdate, AccountResponse } from '@/types';
-import React, { useCallback, useEffect, useState } from 'react';
+import { ExpenseResponse, ExpenseUpdate } from '@/types';
+import React, { useEffect, useState } from 'react';
 import { CurrencySelect, CategorySelect } from '@/components/ui/forms';
 import { FormattedNumberInput } from '@/components/ui/forms/FormattedNumberInput';
 import { removeSpacesFromNumber } from '@/utils/numberFormat';
 
 import { useApiClients } from '@/hooks';
+import { useAccounts } from '@/contexts/AccountsContext';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 interface EditExpenseProps {
@@ -13,7 +14,8 @@ interface EditExpenseProps {
 }
 
 export const EditExpense: React.FC<EditExpenseProps> = ({ expense, onExpenseUpdated }) => {
-    const { expense: expenseApi, account } = useApiClients();
+    const { expense: expenseApi } = useApiClients();
+    const { activeAccounts: accounts, isLoading: isLoadingAccounts } = useAccounts();
     const { handleExpenseError } = useErrorHandler();
     
     const getDateValue = (dateStr: string | undefined): string => {
@@ -36,36 +38,11 @@ export const EditExpense: React.FC<EditExpenseProps> = ({ expense, onExpenseUpda
     
     // Format amount for display (without spaces for initial load)
     const [amountDisplay, setAmountDisplay] = useState(expense.amount.toString());
-    const [accounts, setAccounts] = useState<AccountResponse[]>([]);
     
     const [error, setError] = useState<string | null>(null);
     const [amountTouched, setAmountTouched] = useState(false);
     
     const [isLoading, setIsLoading] = useState(false);
-    const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
-
-    const fetchAccounts = useCallback(async () => {
-        setIsLoadingAccounts(true);
-        try {
-            const response = await account.getAccounts();
-            if ('error' in response && 'errorCode' in response) {
-                // Handle API error with errorCode
-                handleExpenseError(response as any);
-                return;
-            } else if (!('error' in response)) {
-                setAccounts(response as AccountResponse[]);
-            }
-        } catch (err) {
-            // Handle network or other errors
-            handleExpenseError(err as Error);
-        } finally {
-            setIsLoadingAccounts(false);
-        }
-    }, [account]);
-
-    useEffect(() => {
-        fetchAccounts();
-    }, [fetchAccounts]);
 
     // Reset form when expense prop changes
     useEffect(() => {

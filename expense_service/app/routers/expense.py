@@ -255,3 +255,40 @@ def read_expenses_by_date_range(
     Returns expenses within the specified date range, ordered by date (newest first).
     """
     return service.get_by_date_range(start_date, end_date, user_id, workspace_id)
+
+@router.get(
+    "/current-month-count",
+    summary="Get current month expense count",
+    description="Get the number of expenses created this month and the monthly limit",
+    responses={
+        200: {"description": "Current month count and limit returned successfully"},
+        401: {"description": "Unauthorized - invalid or missing token"},
+    }
+)
+def get_current_month_count(
+    service: ExpenseService = Depends(get_expense_service),
+    user_id: int = Depends(get_current_user_id)
+):
+    """
+    Get current month expense count and limit for PDF parser frontend validation.
+
+    Returns:
+        - count: Number of expenses created this month
+        - limit: Monthly limit for this user's plan (None = unlimited)
+    """
+    from datetime import datetime
+    from app.models.expense import Expense
+
+    # Count expenses in current month
+    current_month_start = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    count = service.db.query(Expense).filter(
+        Expense.user_id == user_id,
+        Expense.created_at >= current_month_start
+    ).count()
+
+    # Get limit from subscription
+    features = service.subscription_client.get_user_features(user_id)
+    expense_feature = features.get("expenses", {})
+    limit = expense_feature.get("limit_value")
+
+    return {"count": count, "limit": limit}

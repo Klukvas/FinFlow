@@ -244,12 +244,16 @@ services:
       ENV_FILE: env.docker
       CORS_ORIGINS: "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
       CATEGORY_SERVICE_URL: "http://category_service:8000"
+      SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
+      DATABASE_URL: "postgresql://postgres:postgres@db:5432/pdf_parser_db"
       INTERNAL_SERVICE_TOKEN: "my-secret-token"
       SECRET_KEY: "your-secret-key-here"
       ALGORITHM: "HS256"
     env_file:
       - ./pdf_parser_service/.env.docker
     depends_on:
+      db:
+        condition: service_healthy
       category_service:
         condition: service_started
     ports:
@@ -427,6 +431,7 @@ services:
       SERVICE_BASE_URL: "http://payment_service:8000"
       SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
       IDEMPOTENCY_TTL_SECONDS: "86400"
+      PAYMENTS_ENABLED: "false"  # Set to true when Wayforpay approval is received
     depends_on:
       db:
         condition: service_healthy

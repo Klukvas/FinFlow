@@ -90,8 +90,22 @@ export const Account: React.FC = () => {
         return;
       }
 
+      // Optimistic update: add account to list and fetch summaries and statistics in parallel
+      setAccounts(prev => [...prev, result]);
       setShowCreateModal(false);
-      await loadAccounts();
+      
+      const [summariesResult, statisticsResult] = await Promise.all([
+        accountApiClient.getAccountSummaries(),
+        accountApiClient.getAccountStatistics()
+      ]);
+      
+      if (!('error' in summariesResult)) {
+        setSummaries(summariesResult);
+      }
+      if (!('error' in statisticsResult)) {
+        setStatistics(statisticsResult);
+        setStatisticsLoading(false);
+      }
     } catch (err) {
       setError(t('accountPage.errors.createAccount'));
       console.error('Error creating account:', err);
@@ -110,8 +124,21 @@ export const Account: React.FC = () => {
         return;
       }
 
+      // Optimistic update: update account in list and fetch summaries and statistics in parallel
+      setAccounts(prev => prev.map(acc => acc.id === id ? result : acc));
       setEditingAccount(null);
-      await loadAccounts();
+      
+      const [summariesResult, statisticsResult] = await Promise.all([
+        accountApiClient.getAccountSummaries(),
+        accountApiClient.getAccountStatistics()
+      ]);
+      
+      if (!('error' in summariesResult)) {
+        setSummaries(summariesResult);
+      }
+      if (!('error' in statisticsResult)) {
+        setStatistics(statisticsResult);
+      }
     } catch (err) {
       setError(t('accountPage.errors.updateAccount'));
       console.error('Error updating account:', err);
@@ -130,7 +157,20 @@ export const Account: React.FC = () => {
         return;
       }
 
-      await loadAccounts();
+      // Optimistic update: update account archived status and fetch summaries and statistics in parallel
+      setAccounts(prev => prev.map(acc => acc.id === id ? { ...acc, is_archived: true } : acc));
+      
+      const [summariesResult, statisticsResult] = await Promise.all([
+        accountApiClient.getAccountSummaries(),
+        accountApiClient.getAccountStatistics()
+      ]);
+      
+      if (!('error' in summariesResult)) {
+        setSummaries(summariesResult);
+      }
+      if (!('error' in statisticsResult)) {
+        setStatistics(statisticsResult);
+      }
     } catch (err) {
       setError(t('accountPage.errors.archiveAccount'));
       console.error('Error archiving account:', err);

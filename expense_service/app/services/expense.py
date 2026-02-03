@@ -165,8 +165,13 @@ class ExpenseService(WorkspaceAuthorizationMixin):
             # 1. Authorize workspace access (member role required for create)
             self.authorize_workspace_access(workspace_id, user_id, "member", "create_expense")
             
-            # Check subscription limits before creating
-            current_count = self.db.query(Expense).filter(Expense.user_id == user_id).count()
+            # Check subscription limits before creating (monthly limit)
+            # Count only expenses created in the current calendar month
+            current_month_start = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            current_count = self.db.query(Expense).filter(
+                Expense.user_id == user_id,
+                Expense.created_at >= current_month_start
+            ).count()
             if not self.subscription_client.check_expense_limit(user_id, current_count):
                 features = self.subscription_client.get_user_features(user_id)
                 expense_feature = features.get("expenses", {})

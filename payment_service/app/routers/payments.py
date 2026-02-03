@@ -24,6 +24,18 @@ logger = logging.getLogger("payment_service.payments_router")
 router = APIRouter()
 
 
+@router.get("/config/status")
+async def get_payment_status():
+    """
+    Get payment service status and feature flags.
+    Public endpoint - no authentication required.
+    """
+    return {
+        "payments_enabled": settings.payments_enabled,
+        "service_status": "operational",
+    }
+
+
 @router.get("/config/check")
 async def check_wayforpay_config():
     """
@@ -119,6 +131,13 @@ async def create_payment(
     Requires JWT authentication.
     Supports idempotency via Idempotency-Key header.
     """
+    # Check if payments are enabled
+    if not settings.payments_enabled:
+        raise ValidationError(
+            "Payment processing is temporarily disabled. Please contact support for more information.",
+            error_code="@payment_service/PAYMENTS_DISABLED",
+        )
+    
     # Verify user owns the payment request
     if str(request.user_id) != str(current_user.user_id):
         raise AuthError(

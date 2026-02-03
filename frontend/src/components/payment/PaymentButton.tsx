@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/shared/Button';
 import { usePayment } from '@/contexts/PaymentContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { PaymentPurpose } from '@/types/payment';
-import { FaSpinner, FaCrown } from 'react-icons/fa';
+import { FaSpinner, FaCrown, FaLock } from 'react-icons/fa';
 import { toast } from 'sonner';
+import { config } from '@/config/env';
 
 interface ConsentData {
   consent_given: boolean;
@@ -47,6 +48,14 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
   const [isCreating, setIsCreating] = useState(false);
 
   const handlePayment = async () => {
+    // Check if payments are enabled
+    if (!config.features.paymentsEnabled) {
+      toast.error(t('payment.errors.paymentsDisabled', { 
+        defaultValue: 'Payments are temporarily disabled. Please contact support.' 
+      }));
+      return;
+    }
+
     if (!user?.id) {
       toast.error(t('payment.errors.notAuthenticated'));
       navigate('/login');
@@ -147,7 +156,7 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
     }
   };
 
-  const isButtonDisabled = disabled || isCreating || isProcessing;
+  const isButtonDisabled = disabled || isCreating || isProcessing || !config.features.paymentsEnabled;
 
   return (
     <Button
@@ -157,8 +166,16 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
       disabled={isButtonDisabled}
       onClick={handlePayment}
       className={className}
+      title={!config.features.paymentsEnabled ? t('payment.errors.paymentsDisabled', { 
+        defaultValue: 'Payments are temporarily disabled' 
+      }) : undefined}
     >
-      {isCreating || isProcessing ? (
+      {!config.features.paymentsEnabled ? (
+        <>
+          <FaLock className="mr-2" />
+          {t('payment.disabled', { defaultValue: 'Payments Disabled' })}
+        </>
+      ) : isCreating || isProcessing ? (
         <>
           <FaSpinner className="animate-spin mr-2" />
           {t('payment.processing')}

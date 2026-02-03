@@ -44,10 +44,14 @@ inputs:
     description: CORS allowed origins (comma-separated)
     required: false
     default: "http://localhost:3000,http://localhost:5173"
+  payments-enabled:
+    description: Enable payment processing (set to true after Wayforpay approval)
+    required: false
+    default: "false"
   services:
     description: Space-separated services to deploy
     required: true
-    default: "caddy redis frontend account_service category_service currency_service debt_service expense_service goals_service income_service pdf_parser_service recurring_service subscription_service user_service"
+    default: "caddy redis frontend account_service admin_panel category_service currency_service debt_service expense_service goals_service income_service payment_service pdf_parser_service recurring_service scheduler_service subscription_service user_service workspace_service"
 
 runs:
   using: "composite"
@@ -118,6 +122,7 @@ runs:
         SECRET_KEY="$SECRET_KEY"
         ALGORITHM="$ALGORITHM"
         INTERNAL_SECRET_TOKEN="$INTERNAL_SECRET_TOKEN"
+        PAYMENTS_ENABLED="$PAYMENTS_ENABLED"
         ENVEOF
 
         # Create separate databases for each service
@@ -296,6 +301,7 @@ runs:
         DB_USER: ${{ inputs['db-user'] }}
         DB_PASSWORD: ${{ inputs['db-password'] }}
         CORS_ORIGINS: ${{ inputs['cors-origins'] }}
+        PAYMENTS_ENABLED: ${{ inputs['payments-enabled'] }}
         SERVICES: ${{ inputs.services }}
       run: |
         set -euo pipefail
@@ -309,7 +315,7 @@ runs:
 
         # Use default services if empty
         if [ -z "${SERVICES:-}" ]; then
-          SERVICES="caddy redis frontend account_service category_service currency_service debt_service expense_service goals_service income_service pdf_parser_service recurring_service subscription_service user_service"
+          SERVICES="caddy redis frontend account_service admin_panel category_service currency_service debt_service expense_service goals_service income_service payment_service pdf_parser_service recurring_service scheduler_service subscription_service user_service workspace_service"
           echo "Using default services: $SERVICES"
         fi
 

@@ -77,8 +77,13 @@ class IncomeService(WorkspaceAuthorizationMixin):
             # 1. Authorize workspace access (member role required for create)
             self.authorize_workspace_access(workspace_id, user_id, "member", "create_income")
             
-            # Check subscription limits before creating
-            current_count = self.db.query(Income).filter(Income.user_id == user_id).count()
+            # Check subscription limits before creating (monthly limit)
+            # Count only incomes created in the current calendar month
+            current_month_start = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            current_count = self.db.query(Income).filter(
+                Income.user_id == user_id,
+                Income.created_at >= current_month_start
+            ).count()
             if not self.subscription_client.check_income_limit(user_id, current_count):
                 features = self.subscription_client.get_user_features(user_id)
                 income_feature = features.get("incomes", {})

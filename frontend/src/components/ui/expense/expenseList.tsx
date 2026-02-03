@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { ExpenseResponse } from '@/types';
 import { useApiClients } from '@/hooks';
+import { useCategories } from '@/contexts/CategoriesContext';
 import { DeleteButton, EditButton, Pagination } from '@/components/ui';
 
 interface ExpenseListProps {
@@ -11,7 +12,7 @@ interface ExpenseListProps {
 
 export const ExpenseList: React.FC<ExpenseListProps> = ({ onEditExpense }) => {
     const { t } = useTranslation();
-    const [categories, setCategories] = useState<Record<number, string>>({});
+    const { categories: categoriesList } = useCategories();
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const [expenses, setExpenses] = useState<ExpenseResponse[]>([]);
     const [loading, setLoading] = useState(false);
@@ -20,23 +21,16 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({ onEditExpense }) => {
     const [pageSize, setPageSize] = useState(10);
     const [totalItems, setTotalItems] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
-    const { category, expense } = useApiClients();
+    const { expense } = useApiClients();
 
-    // Load categories once
-    const loadCategories = useCallback(async () => {
-        try {
-            const categoriesResponse = await category.getCategories(true);
-            if (categoriesResponse && !('error' in categoriesResponse) && Array.isArray(categoriesResponse)) {
-                const categoryMap: Record<number, string> = {};
-                categoriesResponse.forEach(cat => {
-                    categoryMap[cat.id] = cat.name;
-                });
-                setCategories(categoryMap);
-            }
-        } catch (err) {
-            console.error('Error loading categories:', err);
-        }
-    }, [category]);
+    // Convert categories list to map for quick lookup
+    const categories: Record<number, string> = React.useMemo(() => {
+        const categoryMap: Record<number, string> = {};
+        categoriesList.forEach(cat => {
+            categoryMap[cat.id] = cat.name;
+        });
+        return categoryMap;
+    }, [categoriesList]);
 
     // Load expenses
     const loadExpenses = useCallback(async () => {
@@ -59,11 +53,6 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({ onEditExpense }) => {
             setLoading(false);
         }
     }, [expense, currentPage, pageSize]);
-
-    // Load categories on mount
-    useEffect(() => {
-        loadCategories();
-    }, [loadCategories]);
 
     // Load expenses when page or size changes
     useEffect(() => {

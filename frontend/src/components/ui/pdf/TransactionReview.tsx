@@ -1,29 +1,56 @@
 import React, { useState, useEffect } from 'react';
 import { useApiClients } from '@/hooks/useApiClients';
-import { ParsedTransaction, TransactionValidation } from '@/services/api/pdfParserApiClient';
+import { ParsedTransaction, TransactionValidation, PDFLimitInfo } from '@/services/api/pdfParserApiClient';
 import { Category } from '@/types';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
 
 interface TransactionReviewProps {
   transactions: ParsedTransaction[];
+  limitInfo?: PDFLimitInfo;
   onTransactionsValidated: (validatedTransactions: TransactionValidation[]) => void;
   onClose: () => void;
 }
 
 export const TransactionReview: React.FC<TransactionReviewProps> = ({
   transactions,
+  limitInfo,
   onTransactionsValidated,
   onClose
 }) => {
-  const { category } = useApiClients();
+  const { category, expense, income } = useApiClients();
   const { actualTheme } = useTheme();
+  const { t } = useTranslation();
   const [categories, setCategories] = useState<Category[]>([]);
   const [validatedTransactions, setValidatedTransactions] = useState<TransactionValidation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Two-stage validation state
+  const [expenseCount, setExpenseCount] = useState<number>(0);
+  const [incomeCount, setIncomeCount] = useState<number>(0);
+  const [expenseLimit, setExpenseLimit] = useState<number | null>(null);
+  const [incomeLimit, setIncomeLimit] = useState<number | null>(null);
+  const [validationWarnings, setValidationWarnings] = useState<string[]>([]);
+  const [validationResult, setValidationResult] = useState<{
+    canProceed: boolean;
+    stage1Pass: boolean;
+    stage2Pass: boolean;
+    selectedExpenses: number;
+    selectedIncomes: number;
+    totalSelected: number;
+  }>({
+    canProceed: true,
+    stage1Pass: true,
+    stage2Pass: true,
+    selectedExpenses: 0,
+    selectedIncomes: 0,
+    totalSelected: 0,
+  });
+
   useEffect(() => {
     loadCategories();
+    loadCurrentLimits();
     initializeValidatedTransactions();
   }, []);
 
@@ -39,6 +66,31 @@ export const TransactionReview: React.FC<TransactionReviewProps> = ({
       setError('Failed to load categories');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadCurrentLimits = async () => {
+    try {
+      const [expenseData, incomeData] = await Promise.all([
+        expense.getCurrentMonthCount(),
+        income.getCurrentMonthCount()
+      ]);
+
+      if ('error' in expenseData) {
+        console.error('Failed to load expense limits:', expenseData.error);
+      } else {
+        setExpenseCount(expenseData.count);
+        setExpenseLimit(expenseData.limit);
+      }
+
+      if ('error' in incomeData) {
+        console.error('Failed to load income limits:', incomeData.error);
+      } else {
+        setIncomeCount(incomeData.count);
+        setIncomeLimit(incomeData.limit);
+      }
+    } catch (err) {
+      console.error('Failed to load current month limits:', err);
     }
   };
 
@@ -81,10 +133,85 @@ export const TransactionReview: React.FC<TransactionReviewProps> = ({
     setValidatedTransactions(prev => prev.filter((_, i) => i !== index));
   };
 
+  // Two-Stage Validation Function
+  const performTwoStageValidation = () => {
+    const warnings: string[] = [];
+    const validTxns = validatedTransactions.filter(txn => txn.is_valid);
+
+    // Count by type
+    const selectedExpenses = validTxns.filter(txn => txn.transaction_type === 'expense').length;
+    const selectedIncomes = validTxns.filter(txn => txn.transaction_type === 'income').length;
+
+    // STAGE 1: Check per-type monthly quotas
+    let stage1Pass = true;
+
+    if (expenseLimit !== null) {
+      const remaining = expenseLimit - expenseCount;
+      if (selectedExpenses > remaining) {
+        stage1Pass = false;
+        warnings.push(
+          `Too many expenses: ${selectedExpenses} selected but only ${remaining} remaining in your monthly quota (${expenseCount}/${expenseLimit}). Please deselect ${selectedExpenses - remaining} expense records.`
+        );
+      }
+    }
+
+    if (incomeLimit !== null) {
+      const remaining = incomeLimit - incomeCount;
+      if (selectedIncomes > remaining) {
+        stage1Pass = false;
+        warnings.push(
+          `Too many incomes: ${selectedIncomes} selected but only ${remaining} remaining in your monthly quota (${incomeCount}/${incomeLimit}). Please deselect ${selectedIncomes - remaining} income records.`
+        );
+      }
+    }
+
+    // STAGE 2: Check total records per upload (only if Stage 1 passes)
+    let stage2Pass = true;
+    const totalSelected = selectedExpenses + selectedIncomes;
+
+    if (stage1Pass && limitInfo?.records_per_upload !== null && limitInfo?.records_per_upload !== undefined) {
+      if (totalSelected > limitInfo.records_per_upload) {
+        stage2Pass = false;
+        const excess = totalSelected - limitInfo.records_per_upload;
+        warnings.push(
+          `Upload limit exceeded: You have ${totalSelected} records selected, but your plan (${limitInfo.plan_code.toUpperCase()}) allows maximum ${limitInfo.records_per_upload} records per upload. Please deselect ${excess} more records (any type).`
+        );
+      }
+    }
+
+    const validationStatus = {
+      canProceed: warnings.length === 0,
+      stage1Pass,
+      stage2Pass,
+      selectedExpenses,
+      selectedIncomes,
+      totalSelected
+    };
+
+    setValidationWarnings(warnings);
+    setValidationResult(validationStatus);
+
+    return validationStatus;
+  };
+
+  // Run validation whenever validated transactions change
+  useEffect(() => {
+    if (!isLoading) {
+      performTwoStageValidation();
+    }
+  }, [validatedTransactions, expenseCount, incomeCount, expenseLimit, incomeLimit, limitInfo]);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(null);
 
   const handleSubmit = async () => {
+    // Perform two-stage validation
+    const validation = performTwoStageValidation();
+
+    if (!validation.canProceed) {
+      setError(t('pdfParserPage.reviewModal.errors.validationFailed'));
+      return;
+    }
     
     // Validate required fields
     const invalidTransactions = validatedTransactions.filter(txn => 
@@ -181,9 +308,73 @@ export const TransactionReview: React.FC<TransactionReviewProps> = ({
           </div>
         )}
 
+        {/* PDF Upload Limit Info */}
+        {limitInfo && (
+          <div className="mx-4 sm:mx-6 mt-4 p-3 sm:p-4 theme-bg-secondary theme-border border rounded-lg">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <svg className="h-4 w-4 sm:h-5 sm:w-5 theme-accent" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3 flex-1">
+                <h3 className="text-xs sm:text-sm font-semibold theme-text-primary mb-2">{t('pdfParserPage.reviewModal.limitInfo.title')}</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
+                  <div className="flex flex-col">
+                    <span className="text-xs theme-text-secondary">{t('pdfParserPage.reviewModal.limitInfo.plan')}</span>
+                    <span className="text-xs sm:text-sm font-medium theme-text-primary uppercase">{limitInfo.plan_code}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs theme-text-secondary">{t('pdfParserPage.reviewModal.limitInfo.monthlyUploads')}</span>
+                    <span className="text-xs sm:text-sm font-medium theme-text-primary">
+                      {limitInfo.uploads_remaining === null
+                        ? t('pdfParserPage.reviewModal.limitInfo.unlimited')
+                        : `${limitInfo.uploads_remaining} ${t('pdfParserPage.reviewModal.validation.remaining')} (${limitInfo.uploads_used_this_month}/${limitInfo.uploads_per_month})`}
+                    </span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs theme-text-secondary">{t('pdfParserPage.reviewModal.limitInfo.maxPerUpload')}</span>
+                    <span className="text-xs sm:text-sm font-medium theme-text-primary">
+                      {limitInfo.records_per_upload === null
+                        ? t('pdfParserPage.reviewModal.limitInfo.unlimited')
+                        : t('pdfParserPage.reviewModal.limitInfo.recordsLimit', { limit: limitInfo.records_per_upload })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Two-Stage Validation Warnings */}
+        {validationWarnings.length > 0 && (
+          <div className="mx-4 sm:mx-6 mt-4 space-y-2">
+            <div className="flex items-center space-x-2 mb-2">
+              <svg className="h-4 w-4 sm:h-5 sm:w-5 theme-warning" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              <h3 className="text-xs sm:text-sm font-semibold theme-warning">Validation Issues</h3>
+            </div>
+            {validationWarnings.map((warning, idx) => (
+              <div key={idx} className="p-3 sm:p-4 theme-warning-light border-l-4 theme-warning-bg rounded-r-lg">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-4 w-4 sm:h-5 sm:w-5 theme-warning" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-xs sm:text-sm theme-text-primary">{warning}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Statistics and Controls */}
         <div className="p-4 sm:p-6 theme-bg-secondary theme-border border-b">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="flex flex-col gap-4">
             {/* Statistics */}
             <div className="flex flex-wrap items-center gap-4 sm:gap-6">
               <div className="flex items-center space-x-2">
@@ -206,8 +397,44 @@ export const TransactionReview: React.FC<TransactionReviewProps> = ({
               </div>
             </div>
 
+            {/* Two-Stage Validation Status */}
+            {(expenseLimit !== null || incomeLimit !== null || limitInfo?.records_per_upload !== null) && (() => {
+              const validation = performTwoStageValidation();
+              const validExpenses = validTransactions.filter(txn => txn.transaction_type === 'expense').length;
+              const validIncomes = validTransactions.filter(txn => txn.transaction_type === 'income').length;
+
+              return (
+                <div className="flex flex-col space-y-2 pt-3 border-t theme-border">
+                  <div className="text-xs sm:text-sm font-semibold theme-text-secondary mb-1">{t('pdfParserPage.reviewModal.validation.title')}:</div>
+
+                  {/* Stage 1: Per-Type Quotas */}
+                  <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+                    <div className="flex items-center space-x-2">
+                      <div className={`w-2 h-2 rounded-full ${validation.stage1Pass ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                      <span className="text-xs theme-text-secondary">
+                        <strong>{t('pdfParserPage.reviewModal.validation.stage1')}:</strong> {t('pdfParserPage.reviewModal.validation.expenses')}: {validExpenses}/{expenseLimit === null ? '∞' : (expenseLimit - expenseCount)} | {t('pdfParserPage.reviewModal.validation.incomes')}: {validIncomes}/{incomeLimit === null ? '∞' : (incomeLimit - incomeCount)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Stage 2: Upload Limit */}
+                  {limitInfo?.records_per_upload !== null && limitInfo?.records_per_upload !== undefined && (
+                    <div className="flex items-center space-x-2">
+                      <div className={`w-2 h-2 rounded-full ${validation.stage2Pass ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                      <span className="text-xs theme-text-secondary">
+                        <strong>{t('pdfParserPage.reviewModal.validation.stage2')}:</strong> {t('pdfParserPage.reviewModal.validation.totalRecords')}: {validation.totalSelected}/{limitInfo.records_per_upload}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Overall Status */}
+                  <div className={`text-xs sm:text-sm font-medium ${validation.canProceed ? 'theme-success' : 'theme-error'}`}>
+                    {validation.canProceed ? `✓ ${t('pdfParserPage.reviewModal.validation.readyToCreate')}` : `✗ ${t('pdfParserPage.reviewModal.validation.adjustSelection')}`}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
-          
         </div>
 
         {/* Transactions List */}
@@ -546,17 +773,24 @@ export const TransactionReview: React.FC<TransactionReviewProps> = ({
         {/* Footer */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 sm:p-6 theme-border border-t theme-bg-secondary gap-4">
           <div className="flex items-center space-x-4">
-            {validTransactions.length > 0 ? (
+            {validationResult.canProceed && validTransactions.length > 0 ? (
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 theme-success-bg rounded-full"></div>
                 <span className="text-xs sm:text-sm font-medium theme-success">
-                  <span className="hidden sm:inline">Ready to create </span>{validTransactions.length} transaction{validTransactions.length !== 1 ? 's' : ''}
+                  <span className="hidden sm:inline">{t('pdfParserPage.reviewModal.footer.readyToCreate')} </span>{validTransactions.length} {t('common.type').toLowerCase()}{validTransactions.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+            ) : !validationResult.canProceed ? (
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                <span className="text-xs sm:text-sm font-medium text-yellow-600 dark:text-yellow-400">
+                  {t('pdfParserPage.reviewModal.validation.validationPassed')}
                 </span>
               </div>
             ) : (
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 theme-error-bg rounded-full"></div>
-                <span className="text-xs sm:text-sm font-medium theme-error">No valid transactions to create</span>
+                <span className="text-xs sm:text-sm font-medium theme-error">{t('pdfParserPage.reviewModal.footer.noValidTransactions')}</span>
               </div>
             )}
           </div>
@@ -570,7 +804,7 @@ export const TransactionReview: React.FC<TransactionReviewProps> = ({
             </button>
             <button
               onClick={handleSubmit}
-              disabled={validTransactions.length === 0 || isSubmitting}
+              disabled={!validationResult.canProceed || isSubmitting}
               className={`px-6 sm:px-8 py-2 sm:py-3 rounded-lg font-medium flex items-center justify-center space-x-2 theme-transition text-sm sm:text-base ${
                 actualTheme === 'dark'
                   ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-600 disabled:to-gray-700'
@@ -585,10 +819,15 @@ export const TransactionReview: React.FC<TransactionReviewProps> = ({
               )}
               <span>
                 {isSubmitting
-                  ? 'Creating...'
-                  : validTransactions.length === 0
-                    ? 'No Valid Transactions' 
-                    : `Create ${validTransactions.length} Transaction${validTransactions.length !== 1 ? 's' : ''}`
+                  ? t('pdfParserPage.reviewModal.footer.creating')
+                  : !validationResult.canProceed
+                    ? t('pdfParserPage.reviewModal.validation.failed')
+                    : validTransactions.length === 0
+                      ? t('pdfParserPage.reviewModal.footer.noValidTransactions')
+                      : t('pdfParserPage.reviewModal.footer.createButton', {
+                          count: validTransactions.length,
+                          plural: validTransactions.length !== 1 ? 's' : ''
+                        })
                 }
               </span>
             </button>

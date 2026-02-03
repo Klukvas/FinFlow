@@ -69,6 +69,10 @@ finflow.ltd {
     reverse_proxy pdf_parser_service:8000
   }
 
+  handle_path /api/payments/* {
+    reverse_proxy payment_service:8000
+  }
+
   handle_path /api/subscription/* {
     reverse_proxy subscription_service:8080
   }

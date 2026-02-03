@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApiClients } from '@/hooks/useApiClients';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useCategories } from '@/contexts/CategoriesContext';
 import { DebtResponse, DebtCreate, DebtUpdate, DebtSummary, DebtPaymentResponse } from '@/types/debt';
 import { ContactResponse, ContactCreate, ContactUpdate } from '@/types/contact';
-import { Category } from '@/types/category';
 import { DebtForm } from '@/components/debt/DebtForm';
 import { PaymentForm } from '@/components/debt/PaymentForm';
 import { PaymentList } from '@/components/debt/PaymentList';
@@ -22,13 +22,13 @@ type ViewMode = 'list' | 'create' | 'edit' | 'payments' | 'payment-form' | 'cont
 type TabType = 'debts' | 'contacts';
 
 export const Debts: React.FC = () => {
-  const { debt, contact, category } = useApiClients();
+  const { debt, contact } = useApiClients();
   const { actualTheme } = useTheme();
   const { t } = useTranslation();
+  const { categories } = useCategories();
   
   const [debts, setDebts] = useState<DebtResponse[]>([]);
   const [contacts, setContacts] = useState<ContactResponse[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [summary, setSummary] = useState<DebtSummary | null>(null);
   const [payments, setPayments] = useState<DebtPaymentResponse[]>([]);
   const [isLoadingPayments, setIsLoadingPayments] = useState(false);
@@ -49,10 +49,9 @@ export const Debts: React.FC = () => {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [debtsResult, contactsResult, categoriesResult, summaryResult] = await Promise.all([
+      const [debtsResult, contactsResult, summaryResult] = await Promise.all([
         debt.getDebts(),
         contact.getContacts(),
-        category.getCategories(),
         debt.getDebtSummary()
       ]);
 
@@ -63,9 +62,6 @@ export const Debts: React.FC = () => {
         setContacts(contactsResult);
       } else {
         console.error('Error loading contacts:', contactsResult);
-      }
-      if (!('error' in categoriesResult)) {
-        setCategories(categoriesResult);
       }
       if (!('error' in summaryResult)) {
         setSummary(summaryResult);
@@ -100,9 +96,14 @@ export const Debts: React.FC = () => {
       try {
         const result = await debt.createDebt(debtData as DebtCreate);
         if (!('error' in result)) {
+          // Optimistic update: add debt to list
           setDebts(prev => [...prev, result]);
           setShowDebtModal(false);
-          loadData(); // Refresh summary
+          // Only refetch summary
+          const summaryResult = await debt.getDebtSummary();
+          if (!('error' in summaryResult)) {
+            setSummary(summaryResult);
+          }
           toast.success(t('debtPage.messages.debtCreated'));
         } else {
           console.error('Error creating debt:', result.error);
@@ -122,10 +123,15 @@ export const Debts: React.FC = () => {
       try {
         const result = await debt.updateDebt(selectedDebt.id, debtData as DebtUpdate);
         if (!('error' in result)) {
+          // Optimistic update: update debt in list
           setDebts(prev => prev.map(d => d.id === selectedDebt.id ? result : d));
           setShowEditDebtModal(false);
           setSelectedDebt(null);
-          loadData(); // Refresh summary
+          // Only refetch summary
+          const summaryResult = await debt.getDebtSummary();
+          if (!('error' in summaryResult)) {
+            setSummary(summaryResult);
+          }
           toast.success(t('debtPage.messages.debtUpdated'));
         } else {
           console.error('Error updating debt:', result.error);
@@ -143,19 +149,26 @@ export const Debts: React.FC = () => {
     if (!selectedDebt) return;
     
     try {
-      const result = await debt.createPayment(selectedDebt.id, paymentData);
-      if (!('error' in result)) {
-        // Refresh the debt to get updated balance
-        const updatedDebtResult = await debt.getDebt(selectedDebt.id);
+      const [paymentResult, updatedDebtResult, summaryResult] = await Promise.all([
+        debt.createPayment(selectedDebt.id, paymentData),
+        debt.getDebt(selectedDebt.id),
+        debt.getDebtSummary()
+      ]);
+      
+      if (!('error' in paymentResult)) {
+        // Update debt with latest balance (parallel fetch completed above)
         if (!('error' in updatedDebtResult)) {
           setDebts(prev => prev.map(d => d.id === selectedDebt.id ? updatedDebtResult : d));
           setSelectedDebt(updatedDebtResult);
         }
+        // Update summary (parallel fetch completed above)
+        if (!('error' in summaryResult)) {
+          setSummary(summaryResult);
+        }
         setShowPaymentModal(false);
-        loadData(); // Refresh summary
         toast.success(t('debtPage.messages.paymentMade'));
       } else {
-        console.error('Error making payment:', result.error);
+        console.error('Error making payment:', paymentResult.error);
         toast.error('Failed to make payment. Please try again.');
       }
     } catch (error) {
@@ -172,25 +185,28 @@ export const Debts: React.FC = () => {
     try {
       const result = await debt.deleteDebt(debtId);
       if (typeof result === 'boolean' && result === true) {
-        // Remove the debt from the list
+        // Optimistic update: remove debt from list
         setDebts(prev => prev.filter(d => d.id !== debtId));
         // If we're viewing this debt, clear the selection
         if (selectedDebt && selectedDebt.id === debtId) {
           setSelectedDebt(null);
           setViewMode('list');
         }
-        // Refresh the debt summary
-        loadData();
-        // Show success toast
-                  toast.success(t('debtPage.messages.debtDeleted'));
-        } else {
-          const errorMsg = typeof result === 'object' && 'error' in result ? result.error : 'Unknown error';
-          console.error('Error deleting debt:', errorMsg);
-          toast.error('Failed to delete debt. Please try again.');
+        // Only refetch summary
+        const summaryResult = await debt.getDebtSummary();
+        if (!('error' in summaryResult)) {
+          setSummary(summaryResult);
         }
-      } catch (error) {
-        console.error('Error deleting debt:', error);
+        // Show success toast
+        toast.success(t('debtPage.messages.debtDeleted'));
+      } else {
+        const errorMsg = typeof result === 'object' && 'error' in result ? result.error : 'Unknown error';
+        console.error('Error deleting debt:', errorMsg);
         toast.error('Failed to delete debt. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error deleting debt:', error);
+      toast.error('Failed to delete debt. Please try again.');
     }
   };
 

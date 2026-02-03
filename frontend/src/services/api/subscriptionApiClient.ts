@@ -70,43 +70,48 @@ export class SubscriptionApiClient {
   }
 
   // Methods to get current counts for each feature type
+  // Optimized to use pagination metadata instead of fetching all data
   async getCurrentCounts(userId: number): Promise<Record<string, number> | ApiError> {
     try {
       const counts: Record<string, number> = {};
       
-      // Get counts from each service in parallel
+      // Get counts using pagination metadata (fetch only 1 item per resource to get total count)
       const [accounts, categories, expenses, incomes, debts, goals] = await Promise.allSettled([
-        this.accountApi.getAccounts(),
-        this.categoryApi.getCategories(),
-        this.expenseApi.getExpenses(),
-        this.incomeApi.getIncomes(),
-        this.debtApi.getDebts(),
-        this.goalsApi.getGoals()
+        this.accountApi.getAccounts(), // This endpoint doesn't support pagination yet, so we fetch all
+        this.categoryApi.getCategoriesPaginated({ page: 1, size: 1, flat: true }),
+        this.expenseApi.getExpensesPaginated({ page: 1, size: 1 }),
+        this.incomeApi.getIncomesPaginated({ page: 1, size: 1 }),
+        this.debtApi.getDebts(), // This endpoint doesn't support pagination yet
+        this.goalsApi.getGoals({ page: 1, size: 1 })
       ]);
 
-      // Process results
+      // Process results - use pagination metadata when available
       if (accounts.status === 'fulfilled' && !('error' in accounts.value)) {
-        counts.accounts = accounts.value.length;
+        counts.accounts = Array.isArray(accounts.value) ? accounts.value.length : 0;
       }
       
       if (categories.status === 'fulfilled' && !('error' in categories.value)) {
-        counts.categories = categories.value.length;
+        // Use total from pagination metadata
+        counts.categories = 'total' in categories.value ? categories.value.total : 0;
       }
       
       if (expenses.status === 'fulfilled' && !('error' in expenses.value)) {
-        counts.expenses = expenses.value.length;
+        // Use total from pagination metadata
+        counts.expenses = 'total' in expenses.value ? expenses.value.total : 0;
       }
       
       if (incomes.status === 'fulfilled' && !('error' in incomes.value)) {
-        counts.incomes = incomes.value.length;
+        // Use total from pagination metadata
+        counts.incomes = 'total' in incomes.value ? incomes.value.total : 0;
       }
       
       if (debts.status === 'fulfilled' && !('error' in debts.value)) {
-        counts.debts = debts.value.length;
+        counts.debts = Array.isArray(debts.value) ? debts.value.length : 0;
       }
       
       if (goals.status === 'fulfilled' && !('error' in goals.value)) {
-        counts.goals = goals.value.items.length;
+        // Use total from pagination metadata
+        counts.goals = 'total' in goals.value ? goals.value.total : 0;
       }
 
       // For recurring, we'll need to implement this when recurring API is available

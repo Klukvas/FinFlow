@@ -303,6 +303,72 @@ services:
         max-file: "3"
         labels: "service=workspace_service,logging=promtail"
 
+  payment_service:
+    image: ${REGISTRY}/${IMAGE_PREFIX}/payment_service:latest
+    environment:
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122,https://finflow.ltd,http://finflow.ltd
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/payment_db
+      - REDIS_URL=redis://redis:6379/0
+      - LOG_LEVEL=INFO
+      - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
+      - JWT_SECRET_KEY=${SECRET_KEY}
+      - JWT_ALGORITHM=${ALGORITHM}
+      - SERVICE_BASE_URL=http://payment_service:8000
+      - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
+      - IDEMPOTENCY_TTL_SECONDS=86400
+      - PAYMENTS_ENABLED=${PAYMENTS_ENABLED:-false}  # Set to true when Wayforpay approval is received
+    depends_on:
+      - redis
+      - subscription_service
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/live').read()"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service=payment_service,logging=promtail"
+
+  scheduler_service:
+    image: ${REGISTRY}/${IMAGE_PREFIX}/scheduler_service:latest
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/scheduler_db
+      - REDIS_URL=redis://redis:6379/0
+      - LOG_LEVEL=INFO
+      - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
+      - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
+      - PAYMENT_SERVICE_URL=http://payment_service:8000
+      - SCHEDULER_TIMEZONE=UTC
+      - RENEWAL_CHECK_CRON=0 */1 * * *
+      - RENEWAL_WINDOW_DAYS=1
+      - MAX_RETRY_ATTEMPTS=3
+      - RETRY_DELAY_SECONDS=300
+      - JOB_MAX_INSTANCES=1
+      - JOB_COALESCE=true
+      - JOB_MISFIRE_GRACE_TIME=300
+    depends_on:
+      - redis
+      - subscription_service
+      - payment_service
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8090/health/live').read()"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service=scheduler_service,logging=promtail"
+
   redis:
     image: redis:7-alpine
     restart: unless-stopped

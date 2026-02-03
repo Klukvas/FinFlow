@@ -1,10 +1,11 @@
-import { CreateExpenseRequest, AccountResponse } from '@/types';
-import React, { useCallback, useEffect, useState } from 'react';
+import { CreateExpenseRequest } from '@/types';
+import React, { useCallback, useState } from 'react';
 import { CurrencySelect, CategorySelect } from '@/components/ui/forms';
 import { FormattedNumberInput } from '@/components/ui/forms/FormattedNumberInput';
 import { removeSpacesFromNumber } from '@/utils/numberFormat';
 
 import { useApiClients } from '@/hooks';
+import { useAccounts } from '@/contexts/AccountsContext';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 interface CreateExpenseProps {
@@ -12,7 +13,8 @@ interface CreateExpenseProps {
 }
 
 export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }) => {
-    const { expense, account } = useApiClients();
+    const { expense } = useApiClients();
+    const { activeAccounts: accounts, isLoading: isLoadingAccounts } = useAccounts();
     const { handleExpenseError } = useErrorHandler();
     
     const [formData, setFormData] = useState<CreateExpenseRequest>({
@@ -24,36 +26,11 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({ onExpenseCreated }
         currency: 'USD',
     });
     const [amountDisplay, setAmountDisplay] = useState('');
-    const [accounts, setAccounts] = useState<AccountResponse[]>([]);
     
     const [error, setError] = useState<string | null>(null);
     const [amountTouched, setAmountTouched] = useState(false);
     
     const [isLoading, setIsLoading] = useState(false);
-    const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
-
-    const fetchAccounts = useCallback(async () => {
-        setIsLoadingAccounts(true);
-        try {
-            const response = await account.getAccounts();
-            if ('error' in response && 'errorCode' in response) {
-                // Handle API error with errorCode
-                handleExpenseError(response as any);
-                return;
-            } else if (!('error' in response)) {
-                setAccounts(response as AccountResponse[]);
-            }
-        } catch (err) {
-            // Handle network or other errors
-            handleExpenseError(err as Error);
-        } finally {
-            setIsLoadingAccounts(false);
-        }
-    }, [account]);
-
-    useEffect(() => {
-        fetchAccounts();
-    }, [fetchAccounts]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;

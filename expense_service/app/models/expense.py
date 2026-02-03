@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Date, ForeignKey, Index
+from sqlalchemy import Column, Integer, String, Float, Date, DateTime, ForeignKey, Index
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from app.database import Base
@@ -16,7 +16,11 @@ class Expense(Base):
     category_id = Column(Integer, nullable=True)
     account_id = Column(Integer, nullable=True, index=True)  # Optional account reference
     currency = Column(String(3), nullable=False, default="USD")  # Currency code
-    
+
+    # Timestamp fields for tracking creation and updates
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+
     # Add composite indexes for workspace queries
     __table_args__ = (
         Index('idx_expenses_workspace_user', 'workspace_id', 'user_id'),

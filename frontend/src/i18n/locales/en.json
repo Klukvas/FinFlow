@@ -366,8 +366,7 @@
     "footer": {
       "text": "Track your expenses, monitor your income, and achieve your savings goals."
     }
-  }
-  ,
+  },
   "featuresPage": {
     "title": "App Features",
     "subtitle": "All the tools you need to manage personal finance effectively",
@@ -375,32 +374,62 @@
       {
         "title": "Analytics & Reports",
         "description": "Get detailed analytics with beautiful charts and diagrams. Track trends and discover patterns in your spending.",
-        "details": ["Income and expense charts", "Expense categorization", "Period comparison", "Report export"]
+        "details": [
+          "Income and expense charts",
+          "Expense categorization",
+          "Period comparison",
+          "Report export"
+        ]
       },
       {
         "title": "Data Security",
         "description": "Your financial data is protected by modern encryption. We use banking-level security standards.",
-        "details": ["256-bit SSL encryption", "Two-factor authentication", "Regular backups", "GDPR compliance"]
+        "details": [
+          "256-bit SSL encryption",
+          "Two-factor authentication",
+          "Regular backups",
+          "GDPR compliance"
+        ]
       },
       {
         "title": "Mobile Version",
         "description": "Manage finances from any device. Data syncs in real-time.",
-        "details": ["Responsive design", "Offline mode", "Push notifications", "Quick access"]
+        "details": [
+          "Responsive design",
+          "Offline mode",
+          "Push notifications",
+          "Quick access"
+        ]
       },
       {
         "title": "Automation",
         "description": "Set up recurring payments, receive reminders, and auto-categorize transactions.",
-        "details": ["Recurring payments", "Smart reminders", "Auto-categorization", "Operation templates"]
+        "details": [
+          "Recurring payments",
+          "Smart reminders",
+          "Auto-categorization",
+          "Operation templates"
+        ]
       },
       {
         "title": "Family Accounting",
         "description": "Keep shared budgets with family members. Set limits and control the common budget.",
-        "details": ["Shared accounts", "Family categories", "Spending limits", "User roles"]
+        "details": [
+          "Shared accounts",
+          "Family categories",
+          "Spending limits",
+          "User roles"
+        ]
       },
       {
         "title": "Settings",
         "description": "Personalize the app to your needs. Create custom categories and configure the interface.",
-        "details": ["Custom categories", "UI customization", "Data import", "API integrations"]
+        "details": [
+          "Custom categories",
+          "UI customization",
+          "Data import",
+          "API integrations"
+        ]
       }
     ]
   },
@@ -838,6 +867,15 @@
       "critical": "Critical",
       "search": "Search",
       "searchPlaceholder": "Search by name..."
+    },
+    "card": {
+      "pause": "Pause",
+      "resume": "Resume",
+      "progress": "Progress",
+      "targetDate": "Target Date",
+      "overdueDays": "Overdue by {{days}} days",
+      "remainingDays": "{{days}} days remaining",
+      "milestones": "Milestones"
     }
   },
   "recurringPage": {
@@ -978,7 +1016,37 @@
       "errors": {
         "fillRequiredFields": "Please fill in all required fields for {{count}} transaction(s)",
         "createFailed": "Failed to create transactions. Please try again.",
-        "loadCategoriesFailed": "Failed to load categories"
+        "loadCategoriesFailed": "Failed to load categories",
+        "validationFailed": "Please adjust your selection to meet the validation requirements."
+      },
+      "limitInfo": {
+        "title": "PDF Upload Limit Info",
+        "plan": "Plan",
+        "monthlyUploads": "Monthly Uploads",
+        "maxPerUpload": "Max per Upload",
+        "uploadsUsed": "{{used}} of {{limit}} uploads used this month",
+        "uploadsRemaining": "{{remaining}} uploads remaining",
+        "recordsLimit": "{{limit}} records max per upload",
+        "unlimited": "Unlimited"
+      },
+      "validation": {
+        "title": "Two-Stage Validation Status",
+        "stage1": "Stage 1: Monthly Quotas",
+        "stage2": "Stage 2: Upload Limit",
+        "expenses": "Expenses",
+        "incomes": "Incomes",
+        "totalRecords": "Total Records",
+        "selected": "selected",
+        "remaining": "remaining",
+        "withinLimit": "Within Limit",
+        "exceeds": "Exceeds",
+        "passed": "Passed",
+        "failed": "Failed",
+        "overallStatus": "Overall Status",
+        "readyToCreate": "Ready to create transactions",
+        "adjustSelection": "Please adjust your selection",
+        "validationPassed": "Validation passed - check warnings above",
+        "noValidTransactions": "No valid transactions to create"
       }
     }
   },
@@ -1023,8 +1091,7 @@
       "loginLink": "Sign In",
       "error": "Registration error"
     }
-  }
-  ,
+  },
   "footer": {
     "brand": {
       "title": "Financial Accounting",
@@ -1092,7 +1159,7 @@
     "amount": "Amount",
     "features": {
       "categories": "Categories",
-      "accounts": "Accounts", 
+      "accounts": "Accounts",
       "expenses": "Expenses",
       "incomes": "Incomes",
       "debts": "Debts",
@@ -1286,6 +1353,7 @@
   "payment": {
     "choosePlan": "Choose Plan",
     "processing": "Processing...",
+    "disabled": "Payments Disabled",
     "redirecting": "Redirecting to payment...",
     "doNotClose": "Please do not close this window...",
     "checkingStatus": "Checking payment status...",
@@ -1303,6 +1371,10 @@
     "tryAgain": "Try Again",
     "goToProfile": "Go to Profile",
     "backToHome": "Back to Home",
+    "disabledNotice": {
+      "title": "Payment Processing Temporarily Unavailable",
+      "message": "We are currently awaiting final approval from our payment provider. Payment functionality will be enabled soon. Thank you for your patience!"
+    },
     "status": {
       "created": "Created",
       "pending": "Pending",
@@ -1342,7 +1414,8 @@
       "noPaymentId": "Payment ID not found",
       "statusCheckFailed": "Failed to check payment status",
       "title": "Payment Error",
-      "failed": "Payment failed"
+      "failed": "Payment failed",
+      "paymentsDisabled": "Payments are temporarily disabled. Please contact support for more information."
     }
   },
   "termsPage": {

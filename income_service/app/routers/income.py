@@ -217,3 +217,40 @@ async def get_incomes_by_category(
     statistics including total amount, count, and average amount, all converted to the user's base currency.
     """
     return await service.get_by_category(category_id, user_id)
+
+@router.get(
+    "/current-month-count",
+    summary="Get current month income count",
+    description="Get the number of incomes created this month and the monthly limit",
+    responses={
+        200: {"description": "Current month count and limit returned successfully"},
+        401: {"description": "Unauthorized - invalid or missing token"},
+    }
+)
+async def get_current_month_count(
+    service: IncomeService = Depends(get_income_service),
+    user_id: int = Depends(get_current_user_id)
+):
+    """
+    Get current month income count and limit for PDF parser frontend validation.
+
+    Returns:
+        - count: Number of incomes created this month
+        - limit: Monthly limit for this user's plan (None = unlimited)
+    """
+    from datetime import datetime
+    from app.models.income import Income
+
+    # Count incomes in current month
+    current_month_start = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    count = service.db.query(Income).filter(
+        Income.user_id == user_id,
+        Income.created_at >= current_month_start
+    ).count()
+
+    # Get limit from subscription
+    features = service.subscription_client.get_user_features(user_id)
+    income_feature = features.get("incomes", {})
+    limit = income_feature.get("limit_value")
+
+    return {"count": count, "limit": limit}

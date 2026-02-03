@@ -1,6 +1,7 @@
-import { Category, ExpenseResponse, CategoryListResponse } from '@/types';
+import { ExpenseResponse } from '@/types';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useCategories } from '@/contexts/CategoriesContext';
 
 import { CategoryComparisonChart } from '../dashboard/CategoryComparisonChart';
 import { CategoryExpensesChart } from '../dashboard/CategoryExpensesChart';
@@ -13,34 +14,20 @@ import { useApiClients } from '@/hooks';
 export const ExpenseDashboard: React.FC = () => {
   const { t } = useTranslation();
   const [expenses, setExpenses] = useState<ExpenseResponse[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const { categories } = useCategories();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const { expense, category } = useApiClients();
+  const { expense } = useApiClients();
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [expensesResponse, categoriesResponse] = await Promise.all([
-        expense.getExpenses(),
-        category.getCategoriesPaginated({
-          flat: true,
-          page: 1,
-          size: 100 // Максимальный размер страницы
-        })
-      ]);
+      const expensesResponse = await expense.getExpenses();
 
       if ('error' in expensesResponse) {
         setError(expensesResponse.error);
       } else {
         setExpenses(expensesResponse);
-      }
-
-      if ('error' in categoriesResponse) {
-        setError(categoriesResponse.error);
-      } else {
-        const paginatedResponse = categoriesResponse as CategoryListResponse;
-        setCategories(paginatedResponse.items || []);
       }
     } catch (err) {
       setError(t('expense.dashboard.loadError'));
@@ -48,7 +35,7 @@ export const ExpenseDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [expense, category, t]);
+  }, [expense, t]);
 
   useEffect(() => {
     fetchData();

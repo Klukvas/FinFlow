@@ -49,4 +49,8 @@ export class IncomeApiClient {
   async getIncomesByCategory(category_id: number): Promise<ApiResponse<IncomesByCategoryResponse>> {
     return this.httpClient.get<IncomesByCategoryResponse>(`/category/${category_id}`);
   }
+
+  async getCurrentMonthCount(): Promise<ApiResponse<{ count: number; limit: number | null }>> {
+    return this.httpClient.get<{ count: number; limit: number | null }>('/current-month-count');
+  }
 }

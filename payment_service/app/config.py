@@ -24,7 +24,8 @@ class Settings(BaseSettings):
     wayforpay_return_url: str = Field(default="")
     wayforpay_callback_url: str = Field(default="")
     wayforpay_api_url: str = Field(default="https://api.wayforpay.com/api")
-    wayforpay_enable_recurring: bool = Field(default=False)  # Set to True when using real merchant account
+    wayforpay_enable_recurring: bool = Field(default=True)  # Recurring tokens enabled - WayForPay confirmed support
+    wayforpay_rectoken_format: str = Field(default="string")  # Format: "string" ("1"), "integer" (1), or "boolean" (true)
     
     # Service URLs
     service_base_url: str = Field(default="http://localhost:8000")
@@ -32,6 +33,9 @@ class Settings(BaseSettings):
     
     # Idempotency
     idempotency_ttl_seconds: int = Field(default=86400)  # 24 hours
+    
+    # Feature flags
+    payments_enabled: bool = Field(default=False)  # Disabled by default until Wayforpay approval
 
     class Config:
         env_file = ".env"

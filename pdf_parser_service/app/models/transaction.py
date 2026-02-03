@@ -42,6 +42,14 @@ class PDFParseRequest(BaseModel):
     bank_type: Optional[BankType] = Field(None, description="Specific bank type (auto-detect if not provided)")
     user_id: int = Field(..., description="User ID for context")
 
+class PDFLimitInfo(BaseModel):
+    """Information about user's PDF upload limits and current usage"""
+    uploads_per_month: Optional[int] = Field(None, description="Monthly upload limit (None = unlimited)")
+    records_per_upload: Optional[int] = Field(None, description="Max records per upload (None = unlimited)")
+    uploads_used_this_month: int = Field(..., description="Number of uploads used this month")
+    uploads_remaining: Optional[int] = Field(None, description="Uploads remaining (None = unlimited)")
+    plan_code: str = Field(..., description="User's subscription plan code")
+
 class PDFParseResponse(BaseModel):
     """Schema for PDF parsing response"""
     transactions: List[ParsedTransaction] = Field(..., description="List of parsed transactions")
@@ -50,6 +58,7 @@ class PDFParseResponse(BaseModel):
     successful_parses: int = Field(..., description="Number of successfully parsed transactions")
     failed_parses: int = Field(..., description="Number of failed parses")
     parsing_metadata: Optional[dict] = Field(default_factory=dict, description="Additional parsing metadata")
+    limit_info: Optional[PDFLimitInfo] = Field(None, description="PDF upload limit information")
     
 class TransactionValidation(BaseModel):
     """Schema for transaction validation/editing"""

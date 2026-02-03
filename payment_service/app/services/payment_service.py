@@ -97,11 +97,9 @@ class PaymentService:
 
         product_name = self._get_product_name(request)
         
-        # Request recurring token for subscription payments
-        # Note: Some test accounts (like test_merch_n1) don't support recToken
-        # Set WAYFORPAY_ENABLE_RECURRING=false in .env to disable for testing
-        enable_recurring = getattr(settings, 'wayforpay_enable_recurring', True)
-        request_recurring = (request.purpose == PaymentPurpose.SUBSCRIPTION) and enable_recurring
+        # Note: WayForPay automatically returns recToken in the webhook callback
+        # after a successful payment. No need to request it in the form data.
+        # The token will be captured from the webhook and stored for recurring payments.
         
         form_data = self.wayforpay_client.create_payment_form(
             order_reference=order_reference,
@@ -112,7 +110,7 @@ class PaymentService:
             product_price=request.amount,
             return_url=return_url,
             service_url=callback_url,
-            request_recurring_token=request_recurring,
+            request_recurring_token=False,  # Deprecated: Token returned automatically
         )
 
         # Store form data and payment URL
@@ -153,7 +151,7 @@ class PaymentService:
                 "merchant_account": form_data.get('merchantAccount'),
                 "has_signature": bool(form_data.get('merchantSignature')),
                 "signature_preview": form_data.get('merchantSignature', '')[:20] + '...' if form_data.get('merchantSignature') else None,
-                "request_recurring": request_recurring,
+                "payment_purpose": request.purpose.value,
                 "straightforward_flag": form_data.get('straightforward'),
             },
         )
