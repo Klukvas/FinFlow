@@ -12,7 +12,7 @@ python = "^3.11"
 fastapi = "0.115.12"
 uvicorn = "0.34.0"
 SQLAlchemy = "2.0.40"
-psycopg2-binary = "2.9.10"
+psycopg2-binary = "2.9.11"
 httpx = "0.28.1"
 pydantic = {extras = ["email"], version = "^2.11.3"}
 pydantic-settings = "2.8.1"
