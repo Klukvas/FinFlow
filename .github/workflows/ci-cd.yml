@@ -656,11 +656,11 @@ jobs:
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/workspace_service:latest
           cache-to: type=inline
 
-  # Stage 14: Admin Panel Build
+  # Stage 14: Admin Panel Build (DISABLED - skip for now)
   stage14-admin-panel:
     name: "Stage 14: Build Admin Panel"
     needs: detect-changes
-    if: needs.detect-changes.outputs.admin_panel == 'true'
+    if: false  # Disabled - skip admin panel build for now
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
