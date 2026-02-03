@@ -7,13 +7,13 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y build-essential libpq-dev && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt /app/requirements.txt
+COPY subscription_service/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
-COPY app /app/app
-COPY alembic /app/alembic
-COPY alembic.ini /app/alembic.ini
-COPY startup.sh /app/startup.sh
+COPY subscription_service/app /app/app
+COPY subscription_service/alembic /app/alembic
+COPY subscription_service/alembic.ini /app/alembic.ini
+COPY subscription_service/startup.sh /app/startup.sh
 
 RUN chmod +x /app/startup.sh
 

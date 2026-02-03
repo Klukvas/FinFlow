@@ -9,11 +9,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install Python dependencies
-COPY requirements.txt .
+COPY scheduler_service/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY . .
+COPY scheduler_service/app /app/app
+COPY scheduler_service/alembic /app/alembic
+COPY scheduler_service/alembic.ini /app/alembic.ini
+COPY scheduler_service/startup.sh /app/startup.sh
 
 # Create non-root user
 RUN useradd -m -u 1000 scheduler && chown -R scheduler:scheduler /app

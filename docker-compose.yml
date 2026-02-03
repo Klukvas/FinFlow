@@ -376,8 +376,8 @@ services:
 
   subscription_service:
     build:
-      context: ./subscription_service
-      dockerfile: ./Dockerfile
+      context: .
+      dockerfile: ./subscription_service/Dockerfile
     environment:
       CORS_ORIGINS: "http://localhost:3000,http://localhost:3002,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:3002,http://127.0.0.1:5173"
       # App settings (SUBS_ prefix)
@@ -416,8 +416,8 @@ services:
   # See: WAYFORPAY_SETUP.md for complete setup instructions
   payment_service:
     build:
-      context: ./payment_service
-      dockerfile: ./Dockerfile
+      context: .
+      dockerfile: ./payment_service/Dockerfile
     env_file:
       - ./payment_service/.env.docker
     environment:
@@ -459,8 +459,8 @@ services:
 
   scheduler_service:
     build:
-      context: ./scheduler_service
-      dockerfile: ./Dockerfile
+      context: .
+      dockerfile: ./scheduler_service/Dockerfile
     environment:
       DATABASE_URL: "postgresql://postgres:postgres@db:5432/scheduler_db"
       REDIS_URL: "redis://redis:6379/0"
