@@ -615,7 +615,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./subscription_service
+          context: .
           file: ./subscription_service/Dockerfile
           push: true
           tags: |
