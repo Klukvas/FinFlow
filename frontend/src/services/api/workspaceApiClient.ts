@@ -48,7 +48,7 @@ export class WorkspaceApiClient {
 
   async getWorkspaces(includeArchived: boolean = false): Promise<WorkspaceListResponse | ErrorResponse> {
     const params = includeArchived ? '?include_archived=true' : '';
-    return this.httpClient.get<WorkspaceListResponse>(`${params || '/'}`);
+    return this.httpClient.get<WorkspaceListResponse>(params);
   }
 
   async getWorkspace(workspaceId: string): Promise<Workspace | ErrorResponse> {
@@ -56,7 +56,7 @@ export class WorkspaceApiClient {
   }
 
   async createWorkspace(data: WorkspaceCreate): Promise<Workspace | ErrorResponse> {
-    return this.httpClient.post<Workspace>('/', data);
+    return this.httpClient.post<Workspace>('', data);
   }
 
   async updateWorkspace(workspaceId: string, data: WorkspaceUpdate): Promise<Workspace | ErrorResponse> {
@@ -126,7 +126,7 @@ export class WorkspaceApiClient {
    */
   async getMyInvites(includeAll: boolean = false): Promise<MyInviteListResponse | ErrorResponse> {
     const params = includeAll ? '?include_all=true' : '';
-    return this.meInvitesClient.get<MyInviteListResponse>(`${params || '/'}`);
+    return this.meInvitesClient.get<MyInviteListResponse>(params);
   }
 
   /**
