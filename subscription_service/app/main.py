@@ -53,6 +53,10 @@ def create_app() -> FastAPI:
     app.add_exception_handler(ServiceError, service_exception_handler)
     app.add_exception_handler(Exception, unhandled_exception_handler)
 
+    @app.get("/health")
+    async def health():
+        return {"status": "ok"}
+
     @app.get("/metrics")
     async def metrics():
         return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
