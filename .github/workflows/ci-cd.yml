@@ -796,16 +796,14 @@ jobs:
           host: ${{ secrets.HZ_HOST }}
           user: ${{ secrets.HZ_USER || 'root' }}
           ssh-private-key: ${{ secrets.HZ_SSH_KEY }}
-          db-server-ssh-key: ${{ secrets.DB_SERVER_SSH_KEY }}
           registry: ${{ env.REGISTRY }}
           image-prefix: ${{ env.IMAGE_PREFIX }}
-          db-host: ${{ secrets.DB_HOST }}
-          db-server-host: ${{ secrets.DB_SERVER_HOST }}
-          db-port: ${{ secrets.DB_PORT || '5432' }}
-          db-name: ${{ secrets.DB_NAME }}
-          db-user: ${{ secrets.DB_USER }}
+          db-user: ${{ secrets.DB_USER || 'finflow' }}
           db-password: ${{ secrets.DB_PASSWORD }}
-          cors-origins: ${{ secrets.CORS_ORIGINS || format('http://{0},https://{0}', secrets.HZ_HOST) }}
+          redis-password: ${{ secrets.REDIS_PASSWORD }}
+          cors-origins: ${{ secrets.CORS_ORIGINS || 'https://finflow.ltd' }}
+          domain: ${{ secrets.DOMAIN || 'finflow.ltd' }}
+          grafana-admin-password: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
           payments-enabled: ${{ secrets.PAYMENTS_ENABLED || 'false' }}
           services: ${{ needs.detect-changes.outputs.services_list }}
 
@@ -835,6 +833,3 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Environment**: ${{ github.event.inputs.environment || 'production' }}" >> $GITHUB_STEP_SUMMARY
           echo "**Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
-
-
-# trigger ci at 2026-01-31T00:00:00Z - Added admin_panel, payment_service, scheduler_service

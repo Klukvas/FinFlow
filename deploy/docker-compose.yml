@@ -1,344 +1,472 @@
 version: '3.8'
 
+# =============================================================================
+# FinFlow Production - Single Server Docker Compose
+# =============================================================================
+# All services on one Hetzner server. No external DB. No exposed internal ports.
+# Secrets via .env file. Redis password-protected. PostgreSQL internal only.
+# =============================================================================
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-fastapi-healthcheck: &fastapi-healthcheck
+  interval: 30s
+  timeout: 5s
+  retries: 5
+  start_period: 30s
+
+x-fastapi-deploy: &fastapi-deploy
+  resources:
+    limits:
+      cpus: '0.50'
+      memory: 384M
+    reservations:
+      cpus: '0.10'
+      memory: 128M
+
 services:
+  # ---------------------------------------------------------------------------
+  # Infrastructure: Database + Cache
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.50'
+          memory: 512M
+    logging: *default-logging
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD}
+      --appendonly yes
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 384M
+        reservations:
+          cpus: '0.10'
+          memory: 64M
+    logging: *default-logging
+
+  # ---------------------------------------------------------------------------
+  # Reverse Proxy
+  # ---------------------------------------------------------------------------
   caddy:
     image: caddy:2-alpine
+    container_name: caddy
+    restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
       - /etc/ssl/cf-origin:/etc/ssl/cf-origin:ro
+    networks:
+      - app_network
+      - monitoring_network
     depends_on:
-      - frontend
-    restart: unless-stopped
+      frontend:
+        condition: service_started
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+    logging: *default-logging
 
+  # ---------------------------------------------------------------------------
+  # Frontend
+  # ---------------------------------------------------------------------------
   frontend:
     image: ${REGISTRY}/${IMAGE_PREFIX}/frontend:latest
+    container_name: frontend
+    restart: unless-stopped
     environment:
       - NODE_ENV=production
-    restart: unless-stopped
-    # Убрано логирование для уменьшения объема логов
+    networks:
+      - app_network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+    logging: *default-logging
 
-  account_service:
-    image: ${REGISTRY}/${IMAGE_PREFIX}/account_service:latest
+  # ---------------------------------------------------------------------------
+  # Core Services
+  # ---------------------------------------------------------------------------
+  user_service:
+    image: ${REGISTRY}/${IMAGE_PREFIX}/user_service:latest
+    container_name: user_service
+    restart: unless-stopped
     environment:
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD_ENCODED}@${DB_HOST}:${DB_PORT}/account_db
-      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD_ENCODED}@postgres:5432/user_db
       - SECRET_KEY=${SECRET_KEY}
       - ALGORITHM=${ALGORITHM}
       - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
-      - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122,https://finflow.ltd,http://finflow.ltd
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
+      - WORKSPACE_SERVICE_URL=http://workspace_service:8000
+      - DOCS_ENABLED=false
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+      <<: *fastapi-healthcheck
+    deploy: *fastapi-deploy
+    logging: *default-logging
+
+  workspace_service:
+    image: ${REGISTRY}/${IMAGE_PREFIX}/workspace_service:latest
+    container_name: workspace_service
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD_ENCODED}@postgres:5432/workspace_db
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=${ALGORITHM}
+      - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      - USER_SERVICE_URL=http://user_service:8000
+      - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
+      - LOG_LEVEL=INFO
+      - DOCS_ENABLED=false
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      user_service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+      <<: *fastapi-healthcheck
+    deploy: *fastapi-deploy
+    logging: *default-logging
+
+  category_service:
+    image: ${REGISTRY}/${IMAGE_PREFIX}/category_service:latest
+    container_name: category_service
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD_ENCODED}@postgres:5432/category_db
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=${ALGORITHM}
+      - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
+      - WORKSPACE_SERVICE_URL=http://workspace_service:8000
+      - LOG_LEVEL=INFO
+      - DOCS_ENABLED=false
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+      <<: *fastapi-healthcheck
+    deploy: *fastapi-deploy
+    logging: *default-logging
+
+  account_service:
+    image: ${REGISTRY}/${IMAGE_PREFIX}/account_service:latest
+    container_name: account_service
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD_ENCODED}@postgres:5432/account_db
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=${ALGORITHM}
+      - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
+      - CORS_ORIGINS=${CORS_ORIGINS}
       - USER_SERVICE_URL=http://user_service:8000
       - EXPENSE_SERVICE_URL=http://expense_service:8000
       - INCOME_SERVICE_URL=http://income_service:8000
       - CURRENCY_SERVICE_URL=http://currency_service:8000
       - WORKSPACE_SERVICE_URL=http://workspace_service:8000
       - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
+      - DOCS_ENABLED=false
+    networks:
+      - app_network
     depends_on:
-      - redis
-      - workspace_service
-      - user_service
-      - currency_service
-      - category_service
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-        labels: "service=account_service,logging=promtail"
-
-  category_service:
-    image: ${REGISTRY}/${IMAGE_PREFIX}/category_service:latest
-    environment:
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/category_db
-      - SECRET_KEY=${SECRET_KEY}
-      - ALGORITHM=${ALGORITHM}
-      - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
-      - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
-      - WORKSPACE_SERVICE_URL=http://workspace_service:8000
-      - LOG_LEVEL=INFO
-      - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122,https://finflow.ltd,http://finflow.ltd
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-        labels: "service=category_service,logging=promtail"
-
-  currency_service:
-    image: ${REGISTRY}/${IMAGE_PREFIX}/currency_service:latest
-    environment:
-      - REDIS_URL=redis://redis:6379
-      - cors_origins=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122
-    depends_on:
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-        labels: "service=currency_service,logging=promtail"
-
-  debt_service:
-    image: ${REGISTRY}/${IMAGE_PREFIX}/debt_service:latest
-    environment:
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/debt_db
-      - SECRET_KEY=${SECRET_KEY}
-      - ALGORITHM=${ALGORITHM}
-      - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
-      - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122,https://finflow.ltd,http://finflow.ltd
-      - USER_SERVICE_URL=http://user_service:8000
-      - CURRENCY_SERVICE_URL=http://currency_service:8000
-      - CATEGORY_SERVICE_URL=http://category_service:8000
-      - WORKSPACE_SERVICE_URL=http://workspace_service:8000
-      - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
-    depends_on:
-      - workspace_service
-      - category_service
-      - user_service
-      - currency_service
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-        labels: "service=debt_service,logging=promtail"
+      <<: *fastapi-healthcheck
+    deploy: *fastapi-deploy
+    logging: *default-logging
 
   expense_service:
     image: ${REGISTRY}/${IMAGE_PREFIX}/expense_service:latest
+    container_name: expense_service
+    restart: unless-stopped
     environment:
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/expense_db
-      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD_ENCODED}@postgres:5432/expense_db
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
       - SECRET_KEY=${SECRET_KEY}
       - ALGORITHM=${ALGORITHM}
       - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
-      - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122,https://finflow.ltd,http://finflow.ltd
+      - CORS_ORIGINS=${CORS_ORIGINS}
       - CATEGORY_SERVICE_URL=http://category_service:8000
       - ACCOUNT_SERVICE_URL=http://account_service:8000
       - CURRENCY_SERVICE_URL=http://currency_service:8000
       - WORKSPACE_SERVICE_URL=http://workspace_service:8000
       - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
+      - DOCS_ENABLED=false
+    networks:
+      - app_network
     depends_on:
-      - redis
-      - workspace_service
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-        labels: "service=expense_service,logging=promtail"
-
-  goals_service:
-    image: ${REGISTRY}/${IMAGE_PREFIX}/goals_service:latest
-    environment:
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/goals_db
-      - SECRET_KEY=${SECRET_KEY}
-      - ALGORITHM=${ALGORITHM}
-      - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
-      - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
-      - USER_SERVICE_URL=http://user_service:8000
-      - CURRENCY_SERVICE_URL=http://currency_service:8000
-      - WORKSPACE_SERVICE_URL=http://workspace_service:8000
-      - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122,https://finflow.ltd,http://finflow.ltd
-    depends_on:
-      - user_service
-      - currency_service
-      - workspace_service
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-        labels: "service=goals_service,logging=promtail"
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+      <<: *fastapi-healthcheck
+    deploy: *fastapi-deploy
+    logging: *default-logging
 
   income_service:
     image: ${REGISTRY}/${IMAGE_PREFIX}/income_service:latest
+    container_name: income_service
+    restart: unless-stopped
     environment:
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/income_db
-      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD_ENCODED}@postgres:5432/income_db
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
       - SECRET_KEY=${SECRET_KEY}
       - ALGORITHM=${ALGORITHM}
       - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
-      - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122,https://finflow.ltd,http://finflow.ltd
+      - CORS_ORIGINS=${CORS_ORIGINS}
       - CATEGORY_SERVICE_URL=http://category_service:8000
       - ACCOUNT_SERVICE_URL=http://account_service:8000
       - WORKSPACE_SERVICE_URL=http://workspace_service:8000
       - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
+      - DOCS_ENABLED=false
+    networks:
+      - app_network
     depends_on:
-      - redis
-      - workspace_service
-      - category_service
-      - user_service
-      - account_service
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-        labels: "service=income_service,logging=promtail"
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+      <<: *fastapi-healthcheck
+    deploy: *fastapi-deploy
+    logging: *default-logging
 
-  subscription_service:
-    image: ${REGISTRY}/${IMAGE_PREFIX}/subscription_service:latest
+  currency_service:
+    image: ${REGISTRY}/${IMAGE_PREFIX}/currency_service:latest
+    container_name: currency_service
+    restart: unless-stopped
     environment:
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/subscription_db
-      - REDIS_URL=redis://redis:6379/0
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - cors_origins=${CORS_ORIGINS}
+      - DOCS_ENABLED=false
+    networks:
+      - app_network
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+      <<: *fastapi-healthcheck
+    deploy: *fastapi-deploy
+    logging: *default-logging
+
+  debt_service:
+    image: ${REGISTRY}/${IMAGE_PREFIX}/debt_service:latest
+    container_name: debt_service
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD_ENCODED}@postgres:5432/debt_db
       - SECRET_KEY=${SECRET_KEY}
       - ALGORITHM=${ALGORITHM}
       - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
-      - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122,https://finflow.ltd,http://finflow.ltd
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      - USER_SERVICE_URL=http://user_service:8000
+      - CURRENCY_SERVICE_URL=http://currency_service:8000
+      - CATEGORY_SERVICE_URL=http://category_service:8000
+      - WORKSPACE_SERVICE_URL=http://workspace_service:8000
+      - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
+      - DOCS_ENABLED=false
+    networks:
+      - app_network
     depends_on:
-      - redis
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-        labels: "service=subscription_service,logging=promtail"
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+      <<: *fastapi-healthcheck
+    deploy: *fastapi-deploy
+    logging: *default-logging
 
-  pdf_parser_service:
-    image: ${REGISTRY}/${IMAGE_PREFIX}/pdf_parser_service:latest
+  goals_service:
+    image: ${REGISTRY}/${IMAGE_PREFIX}/goals_service:latest
+    container_name: goals_service
+    restart: unless-stopped
     environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD_ENCODED}@postgres:5432/goals_db
       - SECRET_KEY=${SECRET_KEY}
       - ALGORITHM=${ALGORITHM}
-      - internal_service_token=${INTERNAL_SECRET_TOKEN}
-      - category_service_url=http://category_service:8000
-      - cors_origins=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122,https://finflow.ltd,http://finflow.ltd
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-        labels: "service=pdf_parser_service,logging=promtail"
+      - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
+      - USER_SERVICE_URL=http://user_service:8000
+      - CURRENCY_SERVICE_URL=http://currency_service:8000
+      - WORKSPACE_SERVICE_URL=http://workspace_service:8000
+      - DOCS_ENABLED=false
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+      <<: *fastapi-healthcheck
+    deploy: *fastapi-deploy
+    logging: *default-logging
 
   recurring_service:
     image: ${REGISTRY}/${IMAGE_PREFIX}/recurring_service:latest
+    container_name: recurring_service
+    restart: unless-stopped
     environment:
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/recurring_db
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD_ENCODED}@postgres:5432/recurring_db
       - SECRET_KEY=${SECRET_KEY}
       - ALGORITHM=${ALGORITHM}
       - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
-      - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122,https://finflow.ltd,http://finflow.ltd
+      - CORS_ORIGINS=${CORS_ORIGINS}
       - WORKSPACE_SERVICE_URL=http://workspace_service:8000
       - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
+      - DOCS_ENABLED=false
+    networks:
+      - app_network
     depends_on:
-      - workspace_service
-      - expense_service
-      - income_service
-      - category_service
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-        labels: "service=recurring_service,logging=promtail"
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+      <<: *fastapi-healthcheck
+    deploy: *fastapi-deploy
+    logging: *default-logging
 
-  user_service:
-    image: ${REGISTRY}/${IMAGE_PREFIX}/user_service:latest
+  subscription_service:
+    image: ${REGISTRY}/${IMAGE_PREFIX}/subscription_service:latest
+    container_name: subscription_service
+    restart: unless-stopped
     environment:
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/user_db
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD_ENCODED}@postgres:5432/subscription_db
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
       - SECRET_KEY=${SECRET_KEY}
       - ALGORITHM=${ALGORITHM}
       - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
-      - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122,https://finflow.ltd,http://finflow.ltd
-      - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
-      - WORKSPACE_SERVICE_URL=http://workspace_service:8000
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-        labels: "service=user_service,logging=promtail"
-
-  workspace_service:
-    image: ${REGISTRY}/${IMAGE_PREFIX}/workspace_service:latest
-    environment:
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/workspace_db
-      - SECRET_KEY=${SECRET_KEY}
-      - ALGORITHM=${ALGORITHM}
-      - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
-      - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122,https://finflow.ltd,http://finflow.ltd
-      - USER_SERVICE_URL=http://user_service:8000
-      - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
-      - LOG_LEVEL=INFO
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      - DOCS_ENABLED=false
+    networks:
+      - app_network
     depends_on:
-      - user_service
-      - subscription_service
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-        labels: "service=workspace_service,logging=promtail"
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health').read()"]
+      <<: *fastapi-healthcheck
+    deploy: *fastapi-deploy
+    logging: *default-logging
 
   payment_service:
     image: ${REGISTRY}/${IMAGE_PREFIX}/payment_service:latest
+    container_name: payment_service
+    restart: unless-stopped
     environment:
-      - CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.108.50.122,https://65.108.50.122,https://finflow.ltd,http://finflow.ltd
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/payment_db
-      - REDIS_URL=redis://redis:6379/0
-      - LOG_LEVEL=INFO
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD_ENCODED}@postgres:5432/payment_db
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=${ALGORITHM}
       - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      - LOG_LEVEL=INFO
       - JWT_SECRET_KEY=${SECRET_KEY}
       - JWT_ALGORITHM=${ALGORITHM}
       - SERVICE_BASE_URL=http://payment_service:8000
       - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
       - IDEMPOTENCY_TTL_SECONDS=86400
-      - PAYMENTS_ENABLED=${PAYMENTS_ENABLED:-false}  # Set to true when Wayforpay approval is received
+      - PAYMENTS_ENABLED=${PAYMENTS_ENABLED:-false}
+      - DOCS_ENABLED=false
+    networks:
+      - app_network
     depends_on:
-      - redis
-      - subscription_service
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/live').read()"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-        labels: "service=payment_service,logging=promtail"
+      <<: *fastapi-healthcheck
+    deploy: *fastapi-deploy
+    logging: *default-logging
 
   scheduler_service:
     image: ${REGISTRY}/${IMAGE_PREFIX}/scheduler_service:latest
+    container_name: scheduler_service
+    restart: unless-stopped
     environment:
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/scheduler_db
-      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD_ENCODED}@postgres:5432/scheduler_db
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
       - LOG_LEVEL=INFO
       - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
       - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
@@ -351,54 +479,166 @@ services:
       - JOB_MAX_INSTANCES=1
       - JOB_COALESCE=true
       - JOB_MISFIRE_GRACE_TIME=300
+      - DOCS_ENABLED=false
+    networks:
+      - app_network
     depends_on:
-      - redis
-      - subscription_service
-      - payment_service
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8090/health/live').read()"]
       interval: 15s
       timeout: 5s
       retries: 5
-      start_period: 20s
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-        labels: "service=scheduler_service,logging=promtail"
+      start_period: 30s
+    deploy: *fastapi-deploy
+    logging: *default-logging
 
-  redis:
-    image: redis:7-alpine
+  pdf_parser_service:
+    image: ${REGISTRY}/${IMAGE_PREFIX}/pdf_parser_service:latest
+    container_name: pdf_parser_service
+    restart: unless-stopped
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=${ALGORITHM}
+      - internal_service_token=${INTERNAL_SECRET_TOKEN}
+      - category_service_url=http://category_service:8000
+      - cors_origins=${CORS_ORIGINS}
+      - DOCS_ENABLED=false
+    volumes:
+      - pdf_uploads:/app/uploads
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+      <<: *fastapi-healthcheck
+    deploy: *fastapi-deploy
+    logging: *default-logging
+
+  # ---------------------------------------------------------------------------
+  # Backup
+  # ---------------------------------------------------------------------------
+  pg_backup:
+    image: postgres:16-alpine
+    container_name: pg_backup
+    restart: unless-stopped
+    environment:
+      - PGHOST=postgres
+      - PGUSER=${DB_USER}
+      - PGPASSWORD=${DB_PASSWORD}
+    volumes:
+      - /var/backups/postgres:/backups
+      - ./backup/backup.sh:/backup.sh:ro
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: /bin/sh
+    command: >
+      -c "chmod +x /backup.sh && echo '0 2 * * * /backup.sh >> /var/log/backup.log 2>&1' | crontab - && crond -f -l 2"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+    logging: *default-logging
+
+  # ---------------------------------------------------------------------------
+  # Monitoring & Logging
+  # ---------------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: prometheus
     restart: unless-stopped
     volumes:
-      - redis_data:/data
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-        labels: "service=redis,logging=promtail"
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    networks:
+      - app_network
+      - monitoring_network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+    logging: *default-logging
 
-  # Logging Infrastructure
+  node_exporter:
+    image: prom/node-exporter:v1.7.0
+    container_name: node_exporter
+    restart: unless-stopped
+    command:
+      - '--path.rootfs=/host'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    volumes:
+      - /:/host:ro,rslave
+    networks:
+      - monitoring_network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.10'
+          memory: 64M
+    logging: *default-logging
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.2
+    container_name: cadvisor
+    restart: unless-stopped
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    networks:
+      - monitoring_network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+    logging: *default-logging
+
   loki:
     image: grafana/loki:2.9.0
     container_name: loki
     restart: unless-stopped
-    ports:
-      - "3100:3100"
     volumes:
       - loki_data:/loki
       - ./logging/loki-config.yml:/etc/loki/local-config.yaml:ro
     command: -config.file=/etc/loki/local-config.yaml
     networks:
-      - logging
+      - monitoring_network
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3100/ready"]
       interval: 30s
       timeout: 10s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+    logging: *default-logging
 
   promtail:
     image: grafana/promtail:2.9.0
@@ -409,49 +649,74 @@ services:
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./logging/promtail-config.yml:/etc/promtail/config.yml:ro
+      - promtail_positions:/positions
     command: -config.file=/etc/promtail/config.yml
     depends_on:
       - loki
     networks:
-      - logging
+      - monitoring_network
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9080/ready"]
       interval: 30s
       timeout: 10s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+    logging: *default-logging
 
   grafana:
     image: grafana/grafana:10.1.0
     container_name: grafana
     restart: unless-stopped
-    ports:
-      - "3001:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin123}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
       - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=https://${DOMAIN}/grafana/
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
     volumes:
       - grafana_data:/var/lib/grafana
       - ./logging/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
       - ./logging/grafana-dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:ro
-      - ./logging/dashboards:/etc/grafana/provisioning/dashboards:ro
-      - ./logging/grafana-alerting.yml:/etc/grafana/provisioning/alerting/alerting.yml:ro
+      - ./logging/dashboards:/var/lib/grafana/dashboards:ro
     depends_on:
       - loki
+      - prometheus
     networks:
-      - logging
+      - monitoring_network
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 384M
+    logging: *default-logging
 
+# ---------------------------------------------------------------------------
+# Volumes
+# ---------------------------------------------------------------------------
 volumes:
+  postgres_data:
   redis_data:
   caddy_data:
   caddy_config:
+  pdf_uploads:
+  prometheus_data:
   loki_data:
   grafana_data:
+  promtail_positions:
 
+# ---------------------------------------------------------------------------
+# Networks - all internal, no exposed DB/Redis ports
+# ---------------------------------------------------------------------------
 networks:
-  logging:
+  app_network:
+    driver: bridge
+  monitoring_network:
     driver: bridge

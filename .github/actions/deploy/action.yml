@@ -1,9 +1,9 @@
 name: Deploy via SSH and Compose
-description: SSH to host, write compose and env, pull images, and recreate services
+description: SSH to single server, sync configs, pull images, and recreate services
 
 inputs:
   host:
-    description: Target host
+    description: Target host (single server)
     required: true
   user:
     description: SSH user
@@ -12,46 +12,40 @@ inputs:
   ssh-private-key:
     description: SSH private key
     required: true
-  db-server-ssh-key:
-    description: SSH private key for DB server
-    required: true
   registry:
     description: Registry for images
     required: true
   image-prefix:
     description: Image namespace/prefix
     required: true
-  db-host:
-    description: Database host
-    required: true
-  db-server-host:
-    description: Database server host (for SSH access)
-    required: true
-  db-port:
-    description: Database port
-    required: true
-    default: "5432"
-  db-name:
-    description: Database name
+  db-password:
+    description: Database password
     required: true
   db-user:
     description: Database user
     required: true
-  db-password:
-    description: Database password
+    default: finflow
+  redis-password:
+    description: Redis password
     required: true
   cors-origins:
     description: CORS allowed origins (comma-separated)
+    required: true
+  domain:
+    description: Production domain
     required: false
-    default: "http://localhost:3000,http://localhost:5173"
+    default: finflow.ltd
+  grafana-admin-password:
+    description: Grafana admin password
+    required: true
   payments-enabled:
-    description: Enable payment processing (set to true after Wayforpay approval)
+    description: Enable payment processing
     required: false
     default: "false"
   services:
-    description: Space-separated services to deploy
-    required: true
-    default: "caddy redis frontend account_service category_service currency_service debt_service expense_service goals_service income_service payment_service pdf_parser_service recurring_service scheduler_service subscription_service user_service workspace_service"
+    description: Space-separated services to deploy (empty = all)
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -61,271 +55,152 @@ runs:
       with:
         ssh-private-key: ${{ inputs['ssh-private-key'] }}
 
-    - name: Add host keys
+    - name: Add host key
       shell: bash
       run: |
         set -euo pipefail
         mkdir -p ~/.ssh
         ssh-keyscan -H "${{ inputs.host }}" >> ~/.ssh/known_hosts
-        ssh-keyscan -H "${{ inputs['db-server-host'] }}" >> ~/.ssh/known_hosts
 
-    - name: Create deployment script
+    - name: Sync config files to server
       shell: bash
+      env:
+        HOST: ${{ inputs.host }}
+        USER: ${{ inputs.user }}
       run: |
-        cat > /tmp/deploy.sh <<'SCRIPT'
         set -euo pipefail
-        mkdir -p ~/app
-        cd ~/app
+        echo "Syncing config files to server..."
 
-        # URL-encode the password for DATABASE_URL
-        DB_PASSWORD_ENCODED=$(python3 -c "import urllib.parse; print(urllib.parse.quote_plus('$DB_PASSWORD'))")
-        
-        # Generate secrets if not already present in existing .env
-        if [ -f .env ]; then
-          source .env 2>/dev/null || true
-        fi
-        
-        if [ -z "${SECRET_KEY:-}" ]; then
-          SECRET_KEY=$(openssl rand -hex 32)
-        fi
-        
-        if [ -z "${ALGORITHM:-}" ]; then
-          ALGORITHM="HS256"
-        fi
-        
-        if [ -z "${INTERNAL_SECRET_TOKEN:-}" ]; then
-          INTERNAL_SECRET_TOKEN=$(openssl rand -hex 32)
-        fi
-        
-        # Store original values for SSH commands
-        DB_SERVER_HOST_ORIGINAL="${{ inputs['db-server-host'] }}"
-        DB_SERVER_SSH_KEY_ORIGINAL="${{ inputs['db-server-ssh-key'] }}"
-        
-        # Escape special characters for .env file only
-        DB_SERVER_HOST_ESCAPED=$(printf '%s\n' "$DB_SERVER_HOST_ORIGINAL" | sed 's/[[\.*^$()+?{|]/\\&/g')
-        DB_SERVER_SSH_KEY_ESCAPED=$(printf '%s\n' "$DB_SERVER_SSH_KEY_ORIGINAL" | sed 's/[[\.*^$()+?{|]/\\&/g')
-        
-        cat > .env <<ENVEOF
-        REGISTRY=$REGISTRY
-        IMAGE_PREFIX=$IMAGE_PREFIX
-        DB_HOST=$DB_HOST
-        DB_SERVER_HOST="$DB_SERVER_HOST_ESCAPED"
-        DB_SERVER_SSH_KEY="$DB_SERVER_SSH_KEY_ESCAPED"
-        DB_PORT=$DB_PORT
-        DB_NAME=$DB_NAME
-        DB_USER=$DB_USER
-        DB_PASSWORD="$DB_PASSWORD"
-        DB_PASSWORD_ENCODED="$DB_PASSWORD_ENCODED"
-        CORS_ORIGINS="$CORS_ORIGINS"
-        cors_origins="$CORS_ORIGINS"
-        NODE_ENV=production
-        SECRET_KEY="$SECRET_KEY"
-        ALGORITHM="$ALGORITHM"
-        INTERNAL_SECRET_TOKEN="$INTERNAL_SECRET_TOKEN"
-        PAYMENTS_ENABLED="$PAYMENTS_ENABLED"
-        ENVEOF
+        # Ensure directories exist
+        ssh -o StrictHostKeyChecking=accept-new "$USER@$HOST" "mkdir -p ~/app/init ~/app/backup ~/app/prometheus ~/app/logging ~/app/logging/dashboards"
 
-        # Create separate databases for each service
-        echo "🗄️ Creating separate databases for each service..."
-        echo "🔍 Debug info:"
-        echo "  USER: $USER"
-        echo "  DB_SERVER_HOST: $DB_SERVER_HOST"
-        echo "  DB_HOST: $DB_HOST"
-        echo "  DB_PORT: $DB_PORT"
-        echo "  DB_USER: $DB_USER"
-        
-        # Create databases by SSH to DB server using dedicated key
-        echo "🔍 Creating databases directly on DB server using dedicated SSH key..."
-        
-        # Write the DB server SSH key to a temporary file
-        echo "$DB_SERVER_SSH_KEY_ORIGINAL" > /tmp/db_server_key
-        chmod 600 /tmp/db_server_key
-        
-        if [ -f init/init.sql ]; then
-          echo "📄 Found init.sql, creating databases on DB server..."
-          ssh -i /tmp/db_server_key -o StrictHostKeyChecking=no "$USER@$DB_SERVER_HOST_ORIGINAL" "mkdir -p ~/init"
-          scp -i /tmp/db_server_key -o StrictHostKeyChecking=no init/init.sql "$USER@$DB_SERVER_HOST_ORIGINAL:~/init/init.sql"
-          ssh -i /tmp/db_server_key -o StrictHostKeyChecking=no "$USER@$DB_SERVER_HOST_ORIGINAL" "PGPASSWORD=$DB_PASSWORD psql -h localhost -p $DB_PORT -U $DB_USER -d postgres -f ~/init/init.sql"
-          if [ $? -eq 0 ]; then
-            echo "✅ Databases created successfully"
-          else
-            echo "⚠️ Database creation completed (some databases may already exist)"
-          fi
-        else
-          echo "⚠️ init.sql not found, creating databases manually on DB server..."
-          ssh -i /tmp/db_server_key -o StrictHostKeyChecking=no "$USER@$DB_SERVER_HOST_ORIGINAL" "PGPASSWORD=$DB_PASSWORD psql -h localhost -p $DB_PORT -U $DB_USER -d postgres -c \"
-            CREATE DATABASE user_db;
-            CREATE DATABASE category_db;
-            CREATE DATABASE expense_db;
-            CREATE DATABASE income_db;
-            CREATE DATABASE recurring_db;
-            CREATE DATABASE goals_db;
-            CREATE DATABASE debt_db;
-            CREATE DATABASE account_db;
-            CREATE DATABASE subscription_db;
-            CREATE DATABASE currency_db;
-          \""
-        fi
-        
-        # Clean up the temporary key file
-        rm -f /tmp/db_server_key
+        # Sync all config files
+        scp deploy/docker-compose.yml "$USER@$HOST:~/app/docker-compose.yml"
+        scp deploy/Caddyfile "$USER@$HOST:~/app/Caddyfile"
+        scp init/init.sql "$USER@$HOST:~/app/init/init.sql"
+        scp deploy/backup/backup.sh "$USER@$HOST:~/app/backup/backup.sh"
+        scp deploy/prometheus/prometheus.yml "$USER@$HOST:~/app/prometheus/prometheus.yml"
+        scp deploy/prometheus/alerts.yml "$USER@$HOST:~/app/prometheus/alerts.yml"
+        scp logging/loki-config.yml "$USER@$HOST:~/app/logging/loki-config.yml"
+        scp logging/promtail-config.yml "$USER@$HOST:~/app/logging/promtail-config.yml"
+        scp logging/grafana-datasources.yml "$USER@$HOST:~/app/logging/grafana-datasources.yml"
+        scp logging/grafana-dashboards.yml "$USER@$HOST:~/app/logging/grafana-dashboards.yml"
 
-        # Use the docker-compose.yml from the deploy folder (already copied)
-        # This ensures we use the standardized configuration from the repository
-        echo "📋 Using docker-compose.yml from deploy folder..."
-        
-        # Verify the docker-compose.yml file exists
-        if [ ! -f docker-compose.yml ]; then
-          echo "❌ docker-compose.yml not found! Make sure it was copied from the deploy folder."
-          exit 1
+        # Sync dashboards if they exist
+        if [ -d "logging/dashboards" ]; then
+          scp -r logging/dashboards/* "$USER@$HOST:~/app/logging/dashboards/" 2>/dev/null || true
         fi
 
-        # Verify Caddyfile exists (should be copied from deploy folder)
-        if [ ! -f Caddyfile ]; then
-          echo "❌ Caddyfile not found! Make sure it was copied from the deploy folder."
-          exit 1
-        fi
-        
-        # Create Caddyfile if it doesn't exist (fallback)
-        if [ ! -f Caddyfile ]; then
-          cat > Caddyfile <<'CADDYEOF'
-        {
-          auto_https disable_redirects
-        }
+        echo "Config files synced."
 
-        :80 {
-          encode zstd gzip
-          log
-
-          # API routes - proxy to backend services
-          handle_path /api/users/* {
-            reverse_proxy user_service:8000
-          }
-
-          handle_path /api/categories/* {
-            reverse_proxy category_service:8000
-          }
-
-          handle_path /api/expenses/* {
-            reverse_proxy expense_service:8000
-          }
-
-          handle_path /api/income/* {
-            reverse_proxy income_service:8000
-          }
-
-          handle_path /api/accounts/* {
-            reverse_proxy account_service:8000
-          }
-
-          handle_path /api/currencies/* {
-            reverse_proxy currency_service:8000
-          }
-
-          handle_path /api/debts/* {
-            reverse_proxy debt_service:8000
-          }
-
-          handle_path /api/goals/* {
-            reverse_proxy goals_service:8000
-          }
-
-          handle_path /api/recurring/* {
-            reverse_proxy recurring_service:8000
-          }
-
-          handle_path /api/pdf/* {
-            reverse_proxy pdf_parser_service:8000
-          }
-
-          # Frontend - SPA routing with fallback to index.html
-          handle /* {
-            reverse_proxy frontend:80 {
-              header_up Host {host}
-              header_up X-Real-IP {remote_host}
-              header_up X-Forwarded-For {remote_host}
-              header_up X-Forwarded-Proto {scheme}
-            }
-          }
-        }
-        CADDYEOF
-        fi
-
-        echo ""
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo "📥 Pulling latest images..."
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        if docker compose pull ${SERVICES}; then
-          echo "✅ Images pulled successfully"
-        else
-          echo "⚠️ Some images failed to pull"
-        fi
-
-        echo ""
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo "🔄 Recreating services: ${SERVICES}"
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        if docker compose up -d ${SERVICES}; then
-          echo "✅ Services started successfully"
-        else
-          echo "❌ Failed to start some services"
-          exit 1
-        fi
-
-        echo ""
-        echo "🧹 Cleaning up old images..."
-        docker image prune -f || true
-
-        echo ""
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo "📊 Deployment Status"
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        docker compose ps
-
-        echo ""
-        echo "✅ Deployment completed successfully!"
-        SCRIPT
-
-    - name: Deploy over SSH
+    - name: Deploy
       shell: bash
       env:
         HOST: ${{ inputs.host }}
         USER: ${{ inputs.user }}
         REGISTRY: ${{ inputs.registry }}
         IMAGE_PREFIX: ${{ inputs['image-prefix'] }}
-        DB_HOST: ${{ inputs['db-host'] }}
-        DB_SERVER_HOST: ${{ inputs['db-server-host'] }}
-        DB_SERVER_SSH_KEY: ${{ inputs['db-server-ssh-key'] }}
-        DB_PORT: ${{ inputs['db-port'] }}
-        DB_NAME: ${{ inputs['db-name'] }}
         DB_USER: ${{ inputs['db-user'] }}
         DB_PASSWORD: ${{ inputs['db-password'] }}
+        REDIS_PASSWORD: ${{ inputs['redis-password'] }}
         CORS_ORIGINS: ${{ inputs['cors-origins'] }}
+        DOMAIN: ${{ inputs.domain }}
+        GRAFANA_ADMIN_PASSWORD: ${{ inputs['grafana-admin-password'] }}
         PAYMENTS_ENABLED: ${{ inputs['payments-enabled'] }}
         SERVICES: ${{ inputs.services }}
       run: |
         set -euo pipefail
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo "🚀 Starting deployment process"
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo "Host: $HOST"
-        echo "User: $USER"
-        echo "Registry: $REGISTRY"
-        echo "Services: ${SERVICES:-<empty>}"
+        echo "Starting deployment to $HOST..."
 
-        # Use default services if empty
+        # Default services if none specified
         if [ -z "${SERVICES:-}" ]; then
-          SERVICES="caddy redis frontend account_service category_service currency_service debt_service expense_service goals_service income_service payment_service pdf_parser_service recurring_service scheduler_service subscription_service user_service workspace_service"
-          echo "Using default services: $SERVICES"
+          SERVICES="caddy postgres redis frontend account_service category_service currency_service debt_service expense_service goals_service income_service payment_service pdf_parser_service recurring_service scheduler_service subscription_service user_service workspace_service"
         fi
 
+        # URL-encode the DB password
+        DB_PASSWORD_ENCODED=$(python3 -c "import urllib.parse; print(urllib.parse.quote_plus('$DB_PASSWORD'))")
+
+        # Generate .env on server
+        ssh -o StrictHostKeyChecking=accept-new "$USER@$HOST" bash -s <<REMOTE_SCRIPT
+        set -euo pipefail
+        cd ~/app
+
+        # Preserve existing secrets if present
+        if [ -f .env ]; then
+          source .env 2>/dev/null || true
+        fi
+
+        SECRET_KEY="\${SECRET_KEY:-$(openssl rand -hex 32)}"
+        ALGORITHM="\${ALGORITHM:-HS256}"
+        INTERNAL_SECRET_TOKEN="\${INTERNAL_SECRET_TOKEN:-$(openssl rand -hex 32)}"
+
+        cat > .env <<'ENVEOF'
+        REGISTRY=${REGISTRY}
+        IMAGE_PREFIX=${IMAGE_PREFIX}
+        DB_USER=${DB_USER}
+        DB_PASSWORD=${DB_PASSWORD}
+        DB_PASSWORD_ENCODED=${DB_PASSWORD_ENCODED}
+        REDIS_PASSWORD=${REDIS_PASSWORD}
+        CORS_ORIGINS=${CORS_ORIGINS}
+        DOMAIN=${DOMAIN}
+        NODE_ENV=production
+        PAYMENTS_ENABLED=${PAYMENTS_ENABLED:-false}
+        GRAFANA_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+        ENVEOF
+
+        # Append generated secrets (not overwritten on re-deploy)
+        echo "SECRET_KEY=\$SECRET_KEY" >> .env
+        echo "ALGORITHM=\$ALGORITHM" >> .env
+        echo "INTERNAL_SECRET_TOKEN=\$INTERNAL_SECRET_TOKEN" >> .env
+
+        # Pull images
+        echo "Pulling images..."
+        docker compose pull ${SERVICES} || echo "Warning: some images failed to pull"
+
+        # Save current state for rollback
+        docker compose ps --format json > /tmp/pre-deploy-state.json 2>/dev/null || true
+
+        # Recreate services
+        echo "Recreating services: ${SERVICES}"
+        if docker compose up -d --remove-orphans ${SERVICES}; then
+          echo "Services started successfully"
+        else
+          echo "Deployment failed - attempting rollback..."
+          docker compose up -d --remove-orphans || true
+          exit 1
+        fi
+
+        # Prune old images
+        docker image prune -f || true
+
+        # Health check (wait for services, then report)
+        echo "Waiting 30s for services to stabilize..."
+        sleep 30
         echo ""
-        echo "📦 Services to deploy: $SERVICES"
+        echo "=== Deployment Status ==="
+        docker compose ps
         echo ""
 
-        # Transfer deployment script, docker-compose.yml, init.sql, and Caddyfile
-        scp /tmp/deploy.sh "$USER@$HOST:/tmp/deploy.sh"
-        scp deploy/docker-compose.yml "$USER@$HOST:~/app/docker-compose.yml"
-        scp deploy/Caddyfile "$USER@$HOST:~/app/Caddyfile"
-        scp init/init.sql "$USER@$HOST:~/app/init/init.sql"
-        ssh -o StrictHostKeyChecking=no "$USER@$HOST" "export REGISTRY='$REGISTRY' IMAGE_PREFIX='$IMAGE_PREFIX' DB_HOST='$DB_HOST' DB_SERVER_HOST='$DB_SERVER_HOST' DB_SERVER_SSH_KEY='$DB_SERVER_SSH_KEY' DB_PORT='$DB_PORT' DB_NAME='$DB_NAME' DB_USER='$DB_USER' DB_PASSWORD='$DB_PASSWORD' CORS_ORIGINS='$CORS_ORIGINS' PAYMENTS_ENABLED='${PAYMENTS_ENABLED:-false}' SERVICES='$SERVICES' && bash /tmp/deploy.sh"
+        # Check for unhealthy containers
+        UNHEALTHY=\$(docker compose ps --format json | python3 -c "
+        import sys, json
+        unhealthy = []
+        for line in sys.stdin:
+          line = line.strip()
+          if not line: continue
+          try:
+            c = json.loads(line)
+            if c.get('Health','') == 'unhealthy' or c.get('State','') != 'running':
+              unhealthy.append(c.get('Name','unknown'))
+          except: pass
+        if unhealthy:
+          print(','.join(unhealthy))
+        " 2>/dev/null || echo "")
+
+        if [ -n "\$UNHEALTHY" ]; then
+          echo "WARNING: Unhealthy containers: \$UNHEALTHY"
+          exit 1
+        fi
+
+        echo "Deployment completed successfully!"
+        REMOTE_SCRIPT

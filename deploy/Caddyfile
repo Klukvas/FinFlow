@@ -82,17 +82,31 @@ finflow.ltd {
   # Use custom SSL certificates
   tls /etc/ssl/cf-origin/finflow.crt /etc/ssl/cf-origin/finflow.key
 
+  # Security headers
+  header {
+    X-Frame-Options "SAMEORIGIN"
+    X-Content-Type-Options "nosniff"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    X-XSS-Protection "1; mode=block"
+    Permissions-Policy "camera=(), microphone=(), geolocation=()"
+  }
+
   # SEO and static files
   handle /robots.txt {
     file_server
   }
-  
+
   handle /sitemap.xml {
     file_server
   }
-  
+
   handle /favicon.ico {
     file_server
+  }
+
+  # Grafana - internal monitoring (behind Caddy)
+  handle_path /grafana/* {
+    reverse_proxy grafana:3000
   }
 
   # API routes - proxy to backend services
@@ -159,16 +173,10 @@ finflow.ltd {
   # Frontend - SPA routing with fallback to index.html
   handle /* {
     reverse_proxy frontend:80 {
-      # Pass through the original headers
       header_up Host {host}
       header_up X-Real-IP {remote_host}
       header_up X-Forwarded-For {remote_host}
       header_up X-Forwarded-Proto {scheme}
-      
-      # SEO headers
-      header_up X-Frame-Options "SAMEORIGIN"
-      header_up X-Content-Type-Options "nosniff"
-      header_up Referrer-Policy "strict-origin-when-cross-origin"
     }
   }
 }
