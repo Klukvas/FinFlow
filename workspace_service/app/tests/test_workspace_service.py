@@ -45,7 +45,6 @@ class TestGetMembers:
         # Verify member data is enriched
         for member in members:
             assert member.email is not None
-            assert member.username is not None
 
     def test_get_members_any_member_can_view(
         self, workspace_service, workspace_with_member, member_user

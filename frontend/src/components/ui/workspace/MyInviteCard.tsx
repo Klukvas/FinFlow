@@ -99,7 +99,7 @@ export const MyInviteCard: React.FC<MyInviteCardProps> = ({
             <div className="flex items-center gap-2 text-sm theme-text-secondary mt-0.5">
               <FaUser className="w-3 h-3" />
               <span>
-                {t('workspace.invite.from', 'From')} <span className="font-medium">{invite.inviter_username}</span>
+                {t('workspace.invite.from', 'From')} <span className="font-medium">{invite.inviter_email}</span>
               </span>
             </div>
           </div>

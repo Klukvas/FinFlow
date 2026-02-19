@@ -30,7 +30,7 @@ router = APIRouter(prefix="/workspaces/{workspace_id}/members", tags=["Members"]
     
     Response includes:
     - Member role (owner, full, read)
-    - User email and username
+    - User email
     - Join date
     """,
     responses={
@@ -102,7 +102,6 @@ def update_member_role(
         created_at=member.created_at,
         updated_at=member.updated_at,
         email=user_info.email if user_info else None,
-        username=user_info.username if user_info else None,
     )
 
 

@@ -17,7 +17,6 @@ class MemberResponse(BaseModel):
     updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
     # Optional user details (populated when needed)
     email: Optional[str] = Field(None, description="Member's email (if fetched)")
-    username: Optional[str] = Field(None, description="Member's username (if fetched)")
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -31,8 +30,7 @@ class MemberResponse(BaseModel):
                 "joined_at": "2024-01-01T00:00:00Z",
                 "created_at": "2024-01-01T00:00:00Z",
                 "updated_at": None,
-                "email": "owner@example.com",
-                "username": "john_doe"
+                "email": "owner@example.com"
             }
         }
     )

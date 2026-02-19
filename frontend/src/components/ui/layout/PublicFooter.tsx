@@ -12,26 +12,21 @@ export const PublicFooter: React.FC = () => {
       { label: t('footer.links.product.features'), href: '/features' },
       { label: t('footer.links.product.pricing'), href: '/pricing' },
       { label: t('footer.links.product.api'), href: '/api' },
-      { label: t('footer.links.product.integrations'), href: '/integrations' },
+    ],
+    platform: [
+      { label: t('footer.links.platform.architecture'), href: '/about' },
+      { label: t('footer.links.platform.security'), href: '/about' },
+      { label: t('footer.links.platform.status'), href: '/status' },
+      { label: t('footer.links.platform.docs'), href: '/docs' },
     ],
     company: [
       { label: t('footer.links.company.about'), href: '/about' },
-      { label: t('footer.links.company.blog'), href: '/blog' },
-      { label: t('footer.links.company.careers'), href: '/careers' },
       { label: t('footer.links.company.contact'), href: '/contact' },
-    ],
-    support: [
-      { label: t('footer.links.support.help'), href: '/help' },
-      { label: t('footer.links.support.docs'), href: '/docs' },
-      { label: t('footer.links.support.status'), href: '/status' },
-      { label: t('footer.links.support.community'), href: '/community' },
     ],
     legal: [
       { label: t('footer.links.legal.privacy'), href: '/privacy' },
       { label: t('footer.links.legal.terms'), href: '/terms' },
       { label: t('footer.links.legal.refund'), href: '/refund' },
-      { label: t('footer.links.legal.cookies'), href: '/cookies' },
-      { label: t('footer.links.legal.gdpr'), href: '/gdpr' },
     ],
   };
 
@@ -44,17 +39,17 @@ export const PublicFooter: React.FC = () => {
 
   return (
     <footer className="theme-surface theme-border border-t theme-transition">
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+      <div className="max-w-6xl mx-auto px-6 py-12">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8">
           {/* Brand Section */}
-          <div className="lg:col-span-1">
-            <h3 className="text-lg font-bold theme-text-primary mb-4">
+          <div className="col-span-2 sm:col-span-3 lg:col-span-1">
+            <h3 className="text-base font-bold theme-text-primary mb-3">
               {t('footer.brand.title')}
             </h3>
-            <p className="theme-text-secondary text-sm mb-4">
+            <p className="theme-text-secondary text-sm mb-4 leading-relaxed">
               {t('footer.brand.description')}
             </p>
-            <div className="flex space-x-4 mb-4">
+            <div className="flex space-x-3 mb-4">
               {socialLinks.map((social) => {
                 const Icon = social.icon;
                 return (
@@ -66,24 +61,22 @@ export const PublicFooter: React.FC = () => {
                     className="theme-text-tertiary hover:theme-text-primary theme-transition"
                     title={social.label}
                   >
-                    <Icon className="w-5 h-5" />
+                    <Icon className="w-4 h-4" />
                   </a>
                 );
               })}
             </div>
-            {/* Contact Email */}
             <a
               href="mailto:finflow@flux-lab.dev"
-              className="inline-flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+              className="text-sm theme-text-tertiary hover:theme-text-primary theme-transition"
             >
-              <FaEnvelope className="w-4 h-4" />
               finflow@flux-lab.dev
             </a>
           </div>
 
           {/* Product Links */}
           <div>
-            <h4 className="font-semibold theme-text-primary mb-4">{t('footer.sections.product')}</h4>
+            <h4 className="text-sm font-semibold theme-text-primary mb-3">{t('footer.sections.product')}</h4>
             <ul className="space-y-2">
               {footerLinks.product.map((link) => (
                 <li key={link.label}>
@@ -98,9 +91,26 @@ export const PublicFooter: React.FC = () => {
             </ul>
           </div>
 
+          {/* Platform Links */}
+          <div>
+            <h4 className="text-sm font-semibold theme-text-primary mb-3">{t('footer.sections.platform')}</h4>
+            <ul className="space-y-2">
+              {footerLinks.platform.map((link) => (
+                <li key={link.label}>
+                  <Link
+                    to={link.href}
+                    className="theme-text-secondary hover:theme-text-primary text-sm theme-transition"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
           {/* Company Links */}
           <div>
-            <h4 className="font-semibold theme-text-primary mb-4">{t('footer.sections.company')}</h4>
+            <h4 className="text-sm font-semibold theme-text-primary mb-3">{t('footer.sections.company')}</h4>
             <ul className="space-y-2">
               {footerLinks.company.map((link) => (
                 <li key={link.label}>
@@ -115,26 +125,9 @@ export const PublicFooter: React.FC = () => {
             </ul>
           </div>
 
-          {/* Support Links */}
-          <div>
-            <h4 className="font-semibold theme-text-primary mb-4">{t('footer.sections.support')}</h4>
-            <ul className="space-y-2">
-              {footerLinks.support.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    to={link.href}
-                    className="theme-text-secondary hover:theme-text-primary text-sm theme-transition"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
           {/* Legal Links */}
           <div>
-            <h4 className="font-semibold theme-text-primary mb-4">{t('footer.sections.legal')}</h4>
+            <h4 className="text-sm font-semibold theme-text-primary mb-3">{t('footer.sections.legal')}</h4>
             <ul className="space-y-2">
               {footerLinks.legal.map((link) => (
                 <li key={link.label}>
@@ -151,16 +144,14 @@ export const PublicFooter: React.FC = () => {
         </div>
 
         {/* Bottom Section */}
-        <div className="mt-8 pt-8 theme-border border-t">
-          <div className="flex flex-col lg:flex-row justify-between items-center">
-            <p className="theme-text-tertiary text-sm">
+        <div className="mt-10 pt-6 theme-border border-t">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
+            <p className="theme-text-tertiary text-xs">
               {t('footer.bottom.copyright', { year: currentYear })}
             </p>
-            <div className="mt-4 lg:mt-0">
-              <p className="theme-text-tertiary text-sm">
-                {t('footer.bottom.madeWith')}
-              </p>
-            </div>
+            <p className="theme-text-tertiary text-xs">
+              {t('footer.bottom.madeWith')}
+            </p>
           </div>
         </div>
       </div>

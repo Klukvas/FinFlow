@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { useTutorial } from '@/contexts/TutorialContext';
 import { WorkspaceSelector } from '@/components/ui/workspace';
 import {
@@ -29,6 +30,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onToggle }) => {
   const { logout, user, isLoading } = useAuth();
+  const { currentWorkspaceId } = useWorkspace();
   const { isActive: isTutorialActive } = useTutorial();
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(false);
@@ -58,22 +60,27 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onToggle }) =
     onClose();
   };
 
-  const navigationItems = [
-    { path: '/category', icon: FaFolder, label: t('navigation.categories') },
-    { path: '/account', icon: FaWallet, label: t('navigation.accounts') },
-    { path: '/expense', icon: FaHome, label: t('navigation.expenses') },
-    { path: '/income', icon: FaDollarSign, label: t('navigation.income') },
-    { path: '/debts', icon: FaDollarSign, label: t('navigation.debts') },
-    { path: '/recurring', icon: FaRedo, label: t('navigation.recurring') },
-    { path: '/goals', icon: FaBullseye, label: t('navigation.goals') },
-    { path: '/pdf-parser', icon: FaFilePdf, label: t('navigation.pdfParser') },
-    { path: '/workspaces', icon: FaUsers, label: t('navigation.workspaces') },
-    { path: '/invites', icon: FaEnvelope, label: t('navigation.invites', 'Invitations') },
+  const allNavigationItems = [
+    { path: '/category', icon: FaFolder, label: t('navigation.categories'), requiresWorkspace: true },
+    { path: '/account', icon: FaWallet, label: t('navigation.accounts'), requiresWorkspace: true },
+    { path: '/expense', icon: FaHome, label: t('navigation.expenses'), requiresWorkspace: true },
+    { path: '/income', icon: FaDollarSign, label: t('navigation.income'), requiresWorkspace: true },
+    { path: '/debts', icon: FaDollarSign, label: t('navigation.debts'), requiresWorkspace: true },
+    { path: '/recurring', icon: FaRedo, label: t('navigation.recurring'), requiresWorkspace: true },
+    { path: '/goals', icon: FaBullseye, label: t('navigation.goals'), requiresWorkspace: true },
+    { path: '/pdf-parser', icon: FaFilePdf, label: t('navigation.pdfParser'), requiresWorkspace: true },
+    { path: '/workspaces', icon: FaUsers, label: t('navigation.workspaces'), requiresWorkspace: false },
+    { path: '/invites', icon: FaEnvelope, label: t('navigation.invites', 'Invitations'), requiresWorkspace: false },
   ];
+
+  // Hide workspace-dependent items when no workspace is selected
+  const navigationItems = currentWorkspaceId
+    ? allNavigationItems
+    : allNavigationItems.filter(item => !item.requiresWorkspace);
 
   // Render sidebar content with expanded/collapsed state
   const renderSidebarContent = (expanded: boolean) => (
-    <div data-testid="sidebar" className="flex flex-col h-full theme-surface theme-shadow theme-transition">
+    <div data-testid="sidebar" className="flex flex-col h-full theme-surface theme-transition">
       {/* Header */}
       <div className={`flex-shrink-0 flex items-center ${expanded ? 'justify-between' : 'justify-center'} p-4 theme-border border-b`}>
         {expanded && <h1 className="text-lg font-bold theme-text-primary">{t('header.appTitle')}</h1>}
@@ -139,7 +146,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onToggle }) =
           to="/profile"
           onClick={isMobile ? onClose : undefined}
           className={`flex items-center ${expanded ? 'mb-4' : 'mb-2 justify-center'} hover:theme-surface-hover rounded-lg p-2 ${expanded ? '-m-2' : ''} theme-transition group cursor-pointer`}
-          title={expanded ? "Перейти к профилю" : user?.username || t('header.user')}
+          title={expanded ? "Перейти к профилю" : user?.email || t('header.user')}
         >
           <div className="w-8 h-8 theme-accent-light rounded-full flex items-center justify-center group-hover:theme-accent-hover theme-transition">
             <FaUser className="w-4 h-4 theme-accent" />
@@ -147,7 +154,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onToggle }) =
           {expanded && (
             <div className="ml-3">
               <p className="text-sm font-medium theme-text-primary group-hover:theme-text-secondary" data-testid="user-name">
-                {isLoading ? t('common.loading') : user?.username || t('header.user')}
+                {isLoading ? t('common.loading') : user?.email || t('header.user')}
               </p>
               <p className="text-xs theme-text-tertiary" data-testid="user-email">
                 {user?.email || t('navigation.profile')}
@@ -195,7 +202,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onToggle }) =
   // Desktop Sidebar - Collapsible & Sticky (full height)
   // When collapsed: show only icons (w-16), when expanded: full width (w-64)
   return (
-    <div className={`sticky top-0 h-screen theme-surface theme-shadow theme-border border-r theme-transition transition-all duration-300 ${
+    <div className={`sticky top-0 h-screen theme-surface theme-border border-r theme-transition transition-all duration-300 ${
       isOpen ? 'w-64' : 'w-16'
     }`}>
       {renderSidebarContent(isOpen)}

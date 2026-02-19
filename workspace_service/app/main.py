@@ -150,6 +150,12 @@ app.add_middleware(
 )
 
 
+@app.get("/")
+async def root():
+    """Root endpoint"""
+    return {"status": "healthy", "service": "workspace-service"}
+
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""

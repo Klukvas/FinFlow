@@ -18,13 +18,12 @@ from app.exceptions.user_errors import (
     UserAuthenticationError,
     UserRegistrationError,
     PasswordPolicyError,
-    UsernamePolicyError,
     AccountLockedError,
     RateLimitError
 )
 from app.config import settings
 from app.utils.logger import get_logger, log_security_event, log_operation, log_authentication_attempt
-from app.utils.validation import validate_password_strength, validate_username, validate_email_domain, sanitize_input
+from app.utils.validation import validate_password_strength, validate_email_domain, sanitize_input
 from app.utils.rate_limiter import rate_limiter
 
 class AuthService:
@@ -38,14 +37,6 @@ class AuthService:
             return self.db.query(User).filter(User.email == email).first()
         except Exception as e:
             self.logger.error(f"Error retrieving user by email: {e}")
-            raise UserValidationError("Database error while retrieving user")
-
-    def get_user_by_username(self, username: str) -> Optional[User]:
-        """Get user by username"""
-        try:
-            return self.db.query(User).filter(User.username == username).first()
-        except Exception as e:
-            self.logger.error(f"Error retrieving user by username: {e}")
             raise UserValidationError("Database error while retrieving user")
 
     def get_user_by_id(self, user_id: int) -> User:
@@ -66,15 +57,11 @@ class AuthService:
         try:
             # Sanitize inputs
             email = sanitize_input(data.email.lower().strip())
-            username = sanitize_input(data.username.strip())
             password = data.password
             base_currency = data.base_currency.upper() if data.base_currency else "USD"
 
             # Validate email domain
             validate_email_domain(email)
-
-            # Validate username
-            validate_username(username)
 
             # Validate password strength
             validate_password_strength(password)
@@ -100,23 +87,12 @@ class AuthService:
                 error.error_code = UserErrorCode.EMAIL_ALREADY_TAKEN
                 raise error
 
-            if self.get_user_by_username(username):
-                log_security_event(
-                    self.logger,
-                    "Registration attempt with existing username",
-                    details=f"Username: {username}"
-                )
-                error = UserRegistrationError(UserServiceError.USERNAME_ALREADY_REGISTERED.value)
-                error.error_code = UserErrorCode.USERNAME_ALREADY_TAKEN
-                raise error
-
             # Hash password
             hashed_password = bcrypt.hash(password)
 
             # Create user
             user = User(
                 email=email,
-                username=username,
                 hashed_password=hashed_password,
                 base_currency=base_currency
             )
@@ -172,18 +148,18 @@ class AuthService:
                 self.logger,
                 "User registered",
                 user.id,
-                f"Email: {email}, Username: {username}"
+                f"Email: {email}"
             )
 
             return user
 
-        except (UserRegistrationError, PasswordPolicyError, UsernamePolicyError, UserValidationError):
+        except (UserRegistrationError, PasswordPolicyError, UserValidationError):
             self.db.rollback()
             raise
         except IntegrityError as e:
             self.db.rollback()
             self.logger.error(f"Database integrity error during user creation: {e}")
-            raise UserRegistrationError("User with this email or username already exists")
+            raise UserRegistrationError("User with this email already exists")
         except Exception as e:
             self.db.rollback()
             self.logger.error(f"Unexpected error during user creation: {e}")
@@ -241,7 +217,6 @@ class AuthService:
                 "exp": expire,
                 "iat": datetime.now(timezone.utc),
                 "email": user.email,
-                "username": user.username,
                 "default_workspace_id": str(user.default_workspace_id) if user.default_workspace_id else None,
                 "role": user.role
             }

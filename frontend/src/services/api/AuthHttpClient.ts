@@ -43,8 +43,6 @@ export class AuthHttpClient {
 
     if (token) {
       headers.Authorization = `Bearer ${token}`;
-    } else {
-      console.warn('AuthHttpClient: No token available for request to', url);
     }
 
     // Add X-Workspace-Id header if available and not skipped

@@ -179,6 +179,20 @@ class IncomeService(WorkspaceAuthorizationMixin):
         
         return [IncomeOut.from_orm(income) for income in incomes]
     
+    def get_all_paginated(self, user_id: int, workspace_id: UUID, page: int = 1, size: int = 50) -> tuple[List[Income], int]:
+        """Get paginated incomes for the user in the workspace"""
+        self.authorize_workspace_access(workspace_id, user_id, "viewer", "list_incomes_paginated")
+
+        offset = (page - 1) * size
+
+        total = self.db.query(Income).filter(Income.workspace_id == workspace_id).count()
+
+        incomes = self.db.query(Income).filter(
+            Income.workspace_id == workspace_id
+        ).order_by(desc(Income.date)).offset(offset).limit(size).all()
+
+        return incomes, total
+
     async def get_by_category(self, category_id: int, user_id: int) -> IncomesByCategoryResponse:
         """Get all incomes for a specific category with statistics"""
         incomes = self.db.query(Income).filter(

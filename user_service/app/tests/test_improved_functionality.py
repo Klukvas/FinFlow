@@ -19,7 +19,6 @@ class TestImprovedUserService:
             "/auth/register",
             json={
                 "email": "test@example.com",
-                "username": "testuser",
                 "password": "SecurePass123!"
             }
         )
@@ -36,7 +35,6 @@ class TestImprovedUserService:
             "/auth/register",
             json={
                 "email": "test2@example.com",
-                "username": "testuser2",
                 "password": "WeakPass123"  # No special characters
             }
         )
@@ -48,38 +46,11 @@ class TestImprovedUserService:
             "/auth/register",
             json={
                 "email": "test3@example.com",
-                "username": "testuser3",
                 "password": "Weak1!"  # Too short
             }
         )
         assert response.status_code == 400
         assert "at least 8 characters" in response.json()["error"]
-
-    def test_register_user_with_invalid_username(self):
-        """Test registration with invalid username"""
-        # Test username with invalid characters
-        response = client.post(
-            "/auth/register",
-            json={
-                "email": "test4@example.com",
-                "username": "test@user",  # Invalid character
-                "password": "SecurePass123!"
-            }
-        )
-        assert response.status_code == 400
-        assert "letters, numbers, underscores, and hyphens" in response.json()["error"]
-
-        # Test username starting with underscore
-        response = client.post(
-            "/auth/register",
-            json={
-                "email": "test5@example.com",
-                "username": "_testuser",  # Starts with underscore
-                "password": "SecurePass123!"
-            }
-        )
-        assert response.status_code == 400
-        assert "start with a letter or number" in response.json()["error"]
 
     def test_register_duplicate_email(self):
         """Test registration with duplicate email"""
@@ -88,46 +59,20 @@ class TestImprovedUserService:
             "/auth/register",
             json={
                 "email": "duplicate@example.com",
-                "username": "user1",
                 "password": "SecurePass123!"
             }
         )
-        
+
         # Second registration with same email
         response = client.post(
             "/auth/register",
             json={
                 "email": "duplicate@example.com",
-                "username": "user2",
                 "password": "SecurePass123!"
             }
         )
         assert response.status_code == 400
         assert "Email already registered" in response.json()["error"]
-
-    def test_register_duplicate_username(self):
-        """Test registration with duplicate username"""
-        # First registration
-        client.post(
-            "/auth/register",
-            json={
-                "email": "user1@example.com",
-                "username": "duplicateuser",
-                "password": "SecurePass123!"
-            }
-        )
-        
-        # Second registration with same username
-        response = client.post(
-            "/auth/register",
-            json={
-                "email": "user2@example.com",
-                "username": "duplicateuser",
-                "password": "SecurePass123!"
-            }
-        )
-        assert response.status_code == 400
-        assert "Username already registered" in response.json()["error"]
 
     def test_login_success(self):
         """Test successful login"""
@@ -136,7 +81,6 @@ class TestImprovedUserService:
             "/auth/register",
             json={
                 "email": "login@example.com",
-                "username": "loginuser",
                 "password": "SecurePass123!"
             }
         )
@@ -173,12 +117,11 @@ class TestImprovedUserService:
             "/auth/register",
             json={
                 "email": "current@example.com",
-                "username": "currentuser",
                 "password": "SecurePass123!"
             }
         )
         token = register_response.json()["access_token"]
-        
+
         # Get current user
         response = client.get(
             "/auth/me",
@@ -187,7 +130,6 @@ class TestImprovedUserService:
         assert response.status_code == 200
         data = response.json()
         assert data["email"] == "current@example.com"
-        assert data["username"] == "currentuser"
         assert "id" in data
 
     def test_get_current_user_unauthorized(self):
@@ -212,25 +154,23 @@ class TestImprovedUserService:
             "/auth/register",
             json={
                 "email": "update@example.com",
-                "username": "updateuser",
                 "password": "SecurePass123!"
             }
         )
         token = register_response.json()["access_token"]
-        
+
         # Update user information
         response = client.put(
             "/auth/me",
             json={
                 "email": "updated@example.com",
-                "username": "updateduser"
+                "base_currency": "EUR"
             },
             headers={"Authorization": f"Bearer {token}"}
         )
         assert response.status_code == 200
         data = response.json()
         assert data["email"] == "updated@example.com"
-        assert data["username"] == "updateduser"
 
     def test_change_password(self):
         """Test changing password"""
@@ -239,7 +179,6 @@ class TestImprovedUserService:
             "/auth/register",
             json={
                 "email": "changepass@example.com",
-                "username": "changepassuser",
                 "password": "OldPass123!"
             }
         )
@@ -264,7 +203,6 @@ class TestImprovedUserService:
             "/auth/register",
             json={
                 "email": "wrongpass@example.com",
-                "username": "wrongpassuser",
                 "password": "OldPass123!"
             }
         )
@@ -289,7 +227,6 @@ class TestImprovedUserService:
             "/auth/register",
             json={
                 "email": "weakpass@example.com",
-                "username": "weakpassuser",
                 "password": "OldPass123!"
             }
         )
@@ -322,37 +259,11 @@ class TestImprovedUserService:
             "/auth/register",
             json={
                 "email": "test@example.com"
-                # Missing username and password
+                # Missing password
             }
         )
         assert response.status_code == 400
-        assert "Username is required" in response.json()["error"]
-
-    def test_username_validation_edge_cases(self):
-        """Test username validation edge cases"""
-        # Test username ending with underscore
-        response = client.post(
-            "/auth/register",
-            json={
-                "email": "test6@example.com",
-                "username": "testuser_",  # Ends with underscore
-                "password": "SecurePass123!"
-            }
-        )
-        assert response.status_code == 400
-        assert "cannot end with underscore" in response.json()["error"]
-
-        # Test username ending with hyphen
-        response = client.post(
-            "/auth/register",
-            json={
-                "email": "test7@example.com",
-                "username": "testuser-",  # Ends with hyphen
-                "password": "SecurePass123!"
-            }
-        )
-        assert response.status_code == 400
-        assert "cannot end with hyphen" in response.json()["error"]
+        assert "Password is required" in response.json()["error"]
 
     def test_password_validation_comprehensive(self):
         """Test comprehensive password validation"""
@@ -369,7 +280,6 @@ class TestImprovedUserService:
                 "/auth/register",
                 json={
                     "email": f"test{i+10}@example.com",
-                    "username": f"testuser{i+10}",
                     "password": password
                 }
             )

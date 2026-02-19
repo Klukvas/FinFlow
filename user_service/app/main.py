@@ -9,7 +9,6 @@ from app.exception_handlers import (
     user_authentication_handler,
     user_registration_handler,
     password_policy_handler,
-    username_policy_handler,
     account_locked_handler,
     rate_limit_handler,
     http_exception_handler
@@ -20,7 +19,6 @@ from app.exceptions.user_errors import (
     UserAuthenticationError,
     UserRegistrationError,
     PasswordPolicyError,
-    UsernamePolicyError,
     AccountLockedError,
     RateLimitError
 )
@@ -119,7 +117,6 @@ app.add_exception_handler(UserValidationError, user_validation_handler)
 app.add_exception_handler(UserAuthenticationError, user_authentication_handler)
 app.add_exception_handler(UserRegistrationError, user_registration_handler)
 app.add_exception_handler(PasswordPolicyError, password_policy_handler)
-app.add_exception_handler(UsernamePolicyError, username_policy_handler)
 app.add_exception_handler(AccountLockedError, account_locked_handler)
 app.add_exception_handler(RateLimitError, rate_limit_handler)
 app.add_exception_handler(HTTPException, http_exception_handler)

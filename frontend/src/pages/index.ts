@@ -1,6 +1,5 @@
 import { Account } from './Account'
 import {Category}  from './Category'
-import { CategoryDetail } from './CategoryDetail'
 import { Expense } from './Expense'
 import { Income } from './Income'
 import { Profile } from './Profile'
@@ -24,7 +23,6 @@ export {
   Account,
   Register, 
   Login, 
-  CategoryDetail,
   Expense, 
   Category,
   Income, 

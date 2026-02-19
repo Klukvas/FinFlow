@@ -270,7 +270,6 @@ class WorkspaceService:
                 created_at=member.created_at,
                 updated_at=member.updated_at,
                 email=user_info.email if user_info else None,
-                username=user_info.username if user_info else None,
             ))
         
         return result

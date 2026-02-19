@@ -52,6 +52,14 @@ class IncomeStats(BaseModel):
     income_count: int
     average_income: float
 
+class IncomeListResponse(BaseModel):
+    """Schema for paginated income list response"""
+    items: List[IncomeOut]
+    total: int
+    page: int
+    size: int
+    pages: int
+
 class CategoryIncomeStatistics(BaseModel):
     """Statistics for incomes by category with currency conversion"""
     total_amount: float = Field(description="Total amount of incomes in user's currency")

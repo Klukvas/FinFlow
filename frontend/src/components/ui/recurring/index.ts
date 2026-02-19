@@ -1,3 +1,9 @@
 export { CreateRecurringPayment } from './CreateRecurringPayment';
 export { RecurringPaymentCard } from './RecurringPaymentCard';
 export { RecurringPaymentStats } from './RecurringPaymentStats';
+export { RecurringPageHeader } from './RecurringPageHeader';
+export { RecurringSummaryStrip } from './RecurringSummaryStrip';
+export { RecurringFilterBar } from './RecurringFilterBar';
+export { UpcomingExecutions } from './UpcomingExecutions';
+export { RecurringTable } from './RecurringTable';
+export { RecurringSidePanel } from './RecurringSidePanel';

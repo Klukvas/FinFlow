@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, status, Query, Path
 from typing import List, Optional
 from datetime import datetime, date
 from uuid import UUID
-from app.schemas.income import IncomeCreate, IncomeOut, IncomeUpdate, IncomeSummary, IncomeStats, IncomesByCategoryResponse
+from app.schemas.income import IncomeCreate, IncomeOut, IncomeUpdate, IncomeSummary, IncomeStats, IncomesByCategoryResponse, IncomeListResponse
 from app.services.income import IncomeService
 from app.dependencies import get_income_service, get_current_user_id, get_workspace_id
 from app.exceptions import (
@@ -72,6 +72,45 @@ def get_incomes(
     Requires 'viewer' role. Returns a list of incomes ordered by date (newest first).
     """
     return service.get_all(user_id, workspace_id, skip, limit)
+
+@router.get(
+    "/paginated",
+    response_model=IncomeListResponse,
+    summary="Get paginated incomes",
+    description="Retrieve paginated incomes in the workspace with pagination metadata",
+    responses={
+        200: {"description": "Incomes retrieved successfully"},
+        401: {"description": "Unauthorized - invalid or missing token"},
+        403: {"description": "Forbidden - insufficient workspace permissions"},
+    }
+)
+def read_incomes_paginated(
+    page: int = Query(1, ge=1, description="Page number (starts from 1)"),
+    size: int = Query(50, ge=1, le=100, description="Number of items per page"),
+    user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
+    service: IncomeService = Depends(get_income_service)
+) -> IncomeListResponse:
+    """
+    Get paginated incomes in the workspace.
+
+    - **page**: Page number (starts from 1)
+    - **size**: Number of items per page (1-100, default 50)
+
+    Requires 'viewer' role in the workspace.
+    Returns paginated results with metadata including total count, current page, and total pages.
+    """
+    incomes, total = service.get_all_paginated(user_id, workspace_id, page, size)
+
+    pages = (total + size - 1) // size
+
+    return IncomeListResponse(
+        items=incomes,
+        total=total,
+        page=page,
+        size=size,
+        pages=pages
+    )
 
 @router.get(
     "/{income_id}",

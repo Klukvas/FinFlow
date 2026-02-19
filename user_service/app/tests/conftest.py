@@ -42,6 +42,5 @@ def fake():
 def user_data(fake):
     return {
         "email": fake.unique.email(),
-        "username": fake.unique.user_name(),
         "password": fake.password()
     }

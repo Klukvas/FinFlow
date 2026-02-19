@@ -1,66 +1,262 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CreateIncome } from '../components/ui/income/CreateIncome';
+import { IncomeList } from '../components/ui/income/IncomeList';
+import { IncomeDashboard } from '../components/ui/income/IncomeDashboard';
+import { IncomePageHeader } from '../components/ui/income/IncomePageHeader';
+import { IncomeSummaryStrip } from '../components/ui/income/IncomeSummaryStrip';
+import { IncomeFilterBar } from '../components/ui/income/IncomeFilterBar';
 import { Modal } from '../components/ui/shared/Modal';
+import { Card } from '../components/ui/shared/Card';
 import { Button } from '../components/ui/shared/Button';
-import { FaPlus } from 'react-icons/fa';
-import { IncomeList } from '@/components';
+import { Tabs } from '../components/ui/shared/Tabs';
+import { FaTable, FaChartBar } from 'react-icons/fa';
+import { IncomeOut, IncomeFilters } from '@/types';
+import { useApiClients } from '@/hooks';
+import { useCategories } from '@/contexts/CategoriesContext';
+import { exportIncomeCsv } from '@/utils/exportCsv';
 
 export const Income = () => {
   const { t } = useTranslation();
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const { income: incomeApi } = useApiClients();
+  const { categories: categoriesList } = useCategories();
+
+  // Modal state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<IncomeOut | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Tab & filter state
+  const [activeTab, setActiveTab] = useState('table');
+  const [filtersVisible, setFiltersVisible] = useState(false);
+  const [filters, setFilters] = useState<IncomeFilters>({ page: 1, size: 10 });
+
+  // Data state
+  const [allIncomes, setAllIncomes] = useState<IncomeOut[]>([]);
+  const [paginatedIncomes, setPaginatedIncomes] = useState<IncomeOut[]>([]);
+  const [allLoading, setAllLoading] = useState(true);
+  const [paginatedLoading, setPaginatedLoading] = useState(false);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+
+  // Category map for quick lookup
+  const categoryMap = useMemo(() => {
+    const map: Record<number, string> = {};
+    categoriesList.forEach((cat) => (map[cat.id] = cat.name));
+    return map;
+  }, [categoriesList]);
+
+  // Determine if client-side filtering is active
+  const hasActiveFilters =
+    filters.date_from ||
+    filters.date_to ||
+    (filters.category_ids && filters.category_ids.length > 0) ||
+    filters.account_id ||
+    filters.currency;
+
+  // Fetch ALL incomes (for KPI, dashboard, and client-side filtering)
+  const fetchAllIncomes = useCallback(async () => {
+    setAllLoading(true);
+    try {
+      const response = await incomeApi.getIncomes(0, 10000);
+      if (!('error' in response)) {
+        setAllIncomes(response);
+      }
+    } catch (err) {
+      console.error('Error fetching all incomes:', err);
+    } finally {
+      setAllLoading(false);
+    }
+  }, [incomeApi]);
+
+  // Fetch paginated incomes (when no filters active)
+  const fetchPaginatedIncomes = useCallback(async () => {
+    if (hasActiveFilters) return;
+    setPaginatedLoading(true);
+    try {
+      const response = await incomeApi.getIncomesPaginated({
+        page: filters.page ?? 1,
+        size: filters.size ?? 10,
+      });
+      if (!('error' in response)) {
+        setPaginatedIncomes(response.items);
+        setTotalItems(response.total);
+        setTotalPages(response.pages);
+      }
+    } catch (err) {
+      console.error('Error fetching paginated incomes:', err);
+    } finally {
+      setPaginatedLoading(false);
+    }
+  }, [incomeApi, filters.page, filters.size, hasActiveFilters]);
+
+  useEffect(() => {
+    fetchAllIncomes();
+  }, [fetchAllIncomes]);
+
+  useEffect(() => {
+    fetchPaginatedIncomes();
+  }, [fetchPaginatedIncomes]);
+
+  // Client-side filtered incomes
+  const filteredIncomes = useMemo(() => {
+    if (!hasActiveFilters) return paginatedIncomes;
+
+    let result = [...allIncomes];
+
+    if (filters.date_from) {
+      result = result.filter((e) => e.date >= filters.date_from!);
+    }
+    if (filters.date_to) {
+      result = result.filter((e) => e.date <= filters.date_to!);
+    }
+    if (filters.category_ids && filters.category_ids.length > 0) {
+      result = result.filter((e) => e.category_id != null && filters.category_ids!.includes(e.category_id));
+    }
+    if (filters.account_id) {
+      result = result.filter((e) => e.account_id === filters.account_id);
+    }
+    if (filters.currency) {
+      result = result.filter((e) => e.currency === filters.currency);
+    }
+
+    return result;
+  }, [allIncomes, paginatedIncomes, filters, hasActiveFilters]);
+
+  // Client-side pagination for filtered results
+  const clientPaginatedIncomes = useMemo(() => {
+    if (!hasActiveFilters) return filteredIncomes;
+    const start = ((filters.page || 1) - 1) * (filters.size || 10);
+    return filteredIncomes.slice(start, start + (filters.size || 10));
+  }, [filteredIncomes, filters.page, filters.size, hasActiveFilters]);
+
+  const displayedTotalItems = hasActiveFilters ? filteredIncomes.length : totalItems;
+  const displayedTotalPages = hasActiveFilters
+    ? Math.ceil(filteredIncomes.length / (filters.size || 10))
+    : totalPages;
+
+  // Keyboard shortcut: N to add income
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'n' || e.key === 'N') {
+        const tag = (e.target as HTMLElement)?.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        e.preventDefault();
+        setIsCreateModalOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
+  const tabs = [
+    { id: 'table', label: t('incomePage.tabs.table'), icon: <FaTable className="w-4 h-4" /> },
+    { id: 'dashboard', label: t('incomePage.tabs.dashboard'), icon: <FaChartBar className="w-4 h-4" /> },
+  ];
+
+  const refreshData = () => {
+    fetchAllIncomes();
+    fetchPaginatedIncomes();
+  };
 
   const handleIncomeCreated = () => {
-    setRefreshTrigger(prev => prev + 1);
     setIsCreateModalOpen(false);
+    refreshData();
+  };
+
+  const handleDeleteRequest = (income: IncomeOut) => {
+    setDeleteTarget(income);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    try {
+      await incomeApi.deleteIncome(deleteTarget.id);
+      refreshData();
+    } catch (err) {
+      console.error('Error deleting income:', err);
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteModalOpen(false);
+      setDeleteTarget(null);
+    }
+  };
+
+  const handleExportCsv = () => {
+    const incomesToExport = hasActiveFilters ? filteredIncomes : allIncomes;
+    exportIncomeCsv(incomesToExport, categoryMap);
+  };
+
+  const handleFiltersChange = (newFilters: IncomeFilters) => {
+    setFilters(newFilters);
+  };
+
+  const handlePageChange = (page: number) => {
+    setFilters((prev) => ({ ...prev, page }));
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setFilters((prev) => ({ ...prev, size, page: 1 }));
   };
 
   return (
     <div className="min-h-screen theme-bg p-2 sm:p-4 md:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 lg:space-y-8">
-        {/* Page Header */}
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-green-600/10 to-emerald-600/10 rounded-xl sm:rounded-2xl blur-3xl"></div>
-          <div className="relative theme-surface backdrop-blur-sm rounded-xl sm:rounded-2xl border theme-border p-4 sm:p-6 lg:p-8 theme-shadow">
-            <div className="flex flex-col gap-4 sm:gap-6">
-              <div className="space-y-2 sm:space-y-3">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg">
-                    <svg className="w-4 h-4 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                    </svg>
-                  </div>
-                  <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold theme-text-primary leading-tight">
-                    {t('incomePage.title')}
-                  </h1>
-                </div>
-                <p className="theme-text-secondary text-xs sm:text-sm md:text-base max-w-2xl leading-relaxed">
-                  {t('incomePage.subtitle')}
-                </p>
-              </div>
-              
-              <div className="flex-shrink-0">
-                <Button
-                  onClick={() => setIsCreateModalOpen(true)}
-                  className="group relative bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold px-4 sm:px-6 py-3 sm:py-3 rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-center min-h-[44px] sm:min-h-[48px] text-sm sm:text-base"
-                >
-                  <div className="w-4 h-4 sm:w-5 sm:h-5 group-hover:rotate-90 transition-transform duration-200">
-                    <FaPlus className="w-full h-full" />
-                  </div>
-                  <span>{t('incomePage.addButton')}</span>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+        {/* Header */}
+        <IncomePageHeader
+          onAddIncome={() => setIsCreateModalOpen(true)}
+          onToggleFilters={() => setFiltersVisible((v) => !v)}
+          onExportCsv={handleExportCsv}
+          filtersActive={Boolean(hasActiveFilters)}
+        />
 
-        {/* Incomes List */}
-        <div className="theme-surface backdrop-blur-sm rounded-xl sm:rounded-2xl border theme-border theme-shadow overflow-hidden">
-          <IncomeList key={refreshTrigger} />
-        </div>
+        {/* KPI Strip */}
+        <IncomeSummaryStrip incomes={allIncomes} loading={allLoading} />
 
-        {/* Create Income Modal */}
+        {/* Filter Bar */}
+        <IncomeFilterBar
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+          isVisible={filtersVisible}
+        />
+
+        {/* Tabs */}
+        <Card>
+          <Tabs
+            tabs={tabs}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            className="px-4 sm:px-6"
+          />
+        </Card>
+
+        {/* Tab Content */}
+        {activeTab === 'table' && (
+          <Card>
+            <IncomeList
+              incomes={clientPaginatedIncomes}
+              loading={paginatedLoading || (hasActiveFilters ? allLoading : false)}
+              categories={categoryMap}
+              currentPage={filters.page || 1}
+              totalPages={displayedTotalPages}
+              pageSize={filters.size || 10}
+              totalItems={displayedTotalItems}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+              onDeleteRequest={handleDeleteRequest}
+              emptyMessage={hasActiveFilters ? t('incomePage.filters.noMatchFilters') : undefined}
+            />
+          </Card>
+        )}
+
+        {activeTab === 'dashboard' && (
+          <IncomeDashboard incomes={allIncomes} loading={allLoading} />
+        )}
+
+        {/* Create Modal */}
         <Modal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
@@ -68,6 +264,54 @@ export const Income = () => {
           size="lg"
         >
           <CreateIncome onIncomeCreated={handleIncomeCreated} />
+        </Modal>
+
+        {/* Delete Confirmation Modal */}
+        <Modal
+          isOpen={isDeleteModalOpen}
+          onClose={() => {
+            setIsDeleteModalOpen(false);
+            setDeleteTarget(null);
+          }}
+          title={t('incomePage.deleteConfirm.title')}
+          size="sm"
+        >
+          <div className="space-y-4">
+            <p className="text-sm theme-text-secondary">
+              {t('incomePage.deleteConfirm.message')}
+            </p>
+            {deleteTarget && (
+              <div className="theme-bg-secondary rounded-lg p-3 text-sm">
+                <span className="font-medium text-green-600/80 dark:text-green-400/70">
+                  +{deleteTarget.amount.toLocaleString('uk-UA', { minimumFractionDigits: 2 })}{' '}
+                  {deleteTarget.currency}
+                </span>
+                <span className="theme-text-secondary ml-2">
+                  {categoryMap[deleteTarget.category_id ?? 0] || ''}
+                </span>
+              </div>
+            )}
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setIsDeleteModalOpen(false);
+                  setDeleteTarget(null);
+                }}
+              >
+                {t('incomePage.deleteConfirm.cancel')}
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                loading={isDeleting}
+                onClick={handleDeleteConfirm}
+              >
+                {t('incomePage.deleteConfirm.confirm')}
+              </Button>
+            </div>
+          </div>
         </Modal>
       </div>
     </div>

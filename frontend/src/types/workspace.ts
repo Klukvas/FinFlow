@@ -44,7 +44,6 @@ export interface WorkspaceMember {
   updated_at: string | null;
   // User details (fetched from user service)
   email?: string | null;
-  username?: string | null;
 }
 
 export interface WorkspaceMemberUpdate {
@@ -81,7 +80,6 @@ export interface MyInvite {
   workspace_name: string;
   inviter_user_id: number;
   inviter_email: string;
-  inviter_username: string;
   role: AssignableRole;
   status: InviteStatus;
   expires_at: string;

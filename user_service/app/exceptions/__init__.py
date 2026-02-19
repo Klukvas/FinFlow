@@ -6,7 +6,6 @@ from .user_errors import (
     UserAuthenticationError,
     UserRegistrationError,
     PasswordPolicyError,
-    UsernamePolicyError,
     AccountLockedError,
     RateLimitError
 )
@@ -14,12 +13,11 @@ from .user_errors import (
 __all__ = [
     "UserServiceError",
     "UserErrorCode",
-    "UserNotFoundError", 
+    "UserNotFoundError",
     "UserValidationError",
     "UserAuthenticationError",
     "UserRegistrationError",
     "PasswordPolicyError",
-    "UsernamePolicyError",
     "AccountLockedError",
     "RateLimitError"
 ]

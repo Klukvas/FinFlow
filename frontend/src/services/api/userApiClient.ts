@@ -9,7 +9,6 @@ export interface LoginRequest {
 export interface RegisterRequest {
   email: string;
   password: string;
-  username: string;
   base_currency?: string;
 }
 
@@ -23,14 +22,12 @@ export interface LoginResponse {
 export interface UserProfile {
   id: number;
   email: string;
-  username: string;
   base_currency: string;
   tutorial_version: number;
 }
 
 export interface UserUpdate {
   email?: string;
-  username?: string;
   base_currency?: string;
 }
 

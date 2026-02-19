@@ -1,5 +1,6 @@
 import { CartesianGrid, Legend, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import React, { useMemo } from 'react';
+import { CHART_COLORS, CHART_TOOLTIP_STYLE } from './chartColors';
 
 import { ExpenseResponse } from '@/types';
 
@@ -38,42 +39,35 @@ export const TrendChart: React.FC<TrendChartProps> = ({ expenses }) => {
       <div className="h-[300px]">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={trendData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-            <XAxis 
-              dataKey="month" 
-              tick={{ fill: 'var(--color-text-primary)' }}
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" strokeOpacity={0.5} />
+            <XAxis
+              dataKey="month"
+              tick={{ fill: 'var(--color-text-primary)', fontSize: 12 }}
               axisLine={{ stroke: 'var(--color-border)' }}
             />
-            <YAxis 
-              tick={{ fill: 'var(--color-text-primary)' }}
+            <YAxis
+              tick={{ fill: 'var(--color-text-primary)', fontSize: 12 }}
               axisLine={{ stroke: 'var(--color-border)' }}
             />
-            <Tooltip 
-              contentStyle={{
-                backgroundColor: 'var(--color-surface)',
-                border: '1px solid var(--color-border)',
-                borderRadius: '8px',
-                color: 'var(--color-text-primary)'
-              }}
-            />
-            <Legend 
-              wrapperStyle={{
-                color: 'var(--color-text-primary)'
-              }}
-            />
-            <Line 
-              type="monotone" 
-              dataKey="amount" 
-              name="Сумма" 
-              stroke="#8884d8" 
+            <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
+            <Legend wrapperStyle={{ color: 'var(--color-text-primary)' }} />
+            <Line
+              type="monotone"
+              dataKey="amount"
+              name="Сумма"
+              stroke={CHART_COLORS[0]}
               strokeWidth={2}
               dot={{ r: 4 }}
               activeDot={{ r: 6 }}
             />
-            <ReferenceLine y={averageAmount} stroke="red" strokeDasharray="3 3" />
+            <ReferenceLine
+              y={averageAmount}
+              stroke="var(--color-text-tertiary)"
+              strokeDasharray="3 3"
+            />
           </LineChart>
         </ResponsiveContainer>
       </div>
     </div>
   );
-}; 
+};

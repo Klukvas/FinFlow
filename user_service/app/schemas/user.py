@@ -6,16 +6,9 @@ import re
 
 class UserCreate(BaseModel):
     email: EmailStr = Field(
-        ..., 
+        ...,
         description="User's email address",
         examples=["user@example.com", "john.doe@company.com"]
-    )
-    username: str = Field(
-        ..., 
-        min_length=3,
-        max_length=50,
-        description="Unique username (3-50 characters, alphanumeric, underscores, hyphens)",
-        examples=["john_doe", "user123", "my-username"]
     )
     password: str = Field(
         ...,
@@ -29,18 +22,6 @@ class UserCreate(BaseModel):
         description="User's base currency code",
         examples=["UAH", "USD", "EUR", "GBP"]
     )
-
-    @field_validator('username')
-    @classmethod
-    def validate_username(cls, v: str) -> str:
-        """Validate username format"""
-        if not re.match(r'^[a-zA-Z0-9_-]+$', v):
-            raise ValueError('Username can only contain letters, numbers, underscores, and hyphens')
-        if not re.match(r'^[a-zA-Z0-9]', v):
-            raise ValueError('Username must start with a letter or number')
-        if v.endswith('_') or v.endswith('-'):
-            raise ValueError('Username cannot end with underscore or hyphen')
-        return v.strip()
 
     @field_validator('password')
     @classmethod
@@ -62,7 +43,6 @@ class UserCreate(BaseModel):
         json_schema_extra={
             "example": {
                 "email": "john.doe@example.com",
-                "username": "john_doe",
                 "password": "SecurePass123!",
                 "base_currency": "UAH"
             }
@@ -71,12 +51,12 @@ class UserCreate(BaseModel):
 
 class UserLogin(BaseModel):
     email: EmailStr = Field(
-        ..., 
+        ...,
         description="User's email address",
         examples=["user@example.com"]
     )
     password: str = Field(
-        ..., 
+        ...,
         description="User's password",
         examples=["SecurePass123!"]
     )
@@ -93,10 +73,9 @@ class UserLogin(BaseModel):
 class UserOut(BaseModel):
     id: int = Field(description="Unique user identifier", examples=[1, 2, 3])
     email: EmailStr = Field(description="User's email address", examples=["user@example.com"])
-    username: str = Field(description="User's username", examples=["john_doe"])
     base_currency: str = Field(description="User's base currency code", examples=["UAH", "USD", "EUR"])
     default_workspace_id: Optional[UUID] = Field(
-        None, 
+        None,
         description="User's default workspace ID"
     )
     tutorial_version: int = Field(
@@ -114,7 +93,6 @@ class UserOut(BaseModel):
             "example": {
                 "id": 1,
                 "email": "john.doe@example.com",
-                "username": "john_doe",
                 "base_currency": "UAH",
                 "default_workspace_id": "550e8400-e29b-41d4-a716-446655440000",
                 "tutorial_version": 1,
@@ -129,36 +107,15 @@ class UserUpdate(BaseModel):
         None,
         description="New email address"
     )
-    username: Optional[str] = Field(
-        None,
-        min_length=3,
-        max_length=50,
-        description="New username"
-    )
     base_currency: Optional[str] = Field(
         None,
         description="New base currency code"
     )
 
-    @field_validator('username')
-    @classmethod
-    def validate_username(cls, v: Optional[str]) -> Optional[str]:
-        """Validate username format"""
-        if v is not None:
-            if not re.match(r'^[a-zA-Z0-9_-]+$', v):
-                raise ValueError('Username can only contain letters, numbers, underscores, and hyphens')
-            if not re.match(r'^[a-zA-Z0-9]', v):
-                raise ValueError('Username must start with a letter or number')
-            if v.endswith('_') or v.endswith('-'):
-                raise ValueError('Username cannot end with underscore or hyphen')
-            return v.strip()
-        return v
-
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
                 "email": "new.email@example.com",
-                "username": "new_username",
                 "base_currency": "USD"
             }
         }
@@ -252,7 +209,6 @@ class AdminUserOut(BaseModel):
     """Full user details for admin view"""
     id: int
     email: EmailStr
-    username: str
     base_currency: str
     role: str
     status: str

@@ -43,7 +43,7 @@ export const PublicHeader: React.FC = () => {
   return (
     <>
             {/* Mobile Header */}
-            <header className="theme-surface theme-border border-b theme-shadow theme-transition lg:hidden" data-testid="mobile-header">
+            <header className="theme-surface theme-border border-b theme-transition lg:hidden" data-testid="mobile-header">
         <div className="px-4 py-3">
           <div className="flex items-center justify-between">
             <button
@@ -74,7 +74,7 @@ export const PublicHeader: React.FC = () => {
       </header>
 
             {/* Desktop Header */}
-            <header className="theme-surface theme-border border-b theme-shadow theme-transition hidden lg:block" data-testid="desktop-header">
+            <header className="theme-surface theme-border border-b theme-transition hidden lg:block" data-testid="desktop-header">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             {/* Logo and Page Title */}

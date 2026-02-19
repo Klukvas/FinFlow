@@ -25,7 +25,6 @@ export const Profile = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    username: '',
     email: '',
     currency: ''
   });
@@ -37,7 +36,6 @@ export const Profile = () => {
   useEffect(() => {
     if (user) {
       setFormData({
-        username: user.username || '',
         email: user.email || '',
         currency: user.base_currency || ''
       });
@@ -86,11 +84,7 @@ export const Profile = () => {
 
       // Подготавливаем данные для обновления
       const updateData: UserUpdate = {};
-      
-      if (formData.username !== user.username) {
-        updateData.username = formData.username;
-      }
-      
+
       if (formData.email !== user.email) {
         updateData.email = formData.email;
       }
@@ -131,7 +125,6 @@ export const Profile = () => {
   const handleCancelEdit = () => {
     if (user) {
       setFormData({
-        username: user.username || '',
         email: user.email || '',
         currency: user.base_currency || ''
       });
@@ -189,21 +182,12 @@ export const Profile = () => {
           <div className="flex-1 space-y-4">
             <div>
               <h2 className="text-xl font-semibold theme-text-primary">
-                {user?.username || t('profile.defaultUsername')}
+                {user?.email || t('profile.defaultUsername')}
               </h2>
-              <p className="theme-text-secondary">{user?.email}</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
-                <div className="flex items-center space-x-3">
-                  <FaUser className="w-5 h-5 theme-text-tertiary" />
-                  <div>
-                    <p className="text-sm font-medium theme-text-tertiary">{t('profile.username')}</p>
-                    <p className="theme-text-primary">{user?.username || t('profile.notSpecified')}</p>
-                  </div>
-                </div>
-
                 <div className="flex items-center space-x-3">
                   <FaWallet className="w-5 h-5 theme-text-tertiary" />
                   <div>
@@ -211,8 +195,6 @@ export const Profile = () => {
                     <p className="theme-text-primary">{user?.base_currency || t('profile.notSpecified')}</p>
                   </div>
                 </div>
-              
-
               </div>
 
               <div className="space-y-4">
@@ -353,16 +335,6 @@ export const Profile = () => {
               <p className="theme-success text-sm">{success}</p>
             </div>
           )}
-
-          <FormField label={t('profile.username')} required>
-            <Input
-              type="text"
-              name="username"
-              value={formData.username}
-              onChange={handleInputChange}
-              placeholder={t('auth.username')}
-            />
-          </FormField>
 
           <FormField label={t('common.email')} required>
             <Input

@@ -567,7 +567,6 @@ class TestGetMyInvites:
         assert inv.workspace_name == "Test Workspace"
         assert inv.inviter_user_id == pending_invite.inviter_user_id
         assert inv.inviter_email == "owner@test.com"
-        assert inv.inviter_username == "owner"
         assert inv.role == pending_invite.role
         assert inv.status == InviteStatus.PENDING
         assert inv.expires_at is not None

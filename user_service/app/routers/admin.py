@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
+
 from typing import Optional
 import math
 
@@ -21,7 +21,7 @@ router = APIRouter(prefix="/admin", tags=["Admin"])
 
 @router.get("/users", response_model=AdminUserListResponse)
 def list_users(
-    search: Optional[str] = Query(None, description="Search by email or username"),
+    search: Optional[str] = Query(None, description="Search by email"),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     admin: User = Depends(get_current_admin_user),
@@ -37,10 +37,7 @@ def list_users(
     if search:
         search_term = f"%{search.lower()}%"
         query = query.filter(
-            or_(
-                User.email.ilike(search_term),
-                User.username.ilike(search_term)
-            )
+            User.email.ilike(search_term)
         )
     
     # Get total count

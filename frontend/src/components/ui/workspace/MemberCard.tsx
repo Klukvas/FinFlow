@@ -88,7 +88,7 @@ export const MemberCard: React.FC<MemberCardProps> = ({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-medium theme-text-primary truncate">
-              {member.username || member.email || `User #${member.user_id}`}
+              {member.email || `User #${member.user_id}`}
             </span>
             {isCurrentUser && (
               <span className="text-xs theme-text-tertiary">

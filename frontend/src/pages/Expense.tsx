@@ -1,39 +1,171 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CreateExpense } from '../components/ui/expense/createExpense';
 import { EditExpense } from '../components/ui/expense/editExpense';
 import { ExpenseList } from '../components/ui/expense/expenseList';
 import { ExpenseDashboard } from '../components/ui/expense/ExpenseDashboard';
+import { ExpensePageHeader } from '../components/ui/expense/ExpensePageHeader';
+import { ExpenseSummaryStrip } from '../components/ui/expense/ExpenseSummaryStrip';
+import { ExpenseFilterBar } from '../components/ui/expense/ExpenseFilterBar';
 import { Modal } from '../components/ui/shared/Modal';
+import { Card } from '../components/ui/shared/Card';
 import { Button } from '../components/ui/shared/Button';
 import { Tabs } from '../components/ui/shared/Tabs';
-import { FaPlus, FaTable, FaChartBar } from 'react-icons/fa';
-import { ExpenseResponse } from '@/types';
+import { FaTable, FaChartBar } from 'react-icons/fa';
+import { ExpenseResponse, ExpenseFilters } from '@/types';
+import { useApiClients } from '@/hooks';
+import { useCategories } from '@/contexts/CategoriesContext';
+import { exportExpensesCsv } from '@/utils/exportCsv';
 
 export const Expense = () => {
   const { t } = useTranslation();
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const { expense: expenseApi } = useApiClients();
+  const { categories: categoriesList } = useCategories();
+
+  // Modal state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<ExpenseResponse | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ExpenseResponse | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Tab & filter state
   const [activeTab, setActiveTab] = useState('table');
+  const [filtersVisible, setFiltersVisible] = useState(false);
+  const [filters, setFilters] = useState<ExpenseFilters>({ page: 1, size: 10 });
+
+  // Data state
+  const [allExpenses, setAllExpenses] = useState<ExpenseResponse[]>([]);
+  const [paginatedExpenses, setPaginatedExpenses] = useState<ExpenseResponse[]>([]);
+  const [allLoading, setAllLoading] = useState(true);
+  const [paginatedLoading, setPaginatedLoading] = useState(false);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+
+  // Category map for quick lookup
+  const categoryMap = useMemo(() => {
+    const map: Record<number, string> = {};
+    categoriesList.forEach((cat) => (map[cat.id] = cat.name));
+    return map;
+  }, [categoriesList]);
+
+  // Determine if client-side filtering is active
+  const hasActiveFilters =
+    filters.date_from ||
+    filters.date_to ||
+    (filters.category_ids && filters.category_ids.length > 0) ||
+    filters.account_id ||
+    filters.currency;
+
+  // Fetch ALL expenses (for KPI, dashboard, and client-side filtering)
+  const fetchAllExpenses = useCallback(async () => {
+    setAllLoading(true);
+    try {
+      const response = await expenseApi.getExpenses();
+      if (!('error' in response)) {
+        setAllExpenses(response);
+      }
+    } catch (err) {
+      console.error('Error fetching all expenses:', err);
+    } finally {
+      setAllLoading(false);
+    }
+  }, [expenseApi]);
+
+  // Fetch paginated expenses (when no filters active)
+  const fetchPaginatedExpenses = useCallback(async () => {
+    if (hasActiveFilters) return;
+    setPaginatedLoading(true);
+    try {
+      const response = await expenseApi.getExpensesPaginated({
+        page: filters.page ?? 1,
+        size: filters.size ?? 10,
+      });
+      if (!('error' in response)) {
+        setPaginatedExpenses(response.items);
+        setTotalItems(response.total);
+        setTotalPages(response.pages);
+      }
+    } catch (err) {
+      console.error('Error fetching paginated expenses:', err);
+    } finally {
+      setPaginatedLoading(false);
+    }
+  }, [expenseApi, filters.page, filters.size, hasActiveFilters]);
+
+  useEffect(() => {
+    fetchAllExpenses();
+  }, [fetchAllExpenses]);
+
+  useEffect(() => {
+    fetchPaginatedExpenses();
+  }, [fetchPaginatedExpenses]);
+
+  // Client-side filtered + paginated expenses
+  const filteredExpenses = useMemo(() => {
+    if (!hasActiveFilters) return paginatedExpenses;
+
+    let result = [...allExpenses];
+
+    if (filters.date_from) {
+      result = result.filter((e) => e.date >= filters.date_from!);
+    }
+    if (filters.date_to) {
+      result = result.filter((e) => e.date <= filters.date_to!);
+    }
+    if (filters.category_ids && filters.category_ids.length > 0) {
+      result = result.filter((e) => filters.category_ids!.includes(e.category_id));
+    }
+    if (filters.account_id) {
+      result = result.filter((e) => e.account_id === filters.account_id);
+    }
+    if (filters.currency) {
+      result = result.filter((e) => e.currency === filters.currency);
+    }
+
+    return result;
+  }, [allExpenses, paginatedExpenses, filters, hasActiveFilters]);
+
+  // Client-side pagination for filtered results
+  const clientPaginatedExpenses = useMemo(() => {
+    if (!hasActiveFilters) return filteredExpenses;
+    const start = ((filters.page || 1) - 1) * (filters.size || 10);
+    return filteredExpenses.slice(start, start + (filters.size || 10));
+  }, [filteredExpenses, filters.page, filters.size, hasActiveFilters]);
+
+  const displayedTotalItems = hasActiveFilters ? filteredExpenses.length : totalItems;
+  const displayedTotalPages = hasActiveFilters
+    ? Math.ceil(filteredExpenses.length / (filters.size || 10))
+    : totalPages;
+
+  // Keyboard shortcut: N to add expense
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'n' || e.key === 'N') {
+        const tag = (e.target as HTMLElement)?.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        e.preventDefault();
+        setIsCreateModalOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
   const tabs = [
-    {
-      id: 'table',
-      label: t('expensePage.tabs.table'),
-      icon: <FaTable className="w-4 h-4" />
-    },
-    {
-      id: 'dashboard',
-      label: t('expensePage.tabs.dashboard'),
-      icon: <FaChartBar className="w-4 h-4" />
-    }
+    { id: 'table', label: t('expensePage.tabs.table'), icon: <FaTable className="w-4 h-4" /> },
+    { id: 'dashboard', label: t('expensePage.tabs.dashboard'), icon: <FaChartBar className="w-4 h-4" /> },
   ];
 
+  const refreshData = () => {
+    fetchAllExpenses();
+    fetchPaginatedExpenses();
+  };
+
   const handleExpenseCreated = () => {
-    setRefreshTrigger(prev => prev + 1);
     setIsCreateModalOpen(false);
+    refreshData();
   };
 
   const handleEditExpense = (expense: ExpenseResponse) => {
@@ -42,74 +174,104 @@ export const Expense = () => {
   };
 
   const handleExpenseUpdated = () => {
-    setRefreshTrigger(prev => prev + 1);
     setIsEditModalOpen(false);
     setSelectedExpense(null);
+    refreshData();
+  };
+
+  const handleDeleteRequest = (expense: ExpenseResponse) => {
+    setDeleteTarget(expense);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    try {
+      await expenseApi.deleteExpense(deleteTarget.id);
+      refreshData();
+    } catch (err) {
+      console.error('Error deleting expense:', err);
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteModalOpen(false);
+      setDeleteTarget(null);
+    }
+  };
+
+  const handleExportCsv = () => {
+    const expensesToExport = hasActiveFilters ? filteredExpenses : allExpenses;
+    exportExpensesCsv(expensesToExport, categoryMap);
+  };
+
+  const handleFiltersChange = (newFilters: ExpenseFilters) => {
+    setFilters(newFilters);
+  };
+
+  const handlePageChange = (page: number) => {
+    setFilters((prev) => ({ ...prev, page }));
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setFilters((prev) => ({ ...prev, size, page: 1 }));
   };
 
   return (
     <div className="min-h-screen theme-bg p-2 sm:p-4 md:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 lg:space-y-8">
-        {/* Page Header */}
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-red-600/10 to-orange-600/10 rounded-xl sm:rounded-2xl blur-3xl"></div>
-          <div className="relative theme-surface backdrop-blur-sm rounded-xl sm:rounded-2xl border theme-border p-4 sm:p-6 lg:p-8 theme-shadow">
-            <div className="flex flex-col gap-4 sm:gap-6">
-              <div className="space-y-2 sm:space-y-3">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-red-500 to-orange-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg">
-                    <svg className="w-4 h-4 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                    </svg>
-                  </div>
-                  <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold theme-text-primary leading-tight">
-                    {t('expensePage.title')}
-                  </h1>
-                </div>
-                <p className="theme-text-secondary text-xs sm:text-sm md:text-base max-w-2xl leading-relaxed">
-                  {t('expensePage.subtitle')}
-                </p>
-              </div>
-              
-              <div className="flex-shrink-0">
-                <Button
-                  onClick={() => setIsCreateModalOpen(true)}
-                  className="group relative bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-semibold px-4 sm:px-6 py-3 sm:py-3 rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-center min-h-[44px] sm:min-h-[48px] text-sm sm:text-base"
-                >
-                  <div className="w-4 h-4 sm:w-5 sm:h-5 group-hover:rotate-90 transition-transform duration-200">
-                    <FaPlus className="w-full h-full" />
-                  </div>
-                  <span>{t('expensePage.addButton')}</span>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+        {/* Header */}
+        <ExpensePageHeader
+          onAddExpense={() => setIsCreateModalOpen(true)}
+          onToggleFilters={() => setFiltersVisible((v) => !v)}
+          onExportCsv={handleExportCsv}
+          filtersActive={Boolean(hasActiveFilters)}
+        />
+
+        {/* KPI Strip */}
+        <ExpenseSummaryStrip expenses={allExpenses} loading={allLoading} />
+
+        {/* Filter Bar */}
+        <ExpenseFilterBar
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+          isVisible={filtersVisible}
+        />
 
         {/* Tabs */}
-        <div className="theme-surface backdrop-blur-sm rounded-xl sm:rounded-2xl border theme-border theme-shadow overflow-hidden">
-          <Tabs 
-            tabs={tabs} 
-            activeTab={activeTab} 
+        <Card>
+          <Tabs
+            tabs={tabs}
+            activeTab={activeTab}
             onTabChange={setActiveTab}
             className="px-4 sm:px-6"
           />
-        </div>
+        </Card>
 
         {/* Tab Content */}
         {activeTab === 'table' && (
-          <div className="theme-surface backdrop-blur-sm rounded-xl sm:rounded-2xl border theme-border theme-shadow overflow-hidden">
-            <ExpenseList key={refreshTrigger} onEditExpense={handleEditExpense} />
-          </div>
+          <Card>
+            <ExpenseList
+              expenses={clientPaginatedExpenses}
+              loading={paginatedLoading || (hasActiveFilters && allLoading)}
+              categories={categoryMap}
+              currentPage={filters.page || 1}
+              totalPages={displayedTotalPages}
+              pageSize={filters.size || 10}
+              totalItems={displayedTotalItems}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+              onEditExpense={handleEditExpense}
+              onDeleteRequest={handleDeleteRequest}
+              emptyMessage={hasActiveFilters ? t('expensePage.filters.noMatchFilters') : undefined}
+            />
+          </Card>
         )}
 
         {activeTab === 'dashboard' && (
-          <div className="theme-surface backdrop-blur-sm rounded-xl sm:rounded-2xl border theme-border theme-shadow p-4 sm:p-6 lg:p-8">
-            <ExpenseDashboard />
-          </div>
+          <ExpenseDashboard expenses={allExpenses} loading={allLoading} />
         )}
 
-        {/* Create Expense Modal */}
+        {/* Create Modal */}
         <Modal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
@@ -119,7 +281,7 @@ export const Expense = () => {
           <CreateExpense onExpenseCreated={handleExpenseCreated} />
         </Modal>
 
-        {/* Edit Expense Modal */}
+        {/* Edit Modal */}
         {selectedExpense && (
           <Modal
             isOpen={isEditModalOpen}
@@ -127,15 +289,60 @@ export const Expense = () => {
               setIsEditModalOpen(false);
               setSelectedExpense(null);
             }}
-            title={t('expensePage.editModalTitle') || 'Редагувати витрату'}
+            title={t('expense.editTitle')}
             size="lg"
           >
-            <EditExpense 
-              expense={selectedExpense} 
-              onExpenseUpdated={handleExpenseUpdated} 
-            />
+            <EditExpense expense={selectedExpense} onExpenseUpdated={handleExpenseUpdated} />
           </Modal>
         )}
+
+        {/* Delete Confirmation Modal */}
+        <Modal
+          isOpen={isDeleteModalOpen}
+          onClose={() => {
+            setIsDeleteModalOpen(false);
+            setDeleteTarget(null);
+          }}
+          title={t('expensePage.deleteConfirm.title')}
+          size="sm"
+        >
+          <div className="space-y-4">
+            <p className="text-sm theme-text-secondary">
+              {t('expensePage.deleteConfirm.message')}
+            </p>
+            {deleteTarget && (
+              <div className="theme-bg-secondary rounded-lg p-3 text-sm">
+                <span className="font-medium theme-text-primary">
+                  {deleteTarget.amount.toLocaleString('uk-UA', { minimumFractionDigits: 2 })}{' '}
+                  {deleteTarget.currency}
+                </span>
+                <span className="theme-text-secondary ml-2">
+                  {categoryMap[deleteTarget.category_id] || ''}
+                </span>
+              </div>
+            )}
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setIsDeleteModalOpen(false);
+                  setDeleteTarget(null);
+                }}
+              >
+                {t('expensePage.deleteConfirm.cancel')}
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                loading={isDeleting}
+                onClick={handleDeleteConfirm}
+              >
+                {t('expensePage.deleteConfirm.confirm')}
+              </Button>
+            </div>
+          </div>
+        </Modal>
       </div>
     </div>
   );

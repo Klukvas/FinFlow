@@ -116,7 +116,6 @@ def owner_user():
     return UserInfo(
         id=1,
         email="owner@test.com",
-        username="owner",
         base_currency="USD",
         default_workspace_id=None
     )
@@ -128,7 +127,6 @@ def member_user():
     return UserInfo(
         id=2,
         email="member@test.com",
-        username="member",
         base_currency="USD",
         default_workspace_id=None
     )
@@ -140,7 +138,6 @@ def other_user():
     return UserInfo(
         id=3,
         email="other@test.com",
-        username="other",
         base_currency="USD",
         default_workspace_id=None
     )

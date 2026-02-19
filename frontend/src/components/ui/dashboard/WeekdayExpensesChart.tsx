@@ -1,5 +1,6 @@
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import React, { useMemo } from 'react';
+import { CHART_COLORS, CHART_TOOLTIP_STYLE } from './chartColors';
 
 import { ExpenseResponse } from '@/types';
 
@@ -42,24 +43,13 @@ export const WeekdayExpensesChart: React.FC<WeekdayExpensesChartProps> = ({ expe
               tick={{ fill: 'var(--color-text-primary)' }}
               axisLine={{ stroke: 'var(--color-border)' }}
             />
-            <Tooltip 
-              contentStyle={{
-                backgroundColor: 'var(--color-surface)',
-                border: '1px solid var(--color-border)',
-                borderRadius: '8px',
-                color: 'var(--color-text-primary)'
-              }}
-            />
-            <Legend 
-              wrapperStyle={{
-                color: 'var(--color-text-primary)'
-              }}
-            />
-            <Line 
-              type="monotone" 
-              dataKey="average" 
-              name="Средняя сумма" 
-              stroke="#8884d8" 
+            <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
+            <Legend wrapperStyle={{ color: 'var(--color-text-primary)' }} />
+            <Line
+              type="monotone"
+              dataKey="average"
+              name="Средняя сумма"
+              stroke={CHART_COLORS[1]}
               strokeWidth={2}
               dot={{ r: 4 }}
               activeDot={{ r: 6 }}

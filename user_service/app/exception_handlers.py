@@ -8,7 +8,6 @@ from app.exceptions.user_errors import (
     UserAuthenticationError,
     UserRegistrationError,
     PasswordPolicyError,
-    UsernamePolicyError,
     AccountLockedError,
     RateLimitError,
     UserErrorCode
@@ -29,9 +28,10 @@ async def custom_validation_exception_handler(request: Request, exc: RequestVali
     # Get the first error for backward compatibility
     first_error = errors[0]
     field = first_error["loc"][-1] if first_error["loc"] else "field"
+    field = str(field)
     error_type = first_error["type"]
     error_msg = first_error.get("msg", "Invalid value")
-    
+
     # Provide more specific error messages based on error type
     if error_type == "missing":
         message = f"{field.capitalize()} is required"
@@ -86,14 +86,6 @@ async def user_registration_handler(request: Request, exc: UserRegistrationError
 async def password_policy_handler(request: Request, exc: PasswordPolicyError):
     """Handle password policy errors"""
     logger.warning(f"Password policy error: {exc.detail}")
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"error": exc.detail, "errorCode": exc.error_code}
-    )
-
-async def username_policy_handler(request: Request, exc: UsernamePolicyError):
-    """Handle username policy errors"""
-    logger.warning(f"Username policy error: {exc.detail}")
     return JSONResponse(
         status_code=exc.status_code,
         content={"error": exc.detail, "errorCode": exc.error_code}

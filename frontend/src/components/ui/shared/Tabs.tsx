@@ -13,25 +13,25 @@ interface TabsProps {
   className?: string;
 }
 
-export const Tabs: React.FC<TabsProps> = ({ 
-  tabs, 
-  activeTab, 
-  onTabChange, 
-  className = '' 
+export const Tabs: React.FC<TabsProps> = ({
+  tabs,
+  activeTab,
+  onTabChange,
+  className = ''
 }) => {
   return (
     <div className={`theme-border border-b ${className}`}>
-      <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+      <nav className="-mb-px flex space-x-6" aria-label="Tabs">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
             className={`
-              group inline-flex items-center py-2 px-1 border-b-2 font-medium text-sm theme-transition
+              group inline-flex items-center py-3 px-1 border-b-2 font-medium text-sm theme-transition
               ${
                 activeTab === tab.id
-                  ? 'theme-accent-light theme-accent rounded-xl'
-                  : 'border-transparent theme-text-secondary hover:theme-text-primary hover:theme-border'
+                  ? 'border-[var(--color-accent)] theme-accent'
+                  : 'border-transparent theme-text-secondary hover:theme-text-primary hover:border-[var(--color-border-hover)]'
               }
             `}
             aria-current={activeTab === tab.id ? 'page' : undefined}

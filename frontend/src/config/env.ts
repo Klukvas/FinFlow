@@ -14,11 +14,11 @@ export const config = {
     accountServiceUrl: import.meta.env.VITE_ACCOUNT_SERVICE_URL || (import.meta.env.PROD ? '/api/accounts' : 'http://localhost:8009'),
     currencyServiceUrl: import.meta.env.VITE_CURRENCY_SERVICE_URL || (import.meta.env.PROD ? '/api/currencies' : 'http://localhost:8010'),
     subscriptionServiceUrl: import.meta.env.VITE_SUBSCRIPTION_SERVICE_URL || (import.meta.env.PROD ? '/api/subscription' : 'http://localhost:8011'),
-    workspaceServiceUrl: import.meta.env.VITE_WORKSPACE_SERVICE_URL || (import.meta.env.PROD ? '/api/workspaces' : 'http://localhost:8012'),
+    workspaceServiceUrl: import.meta.env.VITE_WORKSPACE_SERVICE_URL || (import.meta.env.PROD ? '/api/workspaces' : 'http://localhost:8012/workspaces'),
     paymentServiceUrl: import.meta.env.VITE_PAYMENT_SERVICE_URL || (import.meta.env.PROD ? '/api/payments' : 'http://localhost:8013'),
   },
   app: {
-    name: import.meta.env.VITE_APP_NAME || 'Financial Accounting',
+    name: import.meta.env.VITE_APP_NAME || 'FinFlow',
     version: import.meta.env.VITE_APP_VERSION || '1.0.0',
   },
   features: {

@@ -8,9 +8,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAuthForm } from '@/hooks';
 import { RegisterRequest } from '@/services/api/userApiClient';
 import { config } from '@/config/env';
-import { MdOutlineDriveFileRenameOutline } from "react-icons/md";
+import { FaShieldAlt } from 'react-icons/fa';
 import { validateEmail } from '@/utils';
-import { validateUsername, validatePasswordStrength } from '@/utils/validation';
+import { validatePasswordStrength } from '@/utils/validation';
 
 interface RegisterModalProps {
   isOpen: boolean;
@@ -19,26 +19,24 @@ interface RegisterModalProps {
 }
 
 interface ValidationErrors {
-  username: string;
   email: string;
   password: string;
   currency: string;
 }
 
-export const RegisterModal: React.FC<RegisterModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  onSwitchToLogin 
+export const RegisterModal: React.FC<RegisterModalProps> = ({
+  isOpen,
+  onClose,
+  onSwitchToLogin
 }) => {
   const { t } = useTranslation();
   const { register } = useAuth();
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({
-    username: '',
     email: '',
     password: '',
     currency: ''
   });
-  
+
   const {
     formData,
     error,
@@ -50,55 +48,42 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
     initialValues: {
       email: "",
       password: "",
-      username: "",
       base_currency: "USD",
     } as RegisterRequest,
-    validateEmail: false, // We handle validation separately with translations
+    validateEmail: false,
     onSubmit: async (data: RegisterRequest) => {
-      // Validate all fields before submitting
       const errors: ValidationErrors = {
-        username: '',
         email: '',
         password: '',
         currency: ''
       };
 
-      // Validate username
-      const usernameValidation = validateUsername(data.username);
-      if (!usernameValidation.isValid) {
-        errors.username = usernameValidation.errors[0] || 'Invalid username';
-      }
-
-      // Validate email
       if (!validateEmail(data.email)) {
         errors.email = t('auth.invalidEmail');
       }
 
-      // Validate password
       const passwordValidation = validatePasswordStrength(data.password);
       if (!passwordValidation.isValid) {
         errors.password = passwordValidation.errors[0] || 'Invalid password';
       }
 
-      // Validate currency
       if (!data.base_currency) {
         errors.currency = t('profile.baseCurrency') || 'Currency is required';
       }
 
-      // If any errors, show them and stop submission
-      if (errors.username || errors.email || errors.password || errors.currency) {
+      if (errors.email || errors.password || errors.currency) {
         setValidationErrors(errors);
         throw new Error('Validation failed');
       }
-      
+
       if (config.debug) {
       }
-      
-      const result = await register(data.email, data.password, data.username, data.base_currency || 'USD');
-      
+
+      const result = await register(data.email, data.password, data.base_currency || 'USD');
+
       if (config.debug) {
       }
-      
+
       if (result.success) {
         if (config.debug) {
         }
@@ -114,22 +99,10 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
 
   const handleClose = () => {
     setError('');
-    setValidationErrors({ username: '', email: '', password: '', currency: '' });
+    setValidationErrors({ email: '', password: '', currency: '' });
     onClose();
   };
 
-  // Validate username on blur
-  const handleUsernameBlur = () => {
-    if (formData.username) {
-      const validation = validateUsername(formData.username);
-      setValidationErrors(prev => ({
-        ...prev,
-        username: validation.isValid ? '' : (validation.errors[0] || 'Invalid username')
-      }));
-    }
-  };
-
-  // Validate email on blur
   const handleEmailBlur = () => {
     if (formData.email && !validateEmail(formData.email)) {
       setValidationErrors(prev => ({
@@ -141,7 +114,6 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
     }
   };
 
-  // Validate password on blur
   const handlePasswordBlur = () => {
     if (formData.password) {
       const validation = validatePasswordStrength(formData.password);
@@ -149,14 +121,6 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
         ...prev,
         password: validation.isValid ? '' : (validation.errors[0] || 'Invalid password')
       }));
-    }
-  };
-
-  // Clear validation error when user starts typing
-  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    handleChange(e);
-    if (validationErrors.username) {
-      setValidationErrors(prev => ({ ...prev, username: '' }));
     }
   };
 
@@ -181,7 +145,6 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
     }
   };
 
-  // Validate currency on blur
   const handleCurrencyBlur = () => {
     if (!formData.base_currency) {
       setValidationErrors(prev => ({
@@ -193,66 +156,49 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
     }
   };
 
+  const hasValidationErrors = !!(validationErrors.email || validationErrors.password || validationErrors.currency);
+  const isFormValid = formData.email && formData.password && !hasValidationErrors;
+
   return (
-    <Modal 
-      isOpen={isOpen} 
+    <Modal
+      isOpen={isOpen}
       onClose={handleClose}
       title={t('auth.registerTitle')}
+      showHeader={false}
       size="md"
       data-testid="register-modal"
     >
       <div className="space-y-6">
-        <p className="theme-text-secondary">
-          {t('auth.registerTitle')}
-        </p>
+        {/* Title */}
+        <div>
+          <h2 className="text-2xl font-semibold theme-text-primary">
+            {t('auth.registerTitle')}
+          </h2>
+          <p className="text-sm theme-text-secondary mt-1.5">
+            {t('auth.registerSubtitle')}
+          </p>
+        </div>
 
-        <form onSubmit={handleSubmit} noValidate className="space-y-6">
-          <div className="space-y-2">
-            <label className="block text-sm font-medium theme-text-primary">
-              {t('auth.username')} <span className="theme-error">*</span>
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <MdOutlineDriveFileRenameOutline className="w-4 h-4 theme-text-tertiary" />
-              </div>
-              <input
-                type="text"
-                name="username"
-                data-testid="username-input"
-                placeholder={t('auth.username')}
-                value={formData.username}
-                onChange={handleUsernameChange}
-                onBlur={handleUsernameBlur}
-                className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition theme-bg theme-text-primary ${
-                  validationErrors.username ? 'border-red-500' : 'theme-border'
-                }`}
-                required
-              />
-            </div>
-            {validationErrors.username && (
-              <p className="text-red-500 text-sm mt-1">{validationErrors.username}</p>
-            )}
-          </div>
-
-          <EmailInput 
-            data-testid="email-input"
-            value={formData.email} 
+        {/* Form */}
+        <form onSubmit={handleSubmit} noValidate className="space-y-5">
+          <EmailInput
+            value={formData.email}
             onChange={handleEmailChange}
             onBlur={handleEmailBlur}
-            error={validationErrors.email} 
+            error={validationErrors.email}
           />
-          
-          <PasswordInput 
-            data-testid="password-input"
-            value={formData.password} 
+
+          <PasswordInput
+            value={formData.password}
             onChange={handlePasswordChange}
             onBlur={handlePasswordBlur}
             error={validationErrors.password}
           />
 
+          {/* Currency */}
           <div className="space-y-2">
             <label className="block text-sm font-medium theme-text-primary">
-              {t('profile.baseCurrency')} <span className="theme-error">*</span>
+              {t('profile.baseCurrency')} <span className="text-red-400">*</span>
             </label>
             <CurrencySelect
               value={formData.base_currency || 'USD'}
@@ -262,34 +208,60 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
               dataTestId="currency-select"
             />
             {validationErrors.currency && (
-              <p className="text-red-500 text-sm mt-1">{validationErrors.currency}</p>
+              <p className="text-red-400 text-sm flex items-center gap-1.5 mt-1">
+                <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                {validationErrors.currency}
+              </p>
             )}
           </div>
-          
+
+          {/* Error */}
           {error && (
-            <div className="theme-error-light theme-border border rounded-lg p-4">
-              <p className="theme-error text-sm">{error}</p>
+            <div className="rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3">
+              <p className="text-red-400 text-sm">{error}</p>
             </div>
           )}
 
+          {/* Submit */}
           <button
             type="submit"
-            disabled={isLoading || !!validationErrors.username || !!validationErrors.email || !!validationErrors.password || !!validationErrors.currency}
+            disabled={isLoading || !isFormValid}
             data-testid="submit-register-button"
-            className="w-full theme-accent-bg hover:theme-accent-hover theme-text-inverse font-semibold py-3 px-4 rounded-lg theme-transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full theme-accent-bg hover:theme-accent-hover text-white font-medium py-3 px-4 rounded-lg theme-transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {isLoading ? t('common.loading') : t('auth.registerButton')}
+            {isLoading ? (
+              <>
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                {t('common.loading')}
+              </>
+            ) : (
+              t('auth.registerButton')
+            )}
           </button>
         </form>
 
-        <div className="text-center">
-          <p className="theme-text-secondary">
-            Уже есть аккаунт?{' '}
+        {/* Security line */}
+        <div className="flex items-center justify-center gap-1.5">
+          <FaShieldAlt className="w-3 h-3 theme-text-tertiary" />
+          <span className="text-xs theme-text-tertiary">
+            {t('auth.securityNote')}
+          </span>
+        </div>
+
+        {/* Switch to login */}
+        <div className="text-center pt-2 border-t theme-border">
+          <p className="text-sm theme-text-secondary pt-4">
+            {t('auth.hasAccount')}{' '}
             <button
               onClick={onSwitchToLogin}
-              className="theme-accent hover:theme-accent-hover font-medium theme-transition"
+              className="theme-accent hover:underline font-medium theme-transition"
             >
-              {t('navigation.login')}
+              {t('auth.loginButton')}
             </button>
           </p>
         </div>

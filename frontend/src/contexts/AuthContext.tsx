@@ -6,7 +6,6 @@ import { clearStoredWorkspaceId } from '@/utils/workspaceStorage';
 interface User {
   id: number;
   email: string;
-  username: string;
   base_currency: string;
   tutorial_version: number;
   default_workspace_id?: string | null;
@@ -19,7 +18,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (email: string, password: string, username: string, baseCurrency?: string) => Promise<{ success: boolean; error?: string }>;
+  register: (email: string, password: string, baseCurrency?: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   refreshAccessToken: () => Promise<boolean>;
   refreshUserProfile: () => Promise<void>;
@@ -177,9 +176,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [userApi]);
 
-  const register = useCallback(async (email: string, password: string, username: string, baseCurrency: string = 'USD') => {
+  const register = useCallback(async (email: string, password: string, baseCurrency: string = 'USD') => {
     try {
-      const response = await userApi.register({ email, password, username, base_currency: baseCurrency });
+      const response = await userApi.register({ email, password, base_currency: baseCurrency });
       
       if ('error' in response) {
         return { success: false, error: response.error };

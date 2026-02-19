@@ -30,7 +30,7 @@ export const Badge: React.FC<BadgeProps> = ({
     outline: 'theme-border border theme-text-primary hover:theme-surface-hover',
     success: 'theme-success-light theme-success',
     warning: 'theme-warning-light theme-warning',
-    info: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
+    info: 'theme-accent-light theme-accent'
   };
 
   return (

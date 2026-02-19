@@ -49,6 +49,13 @@ export interface ExpenseCreate {
   export interface ExpenseFilters {
     page?: number;
     size?: number;
+    category_ids?: number[];
+    account_id?: number;
+    currency?: string;
+    date_from?: string;
+    date_to?: string;
+    sort_by?: 'date' | 'amount' | 'category';
+    sort_order?: 'asc' | 'desc';
   }
 
   export interface CategoryExpenseStatistics {

@@ -33,9 +33,9 @@ interface CardFooterProps {
 
 export const Card: React.FC<CardProps> = ({ children, className = '', hover = false, 'data-testid': testId }) => {
   return (
-    <div 
-      className={`rounded-lg border theme-border theme-surface theme-shadow theme-transition ${
-        hover ? 'hover:theme-shadow-hover hover:theme-border-hover' : ''
+    <div
+      className={`rounded-xl border theme-border theme-surface theme-transition ${
+        hover ? 'hover:theme-border-hover hover:theme-surface-hover' : ''
       } ${className}`}
       data-testid={testId || 'card'}
     >
@@ -46,7 +46,7 @@ export const Card: React.FC<CardProps> = ({ children, className = '', hover = fa
 
 export const CardHeader: React.FC<CardHeaderProps> = ({ children, className = '', 'data-testid': testId }) => {
   return (
-    <div 
+    <div
       className={`p-4 sm:p-6 pb-0 ${className}`}
       data-testid={testId || 'card-header'}
     >
@@ -57,7 +57,7 @@ export const CardHeader: React.FC<CardHeaderProps> = ({ children, className = ''
 
 export const CardTitle: React.FC<CardTitleProps> = ({ children, className = '', 'data-testid': testId }) => {
   return (
-    <h3 
+    <h3
       className={`text-lg font-semibold leading-none tracking-tight theme-text-primary ${className}`}
       data-testid={testId || 'card-title'}
     >
@@ -68,7 +68,7 @@ export const CardTitle: React.FC<CardTitleProps> = ({ children, className = '', 
 
 export const CardContent: React.FC<CardContentProps> = ({ children, className = '', 'data-testid': testId }) => {
   return (
-    <div 
+    <div
       className={`p-4 sm:p-6 ${className}`}
       data-testid={testId || 'card-content'}
     >
@@ -79,7 +79,7 @@ export const CardContent: React.FC<CardContentProps> = ({ children, className = 
 
 export const CardFooter: React.FC<CardFooterProps> = ({ children, className = '', 'data-testid': testId }) => {
   return (
-    <div 
+    <div
       className={`p-4 sm:p-6 pt-0 theme-border border-t ${className}`}
       data-testid={testId || 'card-footer'}
     >

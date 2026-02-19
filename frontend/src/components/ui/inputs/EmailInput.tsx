@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { FaEnvelope } from "react-icons/fa";
 import { FormField } from "../forms/FormField";
 import { Input } from "../forms/Input";
@@ -10,33 +11,39 @@ interface EmailInputProps {
   error?: string | undefined;
   label?: string;
   required?: boolean;
+  autoFocus?: boolean;
+  'data-testid'?: string;
 }
 
-export const EmailInput: React.FC<EmailInputProps> = ({ 
-  value, 
-  onChange, 
+export const EmailInput: React.FC<EmailInputProps> = ({
+  value,
+  onChange,
   onBlur,
-  error, 
-  label = "Email",
-  required = true 
+  error,
+  label,
+  required = true,
+  autoFocus = false,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <FormField
-      label={label}
+      label={label || t('auth.email')}
       error={error || ''}
       required={required}
-      className="mb-4"
     >
       <Input
         type="email"
         name="email"
-        placeholder="Введите email"
+        placeholder={t('auth.emailPlaceholder')}
         value={value}
         onChange={onChange}
         onBlur={onBlur}
         error={!!error}
-        icon={<FaEnvelope className="w-4 h-4 text-gray-400" />}
+        icon={<FaEnvelope className="w-4 h-4 theme-text-tertiary" />}
         required={required}
+        autoFocus={autoFocus}
+        autoComplete="email"
         data-testid="email-input"
       />
     </FormField>

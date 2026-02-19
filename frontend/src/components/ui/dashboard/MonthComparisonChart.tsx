@@ -1,5 +1,6 @@
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import React, { useMemo } from 'react';
+import { CHART_COLORS, CHART_TOOLTIP_STYLE } from './chartColors';
 
 import { ExpenseResponse } from '@/types';
 
@@ -56,20 +57,9 @@ export const MonthComparisonChart: React.FC<MonthComparisonChartProps> = ({ expe
               tick={{ fill: 'var(--color-text-primary)' }}
               axisLine={{ stroke: 'var(--color-border)' }}
             />
-            <Tooltip 
-              contentStyle={{
-                backgroundColor: 'var(--color-surface)',
-                border: '1px solid var(--color-border)',
-                borderRadius: '8px',
-                color: 'var(--color-text-primary)'
-              }}
-            />
-            <Legend 
-              wrapperStyle={{
-                color: 'var(--color-text-primary)'
-              }}
-            />
-            <Bar dataKey="amount" name="Сумма" fill="#82ca9d" />
+            <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
+            <Legend wrapperStyle={{ color: 'var(--color-text-primary)' }} />
+            <Bar dataKey="amount" name="Сумма" fill={CHART_COLORS[4]} radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>

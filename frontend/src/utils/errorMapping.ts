@@ -236,20 +236,17 @@ export const getUserErrorTranslationKey = (error: BackendError | string): string
 
   const errorMap: Record<string, string> = {
     'EMAIL_ALREADY_TAKEN': 'user.errors.emailAlreadyTaken',
-    'USERNAME_ALREADY_TAKEN': 'user.errors.usernameAlreadyTaken',
     'INVALID_CREDENTIALS': 'user.errors.invalidCredentials',
     'USER_NOT_FOUND': 'user.errors.notFound',
     'UNAUTHORIZED': 'user.errors.unauthorized',
     'INVALID_TOKEN': 'user.errors.invalidToken',
     'ACCOUNT_LOCKED': 'user.errors.accountLocked',
     'WEAK_PASSWORD': 'user.errors.weakPassword',
-    'INVALID_USERNAME': 'user.errors.invalidUsername',
     'INVALID_EMAIL': 'user.errors.invalidEmail',
     'RATE_LIMIT_EXCEEDED': 'user.errors.rateLimitExceeded',
     'VALIDATION_ERROR': 'user.errors.validationError',
     'REGISTRATION_ERROR': 'user.errors.registrationError',
     'PASSWORD_POLICY_ERROR': 'user.errors.passwordPolicyError',
-    'USERNAME_POLICY_ERROR': 'user.errors.usernamePolicyError',
     'INTERNAL_ERROR': 'user.errors.internalError',
   };
 

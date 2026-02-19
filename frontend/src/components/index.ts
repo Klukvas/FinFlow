@@ -34,6 +34,21 @@ export { CategoryStatistics } from './ui/category/CategoryStatistics';
 // Income components
 export { IncomeList } from './ui/income/IncomeList';
 export { CreateIncome } from './ui/income/CreateIncome';
+export { IncomePageHeader } from './ui/income/IncomePageHeader';
+export { IncomeSummaryStrip } from './ui/income/IncomeSummaryStrip';
+export { IncomeFilterBar } from './ui/income/IncomeFilterBar';
+export { IncomeDashboard } from './ui/income/IncomeDashboard';
+export { IncomeTrendChart } from './ui/income/IncomeTrendChart';
+export { IncomeCategoryChart } from './ui/income/IncomeCategoryChart';
+export { TopIncomeChart } from './ui/income/TopIncomeChart';
+
+// Debt components
+export { DebtPageHeader } from './ui/debt/DebtPageHeader';
+export { DebtSummaryStrip } from './ui/debt/DebtSummaryStrip';
+export { DebtFilterBar } from './ui/debt/DebtFilterBar';
+export { DebtTable } from './ui/debt/DebtTable';
+export { DebtSidePanel } from './ui/debt/DebtSidePanel';
+export { ContactTable } from './ui/debt/ContactTable';
 
 // Protected routes
 export { ProtectedRoute } from './ProtectedRoute';

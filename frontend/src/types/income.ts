@@ -29,6 +29,14 @@ export interface IncomeUpdate {
   date?: string | null;
 }
 
+export interface IncomeListResponse {
+  items: IncomeOut[];
+  total: number;
+  page: number;
+  size: number;
+  pages: number;
+}
+
 export interface IncomeSummary {
   total_income: number;
   count: number;
@@ -63,4 +71,16 @@ export interface CategoryIncomeStatistics {
 export interface IncomesByCategoryResponse {
   incomes: IncomeOut[];
   statistics: CategoryIncomeStatistics;
+}
+
+export interface IncomeFilters {
+  page?: number;
+  size?: number;
+  category_ids?: number[];
+  account_id?: number;
+  currency?: string;
+  date_from?: string;
+  date_to?: string;
+  sort_by?: 'date' | 'amount' | 'category';
+  sort_order?: 'asc' | 'desc';
 }

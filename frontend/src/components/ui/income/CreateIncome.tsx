@@ -214,27 +214,8 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({ onIncomeCreated }) =
         )}
       </div>
 
-      <Button
-        type="submit"
-        disabled={isLoading}
-        className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 sm:gap-3 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none min-h-[44px] text-sm sm:text-base"
-      >
-        {isLoading ? (
-          <>
-            <div className="relative">
-              <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-2 border-white/30"></div>
-              <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-2 border-white border-t-transparent absolute top-0 left-0"></div>
-            </div>
-            {t('income.form.creating')}
-          </>
-        ) : (
-          <>
-            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            {t('income.form.createIncome')}
-          </>
-        )}
+      <Button type="submit" variant="primary" size="lg" fullWidth loading={isLoading}>
+        {t('income.form.createIncome')}
       </Button>
     </form>
   );

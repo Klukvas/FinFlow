@@ -32,16 +32,15 @@ class TestGetMembersEndpoint:
             joined_at=datetime.utcnow(),
             created_at=datetime.utcnow(),
             updated_at=None,
-            email="owner@test.com",
-            username="owner"
+            email="owner@test.com"
         )
         mock_get.return_value = [mock_response]
-        
+
         response = client.get(
             f"/workspaces/{shared_workspace.id}/members",
             headers=auth_headers
         )
-        
+
         assert response.status_code == 200
         data = response.json()
         assert "members" in data
@@ -61,23 +60,20 @@ class TestGetMembersEndpoint:
             joined_at=datetime.utcnow(),
             created_at=datetime.utcnow(),
             updated_at=None,
-            email="owner@test.com",
-            username="owner"
+            email="owner@test.com"
         )
         mock_get.return_value = [mock_response]
-        
+
         response = client.get(
             f"/workspaces/{shared_workspace.id}/members",
             headers=auth_headers
         )
-        
+
         assert response.status_code == 200
         member = response.json()["members"][0]
-        
+
         assert "email" in member
-        assert "username" in member
         assert member["email"] == "owner@test.com"
-        assert member["username"] == "owner"
 
     # Note: Can't test truly unauthorized requests - TestClient always has user_id=1
 
@@ -323,19 +319,18 @@ class TestMemberResponseFormat:
             joined_at=now,
             created_at=now,
             updated_at=now,
-            email="owner@test.com",
-            username="owner"
+            email="owner@test.com"
         )
         mock_get.return_value = [mock_response]
-        
+
         response = client.get(
             f"/workspaces/{shared_workspace.id}/members",
             headers=auth_headers
         )
-        
+
         assert response.status_code == 200
         member = response.json()["members"][0]
-        
+
         # Check required fields
         assert "id" in member
         assert "workspace_id" in member
@@ -345,7 +340,6 @@ class TestMemberResponseFormat:
         assert "joined_at" in member
         assert "created_at" in member
         assert "email" in member
-        assert "username" in member
 
     @patch('app.services.workspace.WorkspaceService.get_members')
     def test_member_role_values(
@@ -359,19 +353,19 @@ class TestMemberResponseFormat:
                 id=1, workspace_id=shared_workspace.id, user_id=1,
                 role=MemberRole.OWNER, status=MemberStatus.ACTIVE,
                 joined_at=now, created_at=now, updated_at=None,
-                email="owner@test.com", username="owner"
+                email="owner@test.com"
             ),
             MemberResponse(
                 id=2, workspace_id=shared_workspace.id, user_id=2,
                 role=MemberRole.FULL, status=MemberStatus.ACTIVE,
                 joined_at=now, created_at=now, updated_at=None,
-                email="full@test.com", username="full_user"
+                email="full@test.com"
             ),
             MemberResponse(
                 id=3, workspace_id=shared_workspace.id, user_id=3,
                 role=MemberRole.READ, status=MemberStatus.ACTIVE,
                 joined_at=now, created_at=now, updated_at=None,
-                email="read@test.com", username="read_user"
+                email="read@test.com"
             ),
         ]
         mock_get.return_value = members

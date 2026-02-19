@@ -230,7 +230,6 @@ class InviteService:
                     workspace_name=workspace.name,
                     inviter_user_id=invite.inviter_user_id,
                     inviter_email=inviter.email,
-                    inviter_username=inviter.username,
                     role=invite.role,
                     status=invite.status,
                     expires_at=invite.expires_at,

@@ -64,19 +64,25 @@
     "pricing": "Pricing"
   },
   "header": {
-    "appTitle": "Financial Accounting",
+    "appTitle": "FinFlow",
     "goToProfile": "Go to profile",
     "user": "User"
   },
   "auth": {
-    "username": "Username",
     "email": "Email",
     "password": "Password",
     "confirmPassword": "Confirm Password",
-    "loginTitle": "Login",
-    "registerTitle": "Register",
-    "loginButton": "Login",
-    "registerButton": "Register",
+    "loginTitle": "Sign In",
+    "loginSubtitle": "Sign in to your financial workspace",
+    "registerTitle": "Create Account",
+    "registerSubtitle": "Create an account to manage your finances",
+    "loginButton": "Sign In",
+    "registerButton": "Create Account",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "securityNote": "Secured with JWT authentication",
+    "emailPlaceholder": "name@company.com",
+    "passwordPlaceholder": "Enter password",
     "logoutConfirm": "Are you sure you want to logout?",
     "loginSuccess": "Successfully logged in",
     "registerSuccess": "Successfully registered",
@@ -90,20 +96,17 @@
     "errors": {
       "genericError": "Something went wrong. Please try again.",
       "emailAlreadyTaken": "This email is already registered",
-      "usernameAlreadyTaken": "This username is already taken",
       "invalidCredentials": "Invalid email or password",
       "notFound": "User not found",
       "unauthorized": "You are not authorized to perform this action",
       "invalidToken": "Invalid or expired token",
       "accountLocked": "Your account has been locked",
       "weakPassword": "Password is too weak",
-      "invalidUsername": "Invalid username format",
       "invalidEmail": "Invalid email format",
       "rateLimitExceeded": "Too many requests. Please try again later",
       "validationError": "Validation error occurred",
       "registrationError": "Registration failed",
       "passwordPolicyError": "Password does not meet requirements",
-      "usernamePolicyError": "Username does not meet requirements",
       "internalError": "Internal server error"
     }
   },
@@ -310,128 +313,271 @@
   },
   "homepage": {
     "hero": {
-      "title": "Manage Your Budget Simply",
-      "subtitle": "Powerful tools to help you take control of your finances.",
-      "cta": "Get Started"
-    },
-    "trustBar": {
-      "text": "Trusted by",
-      "users": "12,000+ users",
-      "and": "and integrated with leading institutions"
-    },
-    "metrics": {
-      "expenses": {
-        "amount": "$2,500",
-        "period": "this month",
-        "label": "Expenses"
-      },
-      "budget": {
-        "percentage": "70%",
-        "amount": "$3,000",
-        "label": "Budget Overview"
-      },
-      "income": {
-        "amount": "$7,200",
-        "period": "this month",
-        "label": "Income"
+      "title": "Your Financial Operating System",
+      "subtitle": "Multi-currency accounts, payment automation, shared workspaces and bank statement import — all in one platform.",
+      "cta": "Start Free",
+      "ctaSecondary": "View Features",
+      "preview": {
+        "workspace": "My Workspace",
+        "personal": "Personal",
+        "accounts": "Accounts",
+        "active": "active",
+        "expenses": "Expenses",
+        "income": "Income",
+        "recurring": "Recurring",
+        "automated": "automated",
+        "goal": "Goal"
       }
     },
-    "benefits": {
-      "clarity": {
-        "title": "Clarity",
-        "subtitle": "Know where every coin goes.",
-        "description": "Clean dashboards show exactly how your money moves."
-      },
-      "control": {
-        "title": "Control",
-        "subtitle": "Budgets that adapt in real time.",
-        "description": "Smart categorization and instant recalculations keep you balanced."
-      },
-      "automation": {
-        "title": "Automation",
-        "subtitle": "Rules that work while you sleep.",
-        "description": "Create triggers for saving, investing, or alerts with one click."
+    "trust": {
+      "badges": {
+        "secure": "Secure by Design",
+        "architecture": "Microservice Architecture",
+        "saas": "Subscription SaaS",
+        "jwt": "JWT Authorization",
+        "pdf": "PDF Statement Import"
       }
     },
-    "testimonials": {
-      "elena": {
-        "quote": "This platform replaced my entire spreadsheet workflow — and looks stunning doing it.",
-        "author": "Elena, Financial Analyst"
-      },
-      "tomas": {
-        "quote": "Finally, a budgeting app that feels built for the future.",
-        "author": "Tomas, Crypto Investor"
+    "features": {
+      "title": "Everything You Need to Control Your Finances",
+      "subtitle": "Structured tools built on reliable microservice architecture",
+      "groups": {
+        "core": {
+          "title": "Core Financial Engine",
+          "accounts": {
+            "title": "Accounts & Balances",
+            "desc": "Bank, cash, crypto and investment accounts with automatic balance tracking."
+          },
+          "transactions": {
+            "title": "Expenses & Income",
+            "desc": "Full transaction management with categorization, filters and period-based analytics."
+          },
+          "currency": {
+            "title": "Multi-Currency Support",
+            "desc": "Real-time exchange rates with automatic conversion between accounts."
+          }
+        },
+        "automation": {
+          "title": "Automation",
+          "recurring": {
+            "title": "Recurring Transactions",
+            "desc": "Set up daily, weekly or monthly payments that are created automatically."
+          },
+          "scheduler": {
+            "title": "Scheduled Jobs",
+            "desc": "Background processes for automatic subscription renewal and payment processing."
+          },
+          "subscriptions": {
+            "title": "Subscription Management",
+            "desc": "Plans with feature limits, auto-renewal and access control."
+          }
+        },
+        "intelligence": {
+          "title": "Intelligence & Control",
+          "goals": {
+            "title": "Financial Goals",
+            "desc": "Set goals with milestones, track progress and get automatic notifications."
+          },
+          "debts": {
+            "title": "Debt Tracking",
+            "desc": "Credit cards, mortgages, personal loans — with principal and interest breakdown."
+          },
+          "pdf": {
+            "title": "PDF Statement Import",
+            "desc": "Upload a bank statement — transactions are extracted and categorized automatically."
+          }
+        }
       }
     },
-    "footer": {
-      "text": "Track your expenses, monitor your income, and achieve your savings goals."
+    "workspaces": {
+      "title": "Personal or Shared — You Decide",
+      "description": "Every user gets a personal workspace automatically. Create shared workspaces for family or business with full access control.",
+      "items": {
+        "personal": "Personal workspace created automatically on registration",
+        "invite": "Invite members by email with expiring invitations",
+        "roles": "Role-based access: owner, full access or read-only",
+        "useCases": "Perfect for family budgets, small businesses or team expenses"
+      },
+      "visual": {
+        "personal": "My Finances",
+        "personalRole": "Owner",
+        "active": "Active",
+        "shared": "Family Budget",
+        "sharedMembers": "4 members",
+        "business": "Business Expenses",
+        "businessMembers": "8 members"
+      }
+    },
+    "plans": {
+      "title": "Scales With You",
+      "subtitle": "Start free, expand when you're ready",
+      "basic": {
+        "name": "Basic",
+        "price": "Free",
+        "highlight": "10 categories, 2 accounts, 50 transactions/mo"
+      },
+      "professional": {
+        "name": "Professional",
+        "price": "$9.99/mo",
+        "highlight": "50 categories, 10 accounts, 5,000 transactions/mo"
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "price": "$29.99/mo",
+        "highlight": "Unlimited — full control"
+      },
+      "viewAll": "Compare all plans"
+    },
+    "cta": {
+      "title": "Start controlling your finances today",
+      "description": "Free plan with no time limits. No credit card required to get started."
     }
   },
   "featuresPage": {
-    "title": "App Features",
-    "subtitle": "All the tools you need to manage personal finance effectively",
-    "items": [
-      {
-        "title": "Analytics & Reports",
-        "description": "Get detailed analytics with beautiful charts and diagrams. Track trends and discover patterns in your spending.",
-        "details": [
-          "Income and expense charts",
-          "Expense categorization",
-          "Period comparison",
-          "Report export"
-        ]
+    "hero": {
+      "label": "Platform Capabilities",
+      "title": "Platform Capabilities",
+      "subtitle": "FinFlow is a full financial operating system built on microservices architecture. Not just budgeting — complete control over accounting, automation, and analytics."
+    },
+    "technicalToggle": "Technical details",
+    "sections": {
+      "core": {
+        "label": "Financial Core",
+        "title": "Accounting & Financial Management",
+        "description": "Core accounting subsystem: accounts, transactions, currencies, and categories. Built on isolated services with dedicated databases.",
+        "accounts": {
+          "title": "Accounts & Balances",
+          "desc": "Bank, cash, crypto, and investment accounts. Automatic balance tracking on every operation."
+        },
+        "transactions": {
+          "title": "Expenses & Income",
+          "desc": "Full transaction ledger linked to accounts, categories, and currencies. Filter by period, type, and amount."
+        },
+        "currency": {
+          "title": "Multi-Currency Engine",
+          "desc": "Support for any currency with real-time conversion rates. Automatic recalculation on cross-account transfers."
+        },
+        "categories": {
+          "title": "Category System",
+          "desc": "Hierarchical categories with MCC code support. Automatic category recognition on bank statement imports."
+        }
       },
-      {
-        "title": "Data Security",
-        "description": "Your financial data is protected by modern encryption. We use banking-level security standards.",
-        "details": [
-          "256-bit SSL encryption",
-          "Two-factor authentication",
-          "Regular backups",
-          "GDPR compliance"
-        ]
+      "automation": {
+        "label": "Automation",
+        "title": "Automation You Don't Have to Think About",
+        "description": "Internal background processes and microservices handle routine operations without your involvement.",
+        "recurring": {
+          "title": "Recurring Transactions",
+          "desc": "Set up daily, weekly, or monthly payments. Transactions are created automatically on schedule."
+        },
+        "scheduler": {
+          "title": "Built-in Scheduler",
+          "desc": "APScheduler-based background processes for zero-delay task execution. Retry logic and logging for every operation."
+        },
+        "subscriptions": {
+          "title": "Subscription Lifecycle",
+          "desc": "Automatic renewal, suspension, and cancellation of subscriptions. Limit enforcement based on selected plan."
+        },
+        "balance": {
+          "title": "Auto Balance Updates",
+          "desc": "Account balances recalculate automatically after every transaction, including recurring and imported operations."
+        }
       },
-      {
-        "title": "Mobile Version",
-        "description": "Manage finances from any device. Data syncs in real-time.",
-        "details": [
-          "Responsive design",
-          "Offline mode",
-          "Push notifications",
-          "Quick access"
-        ]
+      "workspace": {
+        "label": "Workspaces",
+        "title": "Isolated Workspaces",
+        "description": "Every user operates in an isolated workspace. Create shared spaces for family or team with full access control.",
+        "personal": {
+          "title": "Personal Workspace",
+          "desc": "Created automatically on registration. Full data isolation at database level — no other user has access."
+        },
+        "shared": {
+          "title": "Shared Workspaces",
+          "desc": "Create spaces for shared accounting. Suitable for family budgets, business expenses, or team projects."
+        },
+        "roles": {
+          "title": "Role-Based Access",
+          "desc": "Three access levels: owner, full access, and read-only. Flexible permission management."
+        },
+        "invites": {
+          "title": "Invite System",
+          "desc": "Invite members by email. Each invitation has an expiry and can be revoked by the workspace owner."
+        },
+        "isolation": {
+          "title": "Multi-Tenant Isolation",
+          "desc": "Each workspace's data is fully isolated. Queries are filtered at ORM level — cross-workspace leaks are impossible."
+        }
       },
-      {
-        "title": "Automation",
-        "description": "Set up recurring payments, receive reminders, and auto-categorize transactions.",
-        "details": [
-          "Recurring payments",
-          "Smart reminders",
-          "Auto-categorization",
-          "Operation templates"
-        ]
+      "intelligence": {
+        "label": "Analytics & Control",
+        "title": "Financial Control, Not Just Tracking",
+        "description": "Tools for strategic financial management: goals, debts, progress monitoring, and bank data import.",
+        "goals": {
+          "title": "Financial Goals",
+          "desc": "Set goals with milestones and deadlines. Automatic progress tracking and remaining amount calculation."
+        },
+        "debts": {
+          "title": "Debt Tracking",
+          "desc": "Loans, mortgages, personal debts. Principal and interest breakdown with payment schedule tracking."
+        },
+        "progress": {
+          "title": "Progress Monitoring",
+          "desc": "Financial metrics visualization over time. Period comparison, expense and income trends."
+        },
+        "pdf": {
+          "title": "PDF Statement Import",
+          "desc": "Upload a Monobank PDF statement — transactions are recognized, parsed, and categorized automatically via a dedicated microservice."
+        }
       },
-      {
-        "title": "Family Accounting",
-        "description": "Keep shared budgets with family members. Set limits and control the common budget.",
-        "details": [
-          "Shared accounts",
-          "Family categories",
-          "Spending limits",
-          "User roles"
-        ]
-      },
-      {
-        "title": "Settings",
-        "description": "Personalize the app to your needs. Create custom categories and configure the interface.",
-        "details": [
-          "Custom categories",
-          "UI customization",
-          "Data import",
-          "API integrations"
-        ]
+      "platform": {
+        "label": "SaaS Platform",
+        "title": "Built as a Real SaaS",
+        "description": "Not a side project — a full platform with subscriptions, limits, payments, and background renewal.",
+        "plans": {
+          "title": "Subscription Plans",
+          "desc": "Three subscription tiers with different feature sets and limits. Flexible scaling to match your needs."
+        },
+        "entitlements": {
+          "title": "Feature Entitlements",
+          "desc": "Feature access is controlled at plan level. Limit checks happen in real time on every operation."
+        },
+        "payments": {
+          "title": "Secure Payment Integration",
+          "desc": "Payment data tokenization via WayForPay. No card data is stored on our servers."
+        },
+        "renewal": {
+          "title": "Background Renewal",
+          "desc": "Automatic subscription renewal via background processes. Retry logic on failed payments, status notifications."
+        }
       }
-    ]
+    },
+    "technical": {
+      "core": [
+        "Dedicated microservice per domain area (accounts, transactions, categories)",
+        "PostgreSQL with isolated data schemas",
+        "REST API with Pydantic v2 validation"
+      ],
+      "automation": [
+        "APScheduler for background jobs with configurable intervals",
+        "Idempotent job execution with retry policy",
+        "Event-driven architecture between services"
+      ],
+      "workspace": [
+        "Row-level security via workspace_id filtering at ORM level",
+        "JWT-based authentication with workspace context",
+        "Invite tokens with TTL and single-use enforcement"
+      ],
+      "intelligence": [
+        "PDF parsing via dedicated microservice with tabula-py",
+        "Automatic MCC-based categorizer",
+        "REST API for goal tracking with milestone support"
+      ],
+      "platform": [
+        "Subscription lifecycle management via dedicated service",
+        "Plan-based feature enforcement at middleware level",
+        "WayForPay payment gateway with tokenized card storage"
+      ]
+    }
   },
   "pricingPage": {
     "title": "Choose the right plan",
@@ -515,7 +661,7 @@
   },
   "aboutPage": {
     "title": "About Us",
-    "intro": "We created Financial Accounting to help people better manage their money and achieve financial goals.",
+    "intro": "We created FinFlow to help people better manage their money and achieve financial goals.",
     "mission": {
       "title": "Our Mission",
       "description": "Make personal finance management simple, clear and accessible to everyone. We believe that every person deserves to have full control over their money and the ability to plan their financial future."
@@ -590,27 +736,186 @@
     }
   },
   "categoryPage": {
-    "title": "Category Management",
-    "subtitle": "Create and manage expense and income categories for better financial control",
+    "title": "Categories",
+    "subtitle": "Organize your expenses and income with a structured category taxonomy",
     "createButton": "Create Category",
     "createModalTitle": "Create New Category",
-    "editModalTitle": "Edit Category"
+    "editModalTitle": "Edit Category",
+    "shortcutHint": "Press N to add",
+    "kpi": {
+      "totalCategories": "Total Categories",
+      "expenseCategories": "Expense",
+      "incomeCategories": "Income",
+      "withChildren": "With Children"
+    },
+    "filters": {
+      "toggle": "Filters",
+      "type": "Type",
+      "allTypes": "All Types",
+      "search": "Search",
+      "searchPlaceholder": "Search by name...",
+      "clearAll": "Clear All",
+      "noMatchFilters": "No categories match your filters",
+      "viewTree": "Tree",
+      "viewTable": "Table"
+    },
+    "tree": {
+      "expand": "Expand",
+      "collapse": "Collapse",
+      "expandAll": "Expand All",
+      "collapseAll": "Collapse All",
+      "childCount": "{{count}} subcategories"
+    },
+    "table": {
+      "name": "Name",
+      "type": "Type",
+      "parent": "Parent",
+      "created": "Created",
+      "source": "Source",
+      "actions": "Actions",
+      "noCategories": "No categories yet",
+      "noCategoriesDescription": "Create your first category to organize transactions",
+      "rootCategory": "Root"
+    },
+    "sidePanel": {
+      "overview": "Overview",
+      "name": "Name",
+      "type": "Type",
+      "parent": "Parent",
+      "created": "Created",
+      "updated": "Updated",
+      "mccCode": "MCC Code",
+      "source": "Source",
+      "user": "User",
+      "system": "System",
+      "usageStatistics": "Usage Statistics",
+      "totalTransactions": "Total Transactions",
+      "totalAmount": "Total Amount",
+      "averageAmount": "Average Amount",
+      "expenseCount": "Expenses",
+      "incomeCount": "Incomes",
+      "noTransactions": "No transactions yet",
+      "children": "Subcategories",
+      "noChildren": "No subcategories",
+      "recentTransactions": "Recent Transactions",
+      "transactionDate": "Date",
+      "transactionType": "Type",
+      "transactionAmount": "Amount",
+      "transactionDescription": "Description",
+      "edit": "Edit",
+      "delete": "Delete",
+      "deleteDisabledUsage": "Cannot delete: used by {{count}} transactions",
+      "deleteDisabledChildren": "Cannot delete: has subcategories"
+    },
+    "deleteConfirmModal": {
+      "title": "Delete Category",
+      "message": "Are you sure you want to delete this category? This action cannot be undone.",
+      "confirm": "Delete",
+      "cancel": "Cancel"
+    },
+    "messages": {
+      "categoryCreated": "Category created successfully",
+      "categoryUpdated": "Category updated successfully",
+      "categoryDeleted": "Category deleted successfully",
+      "deleteFailed": "Error deleting category"
+    }
   },
   "incomePage": {
-    "title": "Income Management",
-    "subtitle": "Add and track your income for better control over financial growth",
+    "title": "Income",
+    "subtitle": "Track and manage your earnings",
     "addButton": "Add Income",
-    "createModalTitle": "Add New Income"
+    "createModalTitle": "Add New Income",
+    "tabs": {
+      "table": "Income Table",
+      "dashboard": "Analytics"
+    },
+    "kpi": {
+      "thisMonth": "This Month",
+      "prevMonth": "Previous Month",
+      "avgPerDay": "Avg / Day",
+      "sources": "Sources"
+    },
+    "filters": {
+      "toggle": "Filters",
+      "dateFrom": "From",
+      "dateTo": "To",
+      "category": "Category",
+      "account": "Account",
+      "currency": "Currency",
+      "clearAll": "Clear All",
+      "allCategories": "All Categories",
+      "allAccounts": "All Accounts",
+      "allCurrencies": "All Currencies",
+      "noMatchFilters": "No income matches your filters"
+    },
+    "exportButton": "Export CSV",
+    "deleteConfirm": {
+      "title": "Delete Income",
+      "message": "Are you sure you want to delete this income? This action cannot be undone.",
+      "confirm": "Delete",
+      "cancel": "Cancel"
+    },
+    "shortcutHint": "Press N to add",
+    "list": {
+      "loading": "Loading income...",
+      "noIncomeAtAll": "No income recorded yet",
+      "noIncomeSubtitle": "Add your first income to start tracking earnings",
+      "noIncomeOnPage": "No income on this page",
+      "noIncomeOnPageSubtitle": "Try changing filters or go to another page",
+      "date": "Date",
+      "amount": "Amount",
+      "currency": "Currency",
+      "category": "Category",
+      "description": "Description",
+      "actions": "Actions",
+      "noDate": "No date",
+      "unknownCategory": "Unknown",
+      "noCategory": "No category",
+      "noDescription": "No description"
+    },
+    "dashboard": {
+      "loading": "Loading analytics...",
+      "trendTitle": "Income Trend (6 months)",
+      "categoryTitle": "Income by Category",
+      "topTitle": "Top 5 Income Sources"
+    }
   },
   "expensePage": {
-    "title": "Expense Management",
-    "subtitle": "Add and track your expenses for better budget control",
+    "title": "Expenses",
+    "subtitle": "Track and manage your spending",
     "addButton": "Add Expense",
     "createModalTitle": "Add New Expense",
     "tabs": {
       "table": "Expense Table",
       "dashboard": "Analytics"
-    }
+    },
+    "kpi": {
+      "thisMonth": "This Month",
+      "prevMonth": "Previous Month",
+      "avgPerDay": "Avg / Day",
+      "categories": "Categories"
+    },
+    "filters": {
+      "toggle": "Filters",
+      "dateFrom": "From",
+      "dateTo": "To",
+      "category": "Category",
+      "account": "Account",
+      "currency": "Currency",
+      "clearAll": "Clear All",
+      "allCategories": "All Categories",
+      "allAccounts": "All Accounts",
+      "allCurrencies": "All Currencies",
+      "noMatchFilters": "No expenses match your filters"
+    },
+    "exportButton": "Export CSV",
+    "deleteConfirm": {
+      "title": "Delete Expense",
+      "message": "Are you sure you want to delete this expense? This action cannot be undone.",
+      "confirm": "Delete",
+      "cancel": "Cancel"
+    },
+    "shortcutHint": "Press N to add"
   },
   "accountPage": {
     "title": "Accounts",
@@ -655,6 +960,80 @@
       "createAccount": "Create Account",
       "cancel": "Cancel"
     },
+    "exportButton": "Export CSV",
+    "shortcutHint": "Press N to add",
+    "kpi": {
+      "totalAccounts": "Total Accounts",
+      "totalBalance": "Total Balance",
+      "activeAccounts": "Active Accounts",
+      "currencies": "Currencies",
+      "notIncluded": "{{count}} not included"
+    },
+    "filters": {
+      "toggle": "Filters",
+      "clearAll": "Clear All",
+      "noMatchFilters": "No accounts match your filters",
+      "type": "Type",
+      "allTypes": "All Types",
+      "currency": "Currency",
+      "allCurrencies": "All Currencies",
+      "search": "Search",
+      "searchPlaceholder": "Search by name...",
+      "groupBy": "Group By",
+      "groupByNone": "None",
+      "groupByCurrency": "Currency",
+      "groupByType": "Account Type"
+    },
+    "table": {
+      "name": "Name",
+      "type": "Type",
+      "currency": "Currency",
+      "balance": "Balance",
+      "transactions": "Transactions",
+      "lastTransaction": "Last Transaction",
+      "created": "Created",
+      "status": "Status",
+      "actions": "Actions",
+      "noAccounts": "No accounts yet",
+      "noAccountsDescription": "Create your first financial account to start tracking",
+      "active": "Active",
+      "archived": "Archived"
+    },
+    "sidePanel": {
+      "overview": "Overview",
+      "balance": "Balance",
+      "type": "Type",
+      "currency": "Currency",
+      "created": "Created",
+      "lastTransaction": "Last Transaction",
+      "transactions": "Transactions",
+      "transactionHistory": "Transaction History",
+      "noTransactions": "No transactions yet",
+      "transactionsCount": "{{count}} transactions",
+      "financialSummary": "Financial Summary",
+      "income": "Total Income",
+      "expenses": "Total Expenses",
+      "netBalance": "Net Balance",
+      "recentTransactions": "Recent Transactions",
+      "transactionDate": "Date",
+      "transactionType": "Type",
+      "transactionAmount": "Amount",
+      "transactionDescription": "Description",
+      "edit": "Edit",
+      "archive": "Archive"
+    },
+    "archiveConfirmModal": {
+      "title": "Archive Account",
+      "message": "Are you sure you want to archive this account? It will no longer appear in active accounts.",
+      "confirm": "Archive",
+      "cancel": "Cancel"
+    },
+    "messages": {
+      "accountCreated": "Account created successfully",
+      "accountUpdated": "Account updated successfully",
+      "accountArchived": "Account archived successfully",
+      "archiveFailed": "Error archiving account"
+    },
     "errors": {
       "loadAccounts": "Error loading accounts",
       "loadSummaries": "Error loading account summaries",
@@ -671,14 +1050,105 @@
       "debts": "Debts",
       "contacts": "Contacts"
     },
-    "addButton": "Add",
+    "addButton": "Add Debt",
+    "addContact": "Add Contact",
+    "exportButton": "Export CSV",
+    "shortcutHint": "Press N to add",
+    "createModalTitle": "Create Debt",
+    "editModalTitle": "Edit Debt",
+    "paymentModalTitle": "Make Payment",
     "messages": {
       "debtCreated": "Debt created successfully",
       "debtUpdated": "Debt updated successfully",
       "debtDeleted": "Debt deleted successfully",
       "contactCreated": "Contact created successfully",
       "contactUpdated": "Contact updated successfully",
-      "paymentMade": "Payment made successfully"
+      "contactDeleted": "Contact deleted successfully",
+      "paymentMade": "Payment made successfully",
+      "markedAsPaid": "Debt marked as paid"
+    },
+    "kpi": {
+      "totalOutstanding": "Total Outstanding",
+      "totalPaid": "Total Paid",
+      "activeDebts": "Active Debts",
+      "avgInterest": "Avg Interest Rate"
+    },
+    "filters": {
+      "toggle": "Filters",
+      "status": "Status",
+      "allStatuses": "All Statuses",
+      "debtType": "Debt Type",
+      "allTypes": "All Types",
+      "contact": "Contact",
+      "allContacts": "All Contacts",
+      "currency": "Currency",
+      "allCurrencies": "All Currencies",
+      "dateFrom": "From",
+      "dateTo": "To",
+      "clearAll": "Clear All",
+      "noMatchFilters": "No debts match your filters"
+    },
+    "table": {
+      "name": "Name",
+      "balance": "Balance",
+      "initialAmount": "Initial",
+      "interest": "Interest %",
+      "dueDate": "Due Date",
+      "progress": "Progress",
+      "status": "Status",
+      "actions": "Actions",
+      "loading": "Loading debts...",
+      "noDebtsAtAll": "No debts yet",
+      "noDebtsSubtitle": "Click \"Add Debt\" to track your first debt",
+      "noDebtsOnPage": "No debts on this page",
+      "noDebtsOnPageSubtitle": "Try a different page or adjust filters"
+    },
+    "sidePanel": {
+      "overview": "Overview",
+      "balance": "Current Balance",
+      "initialAmount": "Initial Amount",
+      "interestRate": "Interest Rate",
+      "minimumPayment": "Minimum Payment",
+      "dueDate": "Due Date",
+      "startDate": "Start Date",
+      "lastPayment": "Last Payment",
+      "progress": "Payoff Progress",
+      "paymentHistory": "Payment History",
+      "paymentsCount": "{{count}} payments",
+      "noPayments": "No payments yet",
+      "paymentDate": "Date",
+      "paymentAmount": "Amount",
+      "paymentMethod": "Method",
+      "notes": "Notes",
+      "noNotes": "No notes",
+      "contact": "Contact",
+      "makePayment": "Make Payment",
+      "markAsPaid": "Mark as Paid",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "contactsTable": {
+      "name": "Name",
+      "company": "Company",
+      "email": "Email",
+      "debtCount": "Debts",
+      "totalDebt": "Total Debt",
+      "actions": "Actions",
+      "loading": "Loading contacts...",
+      "noContactsAtAll": "No contacts yet",
+      "noContactsSubtitle": "Click \"Add Contact\" to create your first contact"
+    },
+    "deleteConfirmModal": {
+      "title": "Delete Debt",
+      "message": "Are you sure you want to delete this debt? This action cannot be undone.",
+      "confirm": "Delete",
+      "cancel": "Cancel"
+    },
+    "deleteContactModal": {
+      "title": "Delete Contact",
+      "message": "Are you sure you want to delete this contact?",
+      "confirm": "Delete",
+      "cancel": "Cancel"
     },
     "backTo": "← Back to",
     "stats": {
@@ -698,7 +1168,7 @@
       "all": "All Types"
     },
     "status": {
-      "all": "All Status",
+      "all": "All Statuses",
       "active": "Active",
       "paidOff": "Paid Off",
       "inactive": "Inactive"
@@ -785,11 +1255,13 @@
   },
   "goalsPage": {
     "title": "Goals",
+    "subtitle": "Track and manage your financial objectives",
     "createModalTitle": "Create Goal",
     "editModalTitle": "Edit Goal",
     "progressModalTitle": "Update Progress",
-    "createButton": "Create Goal",
+    "createButton": "Add Goal",
     "createButtonShort": "Create",
+    "exportButton": "Export CSV",
     "loadingGoals": "Loading goals...",
     "noGoals": "No goals",
     "createFirstGoal": "Create your first goal to start planning",
@@ -802,7 +1274,10 @@
       "goalCreated": "Goal successfully created",
       "goalUpdated": "Goal successfully updated",
       "goalDeleted": "Goal successfully deleted",
-      "progressUpdated": "Progress updated"
+      "progressUpdated": "Progress updated",
+      "statusChanged": "Goal status updated",
+      "statusChangeFailed": "Error changing goal status",
+      "deleteFailed": "Error deleting goal"
     },
     "form": {
       "title": "Goal Title",
@@ -844,7 +1319,17 @@
       "byType": "By Type",
       "byPriority": "By Priority"
     },
+    "kpi": {
+      "activeGoals": "Active Goals",
+      "completed": "Completed",
+      "totalSaved": "Total Saved",
+      "totalTarget": "Total Target",
+      "overallProgress": "Overall Progress"
+    },
     "filters": {
+      "toggle": "Filters",
+      "clearAll": "Clear All",
+      "noMatchFilters": "No goals match your filters",
       "status": "Status",
       "allStatuses": "All Statuses",
       "active": "Active",
@@ -868,6 +1353,69 @@
       "search": "Search",
       "searchPlaceholder": "Search by name..."
     },
+    "table": {
+      "name": "Name",
+      "amount": "Amount",
+      "progress": "Progress",
+      "targetDate": "Target Date",
+      "daysRemaining": "Days",
+      "status": "Status",
+      "actions": "Actions",
+      "noGoals": "No goals yet",
+      "noGoalsDescription": "Create your first financial goal to start tracking progress",
+      "info": {
+        "currentAmount": "Current",
+        "targetAmount": "Target",
+        "requiredMonthly": "Monthly Required",
+        "targetDate": "Target Date",
+        "daysRemaining": "Days Remaining",
+        "onTrack": "On Track"
+      },
+      "trackStatus": {
+        "onTrack": "On Track",
+        "slightlyBehind": "Slightly Behind",
+        "offTrack": "Off Track",
+        "noDate": "No Target Date"
+      },
+      "overdueDays": "Overdue by {{days}}d",
+      "remainingDays": "{{days}}d left"
+    },
+    "sidePanel": {
+      "overview": "Overview",
+      "currentAmount": "Current Amount",
+      "targetAmount": "Target Amount",
+      "progress": "Progress",
+      "requiredMonthly": "Required Monthly",
+      "startDate": "Start Date",
+      "targetDate": "Target Date",
+      "daysRemaining": "Days Remaining",
+      "onTrack": "On Track",
+      "milestones": "Milestones",
+      "milestonesCount": "{{count}} milestones",
+      "noMilestones": "No milestones defined",
+      "milestoneTitle": "Title",
+      "milestoneTarget": "Target",
+      "milestoneCurrent": "Current",
+      "milestoneStatus": "Status",
+      "milestoneCompleted": "Completed",
+      "milestonePending": "Pending",
+      "projection": "Projection",
+      "projectedCompletion": "Projected Completion",
+      "noTargetDate": "No target date set",
+      "notes": "Notes",
+      "noNotes": "No notes",
+      "pause": "Pause",
+      "resume": "Resume",
+      "edit": "Edit",
+      "delete": "Delete",
+      "updateProgress": "Update Progress"
+    },
+    "deleteConfirmModal": {
+      "title": "Delete Goal",
+      "message": "Are you sure you want to delete this goal? This action cannot be undone.",
+      "confirm": "Delete",
+      "cancel": "Cancel"
+    },
     "card": {
       "pause": "Pause",
       "resume": "Resume",
@@ -879,6 +1427,90 @@
     }
   },
   "recurringPage": {
+    "title": "Automation Control Center",
+    "subtitle": "Manage recurring payments and automation rules",
+    "addButton": "Add Payment",
+    "exportButton": "Export CSV",
+    "shortcutHint": "Press N to add",
+    "status": {
+      "active": "Active",
+      "paused": "Paused",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "types": {
+      "expense": "Expense",
+      "income": "Income"
+    },
+    "schedule": {
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "yearly": "Yearly"
+    },
+    "kpi": {
+      "total": "Total Payments",
+      "active": "Active",
+      "paused": "Paused",
+      "executedThisMonth": "Executed This Month",
+      "failedThisMonth": "Failed This Month"
+    },
+    "filters": {
+      "toggle": "Filters",
+      "status": "Status",
+      "allStatuses": "All Statuses",
+      "paymentType": "Payment Type",
+      "allTypes": "All Types",
+      "frequency": "Frequency",
+      "allFrequencies": "All Frequencies",
+      "clearAll": "Clear All",
+      "noMatchFilters": "No payments match your filters"
+    },
+    "table": {
+      "name": "Name",
+      "amount": "Amount",
+      "frequency": "Frequency",
+      "nextExecution": "Next Execution",
+      "lastExecuted": "Last Executed",
+      "status": "Status",
+      "actions": "Actions",
+      "loading": "Loading payments...",
+      "noPaymentsAtAll": "No recurring payments yet",
+      "noPaymentsSubtitle": "Click \"Add Payment\" to create your first automation",
+      "noPaymentsOnPage": "No payments on this page",
+      "noPaymentsOnPageSubtitle": "Try a different page or adjust filters"
+    },
+    "sidePanel": {
+      "overview": "Overview",
+      "amount": "Amount",
+      "paymentType": "Payment Type",
+      "schedule": "Schedule",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "nextExecution": "Next Execution",
+      "lastExecuted": "Last Executed",
+      "executionHistory": "Execution History",
+      "executionsCount": "{{count}} executions",
+      "noExecutions": "No execution history yet",
+      "executionDate": "Date",
+      "executionStatus": "Status",
+      "executionError": "Error",
+      "scheduleStatus": {
+        "pending": "Pending",
+        "executed": "Executed",
+        "failed": "Failed"
+      },
+      "notes": "Notes",
+      "noNotes": "No notes",
+      "pause": "Pause",
+      "resume": "Resume",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "upcoming": {
+      "title": "Upcoming Executions",
+      "noUpcoming": "No upcoming executions"
+    },
     "createModal": {
       "title": "Create Recurring Payment",
       "success": "Recurring payment successfully created",
@@ -905,6 +1537,28 @@
       "endDate": "End Date (optional)",
       "creating": "Creating...",
       "create": "Create"
+    },
+    "editModal": {
+      "title": "Edit Recurring Payment",
+      "save": "Save Changes",
+      "saving": "Saving...",
+      "success": "Recurring payment updated successfully",
+      "error": "Error updating recurring payment"
+    },
+    "deleteConfirmModal": {
+      "title": "Delete Recurring Payment",
+      "message": "Are you sure you want to delete this recurring payment? This action cannot be undone.",
+      "confirm": "Delete",
+      "cancel": "Cancel"
+    },
+    "messages": {
+      "created": "Recurring payment created successfully",
+      "updated": "Recurring payment updated successfully",
+      "deleted": "Recurring payment deleted successfully",
+      "paused": "Recurring payment paused",
+      "resumed": "Recurring payment resumed",
+      "deleteFailed": "Error deleting recurring payment",
+      "pauseResumeFailed": "Error changing payment status"
     }
   },
   "pdfParserPage": {
@@ -1082,9 +1736,6 @@
     "register": {
       "title": "Sign Up",
       "subtitle": "Create a new account to get started",
-      "username": "Username",
-      "usernameRequired": "Username *",
-      "usernamePlaceholder": "Enter username",
       "submit": "Sign Up",
       "loading": "Signing up...",
       "hasAccount": "Already have an account?",
@@ -1094,45 +1745,40 @@
   },
   "footer": {
     "brand": {
-      "title": "Financial Accounting",
-      "description": "Simple and effective personal finance management. Track income, expenses and plan your budget."
+      "title": "FinFlow",
+      "description": "Financial SaaS platform with microservice architecture. Multi-currency, automation and team collaboration."
     },
     "sections": {
       "product": "Product",
+      "platform": "Platform",
       "company": "Company",
-      "support": "Support",
       "legal": "Legal"
     },
     "links": {
       "product": {
         "features": "Features",
         "pricing": "Pricing",
-        "api": "API",
-        "integrations": "Integrations"
+        "api": "API"
+      },
+      "platform": {
+        "architecture": "Architecture",
+        "security": "Security",
+        "status": "Status",
+        "docs": "Documentation"
       },
       "company": {
         "about": "About",
-        "blog": "Blog",
-        "careers": "Careers",
         "contact": "Contact"
       },
-      "support": {
-        "help": "Help",
-        "docs": "Documentation",
-        "status": "Status",
-        "community": "Community"
-      },
       "legal": {
-        "privacy": "Privacy Policy",
+        "privacy": "Privacy",
         "terms": "Terms of Use",
-        "refund": "Refund Policy",
-        "cookies": "Cookie",
-        "gdpr": "GDPR"
+        "refund": "Refund Policy"
       }
     },
     "bottom": {
-      "copyright": "© {{year}} Financial Accounting. All rights reserved.",
-      "madeWith": "Made with ❤️ for managing finances"
+      "copyright": "© {{year}} FinFlow, powered by FluxLab. All rights reserved.",
+      "madeWith": "Built on FastAPI, PostgreSQL & React"
     }
   },
   "subscription": {
@@ -1279,7 +1925,6 @@
     "editButton": "Edit Profile",
     "editModalTitle": "Edit Profile",
     "defaultUsername": "User",
-    "username": "Username",
     "baseCurrency": "Base Currency",
     "userId": "User ID",
     "subscription": "Subscription",

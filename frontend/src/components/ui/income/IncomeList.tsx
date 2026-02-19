@@ -1,280 +1,264 @@
-import { useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useApiClients } from '@/hooks/useApiClients';
-import { useCategories } from '@/contexts/CategoriesContext';
+
 import { IncomeOut } from '@/types';
-import { DeleteButton, Pagination } from '@/components/ui';
+import { Pagination } from '@/components/ui';
+import { Badge } from '@/components/ui/shared/Badge';
+import { Button } from '@/components/ui/shared/Button';
 
-export const IncomeList: React.FC = () => {
-  const { t } = useTranslation();
-  const { income } = useApiClients();
-  const { categories } = useCategories();
-  const [incomes, setIncomes] = useState<IncomeOut[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [totalItems, setTotalItems] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
+interface IncomeListProps {
+  incomes: IncomeOut[];
+  loading: boolean;
+  categories: Record<number, string>;
+  currentPage: number;
+  totalPages: number;
+  pageSize: number;
+  totalItems: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
+  onDeleteRequest?: (income: IncomeOut) => void;
+  emptyMessage?: string;
+}
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        const incomesResponse = await income.getIncomesPaginated({
-          page: currentPage,
-          size: pageSize
+type SortField = 'date' | 'amount' | 'category';
+type SortOrder = 'asc' | 'desc';
+
+export const IncomeList: React.FC<IncomeListProps> = ({
+  incomes,
+  loading,
+  categories,
+  currentPage,
+  totalPages,
+  pageSize,
+  totalItems,
+  onPageChange,
+  onPageSizeChange,
+  onDeleteRequest,
+  emptyMessage,
+}) => {
+    const { t } = useTranslation();
+    const [sortField, setSortField] = useState<SortField>('date');
+    const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+
+    const sortedIncomes = useMemo(() => {
+        const sorted = [...incomes].sort((a, b) => {
+            let cmp = 0;
+            switch (sortField) {
+                case 'date':
+                    cmp = new Date(a.date).getTime() - new Date(b.date).getTime();
+                    break;
+                case 'amount':
+                    cmp = a.amount - b.amount;
+                    break;
+                case 'category':
+                    cmp = (categories[a.category_id ?? 0] || '').localeCompare(categories[b.category_id ?? 0] || '');
+                    break;
+            }
+            return sortOrder === 'asc' ? cmp : -cmp;
         });
+        return sorted;
+    }, [incomes, sortField, sortOrder, categories]);
 
-        if ('error' in incomesResponse) {
-          setError(incomesResponse.error);
+    const toggleSort = (field: SortField) => {
+        if (sortField === field) {
+            setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
         } else {
-          setIncomes(incomesResponse.items);
-          setTotalItems(incomesResponse.total);
-          setTotalPages(incomesResponse.pages);
+            setSortField(field);
+            setSortOrder('desc');
         }
-      } catch (err) {
-        console.error('Error fetching data:', err);
-        setError('Ошибка при загрузке данных');
-      } finally {
-        setIsLoading(false);
-      }
     };
 
-    fetchData();
-  }, [income, currentPage, pageSize]);
+    const SortIcon: React.FC<{ field: SortField }> = ({ field }) => {
+        if (sortField !== field) return <span className="text-[10px] theme-text-tertiary ml-1">↕</span>;
+        return <span className="text-[10px] theme-accent ml-1">{sortOrder === 'asc' ? '↑' : '↓'}</span>;
+    };
 
-  const getCategoryName = (categoryId: number | null | undefined) => {
-    if (!categoryId) return 'Без категории';
-    const cat = categories.find(c => c.id === categoryId);
-    return cat ? cat.name : 'Неизвестная категория';
-  };
+    const formatDate = (dateString: string | null | undefined) => {
+        if (!dateString) return t('incomePage.list.noDate');
+        return new Date(dateString).toLocaleDateString('uk-UA');
+    };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('uk-UA');
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  const handlePageSizeChange = (size: number) => {
-    setPageSize(size);
-    setCurrentPage(1);
-  };
-
-  const handleDelete = async (id: number) => {
-    setDeletingId(id);
-    try {
-      const response = await income.deleteIncome(id);
-      if (!response || 'error' in response) {
-        setError(response?.error || 'Ошибка при удалении дохода');
-      } else {
-        setIncomes(prev => prev.filter(inc => inc.id !== id));
-      }
-    } catch (err) {
-      setError('Ошибка при удалении дохода');
-      console.error('Error deleting income:', err);
-    } finally {
-      setDeletingId(null);
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center py-12">
+                <div className="animate-spin rounded-full h-6 w-6 border-2 border-[var(--color-accent)] border-t-transparent" />
+                <span className="ml-3 theme-text-secondary text-sm">{t('incomePage.list.loading')}</span>
+            </div>
+        );
     }
-  };
 
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center py-8 sm:py-12">
-        <div className="relative">
-          <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-2 sm:border-3 theme-border"></div>
-          <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-2 sm:border-3 theme-success border-t-transparent absolute top-0 left-0"></div>
-        </div>
-        <span className="ml-3 theme-text-secondary text-sm sm:text-base">Загрузка доходов...</span>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="theme-error-light theme-border border rounded-lg sm:rounded-xl p-4 sm:p-6 mx-4 sm:mx-6 my-4 sm:my-6">
-        <div className="flex items-center gap-3">
-          <div className="w-5 h-5 theme-error flex-shrink-0">
-            <svg fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-            </svg>
-          </div>
-          <p className="theme-error text-sm font-medium">{error}</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="w-full overflow-hidden">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-green-600 to-emerald-600 px-4 sm:px-6 py-4 sm:py-6">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
-          <h2 className="text-lg sm:text-xl font-bold text-white">Список доходов</h2>
-          <div className="text-white text-sm sm:text-base">
-            Всего записей: <span className="font-bold text-lg sm:text-xl">{totalItems}</span>
-          </div>
-        </div>
-      </div>
-      
-      {/* Content */}
-      <div className="p-4 sm:p-6">
-        {incomes.length === 0 ? (
-          <div className="text-center py-8 sm:py-12">
-            <div className="text-6xl sm:text-7xl mb-4 sm:mb-6">💰</div>
-            <p className="theme-text-primary text-base sm:text-lg font-medium mb-2">Доходы пока не добавлены</p>
-            <p className="theme-text-secondary text-sm sm:text-base">Добавьте первый доход, используя кнопку выше</p>
-          </div>
-        ) : (
-          <>
-            {/* Desktop Table View */}
-            <div className="hidden lg:block overflow-x-auto">
-              <table className="min-w-full divide-y theme-border">
-                <thead className="theme-bg-secondary">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium theme-text-tertiary uppercase tracking-wider">
-                      Дата
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium theme-text-tertiary uppercase tracking-wider">
-                      Сумма
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium theme-text-tertiary uppercase tracking-wider">
-                      {t('income.list.currency')}
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium theme-text-tertiary uppercase tracking-wider">
-                      Категория
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium theme-text-tertiary uppercase tracking-wider">
-                      Описание
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium theme-text-tertiary uppercase tracking-wider">
-                      Действия
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="theme-surface divide-y theme-border">
-                  {incomes.map((income) => (
-                    <tr key={income.id} className="hover:theme-surface-hover theme-transition">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm theme-text-primary">
-                          {formatDate(income.date)}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-semibold theme-success">
-                          +{income.amount.toLocaleString('uk-UA')}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm theme-text-secondary">
-                          {income.currency}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium theme-success-light theme-success">
-                          {getCategoryName(income.category_id)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm theme-text-secondary max-w-xs truncate">
-                          {income.description || (
-                            <span className="theme-text-tertiary italic">Без описания</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <DeleteButton
-                          onDelete={() => handleDelete(income.id)}
-                          disabled={deletingId === income.id}
-                          loading={deletingId === income.id}
-                          variant="filled"
-                          size="sm"
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Mobile Card View */}
-            <div className="block lg:hidden space-y-3 sm:space-y-4">
-              {incomes.map((income) => (
-                <div key={income.id} className="theme-surface theme-border border rounded-lg sm:rounded-xl p-4 sm:p-5 theme-shadow hover:theme-shadow-hover theme-transition">
-                  <div className="flex items-start justify-between gap-3 sm:gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
-                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-sm">
-                          <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                          </svg>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <div className="text-base sm:text-lg font-bold theme-success truncate">
-                              +{income.amount.toLocaleString('uk-UA')}
-                            </div>
-                            <div className="text-xs theme-text-secondary px-2 py-1 rounded theme-bg-secondary">
-                              {income.currency}
-                            </div>
-                          </div>
-                          <div className="text-xs sm:text-sm theme-text-tertiary mt-1">
-                            {formatDate(income.date)}
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-2 sm:space-y-3">
-                        <div className="flex items-center gap-2">
-                          <span className="inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium theme-success-light theme-success">
-                            {getCategoryName(income.category_id)}
-                          </span>
-                        </div>
-                        
-                        {income.description && (
-                          <div className="text-sm sm:text-base theme-text-secondary line-clamp-2">
-                            {income.description}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="flex-shrink-0">
-                      <DeleteButton
-                        onDelete={() => handleDelete(income.id)}
-                        disabled={deletingId === income.id}
-                        loading={deletingId === income.id}
-                        variant="filled"
-                        size="sm"
-                      />
-                    </div>
-                  </div>
+    if (incomes.length === 0) {
+        return (
+            <div className="text-center py-12">
+                <div className="w-16 h-16 mx-auto mb-4 theme-bg-tertiary rounded-xl flex items-center justify-center">
+                    <svg className="w-8 h-8 theme-text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                    </svg>
                 </div>
-              ))}
+                <h3 className="text-base font-semibold theme-text-primary mb-1">
+                    {emptyMessage || (totalItems === 0 ? t('incomePage.list.noIncomesAtAll') : t('incomePage.list.noIncomesOnPage'))}
+                </h3>
+                <p className="theme-text-secondary text-sm max-w-md mx-auto">
+                    {totalItems === 0 ? t('incomePage.list.noIncomesSubtitle') : t('incomePage.list.noIncomesOnPageSubtitle')}
+                </p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="w-full">
+            {/* Mobile Cards View */}
+            <div className="block lg:hidden space-y-2 p-4">
+                {sortedIncomes.map((inc) => (
+                    <div
+                        key={inc.id}
+                        className="theme-bg-secondary rounded-lg border theme-border p-3 transition-colors"
+                    >
+                        <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-sm font-semibold text-green-600/80 dark:text-green-400/70">
+                                        +{inc.amount.toLocaleString('uk-UA')}
+                                    </span>
+                                    <span className="text-xs theme-text-secondary">
+                                        {inc.currency}
+                                    </span>
+                                    <span className="text-xs theme-text-tertiary">
+                                        {formatDate(inc.date)}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Badge variant="secondary" size="sm">
+                                        {categories[inc.category_id ?? 0] || t('incomePage.list.unknownCategory')}
+                                    </Badge>
+                                </div>
+                                {inc.description && (
+                                    <p className="text-xs theme-text-secondary truncate">
+                                        {inc.description}
+                                    </p>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+                                {onDeleteRequest && (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => onDeleteRequest(inc)}
+                                        className="text-red-500 hover:text-red-600 !p-1.5 !min-h-0"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                ))}
             </div>
 
-            {/* Pagination */}
+            {/* Desktop Table View */}
+            <div className="hidden lg:block">
+                <div className="overflow-hidden">
+                    <table className="w-full">
+                        <thead className="theme-bg-secondary sticky top-0 z-10">
+                            <tr>
+                                <th
+                                    className="px-4 py-3 text-left text-xs font-semibold theme-text-secondary uppercase tracking-wider cursor-pointer select-none hover:theme-text-primary transition-colors"
+                                    onClick={() => toggleSort('date')}
+                                >
+                                    {t('incomePage.list.date')}<SortIcon field="date" />
+                                </th>
+                                <th
+                                    className="px-4 py-3 text-right text-xs font-semibold theme-text-secondary uppercase tracking-wider cursor-pointer select-none hover:theme-text-primary transition-colors"
+                                    onClick={() => toggleSort('amount')}
+                                >
+                                    {t('incomePage.list.amount')}<SortIcon field="amount" />
+                                </th>
+                                <th className="px-4 py-3 text-left text-xs font-semibold theme-text-secondary uppercase tracking-wider">
+                                    {t('incomePage.list.currency')}
+                                </th>
+                                <th
+                                    className="px-4 py-3 text-left text-xs font-semibold theme-text-secondary uppercase tracking-wider cursor-pointer select-none hover:theme-text-primary transition-colors"
+                                    onClick={() => toggleSort('category')}
+                                >
+                                    {t('incomePage.list.category')}<SortIcon field="category" />
+                                </th>
+                                <th className="px-4 py-3 text-left text-xs font-semibold theme-text-secondary uppercase tracking-wider">
+                                    {t('incomePage.list.description')}
+                                </th>
+                                <th className="px-4 py-3 text-right text-xs font-semibold theme-text-secondary uppercase tracking-wider">
+                                    {t('incomePage.list.actions')}
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody className="theme-surface divide-y theme-border">
+                            {sortedIncomes.map((inc) => (
+                                <tr key={inc.id} className="hover:theme-surface-hover transition-colors group">
+                                    <td className="px-4 py-3">
+                                        <span className="text-sm theme-text-secondary">
+                                            {formatDate(inc.date)}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3 text-right">
+                                        <span className="text-sm font-semibold text-green-600/80 dark:text-green-400/70 tabular-nums">
+                                            +{inc.amount.toLocaleString('uk-UA', { minimumFractionDigits: 2 })}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <span className="text-sm theme-text-secondary">
+                                            {inc.currency}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <Badge variant="secondary" size="sm">
+                                            {categories[inc.category_id ?? 0] || t('incomePage.list.unknownCategory')}
+                                        </Badge>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <span className="text-sm theme-text-secondary max-w-xs truncate block">
+                                            {inc.description || (
+                                                <span className="theme-text-tertiary italic">{t('incomePage.list.noDescription')}</span>
+                                            )}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3 text-right">
+                                        <div className="flex items-center justify-end gap-1">
+                                            {onDeleteRequest && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => onDeleteRequest(inc)}
+                                                    className="text-red-500 hover:text-red-600 !p-1.5 !min-h-0"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             {totalPages > 1 && (
-              <div className="mt-6">
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  itemsPerPage={pageSize}
-                  totalItems={totalItems}
-                  onPageChange={handlePageChange}
-                  onPageSizeChange={handlePageSizeChange}
-                  showPageSizeSelector={true}
-                  pageSizeOptions={[5, 10, 25, 50]}
-                />
-              </div>
+                <div className="p-4 border-t theme-border">
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        itemsPerPage={pageSize}
+                        totalItems={totalItems}
+                        onPageChange={onPageChange}
+                        onPageSizeChange={onPageSizeChange}
+                        showPageSizeSelector={true}
+                        pageSizeOptions={[10, 25, 50]}
+                    />
+                </div>
             )}
-          </>
-        )}
-      </div>
-    </div>
-  );
+        </div>
+    );
 };

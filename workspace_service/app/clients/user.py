@@ -15,7 +15,6 @@ class UserInfo:
     """User information returned from user service"""
     id: int
     email: str
-    username: str
     base_currency: str
     default_workspace_id: Optional[str] = None
 
@@ -53,7 +52,6 @@ class UserClient:
                     return UserInfo(
                         id=data["id"],
                         email=data["email"],
-                        username=data["username"],
                         base_currency=data["base_currency"],
                         default_workspace_id=data.get("default_workspace_id")
                     )
@@ -95,7 +93,6 @@ class UserClient:
                     return UserInfo(
                         id=data["id"],
                         email=data["email"],
-                        username=data["username"],
                         base_currency=data["base_currency"],
                         default_workspace_id=data.get("default_workspace_id")
                     )

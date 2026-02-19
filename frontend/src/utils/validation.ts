@@ -11,10 +11,6 @@ const REQUIRE_UPPERCASE = true;
 const REQUIRE_LOWERCASE = true;
 const REQUIRE_NUMBERS = true;
 
-// Username validation settings (matching backend config)
-const MIN_USERNAME_LENGTH = 3;
-const MAX_USERNAME_LENGTH = 50;
-
 export const validatePasswordStrength = (password: string): ValidationResult => {
   const errors: string[] = [];
 
@@ -45,44 +41,6 @@ export const validatePasswordStrength = (password: string): ValidationResult => 
 
   if (/(123|abc|qwe|asd|zxc)/i.test(password)) {
     errors.push("Password cannot contain common sequences");
-  }
-
-  return {
-    isValid: errors.length === 0,
-    errors
-  };
-};
-
-export const validateUsername = (username: string): ValidationResult => {
-  const errors: string[] = [];
-
-  if (username.length < MIN_USERNAME_LENGTH) {
-    errors.push(`Username must be at least ${MIN_USERNAME_LENGTH} characters long`);
-  }
-
-  if (username.length > MAX_USERNAME_LENGTH) {
-    errors.push(`Username must be no more than ${MAX_USERNAME_LENGTH} characters long`);
-  }
-
-  // Username should only contain alphanumeric characters, underscores, and hyphens
-  if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
-    errors.push("Username can only contain letters, numbers, underscores, and hyphens");
-  }
-
-  // Username should start with a letter or number
-  if (username.length > 0 && !/^[a-zA-Z0-9]/.test(username)) {
-    errors.push("Username must start with a letter or number");
-  }
-
-  // Username should not end with underscore or hyphen
-  if (username.endsWith('_') || username.endsWith('-')) {
-    errors.push("Username cannot end with underscore or hyphen");
-  }
-
-  // Check for reserved usernames
-  const reservedUsernames = ['admin', 'root', 'administrator', 'user', 'test', 'api', 'www', 'mail', 'ftp'];
-  if (reservedUsernames.includes(username.toLowerCase())) {
-    errors.push("This username is reserved and cannot be used");
   }
 
   return {

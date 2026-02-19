@@ -1,21 +1,18 @@
 export interface User {
   id: number;
   email: string;
-  username: string;
   base_currency: string;
   tutorial_version: number;
 }
 
 export interface UserCreate {
   email: string;
-  username: string;
   password: string;
   base_currency?: string;
 }
 
 export interface UserUpdate {
   email?: string;
-  username?: string;
   base_currency?: string;
 }
 

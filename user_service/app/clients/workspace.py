@@ -1,5 +1,6 @@
 """Workspace Service Client for internal communication"""
 import httpx
+import time
 from typing import Optional
 from uuid import UUID
 from app.config import settings
@@ -32,77 +33,92 @@ class WorkspaceClient:
             headers["X-Internal-Token"] = self.internal_token
         return headers
 
-    def create_personal_workspace(self, user_id: int) -> Optional[UUID]:
+    def create_personal_workspace(self, user_id: int, max_retries: int = 3, retry_delay: float = 2.0) -> Optional[UUID]:
         """
         Create a personal workspace for a new user.
-        
+        Retries on connection errors to handle workspace_service startup delay.
+
         Args:
             user_id: The ID of the user to create workspace for
-            
+            max_retries: Number of retry attempts for connection errors
+            retry_delay: Seconds to wait between retries
+
         Returns:
             UUID of the created workspace, or None if creation failed
         """
-        try:
-            url = f"{self.base_url}/internal/workspaces/personal"
-            payload = {"user_id": user_id}
-            
-            logger.info(
-                "Creating personal workspace",
-                extra={
-                    "operation": "workspace_create",
-                    "user_id": user_id,
-                    "url": url
-                }
-            )
-            
-            with httpx.Client(timeout=self.timeout) as client:
-                response = client.post(
-                    url,
-                    json=payload,
-                    headers=self._get_headers()
-                )
-                
-                if response.status_code == 201:
-                    data = response.json()
-                    workspace_id = UUID(data["workspace_id"])
-                    logger.info(
-                        "Personal workspace created successfully",
-                        extra={
-                            "operation": "workspace_create",
-                            "user_id": user_id,
-                            "workspace_id": str(workspace_id)
-                        }
+        url = f"{self.base_url}/internal/workspaces/personal"
+        payload = {"user_id": user_id}
+
+        logger.info(
+            "Creating personal workspace",
+            extra={
+                "operation": "workspace_create",
+                "user_id": user_id,
+                "url": url
+            }
+        )
+
+        for attempt in range(1, max_retries + 1):
+            try:
+                with httpx.Client(timeout=self.timeout) as client:
+                    response = client.post(
+                        url,
+                        json=payload,
+                        headers=self._get_headers()
                     )
-                    return workspace_id
+
+                    if response.status_code == 201:
+                        data = response.json()
+                        workspace_id = UUID(data["workspace_id"])
+                        logger.info(
+                            "Personal workspace created successfully",
+                            extra={
+                                "operation": "workspace_create",
+                                "user_id": user_id,
+                                "workspace_id": str(workspace_id),
+                                "attempt": attempt
+                            }
+                        )
+                        return workspace_id
+                    else:
+                        logger.warning(
+                            f"Failed to create personal workspace: {response.status_code} - {response.text}",
+                            extra={
+                                "operation": "workspace_create",
+                                "user_id": user_id,
+                                "status_code": response.status_code,
+                                "attempt": attempt
+                            }
+                        )
+                        return None
+
+            except (httpx.ConnectError, httpx.TimeoutException) as e:
+                if attempt < max_retries:
+                    logger.info(
+                        f"Workspace service not ready, retrying in {retry_delay}s (attempt {attempt}/{max_retries}): {e}",
+                        extra={"operation": "workspace_create", "user_id": user_id, "attempt": attempt}
+                    )
+                    time.sleep(retry_delay)
                 else:
                     logger.warning(
-                        f"Failed to create personal workspace: {response.status_code} - {response.text}",
-                        extra={
-                            "operation": "workspace_create",
-                            "user_id": user_id,
-                            "status_code": response.status_code
-                        }
+                        f"Workspace service unavailable after {max_retries} attempts: {e}",
+                        extra={"operation": "workspace_create", "user_id": user_id}
                     )
                     return None
-                    
-        except httpx.TimeoutException:
-            logger.warning(
-                "Timeout while creating personal workspace",
-                extra={"operation": "workspace_create", "user_id": user_id}
-            )
-            return None
-        except httpx.RequestError as e:
-            logger.warning(
-                f"Request error while creating personal workspace: {e}",
-                extra={"operation": "workspace_create", "user_id": user_id}
-            )
-            return None
-        except Exception as e:
-            logger.error(
-                f"Unexpected error while creating personal workspace: {e}",
-                extra={"operation": "workspace_create", "user_id": user_id}
-            )
-            return None
+            except httpx.RequestError as e:
+                logger.warning(
+                    f"Request error while creating personal workspace: {e}",
+                    extra={"operation": "workspace_create", "user_id": user_id, "attempt": attempt}
+                )
+                return None
+            except Exception as e:
+                logger.error(
+                    f"Unexpected error while creating personal workspace: {e}",
+                    extra={"operation": "workspace_create", "user_id": user_id, "attempt": attempt}
+                )
+                return None
+
+        return None
 
     def get_user_default_workspace(self, user_id: int) -> Optional[UUID]:
         """

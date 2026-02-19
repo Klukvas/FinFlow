@@ -1,6 +1,7 @@
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Category, ExpenseResponse } from '@/types';
 import React, { useMemo } from 'react';
+import { CHART_COLORS, CHART_TOOLTIP_STYLE } from './chartColors';
 
 interface TopExpensesChartProps {
   expenses: ExpenseResponse[];
@@ -11,7 +12,7 @@ export const TopExpensesChart: React.FC<TopExpensesChartProps> = ({ expenses, ca
   const topExpenses = useMemo(() => {
 
     const results: { [key: string]: number } = {};
-    
+
     for (const exp of expenses) {
       const category = categories.find(cat => cat.id === exp.category_id);
       if (category?.name) {
@@ -38,37 +39,25 @@ export const TopExpensesChart: React.FC<TopExpensesChartProps> = ({ expenses, ca
       <div className="h-[300px]">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={topExpenses}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-            <XAxis 
-              dataKey="name" 
-              angle={-45} 
-              textAnchor="end" 
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" strokeOpacity={0.5} />
+            <XAxis
+              dataKey="name"
+              angle={-45}
+              textAnchor="end"
               height={70}
-              tick={{ fill: 'var(--color-text-primary)' }}
+              tick={{ fill: 'var(--color-text-primary)', fontSize: 12 }}
               axisLine={{ stroke: 'var(--color-border)' }}
             />
-            <YAxis 
-              tick={{ fill: 'var(--color-text-primary)' }}
+            <YAxis
+              tick={{ fill: 'var(--color-text-primary)', fontSize: 12 }}
               axisLine={{ stroke: 'var(--color-border)' }}
             />
-            <Tooltip 
-              formatter={(value: number) => [`${value} ₴`, 'Сумма']}
-              contentStyle={{
-                backgroundColor: 'var(--color-surface)',
-                border: '1px solid var(--color-border)',
-                borderRadius: '8px',
-                color: 'var(--color-text-primary)'
-              }}
-            />
-            <Legend 
-              wrapperStyle={{
-                color: 'var(--color-text-primary)'
-              }}
-            />
-            <Bar dataKey="amount" name="Сумма" fill="#ff8042" />
+            <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
+            <Legend wrapperStyle={{ color: 'var(--color-text-primary)' }} />
+            <Bar dataKey="amount" name="Сумма" fill={CHART_COLORS[0]} radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
     </div>
   );
-}; 
+};

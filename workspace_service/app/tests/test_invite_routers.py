@@ -160,21 +160,20 @@ class TestGetMyInvitesEndpoint:
     def test_get_my_invites_success(self, mock_get, client, auth_headers):
         """Successfully get my invites"""
         from app.schemas.invite import MyInviteResponse
-        
+
         mock_response = MyInviteResponse(
             id=uuid4(),
             workspace_id=uuid4(),
             workspace_name="Test Workspace",
             inviter_user_id=1,
             inviter_email="owner@test.com",
-            inviter_username="owner",
             role=MemberRole.FULL,
             status=InviteStatus.PENDING,
             expires_at=datetime.utcnow() + timedelta(days=3),
             created_at=datetime.utcnow(),
         )
         mock_get.return_value = [mock_response]
-        
+
         response = client.get("/me/invites", headers=auth_headers)
         
         assert response.status_code == 200
@@ -281,27 +280,24 @@ class TestInviteResponseFormat:
     ):
         """My invite response includes inviter details"""
         from app.schemas.invite import MyInviteResponse
-        
+
         mock_response = MyInviteResponse(
             id=uuid4(),
             workspace_id=uuid4(),
             workspace_name="Test Workspace",
             inviter_user_id=1,
             inviter_email="owner@test.com",
-            inviter_username="owner",
             role=MemberRole.FULL,
             status=InviteStatus.PENDING,
             expires_at=datetime.utcnow() + timedelta(days=3),
             created_at=datetime.utcnow(),
         )
         mock_get.return_value = [mock_response]
-        
+
         response = client.get("/me/invites", headers=auth_headers)
-        
+
         assert response.status_code == 200
         invite = response.json()["invites"][0]
-        
+
         assert "inviter_email" in invite
-        assert "inviter_username" in invite
         assert invite["inviter_email"] == "owner@test.com"
-        assert invite["inviter_username"] == "owner"

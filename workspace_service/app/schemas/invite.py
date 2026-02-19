@@ -109,7 +109,6 @@ class MyInviteResponse(BaseModel):
     workspace_name: str = Field(description="Name of the workspace")
     inviter_user_id: int = Field(description="Inviter user ID")
     inviter_email: str = Field(description="Inviter's email")
-    inviter_username: str = Field(description="Inviter's username")
     role: MemberRole = Field(description="Role that will be assigned upon acceptance")
     status: InviteStatus = Field(description="Invite status")
     expires_at: datetime = Field(description="Expiration timestamp")
@@ -139,7 +138,6 @@ class MyInviteResponse(BaseModel):
                 "workspace_name": "Family Budget",
                 "inviter_user_id": 1,
                 "inviter_email": "owner@example.com",
-                "inviter_username": "john_doe",
                 "role": "full",
                 "status": "pending",
                 "expires_at": "2024-01-08T00:00:00Z",

@@ -31,6 +31,7 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [currentWorkspaceId, setCurrentWorkspaceId] = useState<string | null>(() => getStoredWorkspaceId());
   const [isLoading, setIsLoading] = useState(false);
+  const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Create API client
@@ -61,28 +62,37 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
         return;
       }
 
-      const workspaceList = (response as WorkspaceListResponse).workspaces;
+      let workspaceList = (response as WorkspaceListResponse).workspaces || [];
+
+      // If no workspaces exist, try to create a personal workspace
+      // This handles the case where backend workspace creation failed during registration
+      if (workspaceList.length === 0) {
+        console.log('[WorkspaceContext] No workspaces found, creating personal workspace...');
+        const createResponse = await workspaceApi.createWorkspace({ name: 'Personal', type: 'personal' });
+        if (!('error' in createResponse)) {
+          const newWorkspace = createResponse as Workspace;
+          workspaceList = [newWorkspace];
+          console.log('[WorkspaceContext] Personal workspace created:', newWorkspace.id);
+        } else {
+          console.error('[WorkspaceContext] Failed to create personal workspace:', createResponse.error);
+        }
+      }
+
       setWorkspaces(workspaceList);
 
       // Get the stored workspace ID from localStorage
       const storedId = getStoredWorkspaceId();
-      
-      console.log('[WorkspaceContext] Stored workspace ID:', storedId);
-      console.log('[WorkspaceContext] Available workspaces:', workspaceList.map(w => ({ id: w.id, name: w.name })));
-      
+
       // Check if stored workspace exists in the list
       const storedWorkspaceExists = storedId && workspaceList.some(w => w.id === storedId);
-      console.log('[WorkspaceContext] Stored workspace exists in list:', storedWorkspaceExists);
 
       if (storedWorkspaceExists) {
         // If stored workspace exists, make sure React state matches localStorage
-        console.log('[WorkspaceContext] Using stored workspace:', storedId);
         setCurrentWorkspaceId(storedId);
       } else if (workspaceList.length > 0) {
         // If no valid stored workspace, set default (personal or first)
         const personalWorkspace = workspaceList.find(w => w.type === 'personal');
         const defaultWorkspace = personalWorkspace || workspaceList[0];
-        console.log('[WorkspaceContext] Stored workspace not found, defaulting to:', defaultWorkspace.id, defaultWorkspace.name);
         setCurrentWorkspaceId(defaultWorkspace.id);
         setStoredWorkspaceId(defaultWorkspace.id);
       }
@@ -91,6 +101,7 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
       setError('Failed to load workspaces');
     } finally {
       setIsLoading(false);
+      setHasInitiallyLoaded(true);
     }
   }, [isAuthenticated, workspaceApi]);
 
@@ -233,17 +244,19 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
   useEffect(() => {
     if (isAuthenticated) {
       refreshWorkspaces();
+    } else {
+      // Reset on logout so next login shows loading until workspaces are fetched
+      setHasInitiallyLoaded(false);
     }
-    // Note: We don't clear workspace on isAuthenticated=false here
-    // because auth loading state initially shows as not authenticated
-    // Clearing happens explicitly on logout via AuthContext
   }, [isAuthenticated, refreshWorkspaces]);
 
   const value: WorkspaceContextType = {
     workspaces,
     currentWorkspace,
     currentWorkspaceId,
-    isLoading,
+    // Report loading=true during the gap between isAuthenticated becoming true
+    // and refreshWorkspaces() actually starting (covers the useEffect delay)
+    isLoading: isLoading || (isAuthenticated && !hasInitiallyLoaded),
     error,
     setCurrentWorkspace,
     refreshWorkspaces,

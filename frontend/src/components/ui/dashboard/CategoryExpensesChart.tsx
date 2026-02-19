@@ -1,8 +1,7 @@
 import { Category, ExpenseResponse } from '@/types';
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import React, { useMemo } from 'react';
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#ff8042'];
+import { CHART_COLORS, CHART_TOOLTIP_STYLE } from './chartColors';
 
 interface CategoryExpensesChartProps {
   expenses: ExpenseResponse[];
@@ -14,12 +13,12 @@ export const CategoryExpensesChart: React.FC<CategoryExpensesChartProps> = ({ ex
     return categories.map(cat => {
       const categoryExpenses = expenses.filter(exp => exp.category_id === cat.id);
       const total = categoryExpenses.reduce((sum, exp) => sum + exp.amount, 0);
-      
+
       return {
         name: cat.name,
         value: total
       };
-    }).filter(item => item.value > 0); // Показываем только категории с расходами
+    }).filter(item => item.value > 0);
   }, [expenses, categories]);
 
   return (
@@ -34,29 +33,22 @@ export const CategoryExpensesChart: React.FC<CategoryExpensesChartProps> = ({ ex
               nameKey="name"
               cx="50%"
               cy="50%"
+              innerRadius={60}
               outerRadius={80}
-              label
             >
               {expensesByCategory.map((_, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
               ))}
             </Pie>
-            <Tooltip 
-              contentStyle={{
-                backgroundColor: 'var(--color-surface)',
-                border: '1px solid var(--color-border)',
-                borderRadius: '8px',
-                color: 'var(--color-text-primary)'
-              }}
-            />
-            <Legend 
-              wrapperStyle={{
-                color: 'var(--color-text-primary)'
-              }}
+            <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
+            <Legend
+              layout="horizontal"
+              verticalAlign="bottom"
+              wrapperStyle={{ color: 'var(--color-text-primary)' }}
             />
           </PieChart>
         </ResponsiveContainer>
       </div>
     </div>
   );
-}; 
+};

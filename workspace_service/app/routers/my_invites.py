@@ -26,7 +26,7 @@ router = APIRouter(prefix="/me/invites", tags=["My Invites"])
     
     Response includes rich information:
     - Workspace name
-    - Inviter's email and username
+    - Inviter's email
     - Role that will be assigned
     - Expiration status
     """,

@@ -2,7 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
-import { Account, Category, CategoryDetail, Expense, Income, Profile, Recurring, Goals, PdfParser, Debts, Workspaces, MyInvites, Home, About, Features, Pricing, Contact, Terms, Refund } from '@/pages';
+import { Account, Category, Expense, Income, Profile, Recurring, Goals, PdfParser, Debts, Workspaces, MyInvites, Home, About, Features, Pricing, Contact, Terms, Refund } from '@/pages';
 import { PaymentReturn } from '@/pages/payment/PaymentReturn';
 import { PaymentHistory } from '@/pages/payment/PaymentHistory';
 import { PaymentCheckoutSimple } from '@/pages/payment/PaymentCheckoutSimple';
@@ -23,12 +23,18 @@ export const AppRoutes: React.FC = () => {
     );
   }
 
-  // If authenticated but no workspace selected yet, show loading
+  // If authenticated but no workspace after loading, only allow workspace-independent pages.
+  // This prevents API calls to services that require X-Workspace-Id header.
   if (isAuthenticated && !currentWorkspaceId && !workspaceLoading) {
     return (
-      <div className="min-h-screen theme-bg flex items-center justify-center">
-        <div className="theme-text-primary">Загрузка рабочего пространства...</div>
-      </div>
+      <Routes>
+        <Route path="/workspaces" element={<ProtectedRoute><Layout><Workspaces /></Layout></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><Layout><Profile /></Layout></ProtectedRoute>} />
+        <Route path="/invites" element={<ProtectedRoute><Layout><MyInvites /></Layout></ProtectedRoute>} />
+        <Route path="/terms" element={<PublicLayout><Terms /></PublicLayout>} />
+        <Route path="/refund" element={<PublicLayout><Refund /></PublicLayout>} />
+        <Route path="*" element={<Navigate to="/workspaces" replace />} />
+      </Routes>
     );
   }
 
@@ -102,16 +108,6 @@ export const AppRoutes: React.FC = () => {
             <ProtectedRoute>
               <Layout>
                 <Category />
-              </Layout>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/category/:id" 
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <CategoryDetail />
               </Layout>
             </ProtectedRoute>
           } 
@@ -208,8 +204,8 @@ export const AppRoutes: React.FC = () => {
             </PublicLayout>
           } 
         />
-        <Route path="/" element={<Navigate to="/category" replace />} />
-        <Route path="*" element={<Navigate to="/category" replace />} />
+        <Route path="/" element={<Navigate to={currentWorkspaceId ? "/category" : "/workspaces"} replace />} />
+        <Route path="*" element={<Navigate to={currentWorkspaceId ? "/category" : "/workspaces"} replace />} />
       </Routes>
     );
   }

@@ -1,6 +1,6 @@
 import { AuthHttpClient, ApiError } from './AuthHttpClient';
 import { config } from '@/config/env';
-import { IncomeCreate, IncomeOut, IncomeUpdate, IncomeSummary, IncomeStats, IncomesByCategoryResponse } from '@/types/income';
+import { IncomeCreate, IncomeOut, IncomeUpdate, IncomeSummary, IncomeStats, IncomesByCategoryResponse, IncomeListResponse } from '@/types/income';
 
 export type ApiResponse<T> = T | ApiError;
 
@@ -20,6 +20,13 @@ export class IncomeApiClient {
 
   async getIncomes(skip: number = 0, limit: number = 100): Promise<ApiResponse<IncomeOut[]>> {
     return this.httpClient.get<IncomeOut[]>(`/?skip=${skip}&limit=${limit}`);
+  }
+
+  async getIncomesPaginated(params: { page?: number; size?: number } = {}): Promise<ApiResponse<IncomeListResponse>> {
+    const searchParams = new URLSearchParams();
+    if (params.page !== undefined) searchParams.append('page', params.page.toString());
+    if (params.size !== undefined) searchParams.append('size', params.size.toString());
+    return this.httpClient.get<IncomeListResponse>(`/paginated?${searchParams.toString()}`);
   }
 
   async getIncome(id: number): Promise<ApiResponse<IncomeOut>> {

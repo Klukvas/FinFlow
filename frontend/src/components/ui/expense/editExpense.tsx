@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { CurrencySelect, CategorySelect } from '@/components/ui/forms';
 import { FormattedNumberInput } from '@/components/ui/forms/FormattedNumberInput';
 import { removeSpacesFromNumber } from '@/utils/numberFormat';
+import { Button } from '@/components/ui/shared/Button';
+import { useTranslation } from 'react-i18next';
 
 import { useApiClients } from '@/hooks';
 import { useAccounts } from '@/contexts/AccountsContext';
@@ -14,6 +16,7 @@ interface EditExpenseProps {
 }
 
 export const EditExpense: React.FC<EditExpenseProps> = ({ expense, onExpenseUpdated }) => {
+    const { t } = useTranslation();
     const { expense: expenseApi } = useApiClients();
     const { activeAccounts: accounts, isLoading: isLoadingAccounts } = useAccounts();
     const { handleExpenseError } = useErrorHandler();
@@ -247,29 +250,9 @@ export const EditExpense: React.FC<EditExpenseProps> = ({ expense, onExpenseUpda
                     )}
                 </div>
 
-                <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-semibold py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 sm:gap-3 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none min-h-[44px] text-sm sm:text-base"
-                    data-testid="save-expense-button"
-                >
-                    {isLoading ? (
-                        <>
-                            <div className="relative">
-                                <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-2 border-white/30"></div>
-                                <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-2 border-white border-t-transparent absolute top-0 left-0"></div>
-                            </div>
-                            Сохранение...
-                        </>
-                    ) : (
-                        <>
-                            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                            Сохранить изменения
-                        </>
-                    )}
-                </button>
+                <Button type="submit" variant="primary" size="lg" fullWidth loading={isLoading} data-testid="save-expense-button">
+                    {t('common.save')}
+                </Button>
             </form>
         </div>
     );

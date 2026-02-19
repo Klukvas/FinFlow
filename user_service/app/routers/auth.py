@@ -11,7 +11,6 @@ from app.exceptions import (
     UserAuthenticationError,
     UserRegistrationError,
     PasswordPolicyError,
-    UsernamePolicyError,
     AccountLockedError,
     RateLimitError,
     UserErrorCode
@@ -25,7 +24,7 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
     response_model=TokenResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Register a new user",
-    description="Create a new user account with email, username, and password",
+    description="Create a new user account with email and password",
     responses={
         201: {"description": "User registered successfully"},
         400: {"description": "Validation error or user already exists"},
@@ -38,11 +37,10 @@ def register(
 ) -> TokenResponse:
     """
     Register a new user account.
-    
+
     - **email**: User's email address (must be unique)
-    - **username**: Unique username (3-50 characters, alphanumeric, underscores, hyphens)
     - **password**: Strong password (8-128 characters, must include uppercase, lowercase, and numbers)
-    
+
     Returns an access token for immediate authentication.
     """
     try:
@@ -54,7 +52,7 @@ def register(
             token_type="bearer",
             expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
         )
-    except (UserRegistrationError, PasswordPolicyError, UsernamePolicyError, UserValidationError):
+    except (UserRegistrationError, PasswordPolicyError, UserValidationError):
         raise
     except Exception as e:
         raise UserValidationError("Registration failed")
@@ -114,7 +112,7 @@ def get_me(
     """
     Get current user information.
     
-    Returns the user's ID, email, and username for the authenticated user.
+    Returns the user's ID and email for the authenticated user.
     """
     try:
         user = service.get_user_by_id(user_id)
@@ -128,10 +126,10 @@ def get_me(
     "/me",
     response_model=UserOut,
     summary="Update current user",
-    description="Update current user's email or username",
+    description="Update current user's email or base currency",
     responses={
         200: {"description": "User updated successfully"},
-        400: {"description": "Validation error or username/email already exists"},
+        400: {"description": "Validation error or email already exists"},
         401: {"description": "Unauthorized - invalid or missing token"},
     }
 )
@@ -142,15 +140,15 @@ def update_me(
 ) -> UserOut:
     """
     Update current user information.
-    
+
     - **email**: New email address (optional)
-    - **username**: New username (optional)
-    
+    - **base_currency**: New base currency (optional)
+
     Only provided fields will be updated.
     """
     try:
         user = service.get_user_by_id(user_id)
-        
+
         # Update email if provided
         if user_update.email is not None:
             # Check if email is already taken by another user
@@ -160,17 +158,7 @@ def update_me(
                 error.error_code = UserErrorCode.EMAIL_ALREADY_TAKEN
                 raise error
             user.email = user_update.email.lower().strip()
-        
-        # Update username if provided
-        if user_update.username is not None:
-            # Check if username is already taken by another user
-            existing_user = service.get_user_by_username(user_update.username)
-            if existing_user and existing_user.id != user_id:
-                error = UserValidationError("Username already taken")
-                error.error_code = UserErrorCode.USERNAME_ALREADY_TAKEN
-                raise error
-            user.username = user_update.username.strip()
-        
+
         if user_update.base_currency is not None:
             base_currency = user_update.base_currency.strip().upper()
             
@@ -191,7 +179,7 @@ def update_me(
         service.db.refresh(user)
         
         return user
-    except (UserValidationError, UsernamePolicyError):
+    except UserValidationError:
         service.db.rollback()
         raise
     except Exception as e:

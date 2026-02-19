@@ -81,7 +81,7 @@ export const DesktopHeader = React.memo(() => {
                 <FaUser className="w-4 h-4 theme-accent" />
               </div>
               <span className="text-sm font-medium theme-text-secondary group-hover:theme-text-primary">
-                {isLoading ? t('common.loading') : user?.username || t('header.user')}
+                {isLoading ? t('common.loading') : user?.email || t('header.user')}
               </span>
             </Link>
             

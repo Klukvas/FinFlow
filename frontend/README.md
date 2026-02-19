@@ -1,6 +1,6 @@
-# Accounting App Frontend
+# FinFlow Frontend
 
-A modern React TypeScript application for financial accounting with category and expense management.
+A modern React TypeScript application for smart financial management — powered by FluxLab.
 
 ## Features
 
@@ -40,7 +40,7 @@ A modern React TypeScript application for financial accounting with category and
    VITE_API_BASE_URL=http://localhost:8001
    VITE_CATEGORY_SERVICE_URL=http://localhost:8002
    VITE_EXPENSE_SERVICE_URL=http://localhost:8003
-   VITE_APP_NAME=Financial Accounting
+   VITE_APP_NAME=FinFlow
    VITE_DEBUG=true
    ```
 

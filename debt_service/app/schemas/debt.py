@@ -41,6 +41,20 @@ class DebtBase(BaseModel):
     start_date: date = Field(..., description="Debt start date")
     due_date: Optional[date] = Field(None, description="Debt due date")
 
+    @field_validator('debt_type', mode='before')
+    @classmethod
+    def normalize_debt_type(cls, v: object) -> object:
+        if isinstance(v, str):
+            upper = v.upper()
+            aliases = {
+                'PERSONAL': 'PERSONAL_LOAN',
+                'AUTO': 'AUTO_LOAN',
+                'STUDENT': 'STUDENT_LOAN',
+                'CREDIT': 'CREDIT_CARD',
+            }
+            return aliases.get(upper, upper)
+        return v
+
     @field_validator('initial_amount')
     @classmethod
     def validate_initial_amount(cls, v: float) -> float:
@@ -89,6 +103,20 @@ class DebtUpdate(BaseModel):
     due_date: Optional[date] = None
     is_active: Optional[bool] = None
     is_paid_off: Optional[bool] = None
+
+    @field_validator('debt_type', mode='before')
+    @classmethod
+    def normalize_debt_type(cls, v: object) -> object:
+        if isinstance(v, str):
+            upper = v.upper()
+            aliases = {
+                'PERSONAL': 'PERSONAL_LOAN',
+                'AUTO': 'AUTO_LOAN',
+                'STUDENT': 'STUDENT_LOAN',
+                'CREDIT': 'CREDIT_CARD',
+            }
+            return aliases.get(upper, upper)
+        return v
 
 class DebtResponse(DebtBase):
     """Schema for debt output"""

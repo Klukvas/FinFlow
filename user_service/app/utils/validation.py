@@ -1,7 +1,7 @@
 import re
 from typing import List
 from app.config import settings
-from app.exceptions import PasswordPolicyError, UsernamePolicyError, UserValidationError
+from app.exceptions import PasswordPolicyError, UserValidationError
 
 def validate_password_strength(password: str) -> None:
     """Validate password against security policy"""
@@ -24,36 +24,6 @@ def validate_password_strength(password: str) -> None:
     
     if errors:
         raise PasswordPolicyError("; ".join(errors))
-
-def validate_username(username: str) -> None:
-    """Validate username format and requirements"""
-    errors = []
-    
-    if len(username) < settings.MIN_USERNAME_LENGTH:
-        errors.append(f"Username must be at least {settings.MIN_USERNAME_LENGTH} characters long")
-    
-    if len(username) > settings.MAX_USERNAME_LENGTH:
-        errors.append(f"Username must be no more than {settings.MAX_USERNAME_LENGTH} characters long")
-    
-    # Username should only contain alphanumeric characters, underscores, and hyphens
-    if not re.match(r'^[a-zA-Z0-9_-]+$', username):
-        errors.append("Username can only contain letters, numbers, underscores, and hyphens")
-    
-    # Username should start with a letter or number
-    if not re.match(r'^[a-zA-Z0-9]', username):
-        errors.append("Username must start with a letter or number")
-    
-    # Username should not end with underscore or hyphen
-    if username.endswith('_') or username.endswith('-'):
-        errors.append("Username cannot end with underscore or hyphen")
-    
-    # Check for reserved usernames
-    reserved_usernames = ['admin', 'root', 'administrator', 'user', 'test', 'api', 'www', 'mail', 'ftp']
-    if username.lower() in reserved_usernames:
-        errors.append("This username is reserved and cannot be used")
-    
-    if errors:
-        raise UsernamePolicyError("; ".join(errors))
 
 def validate_email_domain(email: str) -> None:
     """Validate email domain (basic check)"""

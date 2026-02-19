@@ -12,7 +12,7 @@ interface AppHeaderProps {
 
 export const AppHeader: React.FC<AppHeaderProps> = ({ onMenuClick, title, isMobile }) => {
   return (
-    <header className={`theme-accent-bg theme-text-inverse theme-shadow theme-transition ${
+    <header className={`theme-surface theme-text-primary theme-border border-b theme-transition ${
       isMobile ? 'lg:hidden' : 'hidden lg:block'
     }`} data-testid={isMobile ? "mobile-header" : "desktop-header"}>
       <div className="flex items-center justify-between px-4 py-3">
@@ -21,10 +21,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onMenuClick, title, isMobi
           <button
             onClick={onMenuClick}
             data-testid="mobile-menu-toggle"
-            className="p-2 rounded-md hover:theme-accent-hover theme-transition"
+            className="p-2 rounded-md hover:theme-surface-hover theme-transition"
             aria-label="Открыть меню"
           >
-            <FaBars className="w-5 h-5" />
+            <FaBars className="w-5 h-5 theme-text-primary" />
           </button>
         ) : (
           <div className="w-9" /> // Spacer for alignment
@@ -36,7 +36,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onMenuClick, title, isMobi
           {/* Desktop: show workspace selector, Mobile: hide (it's in sidebar) */}
           {!isMobile && <WorkspaceSelector compact />}
           <LanguageSelector compact={isMobile} />
-          <ThemeToggle className="theme-surface theme-text-primary" compact={isMobile} />
+          <ThemeToggle compact={isMobile} />
         </div>
       </div>
     </header>
