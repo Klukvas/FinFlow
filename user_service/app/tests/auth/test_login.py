@@ -28,8 +28,8 @@ class TestLogin:
         })
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
-        assert response.json()["detail"] == UserServiceError.INVALID_CREDENTIALS
-    
+        assert response.json()["error"] == UserServiceError.INVALID_CREDENTIALS
+
     def test_login_user_with_invalid_email(self, client: TestClient, user_data):
         client.post("/auth/register", json=user_data)
 
@@ -40,7 +40,7 @@ class TestLogin:
         })
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
-        assert response.json()["detail"] == UserServiceError.INVALID_CREDENTIALS
+        assert response.json()["error"] == UserServiceError.INVALID_CREDENTIALS
     def test_login_user_without_email_field(self, client: TestClient, user_data):
         client.post("/auth/register", json=user_data)
 
@@ -49,8 +49,8 @@ class TestLogin:
             "password": user_data["password"]
         })
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert response.json() == {'error': 'Email is required'}
-    
+        assert response.json()["error"] == 'Email is required'
+
     def test_login_user_without_password_field(self, client: TestClient, user_data):
         client.post("/auth/register", json=user_data)
 
@@ -59,4 +59,4 @@ class TestLogin:
             "email": user_data["email"],
         })
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert response.json() == {'error': 'Password is required'}
+        assert response.json()["error"] == 'Password is required'

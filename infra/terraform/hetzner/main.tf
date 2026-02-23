@@ -10,7 +10,7 @@ data "hcloud_ssh_key" "existing" {
 # SINGLE SERVER ARCHITECTURE - FinFlow Production
 # =============================================================================
 # All services run on ONE Hetzner server via Docker Compose:
-#   PostgreSQL, Redis, 14 FastAPI services, Caddy, monitoring stack
+#   PostgreSQL, Redis, 14 FastAPI services, Caddy
 # =============================================================================
 
 # --- Firewall (single, hardened) ---
@@ -106,8 +106,6 @@ locals {
     - usermod -aG docker ubuntu || true
 
     # Create app directory structure
-    - mkdir -p /home/ubuntu/app/logging/dashboards
-    - mkdir -p /home/ubuntu/app/prometheus
     - mkdir -p /home/ubuntu/app/backup
     - mkdir -p /home/ubuntu/app/init
     - chown -R ubuntu:ubuntu /home/ubuntu/app

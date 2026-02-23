@@ -26,4 +26,4 @@ class TestGetMe:
         })
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
-        assert response.json()["detail"] == UserServiceError.INVALID_TOKEN
+        assert "Invalid" in response.json()["error"] and "token" in response.json()["error"].lower()

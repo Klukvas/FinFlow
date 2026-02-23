@@ -17,17 +17,17 @@ class TestRegistration:
 
         response: Response = client.post("/auth/register", json=user_data)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert response.json()["detail"] == UserServiceError.EMAIL_ALREADY_REGISTERED
+        assert response.json()["error"] == UserServiceError.EMAIL_ALREADY_REGISTERED
 
     def test_register_user_without_email(self, client: TestClient, user_data: dict, fake):
         del user_data['email']
         response: Response = client.post("/auth/register", json=user_data)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert response.json() == {'error': 'Email is required'}
+        assert response.json()["error"] == 'Email is required'
 
     def test_register_user_without_password(self, client: TestClient, user_data: dict, fake):
         del user_data['password']
         response: Response = client.post("/auth/register", json=user_data)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert response.json() == {'error': 'Password is required'}
+        assert response.json()["error"] == 'Password is required'
 

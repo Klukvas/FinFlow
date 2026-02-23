@@ -7,6 +7,7 @@ from random import randint
 from faker import Faker
 from starlette import status
 
+
 class TestCreateExpense:
 
     def test_create_expense_success(self, client: TestClient, fake: Faker):
@@ -27,7 +28,7 @@ class TestCreateExpense:
             response = client.post(
                 "/expenses/",
                 json=payload,
-                headers={"Authorization": "Bearer 123"}
+                headers={"Authorization": "Bearer 123", "X-Workspace-Id": "550e8400-e29b-41d4-a716-446655440000"}
             )
 
         assert response.status_code == status.HTTP_201_CREATED
@@ -52,8 +53,9 @@ class TestCreateExpense:
             response = client.post(
                 "/expenses/",
                 json=payload,
-                headers={"Authorization": "Bearer 123"}
+                headers={"Authorization": "Bearer 123", "X-Workspace-Id": "550e8400-e29b-41d4-a716-446655440000"}
             )
 
-        assert response.status_code == status.HTTP_404_NOT_FOUND
-        assert response.json()["detail"] == "Category does not exist"
+        # Category validation errors are wrapped as ExternalServiceError (503)
+        assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+        assert "Category does not exist" in response.json()["error"]

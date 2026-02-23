@@ -38,8 +38,6 @@ class EntitlementsService:
         # try cache
         cached = self.redis.get(key)
         if cached:
-            from app.main import cache_hits
-            cache_hits.inc()
             data = json.loads(cached)
             return sub.plan_code, version, data
 

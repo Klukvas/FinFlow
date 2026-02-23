@@ -15,6 +15,7 @@ on:
       - '.github/actions/**'
       - 'deploy/**'
       - 'init/**'
+      - 'tests/e2e/**'
   workflow_dispatch:
     inputs:
       environment:
@@ -753,11 +754,223 @@ jobs:
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/scheduler_service:latest
           cache-to: type=inline
 
+  # E2E API Tests: build all services, run integration tests
+  e2e-tests:
+    name: "E2E API Tests"
+    needs: detect-changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate .env.docker files
+        run: |
+          # Shared values
+          SECRET="your-secret-key-here"
+          ALGO="HS256"
+          INTERNAL_TOKEN="my-secret-token"
+
+          # user_service
+          cat > user_service/.env.docker << EOF
+          DATABASE_URL=postgresql://postgres:postgres@db:5432/user_db
+          SECRET_KEY=$SECRET
+          ALGORITHM=$ALGO
+          CORS_ORIGINS=*
+          LOG_LEVEL=INFO
+          RATE_LIMIT_PER_MINUTE=400
+          INTERNAL_SECRET_TOKEN=$INTERNAL_TOKEN
+          EOF
+
+          # category_service (no env_file in compose, but create for safety)
+
+          # expense_service
+          cat > expense_service/.env.docker << EOF
+          DATABASE_URL=postgresql://postgres:postgres@db:5432/expense_db
+          SECRET_KEY=$SECRET
+          ALGORITHM=$ALGO
+          CATEGORY_SERVICE_URL=http://category_service:8000
+          ACCOUNT_SERVICE_URL=http://account_service:8000
+          INTERNAL_SECRET_TOKEN=$INTERNAL_TOKEN
+          CORS_ORIGINS=*
+          LOG_LEVEL=INFO
+          MAX_AMOUNT=999999.99
+          MAX_DESCRIPTION_LENGTH=500
+          HTTP_TIMEOUT=5.0
+          HTTP_RETRY_ATTEMPTS=3
+          EOF
+
+          # income_service
+          cat > income_service/.env.docker << EOF
+          DATABASE_URL=postgresql://postgres:postgres@db:5432/income_db
+          SECRET_KEY=$SECRET
+          ALGORITHM=$ALGO
+          CATEGORY_SERVICE_URL=http://category_service:8000
+          ACCOUNT_SERVICE_URL=http://account_service:8000
+          INTERNAL_SECRET_TOKEN=$INTERNAL_TOKEN
+          CORS_ORIGINS=*
+          LOG_LEVEL=INFO
+          EOF
+
+          # recurring_service
+          cat > recurring_service/.env.docker << EOF
+          DATABASE_URL=postgresql://postgres:postgres@db:5432/recurring_db
+          SECRET_KEY=$SECRET
+          INTERNAL_SECRET_TOKEN=$INTERNAL_TOKEN
+          CORS_ORIGINS=*
+          LOG_LEVEL=INFO
+          EOF
+
+          # goals_service
+          cat > goals_service/.env.docker << EOF
+          DATABASE_URL=postgresql://postgres:postgres@db:5432/goals_db
+          SECRET_KEY=$SECRET
+          INTERNAL_SECRET_TOKEN=$INTERNAL_TOKEN
+          CORS_ORIGINS=*
+          LOG_LEVEL=INFO
+          EOF
+
+          # pdf_parser_service
+          cat > pdf_parser_service/.env.docker << EOF
+          DATABASE_URL=postgresql://postgres:postgres@db:5432/pdf_parser_db
+          INTERNAL_SERVICE_TOKEN=$INTERNAL_TOKEN
+          SECRET_KEY=$SECRET
+          ALGORITHM=$ALGO
+          CORS_ORIGINS=*
+          LOG_LEVEL=INFO
+          EOF
+
+          # debt_service
+          cat > debt_service/.env.docker << EOF
+          DATABASE_URL=postgresql://postgres:postgres@db:5432/debt_db
+          SECRET_KEY=$SECRET
+          INTERNAL_SECRET_TOKEN=$INTERNAL_TOKEN
+          CORS_ORIGINS=*
+          LOG_LEVEL=INFO
+          EOF
+
+          # account_service
+          cat > account_service/.env.docker << EOF
+          DATABASE_URL=postgresql://postgres:postgres@db:5432/account_db
+          REDIS_URL=redis://redis:6379
+          SECRET_KEY=$SECRET
+          ALGORITHM=$ALGO
+          INTERNAL_SECRET_TOKEN=$INTERNAL_TOKEN
+          CORS_ORIGINS=*
+          LOG_LEVEL=INFO
+          EXPENSE_SERVICE_URL=http://expense_service:8000
+          INCOME_SERVICE_URL=http://income_service:8000
+          USER_SERVICE_URL=http://user_service:8000
+          CURRENCY_SERVICE_URL=http://currency_service:8000
+          HTTP_TIMEOUT=5.0
+          HTTP_RETRY_ATTEMPTS=3
+          MAX_BALANCE=999999999.99
+          MAX_NAME_LENGTH=100
+          MAX_DESCRIPTION_LENGTH=500
+          MAX_CURRENCY_LENGTH=3
+          EOF
+
+          # currency_service
+          cat > currency_service/.env.docker << EOF
+          REDIS_URL=redis://redis:6379
+          CORS_ORIGINS=*
+          LOG_LEVEL=INFO
+          EOF
+
+          # subscription_service
+          cat > subscription_service/.env.docker << EOF
+          DATABASE_URL=postgresql://postgres:postgres@db:5432/subscription_db
+          SECRET_KEY=$SECRET
+          ALGORITHM=$ALGO
+          CORS_ORIGINS=*
+          LOG_LEVEL=INFO
+          RATE_LIMIT_PER_MINUTE=400
+          EOF
+
+          # payment_service
+          cat > payment_service/.env.docker << EOF
+          DATABASE_URL=postgresql://postgres:postgres@db:5432/payment_db
+          REDIS_URL=redis://redis:6379/0
+          LOG_LEVEL=INFO
+          JWT_SECRET_KEY=$SECRET
+          JWT_ALGORITHM=$ALGO
+          INTERNAL_SECRET_TOKEN=$INTERNAL_TOKEN
+          WAYFORPAY_MERCHANT_ACCOUNT=test_merch
+          WAYFORPAY_MERCHANT_SECRET_KEY=test_secret
+          WAYFORPAY_MERCHANT_DOMAIN=localhost
+          WAYFORPAY_RETURN_URL=http://localhost:3000/payment/return
+          WAYFORPAY_CALLBACK_URL=http://localhost:8013/v1/webhooks/wayforpay
+          WAYFORPAY_API_URL=https://api.wayforpay.com/api
+          WAYFORPAY_ENABLE_RECURRING=false
+          WAYFORPAY_RECTOKEN_FORMAT=boolean
+          SERVICE_BASE_URL=http://payment_service:8000
+          SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
+          IDEMPOTENCY_TTL_SECONDS=86400
+          PAYMENTS_ENABLED=false
+          EOF
+
+      - name: Build and start services
+        run: docker compose up --build -d
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install test dependencies
+        run: pip install httpx pytest pytest-asyncio faker
+
+      - name: Wait for services to be healthy
+        run: |
+          SERVICES="8001 8002 8003 8004 8009 8011 8012"
+          MAX_WAIT=180
+          ELAPSED=0
+          INTERVAL=5
+
+          while [ $ELAPSED -lt $MAX_WAIT ]; do
+            ALL_HEALTHY=true
+            for PORT in $SERVICES; do
+              if ! curl -sf "http://localhost:$PORT/health" > /dev/null 2>&1; then
+                ALL_HEALTHY=false
+                break
+              fi
+            done
+
+            if [ "$ALL_HEALTHY" = true ]; then
+              echo "All services healthy after ${ELAPSED}s"
+              exit 0
+            fi
+
+            echo "[${ELAPSED}s] Waiting for services..."
+            sleep $INTERVAL
+            ELAPSED=$((ELAPSED + INTERVAL))
+          done
+
+          echo "Services not ready after ${MAX_WAIT}s"
+          docker compose ps
+          docker compose logs --tail=20
+          exit 1
+
+      - name: Run E2E tests
+        run: python -m pytest tests/e2e/tests/ -v --tb=short --junitxml=e2e-results.xml
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results
+          path: e2e-results.xml
+
+      - name: Cleanup
+        if: always()
+        run: docker compose down -v
+
   # Final Stage: Deploy
   deploy:
     name: Deploy to ${{ github.event.inputs.environment || 'production' }}
-    needs: 
+    needs:
       - detect-changes
+      - e2e-tests
       - stage1-frontend
       - stage2-account-service
       - stage3-category-service
@@ -803,7 +1016,6 @@ jobs:
           redis-password: ${{ secrets.REDIS_PASSWORD }}
           cors-origins: ${{ secrets.CORS_ORIGINS || 'https://finflow.ltd' }}
           domain: ${{ secrets.DOMAIN || 'finflow.ltd' }}
-          grafana-admin-password: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
           payments-enabled: ${{ secrets.PAYMENTS_ENABLED || 'false' }}
           services: ${{ needs.detect-changes.outputs.services_list }}
 

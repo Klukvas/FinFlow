@@ -3,8 +3,6 @@ from __future__ import annotations
 import logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from prometheus_client import Histogram, Counter, generate_latest, CONTENT_TYPE_LATEST
-from fastapi.responses import Response
 
 from .utils.errors import service_exception_handler, unhandled_exception_handler, ServiceError
 from .utils.logging import setup_logging
@@ -12,14 +10,6 @@ from .utils.logging import setup_logging
 
 setup_logging()
 logger = logging.getLogger("subscription_service")
-
-p95_entitlements = Histogram(
-    "subscription_entitlements_latency_seconds",
-    "Latency for /v1/entitlements",
-    buckets=(0.025, 0.05, 0.1, 0.25, 0.5, 1, 2, 5),
-)
-cache_hits = Counter("subscription_entitlements_cache_hits_total", "Cache hit count for entitlements")
-subs_changes = Counter("subscription_changes_total", "Number of subscription changes")
 
 
 def create_app() -> FastAPI:
@@ -56,10 +46,6 @@ def create_app() -> FastAPI:
     @app.get("/health")
     async def health():
         return {"status": "ok"}
-
-    @app.get("/metrics")
-    async def metrics():
-        return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
     return app
 

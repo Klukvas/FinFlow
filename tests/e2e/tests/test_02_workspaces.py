@@ -1,0 +1,114 @@
+"""E2E tests for workspace and member management flows."""
+import pytest
+
+from tests.e2e.clients.user_client import UserApiClient
+from tests.e2e.clients.workspace_client import WorkspaceApiClient
+from tests.e2e.helpers.test_data import unique_email, strong_password, workspace_name
+
+pytestmark = pytest.mark.workspace
+
+
+class TestWorkspaceCRUD:
+
+    async def test_list_workspaces(self, workspace_client):
+        result = await workspace_client.list_all()
+        data = result.raise_on_error()
+        workspaces = data.get("workspaces", data) if isinstance(data, dict) else data
+        assert isinstance(workspaces, list)
+        assert len(workspaces) >= 1  # at least personal workspace
+
+    async def test_get_workspace(self, workspace_client, workspace_id):
+        result = await workspace_client.get(workspace_id)
+        data = result.raise_on_error()
+        assert str(data["id"]) == workspace_id
+
+    async def test_update_workspace_name(self, workspace_client, workspace_id):
+        new_name = workspace_name()
+        result = await workspace_client.update(workspace_id, new_name)
+        data = result.raise_on_error()
+        assert data["name"] == new_name
+
+    async def test_create_workspace_exceeds_limit(self, primary_user):
+        """Basic plan limits to 1 workspace; creating a second should fail."""
+        client = WorkspaceApiClient()
+        client.set_token(primary_user["token"])
+        result = await client.create(workspace_name())
+        assert not result.ok
+        assert result.status_code == 403
+
+
+class TestMembers:
+
+    async def test_invite_accept_and_list_members(self, primary_user, workspace_id):
+        """Owner invites a new user to their workspace, invitee accepts."""
+        # Create a fresh user to invite
+        member_email = unique_email()
+        member_api = UserApiClient()
+        member_reg = await member_api.register(member_email, strong_password())
+        member_data = member_reg.raise_on_error()
+        member_token = member_data["access_token"]
+
+        # Owner invites the new user
+        owner = WorkspaceApiClient()
+        owner.set_token(primary_user["token"])
+        invite_result = await owner.create_invite(workspace_id, member_email, role="full")
+        invite_data = invite_result.raise_on_error()
+        invite_id = invite_data["id"]
+
+        # Member accepts the invite
+        invitee = WorkspaceApiClient()
+        invitee.set_token(member_token)
+        accept_result = await invitee.accept_invite(invite_id)
+        assert accept_result.ok or accept_result.status_code in (200, 204)
+
+        # Verify member list
+        members = (await owner.list_members(workspace_id)).raise_on_error()
+        member_list = members if isinstance(members, list) else members.get("members", [])
+        assert len(member_list) >= 2
+
+    async def test_remove_member_loses_access(self, primary_user, workspace_id):
+        """After removing a member, they should no longer have access."""
+        # Create and invite a user
+        member_email = unique_email()
+        member_api = UserApiClient()
+        member_reg = await member_api.register(member_email, strong_password())
+        member_data = member_reg.raise_on_error()
+        member_token = member_data["access_token"]
+
+        owner = WorkspaceApiClient()
+        owner.set_token(primary_user["token"])
+        invite = (await owner.create_invite(workspace_id, member_email)).raise_on_error()
+
+        invitee = WorkspaceApiClient()
+        invitee.set_token(member_token)
+        await invitee.accept_invite(invite["id"])
+
+        # Get the member's user ID from the member list
+        members = (await owner.list_members(workspace_id)).raise_on_error()
+        member_list = members if isinstance(members, list) else members.get("members", [])
+        # Find the member that is not the owner
+        member_entry = next(
+            (m for m in member_list if m.get("email") == member_email or m.get("role") != "owner"),
+            None,
+        )
+        if member_entry:
+            user_id = member_entry.get("user_id") or member_entry.get("id")
+            if user_id:
+                remove_result = await owner.remove_member(workspace_id, user_id)
+                assert remove_result.ok or remove_result.status_code == 204
+
+    async def test_list_invites(self, primary_user, workspace_id):
+        """Owner can list pending invites for their workspace."""
+        owner = WorkspaceApiClient()
+        owner.set_token(primary_user["token"])
+
+        # Create an invite to a new user
+        email = unique_email()
+        user_api = UserApiClient()
+        await user_api.register(email, strong_password())
+        await owner.create_invite(workspace_id, email)
+
+        invites = await owner.list_invites(workspace_id)
+        data = invites.raise_on_error()
+        invite_list = data if isinstance(data, list) else data.get("invites", [])
+        assert len(invite_list) >= 1

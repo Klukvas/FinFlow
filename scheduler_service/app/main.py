@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from prometheus_client import make_asgi_app
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
@@ -130,10 +129,6 @@ async def trigger_job(job_id: str):
     
     return {"status": "triggered", "job_id": job_id}
 
-
-# Mount Prometheus metrics
-metrics_app = make_asgi_app()
-app.mount("/metrics", metrics_app)
 
 
 if __name__ == "__main__":

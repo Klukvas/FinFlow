@@ -35,9 +35,6 @@ inputs:
     description: Production domain
     required: false
     default: finflow.ltd
-  grafana-admin-password:
-    description: Grafana admin password
-    required: true
   payments-enabled:
     description: Enable payment processing
     required: false
@@ -72,24 +69,13 @@ runs:
         echo "Syncing config files to server..."
 
         # Ensure directories exist
-        ssh -o StrictHostKeyChecking=accept-new "$USER@$HOST" "mkdir -p ~/app/init ~/app/backup ~/app/prometheus ~/app/logging ~/app/logging/dashboards"
+        ssh -o StrictHostKeyChecking=accept-new "$USER@$HOST" "mkdir -p ~/app/init ~/app/backup"
 
         # Sync all config files
         scp deploy/docker-compose.yml "$USER@$HOST:~/app/docker-compose.yml"
         scp deploy/Caddyfile "$USER@$HOST:~/app/Caddyfile"
         scp init/init.sql "$USER@$HOST:~/app/init/init.sql"
         scp deploy/backup/backup.sh "$USER@$HOST:~/app/backup/backup.sh"
-        scp deploy/prometheus/prometheus.yml "$USER@$HOST:~/app/prometheus/prometheus.yml"
-        scp deploy/prometheus/alerts.yml "$USER@$HOST:~/app/prometheus/alerts.yml"
-        scp logging/loki-config.yml "$USER@$HOST:~/app/logging/loki-config.yml"
-        scp logging/promtail-config.yml "$USER@$HOST:~/app/logging/promtail-config.yml"
-        scp logging/grafana-datasources.yml "$USER@$HOST:~/app/logging/grafana-datasources.yml"
-        scp logging/grafana-dashboards.yml "$USER@$HOST:~/app/logging/grafana-dashboards.yml"
-
-        # Sync dashboards if they exist
-        if [ -d "logging/dashboards" ]; then
-          scp -r logging/dashboards/* "$USER@$HOST:~/app/logging/dashboards/" 2>/dev/null || true
-        fi
 
         echo "Config files synced."
 
@@ -105,7 +91,6 @@ runs:
         REDIS_PASSWORD: ${{ inputs['redis-password'] }}
         CORS_ORIGINS: ${{ inputs['cors-origins'] }}
         DOMAIN: ${{ inputs.domain }}
-        GRAFANA_ADMIN_PASSWORD: ${{ inputs['grafana-admin-password'] }}
         PAYMENTS_ENABLED: ${{ inputs['payments-enabled'] }}
         SERVICES: ${{ inputs.services }}
       run: |
@@ -145,7 +130,6 @@ runs:
         DOMAIN=${DOMAIN}
         NODE_ENV=production
         PAYMENTS_ENABLED=${PAYMENTS_ENABLED:-false}
-        GRAFANA_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
         ENVEOF
 
         # Append generated secrets (not overwritten on re-deploy)
@@ -181,8 +165,8 @@ runs:
         docker compose ps
         echo ""
 
-        # Check for unhealthy containers
-        UNHEALTHY=\$(docker compose ps --format json | python3 -c "
+        # Check for unhealthy containers (only deployed services)
+        UNHEALTHY=\$(docker compose ps --format json ${SERVICES} | python3 -c "
         import sys, json
         unhealthy = []
         for line in sys.stdin:

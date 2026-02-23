@@ -104,11 +104,6 @@ finflow.ltd {
     file_server
   }
 
-  # Grafana - internal monitoring (behind Caddy)
-  handle_path /grafana/* {
-    reverse_proxy grafana:3000
-  }
-
   # API routes - proxy to backend services
   handle_path /api/users/* {
     reverse_proxy user_service:8000

@@ -38,8 +38,6 @@ class SubscriptionService:
             expires_at=sub.expires_at.isoformat() if sub.expires_at else "",
             version=version,
         )
-        from app.main import subs_changes
-        subs_changes.inc()
         return sub
     
     def cancel_subscription(

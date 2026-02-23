@@ -1,0 +1,27 @@
+[project]
+name = "accounting-e2e-tests"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx>=0.27.0",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "faker>=24.0.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+markers = [
+    "auth: Authentication flow tests",
+    "workspace: Workspace CRUD and member management tests",
+    "category: Category CRUD and hierarchy tests",
+    "account: Account CRUD and balance tests",
+    "expense: Expense CRUD and query tests",
+    "income: Income CRUD and query tests",
+    "subscription: Subscription and feature gating tests",
+    "cross_service: Cross-service isolation and authorization tests",
+]
