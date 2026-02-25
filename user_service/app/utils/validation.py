@@ -6,22 +6,19 @@ from app.exceptions import PasswordPolicyError, UserValidationError
 def validate_password_strength(password: str) -> None:
     """Validate password against security policy"""
     errors = []
-    
+
     if len(password) < settings.MIN_PASSWORD_LENGTH:
         errors.append(f"Password must be at least {settings.MIN_PASSWORD_LENGTH} characters long")
-    
+
     if len(password) > settings.MAX_PASSWORD_LENGTH:
         errors.append(f"Password must be no more than {settings.MAX_PASSWORD_LENGTH} characters long")
-    
-    if settings.REQUIRE_UPPERCASE and not re.search(r'[A-Z]', password):
-        errors.append("Password must contain at least one uppercase letter")
-    
-    if settings.REQUIRE_LOWERCASE and not re.search(r'[a-z]', password):
-        errors.append("Password must contain at least one lowercase letter")
-    
+
+    if not re.search(r'[a-zA-Z]', password):
+        errors.append("Password must contain at least one letter")
+
     if settings.REQUIRE_NUMBERS and not re.search(r'\d', password):
         errors.append("Password must contain at least one number")
-    
+
     if errors:
         raise PasswordPolicyError("; ".join(errors))
 

@@ -14,8 +14,8 @@ class UserCreate(BaseModel):
         ...,
         min_length=8,
         max_length=128,
-        description="Password (8-128 characters, must include uppercase, lowercase, and numbers)",
-        examples=["SecurePass123!", "MyPassword2024#"]
+        description="Password (8-128 characters, must include letters and numbers)",
+        examples=["mypass123", "hello2024"]
     )
     base_currency: str = Field(
         default="USD",
@@ -31,10 +31,8 @@ class UserCreate(BaseModel):
             raise ValueError('Password must be at least 8 characters long')
         if len(v) > 128:
             raise ValueError('Password must be no more than 128 characters long')
-        if not re.search(r'[A-Z]', v):
-            raise ValueError('Password must contain at least one uppercase letter')
-        if not re.search(r'[a-z]', v):
-            raise ValueError('Password must contain at least one lowercase letter')
+        if not re.search(r'[a-zA-Z]', v):
+            raise ValueError('Password must contain at least one letter')
         if not re.search(r'\d', v):
             raise ValueError('Password must contain at least one number')
         return v
@@ -131,7 +129,7 @@ class PasswordChange(BaseModel):
         ...,
         min_length=8,
         max_length=128,
-        description="New password (8-128 characters, must include uppercase, lowercase, and numbers)"
+        description="New password (8-128 characters, must include letters and numbers)"
     )
 
     @field_validator('new_password')
@@ -142,10 +140,8 @@ class PasswordChange(BaseModel):
             raise ValueError('Password must be at least 8 characters long')
         if len(v) > 128:
             raise ValueError('Password must be no more than 128 characters long')
-        if not re.search(r'[A-Z]', v):
-            raise ValueError('Password must contain at least one uppercase letter')
-        if not re.search(r'[a-z]', v):
-            raise ValueError('Password must contain at least one lowercase letter')
+        if not re.search(r'[a-zA-Z]', v):
+            raise ValueError('Password must contain at least one letter')
         if not re.search(r'\d', v):
             raise ValueError('Password must contain at least one number')
         return v

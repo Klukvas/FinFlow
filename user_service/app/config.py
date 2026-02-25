@@ -14,10 +14,10 @@ class Settings(BaseSettings):
     # Password policy settings
     MIN_PASSWORD_LENGTH: int = 8
     MAX_PASSWORD_LENGTH: int = 128
-    REQUIRE_UPPERCASE: bool = True
-    REQUIRE_LOWERCASE: bool = True
+    REQUIRE_UPPERCASE: bool = False
+    REQUIRE_LOWERCASE: bool = False
     REQUIRE_NUMBERS: bool = True
-    REQUIRE_SPECIAL_CHARS: bool = True
+    REQUIRE_SPECIAL_CHARS: bool = False
     
     # Security settings
     MAX_LOGIN_ATTEMPTS: int = 5

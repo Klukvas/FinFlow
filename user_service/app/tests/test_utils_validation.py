@@ -28,35 +28,37 @@ class TestValidatePasswordStrength:
             validate_password_strength(long_password)
         assert "no more than" in str(exc_info.value.detail)
 
-    def test_missing_uppercase_raises_policy_error(self):
-        """Line 17: password without uppercase is rejected."""
-        with pytest.raises(PasswordPolicyError) as exc_info:
-            validate_password_strength("nouppercase1!")
-        assert "uppercase" in str(exc_info.value.detail)
+    def test_lowercase_only_with_digit_passes(self):
+        """Lowercase + digit is sufficient (no uppercase required)."""
+        validate_password_strength("nouppercase1")
 
-    def test_missing_lowercase_raises_policy_error(self):
-        """Line 20: password without lowercase is rejected."""
+    def test_uppercase_only_with_digit_passes(self):
+        """Uppercase + digit is sufficient (no lowercase required)."""
+        validate_password_strength("NOLOWERCASE1")
+
+    def test_missing_letters_raises_policy_error(self):
+        """Password without any letters is rejected."""
         with pytest.raises(PasswordPolicyError) as exc_info:
-            validate_password_strength("NOLOWERCASE1!")
-        assert "lowercase" in str(exc_info.value.detail)
+            validate_password_strength("12345678")
+        assert "letter" in str(exc_info.value.detail)
 
     def test_missing_numbers_raises_policy_error(self):
-        """Line 23: password without numbers is rejected."""
+        """Password without numbers is rejected."""
         with pytest.raises(PasswordPolicyError) as exc_info:
             validate_password_strength("NoNumbers!")
         assert "number" in str(exc_info.value.detail)
 
     def test_multiple_violations_combined_in_error(self):
-        """Line 26: when multiple rules fail they are joined with '; '."""
+        """When multiple rules fail they are joined with '; '."""
         with pytest.raises(PasswordPolicyError) as exc_info:
-            validate_password_strength("short")  # too short, no upper, no digit
+            validate_password_strength("short")  # too short, no digit
         error_detail = exc_info.value.detail
         # Multiple policy messages joined
         assert ";" in error_detail or "at least" in error_detail
 
     def test_exactly_minimum_length_passes(self):
-        """Boundary: exactly 8 chars with all required types passes."""
-        validate_password_strength("Abcde1!x")  # exactly 8 chars
+        """Boundary: exactly 8 chars with letters and digit passes."""
+        validate_password_strength("abcdefg1")  # exactly 8 chars
 
 
 class TestValidateEmailDomain:
