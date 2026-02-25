@@ -490,7 +490,7 @@ class TestFullFlow:
         )
         add_calls = mock_db.add.call_args_list
         outbox_events = [c.args[0] for c in add_calls if isinstance(c.args[0], OutboxEvent)]
-        failure_events = [e for e in outbox_events if e.event_type == "payment_failure"]
+        failure_events = [e for e in outbox_events if e.event_type == "payment_failed"]
         assert len(failure_events) == 1
 
     @pytest.mark.asyncio
