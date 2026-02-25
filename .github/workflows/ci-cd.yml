@@ -960,6 +960,10 @@ jobs:
           EOF
 
       - name: Build and start services
+        env:
+          SECRET_KEY: your-secret-key-here
+          JWT_SECRET_KEY: your-secret-key-here
+          INTERNAL_SECRET_TOKEN: my-secret-token
         run: docker compose up --build -d
 
       - name: Set up Python
