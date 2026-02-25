@@ -131,7 +131,7 @@ class TestImprovedCategoryService:
         # Test without internal token
         response = client.get("/internal/categories/1?user_id=1")
         assert response.status_code == 403
-        assert "Internal token required" in response.json()["error"]
+        assert "Unauthorized internal access" in response.json()["error"]
 
         # Test with invalid internal token
         response = client.get(

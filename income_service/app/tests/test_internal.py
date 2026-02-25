@@ -16,7 +16,7 @@ class TestVerifyInternalToken:
             verify_internal_token(request)
 
         assert exc_info.value.status_code == 403
-        assert "Internal token required" in exc_info.value.detail
+        assert "Unauthorized internal access" in exc_info.value.detail
 
     def test_invalid_token_raises_403(self):
         """Verify 403 when token doesn't match INTERNAL_SECRET_TOKEN"""
