@@ -142,7 +142,7 @@ class TestUserErrorHandlers:
         """Lines 88-89: PasswordPolicyError produces 400 with errorCode."""
         response = client.post(
             "/auth/register",
-            json={"email": "policy@example.com", "password": "nouppercase1"},
+            json={"email": "policy@example.com", "password": "nodigitshere"},
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         data = response.json()

@@ -30,23 +30,23 @@ class TestImprovedUserService:
 
     def test_register_user_with_weak_password(self):
         """Test registration with weak password"""
-        # Test password without uppercase letters
+        # Test password without any digits
         response = client.post(
             "/auth/register",
             json={
                 "email": "test2@example.com",
-                "password": "weakpass123"  # No uppercase characters
+                "password": "nodigitshere"  # No digits
             }
         )
         assert response.status_code == 400
-        assert "uppercase" in response.json()["error"]
+        assert "number" in response.json()["error"]
 
         # Test password too short
         response = client.post(
             "/auth/register",
             json={
                 "email": "test3@example.com",
-                "password": "Weak1!"  # Too short
+                "password": "short1"  # Too short
             }
         )
         assert response.status_code == 400
@@ -268,13 +268,11 @@ class TestImprovedUserService:
     def test_password_validation_comprehensive(self):
         """Test comprehensive password validation"""
         test_cases = [
-            ("nouppercase1!", "Password must contain at least one uppercase letter"),
-            ("NOLOWERCASE1!", "Password must contain at least one lowercase letter"),
+            ("12345678", "Password must contain at least one letter"),
             ("NoNumbers!", "Password must contain at least one number"),
-            ("noupperalso1!", "Password must contain at least one uppercase letter"),
             ("Short1!", "Password must be at least 8 characters long"),
         ]
-        
+
         for i, (password, expected_error) in enumerate(test_cases):
             response = client.post(
                 "/auth/register",
