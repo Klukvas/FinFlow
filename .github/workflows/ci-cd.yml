@@ -16,6 +16,7 @@ on:
       - 'deploy/**'
       - 'init/**'
       - 'tests/e2e/**'
+      - '**/tests/**'
   workflow_dispatch:
     inputs:
       environment:
