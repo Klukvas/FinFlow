@@ -63,6 +63,7 @@ class TestCheckoutEndpoint:
 
         # Stub repos so the service layer works without a real DB
         payment_service.payment_repo.create = MagicMock(side_effect=lambda p: p)
+        payment_service.payment_repo.get_active_payment_for_user_plan = MagicMock(return_value=None)
         payment_service.event_repo.create = MagicMock()
 
         request = CreatePaymentRequest(
@@ -156,6 +157,7 @@ class TestCheckoutEndpoint:
         mock_db.query.return_value = query_mock
 
         payment_service.payment_repo.create = MagicMock(side_effect=lambda p: p)
+        payment_service.payment_repo.get_active_payment_for_user_plan = MagicMock(return_value=None)
         payment_service.event_repo.create = MagicMock()
 
         request = CreatePaymentRequest(
@@ -197,6 +199,7 @@ class TestCheckoutEndpoint:
         mock_db.query.return_value = query_mock
 
         payment_service.payment_repo.create = MagicMock(side_effect=lambda p: p)
+        payment_service.payment_repo.get_active_payment_for_user_plan = MagicMock(return_value=None)
         payment_service.event_repo.create = MagicMock()
 
         request = CreatePaymentRequest(
@@ -326,6 +329,7 @@ class TestFullFlow:
             return p
 
         payment_service.payment_repo.create = MagicMock(side_effect=capture_create)
+        payment_service.payment_repo.get_active_payment_for_user_plan = MagicMock(return_value=None)
         payment_service.event_repo.create = MagicMock()
 
         request = CreatePaymentRequest(
@@ -434,6 +438,7 @@ class TestFullFlow:
         mock_db.query.return_value = query_mock
 
         payment_service.payment_repo.create = MagicMock(side_effect=lambda p: p)
+        payment_service.payment_repo.get_active_payment_for_user_plan = MagicMock(return_value=None)
         payment_service.event_repo.create = MagicMock()
 
         request = CreatePaymentRequest(
