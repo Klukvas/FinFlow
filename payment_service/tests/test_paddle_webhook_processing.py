@@ -16,6 +16,7 @@ from payment_service.app.models.models import (
     PaymentPurpose,
     ProcessedWebhookEvent,
 )
+from payment_service.app.models.outbox import OutboxEvent
 
 
 # ======================================================================
@@ -268,13 +269,17 @@ class TestTransactionCompleted:
 
         await payment_service.process_paddle_webhook(event)
 
-        payment_service.subscription_client.notify_payment_success.assert_awaited_once()
-        call_kwargs = payment_service.subscription_client.notify_payment_success.call_args.kwargs
-        assert call_kwargs["user_id"] == existing_payment.user_id
-        assert call_kwargs["plan_code"] == existing_payment.plan_code
-        assert call_kwargs["paddle_customer_id"] == "ctm_1"
-        assert call_kwargs["paddle_subscription_id"] == "sub_1"
-        assert call_kwargs["paddle_price_id"] == "pri_1"
+        # Verify outbox event was created for subscription notification
+        add_calls = mock_db.add.call_args_list
+        outbox_events = [c.args[0] for c in add_calls if isinstance(c.args[0], OutboxEvent)]
+        assert len(outbox_events) >= 1, "Expected at least one OutboxEvent to be added"
+        success_events = [e for e in outbox_events if e.event_type == "payment_success"]
+        assert len(success_events) == 1
+        assert success_events[0].payload["user_id"] == existing_payment.user_id
+        assert success_events[0].payload["plan_code"] == existing_payment.plan_code
+        assert success_events[0].payload["paddle_customer_id"] == "ctm_1"
+        assert success_events[0].payload["paddle_subscription_id"] == "sub_1"
+        assert success_events[0].payload["paddle_price_id"] == "pri_1"
 
     @pytest.mark.asyncio
     async def test_creates_payment_if_not_found(
@@ -439,7 +444,11 @@ class TestTransactionPaymentFailed:
 
         await payment_service.process_paddle_webhook(event)
 
-        payment_service.subscription_client.notify_payment_failure.assert_awaited_once()
+        # Verify outbox event was created for failure notification
+        add_calls = mock_db.add.call_args_list
+        outbox_events = [c.args[0] for c in add_calls if isinstance(c.args[0], OutboxEvent)]
+        failure_events = [e for e in outbox_events if e.event_type == "payment_failure"]
+        assert len(failure_events) == 1
 
 
 # ======================================================================

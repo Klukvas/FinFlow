@@ -31,6 +31,7 @@ from payment_service.app.schemas.payment import (
     CreatePaymentRequest,
     PaddleWebhookEvent,
 )
+from payment_service.app.models.outbox import OutboxEvent
 from payment_service.app.utils.errors import ValidationError
 
 
@@ -52,6 +53,8 @@ class TestCheckoutEndpoint:
         price_map.paddle_price_id = "pri_test_pro"
         price_map.plan_code = "professional"
         price_map.is_active = True
+        price_map.amount = Decimal("29.99")
+        price_map.currency = "USD"
 
         query_mock = MagicMock()
         query_mock.filter.return_value = query_mock
@@ -144,6 +147,8 @@ class TestCheckoutEndpoint:
         price_map.paddle_price_id = "pri_test_1"
         price_map.plan_code = "professional"
         price_map.is_active = True
+        price_map.amount = Decimal("29.99")
+        price_map.currency = "USD"
 
         query_mock = MagicMock()
         query_mock.filter.return_value = query_mock
@@ -183,6 +188,8 @@ class TestCheckoutEndpoint:
         price_map.paddle_price_id = "pri_test_data"
         price_map.plan_code = "professional"
         price_map.is_active = True
+        price_map.amount = Decimal("29.99")
+        price_map.currency = "USD"
 
         query_mock = MagicMock()
         query_mock.filter.return_value = query_mock
@@ -302,6 +309,8 @@ class TestFullFlow:
         price_map.paddle_price_id = "pri_flow_1"
         price_map.plan_code = "professional"
         price_map.is_active = True
+        price_map.amount = Decimal("29.99")
+        price_map.currency = "USD"
 
         query_mock = MagicMock()
         query_mock.filter.return_value = query_mock
@@ -384,14 +393,16 @@ class TestFullFlow:
         assert payment.paddle_subscription_id == "sub_flow_1"
         assert payment.paddle_transaction_id == "txn_test_abc123"
 
-        # Subscription service was notified
-        payment_service.subscription_client.notify_payment_success.assert_awaited_once()
-        notify_kwargs = payment_service.subscription_client.notify_payment_success.call_args.kwargs
-        assert notify_kwargs["user_id"] == "user_flow_1"
-        assert notify_kwargs["plan_code"] == "professional"
-        assert notify_kwargs["paddle_subscription_id"] == "sub_flow_1"
-        assert notify_kwargs["paddle_customer_id"] == "ctm_flow_1"
-        assert notify_kwargs["paddle_price_id"] == "pri_flow_1"
+        # Subscription service was notified via outbox
+        add_calls = mock_db.add.call_args_list
+        outbox_events = [c.args[0] for c in add_calls if isinstance(c.args[0], OutboxEvent)]
+        success_events = [e for e in outbox_events if e.event_type == "payment_success"]
+        assert len(success_events) == 1
+        assert success_events[0].payload["user_id"] == "user_flow_1"
+        assert success_events[0].payload["plan_code"] == "professional"
+        assert success_events[0].payload["paddle_subscription_id"] == "sub_flow_1"
+        assert success_events[0].payload["paddle_customer_id"] == "ctm_flow_1"
+        assert success_events[0].payload["paddle_price_id"] == "pri_flow_1"
 
         # Processed event was recorded (idempotency)
         add_calls = mock_db.add.call_args_list
@@ -413,6 +424,8 @@ class TestFullFlow:
         price_map.paddle_price_id = "pri_fail_flow"
         price_map.plan_code = "professional"
         price_map.is_active = True
+        price_map.amount = Decimal("29.99")
+        price_map.currency = "USD"
 
         query_mock = MagicMock()
         query_mock.filter.return_value = query_mock
@@ -470,7 +483,10 @@ class TestFullFlow:
         payment_service.payment_repo.update_status.assert_called_once_with(
             payment, PaymentStatus.FAILED, reason="card_declined",
         )
-        payment_service.subscription_client.notify_payment_failure.assert_awaited_once()
+        add_calls = mock_db.add.call_args_list
+        outbox_events = [c.args[0] for c in add_calls if isinstance(c.args[0], OutboxEvent)]
+        failure_events = [e for e in outbox_events if e.event_type == "payment_failure"]
+        assert len(failure_events) == 1
 
     @pytest.mark.asyncio
     async def test_duplicate_webhook_ignored_after_first(
