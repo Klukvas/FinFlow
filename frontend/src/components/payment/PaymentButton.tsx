@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/shared/Button';
-import { usePayment } from '@/contexts/PaymentContext';
-import { useAuth } from '@/contexts/AuthContext';
-import { PaymentPurpose } from '@/types/payment';
-import { FaSpinner, FaCrown, FaLock } from 'react-icons/fa';
-import { toast } from 'sonner';
-import { config } from '@/config/env';
+import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/shared/Button";
+import { usePayment } from "@/contexts/PaymentContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { usePaddle } from "@/hooks/usePaddle";
+import { PaymentPurpose } from "@/types/payment";
+import { FaSpinner, FaCrown, FaLock } from "react-icons/fa";
+import { toast } from "sonner";
+import { config } from "@/config/env";
 
 interface ConsentData {
   consent_given: boolean;
@@ -21,44 +22,61 @@ interface PaymentButtonProps {
   planName: string;
   amount: number;
   currency?: string;
-  variant?: 'primary' | 'outline' | 'secondary';
-  size?: 'sm' | 'md' | 'lg';
+  variant?: "primary" | "outline" | "secondary";
+  size?: "sm" | "md" | "lg";
   fullWidth?: boolean;
   disabled?: boolean;
   className?: string;
   consentData?: ConsentData;
+  onPaymentSuccess?: () => void;
 }
 
 export const PaymentButton: React.FC<PaymentButtonProps> = ({
   planCode,
   planName,
   amount,
-  currency = 'UAH',
-  variant = 'primary',
-  size = 'lg',
+  currency = "USD",
+  variant = "primary",
+  size = "lg",
   fullWidth = false,
   disabled = false,
-  className = '',
+  className = "",
   consentData,
+  onPaymentSuccess,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { createPayment, isProcessing } = usePayment();
   const [isCreating, setIsCreating] = useState(false);
 
+  const { openCheckout } = usePaddle({
+    onCheckoutComplete: () => {
+      toast.success(
+        t("payment.success", { defaultValue: "Payment successful!" }),
+      );
+      onPaymentSuccess?.();
+      navigate("/payment/return");
+    },
+    onCheckoutClosed: () => {
+      setIsCreating(false);
+    },
+  });
+
   const handlePayment = async () => {
-    // Check if payments are enabled
     if (!config.features.paymentsEnabled) {
-      toast.error(t('payment.errors.paymentsDisabled', { 
-        defaultValue: 'Payments are temporarily disabled. Please contact support.' 
-      }));
+      toast.error(
+        t("payment.errors.paymentsDisabled", {
+          defaultValue:
+            "Payments are temporarily disabled. Please contact support.",
+        }),
+      );
       return;
     }
 
     if (!user?.id) {
-      toast.error(t('payment.errors.notAuthenticated'));
-      navigate('/login');
+      toast.error(t("payment.errors.notAuthenticated"));
+      navigate("/login");
       return;
     }
 
@@ -67,12 +85,11 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
     try {
       const returnUrl = `${window.location.origin}/payment/return`;
 
-      console.log('PaymentButton: Creating payment for user', user.id);
-      console.log('PaymentButton: Return URL will be:', returnUrl);
-      
       const payment = await createPayment({
         user_id: String(user.id),
-        workspace_id: user.default_workspace_id ? String(user.default_workspace_id) : undefined,
+        workspace_id: user.default_workspace_id
+          ? String(user.default_workspace_id)
+          : undefined,
         purpose: PaymentPurpose.SUBSCRIPTION,
         plan_code: planCode,
         amount: amount,
@@ -81,82 +98,60 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
         metadata: {
           plan_name: planName,
           user_email: user.email,
-          // Include consent data for WayForPay compliance
           ...(consentData || {}),
         },
       });
 
-      console.log('PaymentButton: Payment response:', payment);
-      console.log('PaymentButton: Payment type:', typeof payment);
-      console.log('PaymentButton: Payment keys:', payment ? Object.keys(payment) : 'null');
-
       if (!payment) {
-        console.error('PaymentButton: Payment creation returned null');
-        toast.error(t('payment.errors.createFailed'));
+        toast.error(t("payment.errors.createFailed"));
+        setIsCreating(false);
         return;
       }
 
-      // Store payment ID in localStorage for return page (survives external redirects better)
-      localStorage.setItem('pending_payment_id', payment.id);
-      localStorage.setItem('pending_plan_code', planCode);
+      // Store payment ID for return page
+      localStorage.setItem("pending_payment_id", payment.id);
+      localStorage.setItem("pending_plan_code", planCode);
 
-      // Check if we have form fields to POST
-      const formFields = (payment as any).provider_form_fields;
-      const paymentUrl = (payment as any).provider_payment_url || (payment as any).payment_url;
-      
-      console.log('PaymentButton: Extracted formFields:', formFields);
-      console.log('PaymentButton: Form fields keys:', formFields ? Object.keys(formFields) : 'null');
-      console.log('PaymentButton: Extracted paymentUrl:', paymentUrl);
-      console.log('PaymentButton: Condition check - formFields?', !!formFields);
-      console.log('PaymentButton: Condition check - paymentUrl?', !!paymentUrl);
-      
-      // Validate form fields
-      if (!formFields || typeof formFields !== 'object') {
-        console.error('❌ PaymentButton: formFields is missing or invalid');
-        console.error('Full payment object:', JSON.stringify(payment, null, 2));
-        toast.error('Payment data is incomplete. Please try again or contact support.');
-        return;
-      }
-
-      if (!paymentUrl || typeof paymentUrl !== 'string') {
-        console.error('❌ PaymentButton: paymentUrl is missing or invalid');
-        console.error('Full payment object:', JSON.stringify(payment, null, 2));
-        toast.error('Payment URL is missing. Please try again or contact support.');
-        return;
-      }
-
-      // Validate required WayForPay fields
-      const requiredFields = ['merchantAccount', 'merchantSignature', 'orderReference', 'amount', 'currency'];
-      const missingFields = requiredFields.filter(field => !formFields[field]);
-      
-      if (missingFields.length > 0) {
-        console.error('❌ PaymentButton: Missing required WayForPay fields:', missingFields);
-        console.error('Available fields:', Object.keys(formFields));
-        toast.error(`Payment setup incomplete: missing ${missingFields.join(', ')}`);
-        return;
-      }
-      
-      console.log('✅ PaymentButton: Payment data validated successfully');
-      console.log('✅ PaymentButton: Navigating to /payment/checkout');
-      
-      toast.success(t('payment.redirecting'));
-      
-      // Navigate to checkout page which will POST to WayForPay
-      navigate('/payment/checkout', {
-        state: {
-          paymentUrl: paymentUrl,
-          formFields: formFields,
-        },
+      console.log("Payment created:", {
+        transaction_id: payment.transaction_id,
+        checkout_url: payment.checkout_url,
+        provider_payment_url: payment.provider_payment_url,
       });
+
+      // Use Paddle.js overlay checkout with transaction ID
+      if (payment.transaction_id) {
+        // Map i18n language to ISO 3166-1 alpha-2 country code
+        const langToCountry: Record<string, string> = {
+          uk: "UA",
+          en: "US",
+          ru: "RU",
+        };
+        const opened = openCheckout(payment.transaction_id, {
+          email: user.email,
+          countryCode: langToCountry[i18n.language],
+          locale: i18n.language,
+        });
+        if (!opened) {
+          toast.error(
+            "Failed to open Paddle checkout. Check console for details.",
+          );
+          setIsCreating(false);
+        }
+        // No redirect fallback — overlay should open on this page
+        return;
+      }
+
+      toast.error("No transaction ID returned. Cannot open checkout.");
+      setIsCreating(false);
     } catch (error) {
-      console.error('Payment creation failed:', error);
-      toast.error(t('payment.errors.unexpected'));
-    } finally {
+      console.error("Payment creation failed:", error);
+      toast.error(t("payment.errors.unexpected"));
       setIsCreating(false);
     }
   };
 
-  const isButtonDisabled = disabled || isCreating || isProcessing || !config.features.paymentsEnabled;
+  const isButtonDisabled =
+    disabled || isCreating || isProcessing || !config.features.paymentsEnabled;
 
   return (
     <Button
@@ -166,24 +161,28 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
       disabled={isButtonDisabled}
       onClick={handlePayment}
       className={className}
-      title={!config.features.paymentsEnabled ? t('payment.errors.paymentsDisabled', { 
-        defaultValue: 'Payments are temporarily disabled' 
-      }) : undefined}
+      title={
+        !config.features.paymentsEnabled
+          ? t("payment.errors.paymentsDisabled", {
+              defaultValue: "Payments are temporarily disabled",
+            })
+          : undefined
+      }
     >
       {!config.features.paymentsEnabled ? (
         <>
           <FaLock className="mr-2" />
-          {t('payment.disabled', { defaultValue: 'Payments Disabled' })}
+          {t("payment.disabled", { defaultValue: "Payments Disabled" })}
         </>
       ) : isCreating || isProcessing ? (
         <>
           <FaSpinner className="animate-spin mr-2" />
-          {t('payment.processing')}
+          {t("payment.processing")}
         </>
       ) : (
         <>
           <FaCrown className="mr-2" />
-          {t('payment.choosePlan')}
+          {t("payment.choosePlan")}
         </>
       )}
     </Button>

@@ -8,10 +8,13 @@ export interface UserEntitlements {
   user_id: string;
   plan_code: string;
   version: number;
-  entitlements: Record<string, {
-    enabled: number;
-    limit_value: number;
-  }>;
+  entitlements: Record<
+    string,
+    {
+      enabled: number;
+      limit_value: number;
+    }
+  >;
 }
 
 export interface PlanResponse {
@@ -28,10 +31,13 @@ export interface PlanResponse {
 export interface SubscriptionResponse {
   user_id: number;
   plan_code: string;
-  status: 'active' | 'past_due' | 'canceled' | 'paused';
+  status: "active" | "past_due" | "canceled" | "paused";
   started_at: string;
   expires_at: string | null;
   canceled_at: string | null;
+  auto_renew?: boolean;
+  paddle_subscription_id?: string;
+  paddle_price_id?: string;
 }
 
 export interface PlanFeature {

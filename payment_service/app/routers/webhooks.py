@@ -3,183 +3,134 @@ from __future__ import annotations
 import logging
 import json
 from fastapi import APIRouter, Depends, Request, status
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from pydantic import ValidationError as PydanticValidationError
 
 from ..database import get_db
 from ..services.payment_service import PaymentService
-from ..schemas.payment import WebhookWayForPayRequest
-from ..utils.errors import ValidationError, NotFoundError
-from ..config import settings
+from ..clients.paddle_client import PaddleClient
+from ..schemas.payment import PaddleWebhookEvent
 
 logger = logging.getLogger("payment_service.webhooks_router")
 
 router = APIRouter()
 
 
-@router.post("/payment/return")
-@router.get("/payment/return")
-async def payment_return_redirect(request: Request):
-    """
-    Handle WayForPay return redirect (POST or GET).
-    Redirects to frontend payment return page.
-    """
-    # Get query params or form data
-    params = dict(request.query_params)
-    
-    if request.method == "POST":
-        try:
-            form_data = await request.form()
-            params.update(dict(form_data))
-        except:
-            pass
-    
-    logger.info(
-        f"Payment return redirect - Method: {request.method}, Params: {params}",
-        extra={
-            "method": request.method,
-            "params_count": len(params),
-            "param_keys": list(params.keys()),
-            "has_error": "error" in params or "reasonCode" in params,
-            "reason_code": params.get("reasonCode"),
-            "reason": params.get("reason"),
-        }
-    )
-    
-    # Build redirect URL to frontend
-    frontend_url = settings.wayforpay_return_url
-    
-    # Add params as query string
-    if params:
-        query_string = "&".join(f"{k}={v}" for k, v in params.items())
-        redirect_url = f"{frontend_url}?{query_string}"
-    else:
-        redirect_url = frontend_url
-    
-    logger.info(f"Redirecting to: {redirect_url}")
-    
-    return RedirectResponse(url=redirect_url, status_code=status.HTTP_303_SEE_OTHER)
-
-
-@router.post("/webhooks/wayforpay")
-async def wayforpay_webhook(
+@router.post("/webhooks/paddle")
+async def paddle_webhook(
     request: Request,
     db: Session = Depends(get_db),
 ):
+    """Paddle Billing webhook endpoint.
+
+    No JWT required -- authentication is via Paddle signature verification.
+    Always returns 200 OK to prevent Paddle retry storms.
+
+    Paddle sends a ``Paddle-Signature`` header containing ``ts=<unix>;h1=<hmac>``.
+    The body is a JSON envelope with ``event_id``, ``event_type``, ``occurred_at``,
+    ``notification_id``, and ``data``.
     """
-    WayForPay webhook endpoint
-    
-    No JWT required - authentication via signature verification.
-    Returns 200 OK for all valid requests to prevent provider retries.
-    """
-    # Read raw body first for debugging
+    # Read raw body for signature verification
     raw_body = await request.body()
-    logger.info(f"Received WayForPay webhook raw body: {raw_body.decode('utf-8', errors='replace')}")
-    
-    # Try to parse as JSON
+
+    # Verify signature
+    paddle_signature = request.headers.get("Paddle-Signature", "")
+    paddle_client = PaddleClient()
+
+    if not paddle_signature:
+        logger.warning("Paddle webhook received without Paddle-Signature header")
+        return JSONResponse(
+            content={"status": "error", "reason": "Missing Paddle-Signature header"},
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    signature_valid = paddle_client.verify_webhook_signature(raw_body, paddle_signature)
+    if not signature_valid:
+        logger.warning(
+            "Paddle webhook signature verification failed",
+            extra={"signature_header_preview": paddle_signature[:60]},
+        )
+        return JSONResponse(
+            content={"status": "error", "reason": "Invalid signature"},
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    # Parse JSON body
     try:
         body_json = json.loads(raw_body)
-        logger.info(f"Parsed webhook JSON: {json.dumps(body_json, indent=2)}")
-    except json.JSONDecodeError as e:
-        logger.error(f"Failed to parse webhook body as JSON: {e}")
+    except json.JSONDecodeError as exc:
+        logger.error(f"Failed to parse Paddle webhook body as JSON: {exc}")
         return JSONResponse(
-            content={"status": "decline", "reason": "Invalid JSON"},
-            status_code=status.HTTP_200_OK
+            content={"status": "error", "reason": "Invalid JSON"},
+            status_code=status.HTTP_200_OK,
         )
-    
+
     # Validate with Pydantic
     try:
-        callback = WebhookWayForPayRequest(**body_json)
-    except PydanticValidationError as e:
-        logger.error(f"Webhook validation error: {e.errors()}")
-        return JSONResponse(
-            content={"status": "decline", "reason": "Validation error", "errors": str(e.errors())},
-            status_code=status.HTTP_200_OK
+        event = PaddleWebhookEvent(**body_json)
+    except PydanticValidationError as exc:
+        logger.error(
+            "Paddle webhook validation error",
+            extra={"errors": str(exc.errors())},
         )
-    
+        return JSONResponse(
+            content={"status": "error", "reason": "Validation error"},
+            status_code=status.HTTP_200_OK,
+        )
+
     logger.info(
-        f"Received WayForPay webhook for order {callback.orderReference}",
+        f"Received Paddle webhook: {event.event_type}",
         extra={
-            "order_reference": callback.orderReference,
-            "transaction_status": callback.transactionStatus,
-            "merchant_account": callback.merchantAccount,
-            "has_rec_token": callback.recToken is not None,
-            "rec_token_preview": callback.recToken[:20] + "..." if callback.recToken and len(callback.recToken) > 20 else callback.recToken,
+            "event_id": event.event_id,
+            "event_type": event.event_type,
+            "occurred_at": event.occurred_at,
+            "notification_id": event.notification_id,
         },
     )
 
+    # Process event
     try:
         service = PaymentService(db)
-        payment = await service.process_wayforpay_callback(callback)
+        payment = await service.process_paddle_webhook(event)
 
-        logger.info(
-            f"Successfully processed webhook for payment {payment.id}",
-            extra={
-                "payment_id": str(payment.id),
-                "order_reference": callback.orderReference,
-                "status": payment.status.value,
-            },
+        if payment:
+            logger.info(
+                f"Paddle webhook processed successfully for payment {payment.id}",
+                extra={
+                    "payment_id": str(payment.id),
+                    "event_id": event.event_id,
+                    "event_type": event.event_type,
+                    "payment_status": payment.status.value,
+                },
+            )
+        else:
+            logger.info(
+                "Paddle webhook processed (no payment affected or duplicate)",
+                extra={
+                    "event_id": event.event_id,
+                    "event_type": event.event_type,
+                },
+            )
+
+        return JSONResponse(
+            content={"status": "ok", "event_id": event.event_id},
+            status_code=status.HTTP_200_OK,
         )
 
-        # Always return 200 OK with accept/decline response
-        response_data = {
-            "orderReference": callback.orderReference,
-            "status": "accept",
-            "time": int(payment.updated_at.timestamp()),
-        }
-
-        return JSONResponse(content=response_data, status_code=status.HTTP_200_OK)
-
-    except ValidationError as e:
-        # Invalid signature or validation error
-        logger.warning(
-            f"Webhook validation error: {e.message}",
-            extra={
-                "order_reference": callback.orderReference,
-                "error_code": e.error_code,
-            },
-        )
-
-        # Return 200 but with decline status
-        response_data = {
-            "orderReference": callback.orderReference,
-            "status": "decline",
-            "time": 0,
-        }
-        return JSONResponse(content=response_data, status_code=status.HTTP_200_OK)
-
-    except NotFoundError as e:
-        # Payment not found
+    except Exception as exc:
+        # Always return 200 to prevent Paddle infinite retries
         logger.error(
-            f"Payment not found for webhook: {e.message}",
+            f"Error processing Paddle webhook: {exc}",
             extra={
-                "order_reference": callback.orderReference,
-                "error_code": e.error_code,
-            },
-        )
-
-        response_data = {
-            "orderReference": callback.orderReference,
-            "status": "decline",
-            "time": 0,
-        }
-        return JSONResponse(content=response_data, status_code=status.HTTP_200_OK)
-
-    except Exception as e:
-        # Unexpected error - still return 200 to prevent infinite retries
-        logger.error(
-            f"Unexpected error processing webhook: {e}",
-            extra={
-                "order_reference": callback.orderReference,
-                "error": str(e),
+                "event_id": event.event_id,
+                "event_type": event.event_type,
+                "error": str(exc),
             },
             exc_info=True,
         )
 
-        response_data = {
-            "orderReference": callback.orderReference,
-            "status": "decline",
-            "time": 0,
-        }
-        return JSONResponse(content=response_data, status_code=status.HTTP_200_OK)
+        return JSONResponse(
+            content={"status": "error", "event_id": event.event_id},
+            status_code=status.HTTP_200_OK,
+        )

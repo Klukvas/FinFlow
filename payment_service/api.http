@@ -82,38 +82,48 @@ Content-Type: application/json
 # Webhooks (No auth - signature verification)
 #####################
 
-### WayForPay Webhook (Approved)
-POST {{baseUrl}}/v1/webhooks/wayforpay
+### Paddle Webhook (Transaction Completed)
+POST {{baseUrl}}/v1/webhooks/paddle
 Content-Type: application/json
+Paddle-Signature: ts=1705244400;h1=test-signature-here
 
 {
-  "merchantAccount": "test_merchant",
-  "orderReference": "ORDER_1234567890",
-  "merchantSignature": "signature-here",
-  "amount": 299.00,
-  "currency": "UAH",
-  "authCode": "123456",
-  "cardPan": "4***1111",
-  "transactionStatus": "Approved",
-  "reasonCode": 1100,
-  "createdDate": 1705244400,
-  "processingDate": 1705244401,
-  "fee": 5.98,
-  "paymentSystem": "card"
+  "event_id": "evt_01abc123",
+  "event_type": "transaction.completed",
+  "occurred_at": "2026-01-14T12:00:01Z",
+  "data": {
+    "id": "txn_01abc123",
+    "status": "completed",
+    "customer_id": "ctm_01abc123",
+    "currency_code": "UAH",
+    "details": {
+      "totals": {
+        "total": "29900",
+        "subtotal": "29900"
+      }
+    },
+    "custom_data": {
+      "order_reference": "ORDER_1234567890"
+    }
+  }
 }
 
-### WayForPay Webhook (Declined)
-POST {{baseUrl}}/v1/webhooks/wayforpay
+### Paddle Webhook (Transaction Failed)
+POST {{baseUrl}}/v1/webhooks/paddle
 Content-Type: application/json
+Paddle-Signature: ts=1705244400;h1=test-signature-here
 
 {
-  "merchantAccount": "test_merchant",
-  "orderReference": "ORDER_1234567890",
-  "merchantSignature": "signature-here",
-  "amount": 299.00,
-  "currency": "UAH",
-  "transactionStatus": "Declined",
-  "reasonCode": 1101,
-  "reason": "Insufficient funds",
-  "createdDate": 1705244400
+  "event_id": "evt_01abc456",
+  "event_type": "transaction.payment_failed",
+  "occurred_at": "2026-01-14T12:00:01Z",
+  "data": {
+    "id": "txn_01abc456",
+    "status": "past_due",
+    "customer_id": "ctm_01abc123",
+    "currency_code": "UAH",
+    "custom_data": {
+      "order_reference": "ORDER_1234567890"
+    }
+  }
 }

@@ -13,14 +13,18 @@ from ..repositories import JobRepository
 from ..models.models import JobStatus
 from ..utils.logging import get_logger
 from ..utils import metrics
+from ..utils.distributed_lock import DistributedLock
 
 logger = get_logger("scheduler_service.subscription_renewal_job")
+
+RENEWAL_LOCK_NAME = "subscription_renewal_job"
+RENEWAL_LOCK_TTL_SECONDS = 600  # 10 minutes — should exceed max job duration
 
 
 class SubscriptionRenewalJob:
     """
     Job that processes subscription renewals
-    
+
     Responsibilities:
     - Identify subscriptions expiring soon
     - Attempt recurring payment
@@ -32,13 +36,25 @@ class SubscriptionRenewalJob:
     def __init__(self):
         self.subscription_client = SubscriptionClient()
         self.payment_client = PaymentClient()
+        self.lock = DistributedLock()
 
     async def execute(self):
         """
-        Main job execution entry point
-        
-        This method is called by the scheduler and handles the entire renewal process
+        Main job execution entry point.
+
+        Acquires a distributed lock to prevent concurrent execution
+        across multiple scheduler instances in a multi-pod deployment.
         """
+        async with self.lock.hold(RENEWAL_LOCK_NAME, RENEWAL_LOCK_TTL_SECONDS) as acquired:
+            if not acquired:
+                logger.info(
+                    "Subscription renewal job skipped — another instance holds the lock"
+                )
+                return
+            await self._execute_inner()
+
+    async def _execute_inner(self):
+        """Inner execution logic, called only when distributed lock is held."""
         job_name = "subscription_renewal"
         db = SessionLocal()
         job_repo = JobRepository(db)
@@ -200,6 +216,31 @@ class SubscriptionRenewalJob:
             metrics.record_renewal_skipped("canceled")
             return False
 
+        # Skip Paddle subscriptions - Paddle handles its own renewals
+        payment_provider = subscription.get("payment_provider")
+        if payment_provider == "PADDLE":
+            logger.info(
+                f"Subscription {subscription_id} uses Paddle billing, skipping (Paddle manages renewals)",
+                extra={
+                    "subscription_id": subscription_id,
+                    "user_id": user_id,
+                    "payment_provider": payment_provider,
+                },
+            )
+
+            job_repo.create_renewal_attempt(
+                job_execution_id=job_execution_id,
+                subscription_id=subscription_id,
+                user_id=user_id,
+                amount=subscription.get("plan_amount", "0"),
+                currency=subscription.get("currency", "USD"),
+                status="SKIPPED",
+                failure_reason="paddle_manages_renewals",
+            )
+
+            metrics.record_renewal_skipped("paddle_managed")
+            return True  # Not a failure
+
         # Check if subscription has recurring token
         recurring_token = subscription.get("recurring_token")
         if not recurring_token:
@@ -291,11 +332,6 @@ class SubscriptionRenewalJob:
             else:
                 # Payment failed or pending
                 failure_reason = payment_result.get("failure_reason", payment_status)
-                
-                await self.subscription_client.mark_subscription_past_due(
-                    subscription_id=subscription_id,
-                    reason=failure_reason,
-                )
 
                 job_repo.create_renewal_attempt(
                     job_execution_id=job_execution_id,
@@ -306,6 +342,12 @@ class SubscriptionRenewalJob:
                     currency=currency,
                     status="FAILED",
                     failure_reason=failure_reason,
+                )
+
+                await self._handle_renewal_failure(
+                    subscription_id=subscription_id,
+                    reason=failure_reason,
+                    job_repo=job_repo,
                 )
 
                 metrics.record_renewal_attempt("failed")
@@ -322,11 +364,6 @@ class SubscriptionRenewalJob:
                 },
             )
 
-            await self.subscription_client.mark_subscription_past_due(
-                subscription_id=subscription_id,
-                reason=f"payment_error: {str(e)}",
-            )
-
             job_repo.create_renewal_attempt(
                 job_execution_id=job_execution_id,
                 subscription_id=subscription_id,
@@ -337,9 +374,54 @@ class SubscriptionRenewalJob:
                 failure_reason=str(e),
             )
 
+            await self._handle_renewal_failure(
+                subscription_id=subscription_id,
+                reason=f"payment_error: {str(e)}",
+                job_repo=job_repo,
+            )
+
             metrics.record_renewal_attempt("failed")
             metrics.record_payment_failure("payment_error")
             return False
+
+    async def _handle_renewal_failure(
+        self,
+        subscription_id: int,
+        reason: str,
+        job_repo: JobRepository,
+    ) -> None:
+        """Mark subscription past_due only after exhausting retry attempts.
+
+        The scheduler runs hourly.  Each failed run records a FAILED
+        RenewalAttempt.  We count recent failures (last 7 days) and only
+        escalate to past_due once the count reaches ``max_retry_attempts``.
+        """
+        recent_failures = job_repo.count_recent_failures(subscription_id)
+
+        if recent_failures >= settings.max_retry_attempts:
+            logger.warning(
+                f"Subscription {subscription_id} exceeded max retries "
+                f"({recent_failures}/{settings.max_retry_attempts}), marking past_due",
+                extra={
+                    "subscription_id": subscription_id,
+                    "recent_failures": recent_failures,
+                    "max_retry_attempts": settings.max_retry_attempts,
+                },
+            )
+            await self.subscription_client.mark_subscription_past_due(
+                subscription_id=subscription_id,
+                reason=reason,
+            )
+        else:
+            logger.info(
+                f"Subscription {subscription_id} renewal failed "
+                f"({recent_failures}/{settings.max_retry_attempts}), will retry on next run",
+                extra={
+                    "subscription_id": subscription_id,
+                    "recent_failures": recent_failures,
+                    "max_retry_attempts": settings.max_retry_attempts,
+                },
+            )
 
 
 # Global job instance

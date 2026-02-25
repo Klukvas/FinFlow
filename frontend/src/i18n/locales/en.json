@@ -543,7 +543,7 @@
         },
         "payments": {
           "title": "Secure Payment Integration",
-          "desc": "Payment data tokenization via WayForPay. No card data is stored on our servers."
+          "desc": "Payments securely processed via Paddle. No card data is stored on our servers."
         },
         "renewal": {
           "title": "Background Renewal",
@@ -575,7 +575,7 @@
       "platform": [
         "Subscription lifecycle management via dedicated service",
         "Plan-based feature enforcement at middleware level",
-        "WayForPay payment gateway with tokenized card storage"
+        "Paddle payment gateway for secure payment processing"
       ]
     }
   },
@@ -1814,7 +1814,20 @@
     },
     "status": {
       "active": "Active",
-      "inactive": "Inactive"
+      "inactive": "Inactive",
+      "past_due": "Past Due",
+      "paused": "Paused"
+    },
+    "renewsOn": "Renews on {{date}}",
+    "pastDue": {
+      "title": "Payment Past Due",
+      "message": "Your subscription payment failed. Please update your payment method to continue using premium features.",
+      "action": "Update Payment Method"
+    },
+    "paused": {
+      "title": "Subscription Paused",
+      "message": "Your subscription is currently paused. Resume it to regain access to premium features.",
+      "action": "Resume Subscription"
     },
     "used": "Used",
     "limit": "Limit",
@@ -1824,7 +1837,7 @@
       "title": "I agree to subscribe to {{planName}} plan",
       "ariaLabel": "Agree to subscription terms",
       "intro": "By subscribing, I confirm that:",
-      "tokenization": "My payment card details will be securely tokenized and stored by WayForPay payment processor",
+      "tokenization": "My payment card details will be securely processed by Paddle payment processor",
       "recurring": "I authorize automatic monthly charges of {{amount}} {{currency}} to my payment card",
       "billingDate": "Charges will occur on the {{day}} of each month starting from {{startDate}}",
       "cancellation": "I can cancel my subscription at any time from my account settings",
@@ -2049,7 +2062,8 @@
     },
     "processing": {
       "title": "Processing Payment",
-      "message": "We are processing your payment. Please wait..."
+      "message": "We are processing your payment. Please wait...",
+      "detail": "Your payment is being processed by the payment provider. This usually takes a few moments. Check your profile shortly for the updated subscription status."
     },
     "errors": {
       "notAuthenticated": "Please log in to continue",
@@ -2093,16 +2107,16 @@
       "subscription": {
         "title": "Subscription and Payments",
         "item1": "The Platform operates on a recurring monthly subscription model.",
-        "item2": "All payments are processed via the payment service provider WayForPay.",
+        "item2": "All payments are processed via the payment service provider Paddle.",
         "item3": "By purchasing a subscription, the user agrees to automatic recurring charges for each billing period until the subscription is canceled.",
         "item4": "The user may cancel the subscription at any time via the personal account dashboard.",
         "item5": "Upon cancellation, access to the Platform remains available until the end of the paid billing period."
       },
       "refund": {
         "title": "Refund Policy",
-        "item1": "Refunds are not provided for subscription payments.",
-        "item2": "Since the service is considered rendered upon granting access, all payments are non-refundable, including cases of partial use.",
-        "item3": "By completing the payment, the user explicitly agrees to these refund conditions."
+        "item1": "We offer a 10-day money-back guarantee for all first-time subscription payments. If you are not satisfied, you may request a full refund within 10 days of your first payment.",
+        "item2": "Refund requests should be sent to finflow@flux-lab.dev with your account email and order details.",
+        "item3": "After the 10-day period, subscription payments are non-refundable. You may cancel your subscription at any time to prevent future charges."
       },
       "liability": {
         "title": "Limitation of Liability",
@@ -2123,31 +2137,101 @@
   "refundPage": {
     "title": "Refund Policy",
     "lastUpdated": "Last updated",
-    "updateDate": "January 19, 2026",
+    "updateDate": "February 25, 2026",
     "backToHome": "Back to Home",
     "intro": "This Refund Policy applies to all payments made on the FinFlow platform.",
     "footer": "If you have any questions about refunds, please contact us at finflow@flux-lab.dev",
     "sections": {
-      "noRefund": {
-        "title": "No Refund Policy",
-        "item1": "FinFlow operates as a digital subscription-based service.",
-        "item2": "Refunds are not available for any subscription payments.",
-        "item3": "The service is considered fully rendered once access to the Platform is granted."
+      "moneyBack": {
+        "title": "10-Day Money-Back Guarantee",
+        "item1": "We offer a 10-day money-back guarantee for all first-time subscription payments.",
+        "item2": "If you are not satisfied with the service, you may request a full refund within 10 days of your first payment — no questions asked.",
+        "item3": "After the 10-day period, subscription payments are non-refundable."
       },
       "cancellation": {
         "title": "Subscription Cancellation",
         "item1": "Users may cancel their subscription at any time via their personal account.",
-        "item2": "Cancellation prevents future charges but does not entitle the user to a refund for the current billing period.",
-        "item3": "Access to the Platform remains available until the end of the paid subscription period."
+        "item2": "Cancellation prevents future charges. Access to the Platform remains available until the end of the paid subscription period.",
+        "item3": "If you cancel within the first 10 days, you are eligible for a full refund upon request."
       },
-      "payment": {
-        "title": "Payment Processing",
-        "item1": "All payments are processed via WayForPay.",
-        "item2": "By completing a payment, the user confirms acceptance of this Refund Policy."
+      "howToRequest": {
+        "title": "How to Request a Refund",
+        "item1": "Send an email to finflow@flux-lab.dev with your account email address and order details.",
+        "item2": "Refunds are typically processed within 5-10 business days via the original payment method."
       },
       "contact": {
         "title": "Contact",
         "item1": "For refund-related questions, please contact: finflow@flux-lab.dev"
+      }
+    }
+  },
+  "privacyPage": {
+    "title": "Privacy Policy",
+    "lastUpdated": "Last updated",
+    "updateDate": "February 25, 2026",
+    "backToHome": "Back to Home",
+    "intro": "This Privacy Policy describes how FinFlow (\"we\", \"us\", or \"our\"), operated by Individual Entrepreneur (FOP) Pavlenko Andrii Volodymyrovych (Tax ID: 3650600237), collects, uses, and protects your personal information when you use the FinFlow platform available at https://finflow.ltd (the \"Platform\").",
+    "acceptance": "By using the Platform, you consent to the practices described in this Privacy Policy.",
+    "footer": "If you have any questions about this Privacy Policy, please contact us at finflow@flux-lab.dev",
+    "sections": {
+      "dataCollection": {
+        "title": "Information We Collect",
+        "item1": "Account Information: Name, email address, and password when you register an account.",
+        "item2": "Financial Data: Transaction records, expense and income entries, budget goals, debt tracking information, and other financial data you enter into the Platform. This data is provided voluntarily by you and is not sourced from external financial institutions.",
+        "item3": "Payment Information: When you subscribe to a paid plan, payment details are collected and processed by our payment provider, Paddle. We do not store your full card number on our servers. We only receive the last 4 digits of your card, card type, and expiration date for display purposes.",
+        "item4": "Usage Data: Information about how you interact with the Platform, including pages visited, features used, device type, browser type, IP address, and session duration.",
+        "item5": "Communications: Messages you send to us through the contact form or email."
+      },
+      "dataUsage": {
+        "title": "How We Use Your Information",
+        "item1": "To provide, maintain, and improve the Platform and its features.",
+        "item2": "To process your subscription payments through Paddle.",
+        "item3": "To send you account-related notifications, including billing reminders, subscription confirmations, and service updates.",
+        "item4": "To respond to your support inquiries and feedback.",
+        "item5": "To analyze usage patterns and improve Platform performance using aggregated, anonymized data.",
+        "item6": "To comply with legal obligations under applicable law."
+      },
+      "thirdParty": {
+        "title": "Third-Party Services",
+        "item1": "Paddle (Payment Processor): Paddle acts as our Merchant of Record and processes all payment transactions. When you make a purchase, Paddle collects your payment information directly. Paddle's handling of your data is governed by Paddle's Privacy Policy (https://www.paddle.com/legal/privacy).",
+        "item2": "Google Analytics: We use Google Analytics to collect anonymized usage data about how visitors interact with the Platform. Google Analytics uses cookies to gather information such as pages visited, session duration, and device type. No personally identifiable financial data is shared with Google.",
+        "item3": "Legal Requirements: We may disclose your information if required by law, court order, or governmental authority.",
+        "item4": "We do not sell, rent, or trade your personal information to any third party."
+      },
+      "dataSecurity": {
+        "title": "Data Security",
+        "item1": "All data transmitted between your browser and our servers is encrypted using TLS 1.2+ (HTTPS).",
+        "item2": "Payment processing is handled by Paddle, which is PCI DSS Level 1 compliant.",
+        "item3": "We do not store your full payment card details on our servers.",
+        "item4": "Access to user data is restricted to authorized personnel only.",
+        "item5": "While we take reasonable measures to protect your data, no method of electronic transmission or storage is 100% secure."
+      },
+      "cookies": {
+        "title": "Cookies",
+        "item1": "Essential Cookies: Used to maintain your login session and ensure the Platform functions correctly. These are strictly necessary and cannot be disabled.",
+        "item2": "Analytics Cookies: Used by Google Analytics to collect anonymized usage data. These help us understand how visitors use the Platform so we can improve it.",
+        "item3": "You can manage or disable non-essential cookies through your browser settings. Disabling essential cookies may affect Platform functionality."
+      },
+      "userRights": {
+        "title": "Your Rights",
+        "item1": "Access the personal data we hold about you by contacting us.",
+        "item2": "Correct inaccurate or incomplete personal data by updating your profile or contacting us.",
+        "item3": "Delete your account and associated personal data by contacting us at finflow@flux-lab.dev. Upon account deletion, your personal data will be permanently removed within 30 days, except where retention is required by law.",
+        "item4": "Export your financial data from the Platform at any time."
+      },
+      "dataRetention": {
+        "title": "Data Retention",
+        "item1": "Your account data and financial records are retained for as long as your account is active.",
+        "item2": "After account deletion, personal data is permanently removed within 30 days, unless retention is required by applicable law."
+      },
+      "changes": {
+        "title": "Changes to This Policy",
+        "item1": "We may update this Privacy Policy from time to time. Changes will be posted on this page with an updated \"Last updated\" date.",
+        "item2": "For significant changes, we will notify you via email or through a notification on the Platform."
+      },
+      "contact": {
+        "title": "Contact",
+        "item1": "For any questions regarding this Privacy Policy, please contact us at: finflow@flux-lab.dev"
       }
     }
   }

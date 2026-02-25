@@ -1,6 +1,6 @@
 # Payment Service
 
-Payment Service is responsible for managing payments through WayForPay, handling webhooks, maintaining payment lifecycle, and notifying other services about payment events.
+Payment Service is responsible for managing payments through Paddle Billing, handling webhooks, maintaining payment lifecycle, and notifying other services about payment events.
 
 ## Table of Contents
 
@@ -20,8 +20,8 @@ Payment Service is responsible for managing payments through WayForPay, handling
 
 The Payment Service acts as the source of truth for all payment-related data in the system. It:
 
-- Creates payment invoices and generates WayForPay checkout URLs
-- Receives and validates webhooks from WayForPay
+- Creates payment invoices and generates Paddle checkout URLs
+- Receives and validates webhooks from Paddle
 - Maintains payment status lifecycle with a state machine
 - Notifies subscription_service about successful/failed payments
 - Provides idempotent API endpoints
@@ -50,19 +50,19 @@ The Payment Service acts as the source of truth for all payment-related data in 
 
 **Outgoing Dependencies:**
 - `subscription_service` - Notifies about payment success/failure
-- `WayForPay API` - External payment provider
+- `Paddle API` - External payment provider
 
 **Incoming Dependencies:**
 - `frontend/BFF` - Creates payments, views status
 - `subscription_service` - May create payments internally
-- `WayForPay` - Sends webhook callbacks
+- `Paddle` - Sends webhook callbacks
 
 ### Tech Stack
 
 - **Runtime:** Python 3.11 + FastAPI + Uvicorn
 - **Database:** PostgreSQL (primary storage)
 - **Cache:** Redis (idempotency keys, rate limiting)
-- **Payment Provider:** WayForPay
+- **Payment Provider:** Paddle Billing
 - **Observability:** Prometheus metrics, JSON logging
 
 ### Layers
@@ -80,12 +80,12 @@ routers/          # HTTP endpoints (public, internal, webhooks)
 
 **Endpoint:** `POST /v1/payments`
 
-Creates a new payment and returns WayForPay checkout URL.
+Creates a new payment and returns Paddle checkout URL.
 
 **Flow:**
 1. Client provides user_id, amount, currency, purpose (SUBSCRIPTION/ONE_TIME)
 2. Service generates unique order_reference
-3. WayForPay payment form is created with signature
+3. Paddle checkout session is created
 4. Payment saved with status CREATED
 5. Client receives payment_url to redirect user
 
@@ -93,13 +93,13 @@ Creates a new payment and returns WayForPay checkout URL.
 
 ### 2. Webhook Processing
 
-**Endpoint:** `POST /v1/webhooks/wayforpay`
+**Endpoint:** `POST /v1/webhooks/paddle`
 
-Receives callbacks from WayForPay when payment status changes.
+Receives callbacks from Paddle when payment status changes.
 
 **Flow:**
-1. WayForPay sends callback with signature
-2. Service verifies signature (HMAC SHA1)
+1. Paddle sends webhook notification with signature
+2. Service verifies signature (Paddle webhook signature verification)
 3. Finds payment by order_reference
 4. Checks idempotency (prevents duplicate processing)
 5. Updates payment status via state machine
@@ -156,11 +156,11 @@ Content-Type: application/json
 {
   "payment_id": "uuid",
   "order_reference": "ORDER_1705244400_abc123",
-  "provider": "WAYFORPAY",
+  "provider": "PADDLE",
   "amount": 299.00,
   "currency": "UAH",
   "status": "CREATED",
-  "payment_url": "https://secure.wayforpay.com/pay",
+  "payment_url": "https://checkout.paddle.com/...",
   "created_at": "2026-01-14T12:00:00Z"
 }
 ```
@@ -181,30 +181,36 @@ Authorization: Bearer <jwt_token>
 
 ### Webhooks (Signature Verification)
 
-#### WayForPay Callback
+#### Paddle Webhook
 
 ```http
-POST /v1/webhooks/wayforpay
+POST /v1/webhooks/paddle
 Content-Type: application/json
+Paddle-Signature: ts=...;h1=...
 
 {
-  "merchantAccount": "merchant",
-  "orderReference": "ORDER_123",
-  "merchantSignature": "signature",
-  "amount": 299.00,
-  "currency": "UAH",
-  "authCode": "123456",
-  "cardPan": "4***1111",
-  "transactionStatus": "Approved",
-  "reasonCode": 1100,
-  "createdDate": 1705244400,
-  "processingDate": 1705244401,
-  "fee": 5.98,
-  "paymentSystem": "card"
+  "event_id": "evt_01abc...",
+  "event_type": "transaction.completed",
+  "occurred_at": "2026-01-14T12:00:01Z",
+  "data": {
+    "id": "txn_01abc...",
+    "status": "completed",
+    "customer_id": "ctm_01abc...",
+    "currency_code": "UAH",
+    "details": {
+      "totals": {
+        "total": "29900",
+        "subtotal": "29900"
+      }
+    },
+    "custom_data": {
+      "order_reference": "ORDER_123"
+    }
+  }
 }
 ```
 
-**Response:** Always 200 OK with accept/decline status
+**Response:** Always 200 OK to acknowledge receipt
 
 ### Internal API (X-Internal-Token Required)
 
@@ -237,8 +243,8 @@ Primary payment records.
 | Column | Type | Description |
 |--------|------|-------------|
 | id | UUID | Primary key |
-| provider | ENUM | WAYFORPAY |
-| order_reference | VARCHAR(255) | Unique order ID (WayForPay) |
+| provider | ENUM | PADDLE |
+| order_reference | VARCHAR(255) | Unique order ID |
 | user_id | UUID | Payment owner |
 | workspace_id | UUID | Workspace context (nullable) |
 | purpose | ENUM | SUBSCRIPTION, ONE_TIME |
@@ -246,7 +252,7 @@ Primary payment records.
 | amount | NUMERIC(10,2) | Payment amount |
 | currency | CHAR(3) | Currency code (UAH, USD, EUR) |
 | status | ENUM | Current status |
-| provider_payment_url | TEXT | WayForPay checkout URL |
+| provider_payment_url | TEXT | Paddle checkout URL |
 | provider_payload | JSONB | Sent to provider |
 | provider_response | JSONB | Response from provider |
 | paid_at | TIMESTAMP | When paid |
@@ -312,22 +318,22 @@ Idempotency tracking for duplicate request prevention.
 | JWT_SECRET_KEY | ✅ | - | JWT verification key |
 | JWT_ALGORITHM | ❌ | HS256 | JWT algorithm |
 | INTERNAL_SECRET_TOKEN | ✅ | - | Internal API token |
-| WAYFORPAY_MERCHANT_ACCOUNT | ✅ | - | WayForPay merchant account |
-| WAYFORPAY_MERCHANT_SECRET_KEY | ✅ | - | WayForPay secret key |
-| WAYFORPAY_MERCHANT_DOMAIN | ✅ | - | Your domain |
-| WAYFORPAY_RETURN_URL | ✅ | - | User return URL after payment |
-| WAYFORPAY_CALLBACK_URL | ✅ | - | Webhook callback URL (public) |
-| WAYFORPAY_API_URL | ❌ | https://api.wayforpay.com/api | WayForPay API endpoint |
+| PADDLE_API_KEY | ✅ | - | Paddle API key |
+| PADDLE_WEBHOOK_SECRET | ✅ | - | Paddle webhook signature secret |
+| PADDLE_ENVIRONMENT | ❌ | sandbox | Paddle environment (sandbox/production) |
+| PADDLE_RETURN_URL | ✅ | - | User return URL after payment |
+| PADDLE_WEBHOOK_URL | ✅ | - | Webhook callback URL (public) |
+| PADDLE_API_URL | ❌ | https://sandbox-api.paddle.com | Paddle API endpoint |
 | SERVICE_BASE_URL | ❌ | http://localhost:8000 | This service URL |
 | SUBSCRIPTION_SERVICE_URL | ✅ | - | Subscription service URL |
 | IDEMPOTENCY_TTL_SECONDS | ❌ | 86400 | Idempotency key TTL (24h) |
 
-### WayForPay Configuration
+### Paddle Configuration
 
-1. Register at [WayForPay](https://wayforpay.com)
-2. Get merchant account and secret key
-3. Configure callback URL in WayForPay dashboard
-4. Ensure callback URL is publicly accessible (use ngrok for local dev)
+1. Register at [Paddle](https://www.paddle.com)
+2. Get API key and webhook secret from Paddle dashboard
+3. Configure webhook URL in Paddle notification settings
+4. Ensure webhook URL is publicly accessible (use ngrok for local dev)
 
 ## Development
 
@@ -398,15 +404,15 @@ docker build -t payment_service:latest -f Dockerfile .
 
 ### Production Checklist
 
-- [ ] Use real WayForPay credentials (not test values)
+- [ ] Use production Paddle credentials (not sandbox values)
 - [ ] Set strong INTERNAL_SECRET_TOKEN
-- [ ] Configure public WAYFORPAY_CALLBACK_URL (must be HTTPS)
+- [ ] Configure public PADDLE_WEBHOOK_URL (must be HTTPS)
 - [ ] Enable database connection pooling
 - [ ] Set up Redis for better idempotency
 - [ ] Configure log aggregation (Loki/Elasticsearch)
 - [ ] Set up Prometheus alerting
 - [ ] Implement rate limiting on webhook endpoint
-- [ ] Configure IP allowlist for WayForPay webhooks (if supported)
+- [ ] Configure IP allowlist for Paddle webhooks (if supported)
 - [ ] Set up backup and recovery for payment_db
 - [ ] Test webhook signature verification thoroughly
 - [ ] Implement outbox pattern for reliable notifications
@@ -476,7 +482,7 @@ Use `request_id` header for request correlation across services.
 
 1. **Signature Verification** - All webhooks must have valid HMAC signature
 2. **Idempotency** - Duplicate webhooks are detected and ignored
-3. **IP Allowlist** (optional) - Restrict webhooks to WayForPay IPs
+3. **IP Allowlist** (optional) - Restrict webhooks to Paddle IPs
 4. **Rate Limiting** (recommended) - Prevent webhook flooding
 
 ### API Security
@@ -489,7 +495,7 @@ Use `request_id` header for request correlation across services.
 ### Data Security
 
 - Never store full card numbers (PCI compliance)
-- Store only masked PAN (e.g., "4***1111") from WayForPay
+- Store only masked PAN (e.g., "4***1111") from Paddle
 - Use HTTPS for all external communication
 - Encrypt sensitive configuration (secrets management)
 
@@ -531,21 +537,21 @@ Use `request_id` header for request correlation across services.
 
 ### Webhook not received
 
-1. Check WAYFORPAY_CALLBACK_URL is publicly accessible
-2. Verify URL is configured in WayForPay dashboard
+1. Check PADDLE_WEBHOOK_URL is publicly accessible
+2. Verify URL is configured in Paddle notification settings
 3. Check webhook logs for delivery attempts
 4. Use ngrok for local development
 
 ### Invalid signature errors
 
-1. Verify WAYFORPAY_MERCHANT_SECRET_KEY is correct
-2. Check signature field order matches WayForPay docs
+1. Verify PADDLE_WEBHOOK_SECRET is correct
+2. Check signature verification matches Paddle docs
 3. Ensure no extra spaces in secret key
 4. Review logs for signature_valid=false events
 
 ### Payment stuck in PENDING
 
-1. Check WayForPay dashboard for payment status
+1. Check Paddle dashboard for payment status
 2. Use `GET /v1/payments/{id}` to verify status
 3. Consider implementing status polling/verification
 4. Check if webhook was received (payment_events table)

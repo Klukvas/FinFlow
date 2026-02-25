@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO")
     
     # Internal service authentication
-    internal_secret_token: str = Field(default="my-secret-token")
+    internal_secret_token: str = Field(default="")
     
     # Service URLs
     subscription_service_url: str = Field(default="http://localhost:8080")

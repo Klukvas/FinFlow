@@ -1,14 +1,36 @@
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { useWorkspace } from '@/contexts/WorkspaceContext';
-import { Account, Category, Expense, Income, Profile, Recurring, Goals, PdfParser, Debts, Workspaces, MyInvites, Home, About, Features, Pricing, Contact, Terms, Refund } from '@/pages';
-import { PaymentReturn } from '@/pages/payment/PaymentReturn';
-import { PaymentHistory } from '@/pages/payment/PaymentHistory';
-import { PaymentCheckoutSimple } from '@/pages/payment/PaymentCheckoutSimple';
-import { Layout } from './ui/layout/Layout';
-import { PublicLayout } from './ui/layout/PublicLayout';
-import { ProtectedRoute } from './ProtectedRoute';
+import React from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import {
+  Account,
+  Category,
+  Expense,
+  Income,
+  Profile,
+  Recurring,
+  Goals,
+  PdfParser,
+  Debts,
+  Workspaces,
+  MyInvites,
+  Home,
+  About,
+  Features,
+  Pricing,
+  Contact,
+  Terms,
+  Refund,
+  PrivacyPolicy,
+} from "@/pages";
+import { PaymentReturn } from "@/pages/payment/PaymentReturn";
+import { PaymentHistory } from "@/pages/payment/PaymentHistory";
+import { SubscriptionTermsPage } from "@/pages/legal/SubscriptionTermsPage";
+import { CancelHelpPage } from "@/pages/legal/CancelHelpPage";
+
+import { Layout } from "./ui/layout/Layout";
+import { PublicLayout } from "./ui/layout/PublicLayout";
+import { ProtectedRoute } from "./ProtectedRoute";
 
 export const AppRoutes: React.FC = () => {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
@@ -28,11 +50,76 @@ export const AppRoutes: React.FC = () => {
   if (isAuthenticated && !currentWorkspaceId && !workspaceLoading) {
     return (
       <Routes>
-        <Route path="/workspaces" element={<ProtectedRoute><Layout><Workspaces /></Layout></ProtectedRoute>} />
-        <Route path="/profile" element={<ProtectedRoute><Layout><Profile /></Layout></ProtectedRoute>} />
-        <Route path="/invites" element={<ProtectedRoute><Layout><MyInvites /></Layout></ProtectedRoute>} />
-        <Route path="/terms" element={<PublicLayout><Terms /></PublicLayout>} />
-        <Route path="/refund" element={<PublicLayout><Refund /></PublicLayout>} />
+        <Route
+          path="/workspaces"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Workspaces />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Profile />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/invites"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <MyInvites />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/terms"
+          element={
+            <PublicLayout>
+              <Terms />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/refund"
+          element={
+            <PublicLayout>
+              <Refund />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/privacy"
+          element={
+            <PublicLayout>
+              <PrivacyPolicy />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/subscription-terms"
+          element={
+            <PublicLayout>
+              <SubscriptionTermsPage />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/cancel-subscription"
+          element={
+            <PublicLayout>
+              <CancelHelpPage />
+            </PublicLayout>
+          }
+        />
         <Route path="*" element={<Navigate to="/workspaces" replace />} />
       </Routes>
     );
@@ -42,170 +129,202 @@ export const AppRoutes: React.FC = () => {
   if (isAuthenticated) {
     return (
       <Routes>
-        <Route 
-          path="/account" 
+        <Route
+          path="/account"
           element={
             <ProtectedRoute>
               <Layout>
                 <Account />
               </Layout>
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/expense" 
+        <Route
+          path="/expense"
           element={
             <ProtectedRoute>
               <Layout>
                 <Expense />
               </Layout>
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/income" 
+        <Route
+          path="/income"
           element={
             <ProtectedRoute>
               <Layout>
                 <Income />
               </Layout>
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/debts" 
+        <Route
+          path="/debts"
           element={
             <ProtectedRoute>
               <Layout>
                 <Debts />
               </Layout>
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/recurring" 
+        <Route
+          path="/recurring"
           element={
             <ProtectedRoute>
               <Layout>
                 <Recurring />
               </Layout>
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/goals" 
+        <Route
+          path="/goals"
           element={
             <ProtectedRoute>
               <Layout>
                 <Goals />
               </Layout>
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/category" 
+        <Route
+          path="/category"
           element={
             <ProtectedRoute>
               <Layout>
                 <Category />
               </Layout>
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/profile" 
+        <Route
+          path="/profile"
           element={
             <ProtectedRoute>
               <Layout>
                 <Profile />
               </Layout>
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/pdf-parser" 
+        <Route
+          path="/pdf-parser"
           element={
             <ProtectedRoute>
               <Layout>
                 <PdfParser />
               </Layout>
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/workspaces" 
+        <Route
+          path="/workspaces"
           element={
             <ProtectedRoute>
               <Layout>
                 <Workspaces />
               </Layout>
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/invites" 
+        <Route
+          path="/invites"
           element={
             <ProtectedRoute>
               <Layout>
                 <MyInvites />
               </Layout>
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/payment/checkout" 
-          element={
-            <ProtectedRoute>
-              <PaymentCheckoutSimple />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/payment/return" 
+        <Route
+          path="/payment/return"
           element={
             <ProtectedRoute>
               <PaymentReturn />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/payment/history" 
+        <Route
+          path="/payment/history"
           element={
             <ProtectedRoute>
               <Layout>
                 <PaymentHistory />
               </Layout>
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/pricing" 
+        <Route
+          path="/pricing"
           element={
             <ProtectedRoute>
               <Layout>
                 <Pricing />
               </Layout>
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/terms" 
+        <Route
+          path="/terms"
           element={
             <PublicLayout>
               <Terms />
             </PublicLayout>
-          } 
+          }
         />
-        <Route 
-          path="/refund" 
+        <Route
+          path="/refund"
           element={
             <PublicLayout>
               <Refund />
             </PublicLayout>
-          } 
+          }
         />
-        <Route path="/" element={<Navigate to={currentWorkspaceId ? "/category" : "/workspaces"} replace />} />
-        <Route path="*" element={<Navigate to={currentWorkspaceId ? "/category" : "/workspaces"} replace />} />
+        <Route
+          path="/privacy"
+          element={
+            <PublicLayout>
+              <PrivacyPolicy />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/subscription-terms"
+          element={
+            <PublicLayout>
+              <SubscriptionTermsPage />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/cancel-subscription"
+          element={
+            <PublicLayout>
+              <CancelHelpPage />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/"
+          element={
+            <Navigate
+              to={currentWorkspaceId ? "/category" : "/workspaces"}
+              replace
+            />
+          }
+        />
+        <Route
+          path="*"
+          element={
+            <Navigate
+              to={currentWorkspaceId ? "/category" : "/workspaces"}
+              replace
+            />
+          }
+        />
       </Routes>
     );
   }
@@ -213,42 +332,86 @@ export const AppRoutes: React.FC = () => {
   // If user is not authenticated, show public routes
   return (
     <Routes>
-      <Route path="/" element={
-        <PublicLayout>
-          <Home />
-        </PublicLayout>
-      } />
-      <Route path="/about" element={
-        <PublicLayout>
-          <About />
-        </PublicLayout>
-      } />
-      <Route path="/features" element={
-        <PublicLayout>
-          <Features />
-        </PublicLayout>
-      } />
-      <Route path="/pricing" element={
-        <PublicLayout>
-          <Pricing />
-        </PublicLayout>
-      } />
-      <Route path="/contact" element={
-        <PublicLayout>
-          <Contact />
-        </PublicLayout>
-      } />
-      <Route path="/terms" element={
-        <PublicLayout>
-          <Terms />
-        </PublicLayout>
-      } />
-      <Route path="/refund" element={
-        <PublicLayout>
-          <Refund />
-        </PublicLayout>
-      } />
-      <Route path="/payment/checkout" element={<PaymentCheckoutSimple />} />
+      <Route
+        path="/"
+        element={
+          <PublicLayout>
+            <Home />
+          </PublicLayout>
+        }
+      />
+      <Route
+        path="/about"
+        element={
+          <PublicLayout>
+            <About />
+          </PublicLayout>
+        }
+      />
+      <Route
+        path="/features"
+        element={
+          <PublicLayout>
+            <Features />
+          </PublicLayout>
+        }
+      />
+      <Route
+        path="/pricing"
+        element={
+          <PublicLayout>
+            <Pricing />
+          </PublicLayout>
+        }
+      />
+      <Route
+        path="/contact"
+        element={
+          <PublicLayout>
+            <Contact />
+          </PublicLayout>
+        }
+      />
+      <Route
+        path="/terms"
+        element={
+          <PublicLayout>
+            <Terms />
+          </PublicLayout>
+        }
+      />
+      <Route
+        path="/refund"
+        element={
+          <PublicLayout>
+            <Refund />
+          </PublicLayout>
+        }
+      />
+      <Route
+        path="/privacy"
+        element={
+          <PublicLayout>
+            <PrivacyPolicy />
+          </PublicLayout>
+        }
+      />
+      <Route
+        path="/subscription-terms"
+        element={
+          <PublicLayout>
+            <SubscriptionTermsPage />
+          </PublicLayout>
+        }
+      />
+      <Route
+        path="/cancel-subscription"
+        element={
+          <PublicLayout>
+            <CancelHelpPage />
+          </PublicLayout>
+        }
+      />
       <Route path="/payment/return" element={<PaymentReturn />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

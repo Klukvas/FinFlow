@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from uuid import UUID
 
 from ..models.models import JobExecution, RenewalAttempt, JobStatus
@@ -90,3 +91,19 @@ class JobRepository:
         self.db.commit()
         self.db.refresh(attempt)
         return attempt
+
+    def count_recent_failures(
+        self, subscription_id: int, window_days: int = 7
+    ) -> int:
+        """Count failed renewal attempts for a subscription within the lookback window."""
+        cutoff = datetime.utcnow() - timedelta(days=window_days)
+        return (
+            self.db.query(func.count(RenewalAttempt.id))
+            .filter(
+                RenewalAttempt.subscription_id == subscription_id,
+                RenewalAttempt.status == "FAILED",
+                RenewalAttempt.created_at >= cutoff,
+            )
+            .scalar()
+            or 0
+        )

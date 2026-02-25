@@ -20,6 +20,9 @@ class SubscriptionOut(BaseModel):
     auto_renew: bool = True  # CRITICAL: Required for frontend to determine if subscription is canceled
     recurring_token: Optional[str] = None
     next_billing_date: Optional[datetime] = None
+    paddle_customer_id: Optional[str] = None
+    paddle_subscription_id: Optional[str] = None
+    paddle_price_id: Optional[str] = None
 
     class Config:
         from_attributes = True

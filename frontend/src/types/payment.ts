@@ -1,23 +1,23 @@
 // Payment types matching backend payment_service
 
 export enum PaymentStatus {
-  CREATED = 'CREATED',
-  PENDING = 'PENDING',
-  PAID = 'PAID',
-  FAILED = 'FAILED',
-  EXPIRED = 'EXPIRED',
-  REFUNDED = 'REFUNDED',
-  PARTIALLY_REFUNDED = 'PARTIALLY_REFUNDED',
-  CANCELED = 'CANCELED',
+  CREATED = "CREATED",
+  PENDING = "PENDING",
+  PAID = "PAID",
+  FAILED = "FAILED",
+  EXPIRED = "EXPIRED",
+  REFUNDED = "REFUNDED",
+  PARTIALLY_REFUNDED = "PARTIALLY_REFUNDED",
+  CANCELED = "CANCELED",
 }
 
 export enum PaymentProvider {
-  WAYFORPAY = 'WAYFORPAY',
+  PADDLE = "PADDLE",
 }
 
 export enum PaymentPurpose {
-  SUBSCRIPTION = 'SUBSCRIPTION',
-  ONE_TIME = 'ONE_TIME',
+  SUBSCRIPTION = "SUBSCRIPTION",
+  ONE_TIME = "ONE_TIME",
 }
 
 export interface CreatePaymentRequest {
@@ -39,6 +39,8 @@ export interface CreatePaymentResponse {
   currency: string;
   status: PaymentStatus;
   payment_url: string;
+  checkout_url?: string;
+  transaction_id?: string; // Paddle transaction ID for Paddle.js overlay checkout
   provider_form_fields?: Record<string, any>;
   created_at: string;
 }
@@ -66,6 +68,8 @@ export interface Payment {
   currency: string;
   status: PaymentStatus;
   provider_payment_url?: string;
+  checkout_url?: string;
+  transaction_id?: string; // Paddle transaction ID for overlay checkout
   paid_at?: string;
   failed_at?: string;
   refunded_at?: string;
@@ -74,6 +78,20 @@ export interface Payment {
   created_at: string;
   updated_at: string;
   events?: PaymentEvent[];
+}
+
+export interface ChangePlanRequest {
+  user_id: string;
+  new_plan_code: string;
+  paddle_subscription_id: string;
+  metadata?: Record<string, any>;
+}
+
+export interface ChangePlanResponse {
+  success: boolean;
+  old_plan_code?: string;
+  new_plan_code: string;
+  paddle_subscription_id: string;
 }
 
 export interface PaymentHistoryFilters {

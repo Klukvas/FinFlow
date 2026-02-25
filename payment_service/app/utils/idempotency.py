@@ -81,10 +81,11 @@ def store_idempotency(
     request_hash: str,
     response_body: dict[str, Any],
     response_status: str,
+    auto_commit: bool = True,
 ):
     """
     Store idempotency key with response for future duplicate requests
-    
+
     Args:
         db: Database session
         idempotency_key: Idempotency key
@@ -92,6 +93,8 @@ def store_idempotency(
         request_hash: Hash of request body
         response_body: Response to cache
         response_status: Response status code
+        auto_commit: If True, commit immediately. If False, only add to session
+                     (caller is responsible for committing).
     """
     expires_at = datetime.utcnow() + timedelta(seconds=settings.idempotency_ttl_seconds)
 
@@ -105,7 +108,8 @@ def store_idempotency(
     )
 
     db.add(key_record)
-    db.commit()
+    if auto_commit:
+        db.commit()
 
     logger.info(
         f"Stored idempotency key: {idempotency_key}",

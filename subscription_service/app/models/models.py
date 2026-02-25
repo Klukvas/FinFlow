@@ -12,6 +12,7 @@ from sqlalchemy import (
     CheckConstraint,
     Text,
     JSON,
+    Numeric,
 )
 from sqlalchemy.orm import relationship
 
@@ -25,6 +26,8 @@ class Plan(Base):
     code = Column(String(64), unique=True, nullable=False, index=True)
     name = Column(String(255), nullable=False)
     period_days = Column(Integer, nullable=False)
+    price = Column(Numeric(10, 2), nullable=True)  # Plan price for renewal validation
+    currency = Column(String(3), nullable=True, default="USD")
     is_active = Column(Boolean, default=True, nullable=False)
     version = Column(Integer, default=1, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
@@ -74,18 +77,23 @@ class Subscription(Base):
     
     # Recurring payment fields
     recurring_token = Column(String(255), nullable=True)  # Token for auto-renewal
-    payment_provider = Column(String(32), nullable=True)  # Provider: WAYFORPAY
+    payment_provider = Column(String(32), nullable=True)  # Provider: PADDLE (legacy: WAYFORPAY)
     last_payment_id = Column(String(128), nullable=True)  # Last successful payment ID
     next_billing_date = Column(DateTime, nullable=True)  # When next charge will occur
     auto_renew = Column(Boolean, default=True, nullable=False)  # Auto-renewal enabled
     
-    # Consent fields (WayForPay compliance)
+    # Consent fields (payment provider compliance)
     consent_given = Column(Boolean, default=False, nullable=False)
     consent_version = Column(String(16), nullable=True)
     consent_timestamp = Column(DateTime, nullable=True)
     consent_ip_address = Column(String(45), nullable=True)
     consent_user_agent = Column(Text, nullable=True)
-    
+
+    # Paddle Billing fields
+    paddle_customer_id = Column(String(255), nullable=True)
+    paddle_subscription_id = Column(String(255), nullable=True)
+    paddle_price_id = Column(String(255), nullable=True)
+
     # Cancellation fields (audit trail)
     cancellation_reason = Column(String(32), nullable=True)
     cancellation_comment = Column(Text, nullable=True)
@@ -93,6 +101,15 @@ class Subscription(Base):
     
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
+class ProcessedInternalEvent(Base):
+    """Track processed internal events for idempotent handling."""
+    __tablename__ = "processed_internal_events"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    event_key = Column(String(255), unique=True, nullable=False, index=True)
+    processed_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
 
 class SubscriptionConsentLog(Base):

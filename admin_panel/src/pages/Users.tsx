@@ -1,40 +1,48 @@
-import React, { useState, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
-import { UserService } from '@/services/userService';
-import { AdminUser, ApiError } from '@/types';
-import { 
-  FaSearch, 
-  FaUserShield, 
-  FaUser, 
-  FaCheck, 
+import React, { useState, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/contexts/AuthContext";
+import { UserService } from "@/services/userService";
+import { AdminUser } from "@/types";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import {
+  FaSearch,
+  FaUserShield,
+  FaUser,
+  FaCheck,
   FaBan,
   FaTimes,
   FaChevronLeft,
-  FaChevronRight
-} from 'react-icons/fa';
+  FaChevronRight,
+} from "react-icons/fa";
+
+type PendingAction =
+  | { type: "role"; user: AdminUser; role: "user" | "admin" }
+  | { type: "status"; user: AdminUser; status: "active" | "disabled" };
 
 export const Users: React.FC = () => {
-  const { token, logout } = useAuth();
+  const { token, logout, refreshToken } = useAuth();
   const queryClient = useQueryClient();
-  
-  const [search, setSearch] = useState('');
-  const [searchInput, setSearchInput] = useState('');
+
+  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [page, setPage] = useState(1);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(
+    null,
+  );
   const pageSize = 15;
 
   const userService = React.useMemo(
-    () => new UserService(() => token, logout),
-    [token, logout]
+    () => new UserService(() => token, logout, refreshToken),
+    [token, logout, refreshToken],
   );
 
   // Fetch users
   const { data, isLoading, error } = useQuery({
-    queryKey: ['admin-users', search, page, pageSize],
+    queryKey: ["admin-users", search, page, pageSize],
     queryFn: async () => {
       const result = await userService.listUsers({ search, page, pageSize });
-      if ('error' in result) throw new Error(result.error);
+      if ("error" in result) throw new Error(result.error);
       return result;
     },
   });
@@ -43,42 +51,83 @@ export const Users: React.FC = () => {
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: number; role: string }) => {
       const result = await userService.updateUserRole(userId, role);
-      if ('error' in result) throw new Error(result.error);
+      if ("error" in result) throw new Error(result.error);
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       setSelectedUser(null);
     },
   });
 
   // Update status mutation
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ userId, status }: { userId: number; status: string }) => {
+    mutationFn: async ({
+      userId,
+      status,
+    }: {
+      userId: number;
+      status: string;
+    }) => {
       const result = await userService.updateUserStatus(userId, status);
-      if ('error' in result) throw new Error(result.error);
+      if ("error" in result) throw new Error(result.error);
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       setSelectedUser(null);
     },
   });
 
-  const handleSearch = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    setSearch(searchInput);
-    setPage(1);
-  }, [searchInput]);
+  const handleSearch = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      setSearch(searchInput);
+      setPage(1);
+    },
+    [searchInput],
+  );
 
-  const handleToggleRole = (user: AdminUser) => {
-    const newRole = user.role === 'admin' ? 'user' : 'admin';
-    updateRoleMutation.mutate({ userId: user.id, role: newRole });
+  const handleSetRole = (user: AdminUser, role: "user" | "admin") => {
+    if (user.role === role) return;
+    setPendingAction({ type: "role", user, role });
   };
 
-  const handleToggleStatus = (user: AdminUser) => {
-    const newStatus = user.status === 'active' ? 'disabled' : 'active';
-    updateStatusMutation.mutate({ userId: user.id, status: newStatus });
+  const handleSetStatus = (
+    user: AdminUser,
+    status: "active" | "disabled",
+  ) => {
+    if (user.status === status) return;
+    setPendingAction({ type: "status", user, status });
+  };
+
+  const handleConfirmAction = () => {
+    if (!pendingAction) return;
+    if (pendingAction.type === "role") {
+      updateRoleMutation.mutate(
+        { userId: pendingAction.user.id, role: pendingAction.role },
+        { onSettled: () => setPendingAction(null) },
+      );
+    } else {
+      updateStatusMutation.mutate(
+        { userId: pendingAction.user.id, status: pendingAction.status },
+        { onSettled: () => setPendingAction(null) },
+      );
+    }
+  };
+
+  const getConfirmMessage = (): { title: string; message: string } => {
+    if (!pendingAction) return { title: "", message: "" };
+    if (pendingAction.type === "role") {
+      return {
+        title: "Change Role",
+        message: `Change ${pendingAction.user.username}'s role from "${pendingAction.user.role}" to "${pendingAction.role}"?`,
+      };
+    }
+    return {
+      title: "Change Status",
+      message: `Change ${pendingAction.user.username}'s status from "${pendingAction.user.status}" to "${pendingAction.status}"?`,
+    };
   };
 
   return (
@@ -86,7 +135,9 @@ export const Users: React.FC = () => {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-white mb-2">Users Management</h1>
-        <p className="text-slate-400">Manage user accounts, roles, and access</p>
+        <p className="text-slate-400">
+          Manage user accounts, roles, and access
+        </p>
       </div>
 
       {/* Search */}
@@ -122,17 +173,27 @@ export const Users: React.FC = () => {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-700">
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-slate-300">User</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-slate-300">Role</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-slate-300">Status</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-slate-300">Created</th>
-                  <th className="text-right px-6 py-4 text-sm font-semibold text-slate-300">Actions</th>
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-slate-300">
+                    User
+                  </th>
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-slate-300">
+                    Role
+                  </th>
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-slate-300">
+                    Status
+                  </th>
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-slate-300">
+                    Created
+                  </th>
+                  <th className="text-right px-6 py-4 text-sm font-semibold text-slate-300">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {data?.items.map((user) => (
-                  <tr 
-                    key={user.id} 
+                  <tr
+                    key={user.id}
                     className="border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors"
                   >
                     <td className="px-6 py-4">
@@ -143,36 +204,49 @@ export const Users: React.FC = () => {
                           </span>
                         </div>
                         <div>
-                          <p className="text-white font-medium">{user.username}</p>
+                          <p className="text-white font-medium">
+                            {user.username}
+                          </p>
                           <p className="text-sm text-slate-400">{user.email}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
-                        user.role === 'admin'
-                          ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
-                          : 'bg-slate-600/30 text-slate-300 border border-slate-600/30'
-                      }`}>
-                        {user.role === 'admin' ? <FaUserShield className="w-3 h-3" /> : <FaUser className="w-3 h-3" />}
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
+                          user.role === "admin"
+                            ? "bg-purple-500/10 text-purple-400 border border-purple-500/20"
+                            : "bg-slate-600/30 text-slate-300 border border-slate-600/30"
+                        }`}
+                      >
+                        {user.role === "admin" ? (
+                          <FaUserShield className="w-3 h-3" />
+                        ) : (
+                          <FaUser className="w-3 h-3" />
+                        )}
                         {user.role}
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
-                        user.status === 'active'
-                          ? 'bg-green-500/10 text-green-400 border border-green-500/20'
-                          : 'bg-red-500/10 text-red-400 border border-red-500/20'
-                      }`}>
-                        {user.status === 'active' ? <FaCheck className="w-3 h-3" /> : <FaBan className="w-3 h-3" />}
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
+                          user.status === "active"
+                            ? "bg-green-500/10 text-green-400 border border-green-500/20"
+                            : "bg-red-500/10 text-red-400 border border-red-500/20"
+                        }`}
+                      >
+                        {user.status === "active" ? (
+                          <FaCheck className="w-3 h-3" />
+                        ) : (
+                          <FaBan className="w-3 h-3" />
+                        )}
                         {user.status}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-400">
-                      {user.created_at 
+                      {user.created_at
                         ? new Date(user.created_at).toLocaleDateString()
-                        : '-'
-                      }
+                        : "-"}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
@@ -188,7 +262,7 @@ export const Users: React.FC = () => {
                 ))}
               </tbody>
             </table>
-            
+
             {data?.items.length === 0 && (
               <div className="text-center py-12 text-slate-400">
                 No users found
@@ -200,11 +274,12 @@ export const Users: React.FC = () => {
           {data && data.total_pages > 1 && (
             <div className="flex items-center justify-between">
               <p className="text-sm text-slate-400">
-                Showing {((page - 1) * pageSize) + 1} to {Math.min(page * pageSize, data.total)} of {data.total} users
+                Showing {(page - 1) * pageSize + 1} to{" "}
+                {Math.min(page * pageSize, data.total)} of {data.total} users
               </p>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
                   className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
@@ -214,7 +289,9 @@ export const Users: React.FC = () => {
                   Page {page} of {data.total_pages}
                 </span>
                 <button
-                  onClick={() => setPage(p => Math.min(data.total_pages, p + 1))}
+                  onClick={() =>
+                    setPage((p) => Math.min(data.total_pages, p + 1))
+                  }
                   disabled={page === data.total_pages}
                   className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
@@ -251,34 +328,38 @@ export const Users: React.FC = () => {
                   </span>
                 </div>
                 <div>
-                  <p className="text-lg text-white font-medium">{selectedUser.username}</p>
+                  <p className="text-lg text-white font-medium">
+                    {selectedUser.username}
+                  </p>
                   <p className="text-sm text-slate-400">{selectedUser.email}</p>
                 </div>
               </div>
 
-              {/* Role toggle */}
+              {/* Role selector */}
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-3">Role</label>
+                <label className="block text-sm font-medium text-slate-300 mb-3">
+                  Role
+                </label>
                 <div className="flex gap-3">
                   <button
-                    onClick={() => handleToggleRole(selectedUser)}
+                    onClick={() => handleSetRole(selectedUser, "user")}
                     disabled={updateRoleMutation.isPending}
                     className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-all ${
-                      selectedUser.role === 'user'
-                        ? 'bg-slate-700 border-slate-600 text-white'
-                        : 'border-slate-700 text-slate-400 hover:border-slate-600'
+                      selectedUser.role === "user"
+                        ? "bg-slate-700 border-slate-600 text-white"
+                        : "border-slate-700 text-slate-400 hover:border-slate-600"
                     }`}
                   >
                     <FaUser className="w-4 h-4" />
                     User
                   </button>
                   <button
-                    onClick={() => handleToggleRole(selectedUser)}
+                    onClick={() => handleSetRole(selectedUser, "admin")}
                     disabled={updateRoleMutation.isPending}
                     className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-all ${
-                      selectedUser.role === 'admin'
-                        ? 'bg-purple-500/20 border-purple-500/30 text-purple-400'
-                        : 'border-slate-700 text-slate-400 hover:border-slate-600'
+                      selectedUser.role === "admin"
+                        ? "bg-purple-500/20 border-purple-500/30 text-purple-400"
+                        : "border-slate-700 text-slate-400 hover:border-slate-600"
                     }`}
                   >
                     <FaUserShield className="w-4 h-4" />
@@ -287,29 +368,31 @@ export const Users: React.FC = () => {
                 </div>
               </div>
 
-              {/* Status toggle */}
+              {/* Status selector */}
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-3">Status</label>
+                <label className="block text-sm font-medium text-slate-300 mb-3">
+                  Status
+                </label>
                 <div className="flex gap-3">
                   <button
-                    onClick={() => handleToggleStatus(selectedUser)}
+                    onClick={() => handleSetStatus(selectedUser, "active")}
                     disabled={updateStatusMutation.isPending}
                     className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-all ${
-                      selectedUser.status === 'active'
-                        ? 'bg-green-500/20 border-green-500/30 text-green-400'
-                        : 'border-slate-700 text-slate-400 hover:border-slate-600'
+                      selectedUser.status === "active"
+                        ? "bg-green-500/20 border-green-500/30 text-green-400"
+                        : "border-slate-700 text-slate-400 hover:border-slate-600"
                     }`}
                   >
                     <FaCheck className="w-4 h-4" />
                     Active
                   </button>
                   <button
-                    onClick={() => handleToggleStatus(selectedUser)}
+                    onClick={() => handleSetStatus(selectedUser, "disabled")}
                     disabled={updateStatusMutation.isPending}
                     className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-all ${
-                      selectedUser.status === 'disabled'
-                        ? 'bg-red-500/20 border-red-500/30 text-red-400'
-                        : 'border-slate-700 text-slate-400 hover:border-slate-600'
+                      selectedUser.status === "disabled"
+                        ? "bg-red-500/20 border-red-500/30 text-red-400"
+                        : "border-slate-700 text-slate-400 hover:border-slate-600"
                     }`}
                   >
                     <FaBan className="w-4 h-4" />
@@ -321,7 +404,8 @@ export const Users: React.FC = () => {
               {/* Error messages */}
               {(updateRoleMutation.error || updateStatusMutation.error) && (
                 <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-400">
-                  {updateRoleMutation.error?.message || updateStatusMutation.error?.message}
+                  {updateRoleMutation.error?.message ||
+                    updateStatusMutation.error?.message}
                 </div>
               )}
             </div>
@@ -337,6 +421,26 @@ export const Users: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Confirm Dialog */}
+      {pendingAction && (
+        <ConfirmDialog
+          title={getConfirmMessage().title}
+          message={getConfirmMessage().message}
+          confirmLabel="Confirm"
+          variant={
+            pendingAction.type === "status" &&
+            pendingAction.status === "disabled"
+              ? "danger"
+              : "warning"
+          }
+          isLoading={
+            updateRoleMutation.isPending || updateStatusMutation.isPending
+          }
+          onConfirm={handleConfirmAction}
+          onCancel={() => setPendingAction(null)}
+        />
       )}
     </div>
   );

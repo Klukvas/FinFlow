@@ -240,10 +240,62 @@ jobs:
           echo "services_list=$SERVICES_LIST" >> $GITHUB_OUTPUT
           echo "Services to build/deploy:$SERVICES_LIST"
 
+  # Unit Tests: run pytest for services that have tests
+  unit-tests:
+    name: "Unit Tests"
+    needs: detect-changes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Run category_service tests
+        if: needs.detect-changes.outputs.category_service == 'true'
+        working-directory: category_service
+        run: |
+          poetry install --with dev --no-interaction
+          poetry run pytest -v --tb=short
+
+      - name: Run expense_service tests
+        if: needs.detect-changes.outputs.expense_service == 'true'
+        working-directory: expense_service
+        run: |
+          poetry install --with dev --no-interaction
+          poetry run pytest -v --tb=short
+
+      - name: Run user_service tests
+        if: needs.detect-changes.outputs.user_service == 'true'
+        working-directory: user_service
+        run: |
+          poetry install --with dev --no-interaction
+          poetry run pytest -v --tb=short
+
+      - name: Run payment_service tests
+        if: needs.detect-changes.outputs.payment_service == 'true'
+        working-directory: payment_service
+        run: |
+          pip install -r requirements.txt pytest pytest-asyncio
+          pytest tests/ -v --tb=short
+
+      - name: Run workspace_service tests
+        if: needs.detect-changes.outputs.workspace_service == 'true'
+        working-directory: workspace_service
+        run: |
+          poetry install --with dev --no-interaction
+          poetry run pytest -v --tb=short
+
   # Stage 1: Frontend Build
   stage1-frontend:
     name: "Stage 1: Build Frontend"
-    needs: detect-changes
+    needs: [detect-changes, e2e-tests]
     if: needs.detect-changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -277,7 +329,7 @@ jobs:
   # Stage 2: Account Service Build
   stage2-account-service:
     name: "Stage 2: Build Account Service"
-    needs: detect-changes
+    needs: [detect-changes, e2e-tests]
     if: needs.detect-changes.outputs.account_service == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -309,7 +361,7 @@ jobs:
   # Stage 3: Category Service Build
   stage3-category-service:
     name: "Stage 3: Build Category Service"
-    needs: detect-changes
+    needs: [detect-changes, e2e-tests]
     if: needs.detect-changes.outputs.category_service == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -341,7 +393,7 @@ jobs:
   # Stage 4: Currency Service Build
   stage4-currency-service:
     name: "Stage 4: Build Currency Service"
-    needs: detect-changes
+    needs: [detect-changes, e2e-tests]
     if: needs.detect-changes.outputs.currency_service == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -373,7 +425,7 @@ jobs:
   # Stage 5: Debt Service Build
   stage5-debt-service:
     name: "Stage 5: Build Debt Service"
-    needs: detect-changes
+    needs: [detect-changes, e2e-tests]
     if: needs.detect-changes.outputs.debt_service == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -405,7 +457,7 @@ jobs:
   # Stage 6: Expense Service Build
   stage6-expense-service:
     name: "Stage 6: Build Expense Service"
-    needs: detect-changes
+    needs: [detect-changes, e2e-tests]
     if: needs.detect-changes.outputs.expense_service == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -437,7 +489,7 @@ jobs:
   # Stage 7: Goals Service Build
   stage7-goals-service:
     name: "Stage 7: Build Goals Service"
-    needs: detect-changes
+    needs: [detect-changes, e2e-tests]
     if: needs.detect-changes.outputs.goals_service == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -469,7 +521,7 @@ jobs:
   # Stage 8: Income Service Build
   stage8-income-service:
     name: "Stage 8: Build Income Service"
-    needs: detect-changes
+    needs: [detect-changes, e2e-tests]
     if: needs.detect-changes.outputs.income_service == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -501,7 +553,7 @@ jobs:
   # Stage 9: PDF Parser Service Build
   stage9-pdf-parser-service:
     name: "Stage 9: Build PDF Parser Service"
-    needs: detect-changes
+    needs: [detect-changes, e2e-tests]
     if: needs.detect-changes.outputs.pdf_parser_service == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -533,7 +585,7 @@ jobs:
   # Stage 10: Recurring Service Build
   stage10-recurring-service:
     name: "Stage 10: Build Recurring Service"
-    needs: detect-changes
+    needs: [detect-changes, e2e-tests]
     if: needs.detect-changes.outputs.recurring_service == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -565,7 +617,7 @@ jobs:
   # Stage 11: User Service Build
   stage11-user-service:
     name: "Stage 11: Build User Service"
-    needs: detect-changes
+    needs: [detect-changes, e2e-tests]
     if: needs.detect-changes.outputs.user_service == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -597,7 +649,7 @@ jobs:
   # Stage 12: Subscription Service Build
   stage12-subscription-service:
     name: "Stage 12: Build Subscription Service"
-    needs: detect-changes
+    needs: [detect-changes, e2e-tests]
     if: needs.detect-changes.outputs.subscription_service == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -629,7 +681,7 @@ jobs:
   # Stage 13: Workspace Service Build
   stage13-workspace-service:
     name: "Stage 13: Build Workspace Service"
-    needs: detect-changes
+    needs: [detect-changes, e2e-tests]
     if: needs.detect-changes.outputs.workspace_service == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -661,7 +713,7 @@ jobs:
   # Stage 14: Admin Panel Build (DISABLED - skip for now)
   stage14-admin-panel:
     name: "Stage 14: Build Admin Panel"
-    needs: detect-changes
+    needs: [detect-changes, e2e-tests]
     if: false  # Disabled - skip admin panel build for now
     runs-on: ubuntu-latest
     steps:
@@ -693,7 +745,7 @@ jobs:
   # Stage 15: Payment Service Build
   stage15-payment-service:
     name: "Stage 15: Build Payment Service"
-    needs: detect-changes
+    needs: [detect-changes, e2e-tests]
     if: needs.detect-changes.outputs.payment_service == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -725,7 +777,7 @@ jobs:
   # Stage 16: Scheduler Service Build
   stage16-scheduler-service:
     name: "Stage 16: Build Scheduler Service"
-    needs: detect-changes
+    needs: [detect-changes, e2e-tests]
     if: needs.detect-changes.outputs.scheduler_service == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -757,7 +809,7 @@ jobs:
   # E2E API Tests: build all services, run integration tests
   e2e-tests:
     name: "E2E API Tests"
-    needs: detect-changes
+    needs: [detect-changes, unit-tests]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -895,14 +947,11 @@ jobs:
           JWT_SECRET_KEY=$SECRET
           JWT_ALGORITHM=$ALGO
           INTERNAL_SECRET_TOKEN=$INTERNAL_TOKEN
-          WAYFORPAY_MERCHANT_ACCOUNT=test_merch
-          WAYFORPAY_MERCHANT_SECRET_KEY=test_secret
-          WAYFORPAY_MERCHANT_DOMAIN=localhost
-          WAYFORPAY_RETURN_URL=http://localhost:3000/payment/return
-          WAYFORPAY_CALLBACK_URL=http://localhost:8013/v1/webhooks/wayforpay
-          WAYFORPAY_API_URL=https://api.wayforpay.com/api
-          WAYFORPAY_ENABLE_RECURRING=false
-          WAYFORPAY_RECTOKEN_FORMAT=boolean
+          PADDLE_API_KEY=test_paddle_key
+          PADDLE_WEBHOOK_SECRET=test_webhook_secret
+          PADDLE_ENVIRONMENT=sandbox
+          PADDLE_SUCCESS_URL=http://localhost:3000/payment/return
+          PADDLE_CANCEL_URL=http://localhost:3000/pricing
           SERVICE_BASE_URL=http://payment_service:8000
           SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
           IDEMPOTENCY_TTL_SECONDS=86400
@@ -970,6 +1019,7 @@ jobs:
     name: Deploy to ${{ github.event.inputs.environment || 'production' }}
     needs:
       - detect-changes
+      - unit-tests
       - e2e-tests
       - stage1-frontend
       - stage2-account-service

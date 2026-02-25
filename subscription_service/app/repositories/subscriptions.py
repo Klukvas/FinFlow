@@ -12,7 +12,7 @@ class SubscriptionRepository:
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def upsert_subscription(self, user_id: str, plan_code: str, status: Optional[str] = None) -> Subscription:
+    def upsert_subscription(self, user_id: str, plan_code: str, status: Optional[str] = None, commit: bool = True) -> Subscription:
         """
         Create or update subscription.
         
@@ -57,37 +57,47 @@ class SubscriptionRepository:
             sub.status = status or "active"
             sub.canceled_at = None
 
-        self.db.commit()
-        self.db.refresh(sub)
+        if commit:
+            self.db.commit()
+            self.db.refresh(sub)
+        else:
+            self.db.flush()
         return sub
 
     def get_active_subscription(self, user_id: str) -> Optional[Subscription]:
         """
         Get subscription that should provide benefits.
-        
+
         Returns subscription if:
-        - Status is active/past_due/paused AND not expired, OR
+        - Status is active/past_due/paused AND not expired (with grace period), OR
         - Status is canceled but expires_at is still in the future
-          (user keeps benefits until end of billing period)
+          (user keeps benefits until end of billing period, NO grace period)
+
+        The grace period allows non-canceled subscriptions a buffer after
+        expires_at so that failed renewal payments don't immediately revoke
+        access.
         """
         from sqlalchemy import or_, and_
-        
+        from ..config import settings
+
         now = datetime.utcnow()
-        
+        grace_deadline = now - timedelta(days=settings.grace_period_days)
+
         return (
             self.db.query(Subscription)
             .filter(Subscription.user_id == user_id)
             .filter(
                 or_(
-                    # Active statuses - must also check expires_at
+                    # Active statuses - allow grace period after expires_at
                     and_(
                         Subscription.status.in_(["active", "past_due", "paused"]),
                         or_(
-                            Subscription.expires_at > now,  # Not expired yet
-                            Subscription.expires_at.is_(None)  # Or no expiry (unlimited)
+                            Subscription.expires_at > now,            # Not expired yet
+                            Subscription.expires_at.is_(None),        # No expiry (unlimited)
+                            Subscription.expires_at > grace_deadline  # Within grace period
                         )
                     ),
-                    # Canceled but not yet expired - keep benefits until expires_at
+                    # Canceled but not yet expired - strict, NO grace period
                     and_(
                         Subscription.status == "canceled",
                         Subscription.expires_at > now
@@ -102,21 +112,27 @@ class SubscriptionRepository:
         # Order by id DESC to get the most recent subscription if multiple exist
         return self.db.query(Subscription).filter(Subscription.user_id == user_id).order_by(Subscription.id.desc()).first()
 
-    def cancel_subscription(self, user_id: str) -> Optional[Subscription]:
+    def cancel_subscription(self, user_id: str, immediate: bool = False) -> Optional[Subscription]:
         """
-        Cancel subscription - user keeps benefits until expires_at.
-        
-        Sets status to 'canceled' and canceled_at to current time.
-        Does NOT change expires_at - user keeps access until then.
+        Cancel subscription.
+
+        Args:
+            user_id: The user whose subscription to cancel.
+            immediate: If True, set expires_at to now (revoke access immediately).
+                       Used for refund-triggered cancellations.
+                       If False, user keeps benefits until original expires_at.
         """
         sub = self.get_subscription_by_user(user_id)
         if sub is None:
             return None
-        
+
         sub.status = "canceled"
+        sub.auto_renew = False
         sub.canceled_at = datetime.utcnow()
-        # Note: expires_at stays unchanged - user keeps benefits until then
-        
+
+        if immediate:
+            sub.expires_at = datetime.utcnow()
+
         self.db.commit()
         self.db.refresh(sub)
         return sub

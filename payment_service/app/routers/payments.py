@@ -3,20 +3,27 @@ from __future__ import annotations
 import logging
 from typing import Optional
 from uuid import UUID
-from fastapi import APIRouter, Depends, status, Header
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..services.payment_service import PaymentService
-from ..schemas.payment import CreatePaymentRequest, CreatePaymentResponse, PaymentOut
+from ..schemas.payment import (
+    CreatePaymentRequest,
+    CreatePaymentResponse,
+    ChangePlanRequest,
+    ChangePlanResponse,
+    PaymentOut,
+)
 from ..utils.jwt import get_current_user, JWTPayload
-from ..utils.errors import AuthError, NotFoundError, ValidationError
+from ..utils.errors import AuthError, ValidationError
 from ..utils.idempotency import (
     check_idempotency,
     store_idempotency,
     compute_request_hash,
     get_idempotency_key,
 )
+from ..utils.rate_limit import require_payment_rate_limit
 from ..config import settings
 
 logger = logging.getLogger("payment_service.payments_router")
@@ -26,9 +33,9 @@ router = APIRouter()
 
 @router.get("/config/status")
 async def get_payment_status():
-    """
-    Get payment service status and feature flags.
-    Public endpoint - no authentication required.
+    """Get payment service status and feature flags.
+
+    Public endpoint -- no authentication required.
     """
     return {
         "payments_enabled": settings.payments_enabled,
@@ -37,84 +44,39 @@ async def get_payment_status():
 
 
 @router.get("/config/check")
-async def check_wayforpay_config():
+async def check_paddle_config():
+    """Check Paddle Billing configuration status.
+
+    Useful for verifying that all required environment variables
+    are set before going live.  Does not expose secret values.
     """
-    Check WayForPay configuration status.
-    Useful for debugging payment form issues.
-    
-    NOTE: Does not expose secret values, only validation status.
-    """
-    # Check for default/test credentials
-    is_using_test_merchant = (
-        not settings.wayforpay_merchant_account or 
-        settings.wayforpay_merchant_account == "test_merch_n1"
+    is_production_ready = bool(
+        settings.paddle_api_key
+        and settings.paddle_webhook_secret
+        and settings.paddle_environment == "production"
     )
-    is_using_test_secret = (
-        not settings.wayforpay_merchant_secret_key or 
-        settings.wayforpay_merchant_secret_key == "flk3409refn54t54t*FNJRET"
-    )
-    is_using_test_domain = (
-        not settings.wayforpay_merchant_domain or 
-        settings.wayforpay_merchant_domain == "www.market.ua"
-    )
-    
-    has_callback_url = bool(settings.wayforpay_callback_url)
-    has_return_url = bool(settings.wayforpay_return_url)
-    
-    # Overall configuration status
-    is_production_ready = not (
-        is_using_test_merchant or 
-        is_using_test_secret or 
-        is_using_test_domain
-    ) and has_callback_url and has_return_url
-    
+
     config_status = {
-        "status": "ok" if is_production_ready else "configuration_needed",
+        "status": "ok" if settings.paddle_api_key else "configuration_needed",
         "checks": {
-            "merchant_account": {
-                "configured": not is_using_test_merchant,
-                "value_preview": settings.wayforpay_merchant_account[:10] + "..." if settings.wayforpay_merchant_account and len(settings.wayforpay_merchant_account) > 10 else settings.wayforpay_merchant_account,
-                "warning": "Using default test credentials - will not work!" if is_using_test_merchant else None,
-            },
-            "merchant_secret_key": {
-                "configured": not is_using_test_secret,
-                "has_value": bool(settings.wayforpay_merchant_secret_key),
-                "length": len(settings.wayforpay_merchant_secret_key) if settings.wayforpay_merchant_secret_key else 0,
-                "warning": "Using default test credentials - will not work!" if is_using_test_secret else None,
-            },
-            "merchant_domain": {
-                "configured": not is_using_test_domain,
-                "value": settings.wayforpay_merchant_domain,
-                "warning": "Using default test domain - must match your WayForPay merchant domain!" if is_using_test_domain else None,
-            },
-            "callback_url": {
-                "configured": has_callback_url,
-                "value": settings.wayforpay_callback_url,
-                "is_https": settings.wayforpay_callback_url.startswith("https://") if has_callback_url else False,
-                "warning": "Not configured!" if not has_callback_url else ("Must be HTTPS for webhooks to work!" if not settings.wayforpay_callback_url.startswith("https://") else None),
-            },
-            "return_url": {
-                "configured": has_return_url,
-                "value": settings.wayforpay_return_url,
-                "warning": "Not configured!" if not has_return_url else None,
-            },
+            "api_key": {"configured": bool(settings.paddle_api_key)},
+            "webhook_secret": {"configured": bool(settings.paddle_webhook_secret)},
+            "environment": {"value": settings.paddle_environment},
+            "success_url": {"configured": bool(settings.paddle_success_url)},
         },
         "production_ready": is_production_ready,
-        "documentation": "See WAYFORPAY_SETUP.md for configuration instructions",
     }
-    
-    if not is_production_ready:
+
+    if not settings.paddle_api_key:
         logger.warning(
-            "WayForPay configuration is incomplete or using test credentials!",
+            "Paddle configuration incomplete: API key not set",
             extra={
-                "using_test_merchant": is_using_test_merchant,
-                "using_test_secret": is_using_test_secret,
-                "using_test_domain": is_using_test_domain,
-                "has_callback_url": has_callback_url,
-                "has_return_url": has_return_url,
-            }
+                "has_api_key": bool(settings.paddle_api_key),
+                "has_webhook_secret": bool(settings.paddle_webhook_secret),
+                "environment": settings.paddle_environment,
+            },
         )
-    
+
     return config_status
 
 
@@ -124,12 +86,12 @@ async def create_payment(
     db: Session = Depends(get_db),
     current_user: JWTPayload = Depends(get_current_user),
     idempotency_key: Optional[str] = Depends(get_idempotency_key),
+    _rate_limit: None = Depends(require_payment_rate_limit),
 ):
-    """
-    Create a new payment
-    
+    """Create a new payment via Paddle checkout.
+
     Requires JWT authentication.
-    Supports idempotency via Idempotency-Key header.
+    Supports idempotency via ``Idempotency-Key`` header.
     """
     # Check if payments are enabled
     if not settings.payments_enabled:
@@ -137,7 +99,7 @@ async def create_payment(
             "Payment processing is temporarily disabled. Please contact support for more information.",
             error_code="@payment_service/PAYMENTS_DISABLED",
         )
-    
+
     # Verify user owns the payment request
     if str(request.user_id) != str(current_user.user_id):
         raise AuthError(
@@ -152,9 +114,9 @@ async def create_payment(
         if cached_response:
             return cached_response
 
-    # Create payment
+    # Create payment (async -- calls Paddle API)
     service = PaymentService(db)
-    payment = service.create_payment(request)
+    payment = await service.create_payment(request)
 
     response = CreatePaymentResponse(
         payment_id=payment.id,
@@ -164,11 +126,14 @@ async def create_payment(
         currency=payment.currency,
         status=payment.status,
         payment_url=payment.provider_payment_url,
-        provider_form_fields=payment.provider_payload,  # Return form fields
+        checkout_url=payment.provider_payment_url,
+        transaction_id=payment.paddle_transaction_id,
+        provider_form_fields=payment.provider_payload,
         created_at=payment.created_at,
     )
 
-    # Store idempotency key
+    # Store idempotency key INSIDE transaction (before returning response)
+    # to prevent duplicates if server crashes between response and storage
     if idempotency_key:
         store_idempotency(
             db,
@@ -177,7 +142,9 @@ async def create_payment(
             request_hash,
             response.model_dump(mode="json"),
             "201",
+            auto_commit=False,
         )
+        db.commit()
 
     logger.info(
         f"Payment created via API: {payment.id}",
@@ -186,110 +153,50 @@ async def create_payment(
             "user_id": str(current_user.user_id),
             "amount": str(payment.amount),
             "order_reference": payment.order_reference,
-            "payment_url_in_response": response.payment_url,
-            "has_form_fields_in_response": bool(response.provider_form_fields),
-            "form_fields_count": len(response.provider_form_fields) if response.provider_form_fields else 0,
+            "checkout_url_present": bool(response.checkout_url),
         },
     )
 
     return response
 
 
-@router.get("/payments/{payment_id}/redirect")
-async def redirect_to_payment_provider(
-    payment_id: UUID,
+@router.post("/payments/change-plan", response_model=ChangePlanResponse)
+async def change_plan(
+    request: ChangePlanRequest,
     db: Session = Depends(get_db),
     current_user: JWTPayload = Depends(get_current_user),
 ):
+    """Change subscription plan (upgrade or downgrade) via Paddle API.
+
+    Requires JWT authentication.
+    The user must own the subscription being changed.
     """
-    Generate HTML page that auto-submits payment form to WayForPay
-    
-    This is a helper endpoint for frontend to redirect user to payment provider.
-    """
-    from fastapi.responses import HTMLResponse
-    
-    service = PaymentService(db)
-    payment = service.payment_repo.get_by_id_or_raise(payment_id)
-    
-    # Verify user owns the payment
-    if str(payment.user_id) != str(current_user.user_id):
-        raise AuthError(
-            "Cannot access another user's payment",
-            error_code="@payment_service/UNAUTHORIZED_ACCESS",
-        )
-    
-    if not payment.provider_payment_url or not payment.provider_payload:
+    if not settings.payments_enabled:
         raise ValidationError(
-            "Payment provider data not available",
-            error_code="@payment_service/PAYMENT_DATA_MISSING",
+            "Payment processing is temporarily disabled.",
+            error_code="@payment_service/PAYMENTS_DISABLED",
         )
-    
-    # Generate HTML form that auto-submits
-    form_fields = ""
-    for key, value in payment.provider_payload.items():
-        if isinstance(value, list):
-            for item in value:
-                form_fields += f'<input type="hidden" name="{key}[]" value="{item}">\n'
-        else:
-            form_fields += f'<input type="hidden" name="{key}" value="{value}">\n'
-    
-    html = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Redirecting to Payment...</title>
-        <style>
-            body {{
-                font-family: Arial, sans-serif;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                height: 100vh;
-                margin: 0;
-                background: #f5f5f5;
-            }}
-            .container {{
-                text-align: center;
-                background: white;
-                padding: 40px;
-                border-radius: 8px;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            }}
-            .spinner {{
-                border: 4px solid #f3f3f3;
-                border-top: 4px solid #3498db;
-                border-radius: 50%;
-                width: 40px;
-                height: 40px;
-                animation: spin 1s linear infinite;
-                margin: 20px auto;
-            }}
-            @keyframes spin {{
-                0% {{ transform: rotate(0deg); }}
-                100% {{ transform: rotate(360deg); }}
-            }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h2>Redirecting to Payment Gateway...</h2>
-            <div class="spinner"></div>
-            <p>Please wait, you will be redirected shortly.</p>
-        </div>
-        <form id="paymentForm" method="POST" action="{payment.provider_payment_url}">
-            {form_fields}
-        </form>
-        <script>
-            // Auto-submit form after a brief delay
-            setTimeout(function() {{
-                document.getElementById('paymentForm').submit();
-            }}, 1000);
-        </script>
-    </body>
-    </html>
-    """
-    
-    return HTMLResponse(content=html)
+
+    if str(request.user_id) != str(current_user.user_id):
+        raise AuthError(
+            "Cannot change plan for another user",
+            error_code="@payment_service/UNAUTHORIZED_USER",
+        )
+
+    service = PaymentService(db)
+    result = await service.change_subscription_plan(request)
+
+    logger.info(
+        "Plan changed via API",
+        extra={
+            "user_id": str(current_user.user_id),
+            "old_plan_code": result.get("old_plan_code"),
+            "new_plan_code": result["new_plan_code"],
+            "paddle_subscription_id": result["paddle_subscription_id"],
+        },
+    )
+
+    return ChangePlanResponse(**result)
 
 
 @router.get("/payments/by-order/{order_reference}", response_model=PaymentOut)
@@ -298,9 +205,8 @@ async def get_payment_by_order_reference(
     db: Session = Depends(get_db),
     current_user: JWTPayload = Depends(get_current_user),
 ):
-    """
-    Get payment details by order reference
-    
+    """Get payment details by order reference.
+
     Requires JWT authentication.
     Users can only access their own payments.
     """
@@ -323,9 +229,8 @@ async def get_payment(
     db: Session = Depends(get_db),
     current_user: JWTPayload = Depends(get_current_user),
 ):
-    """
-    Get payment details by ID
-    
+    """Get payment details by ID.
+
     Requires JWT authentication.
     Users can only access their own payments.
     """
@@ -349,11 +254,10 @@ async def list_payments(
     db: Session = Depends(get_db),
     current_user: JWTPayload = Depends(get_current_user),
 ):
-    """
-    List user's payments
-    
+    """List the authenticated user's payments.
+
     Requires JWT authentication.
-    Returns payments for the authenticated user.
+    Returns payments for the authenticated user only.
     """
     service = PaymentService(db)
     payments = service.payment_repo.get_by_user_id(

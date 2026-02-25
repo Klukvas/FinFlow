@@ -11,6 +11,12 @@ from ..services.payment_service import PaymentService
 from ..schemas.payment import CreatePaymentRequest, CreatePaymentResponse, PaymentOut, RefundRequest, RefundResponse
 from ..config import settings
 from ..utils.errors import AuthError
+from ..utils.idempotency import (
+    check_idempotency,
+    store_idempotency,
+    compute_request_hash,
+    get_idempotency_key,
+)
 
 logger = logging.getLogger("payment_service.internal_router")
 
@@ -42,7 +48,7 @@ async def create_payment_internal(
     Requires X-Internal-Token header.
     """
     service = PaymentService(db)
-    payment = service.create_payment(request)
+    payment = await service.create_payment(request)
 
     response = CreatePaymentResponse(
         payment_id=payment.id,
@@ -159,32 +165,56 @@ async def refund_payment_internal(
     request: RefundRequest,
     db: Session = Depends(get_db),
     _: None = Depends(verify_internal_token),
+    idempotency_key: Optional[str] = Depends(get_idempotency_key),
 ):
     """
     Request refund for a payment (internal)
-    
+
     Requires X-Internal-Token header.
-    Currently returns a placeholder response - full refund logic needs WayForPay API integration.
+    Calls Paddle Adjustments API to issue refund.
+    Supports idempotency via ``Idempotency-Key`` header to prevent double refunds.
     """
+    # Check idempotency to prevent double refund
+    request_hash = ""
+    if idempotency_key:
+        request_hash = compute_request_hash({
+            "payment_id": str(payment_id),
+            **request.model_dump(mode="json"),
+        })
+        cached_response = check_idempotency(db, idempotency_key, "refund_payment", request_hash)
+        if cached_response:
+            return cached_response
+
     service = PaymentService(db)
     payment = service.payment_repo.get_by_id_or_raise(payment_id)
 
-    # TODO: Implement actual refund via WayForPay API
-    # For now, just return a placeholder
-    logger.warning(
-        f"Refund requested for payment {payment_id} - not yet implemented",
+    logger.info(
+        f"Refund requested for payment {payment_id}",
         extra={
             "payment_id": str(payment_id),
             "amount": str(request.amount) if request.amount else "full",
+            "reason": request.reason,
         },
     )
 
-    from datetime import datetime
-    from ..models.models import PaymentStatus
-
-    return RefundResponse(
-        payment_id=payment.id,
-        status=PaymentStatus.REFUNDED,
-        refunded_amount=request.amount or payment.amount,
-        refunded_at=datetime.utcnow(),
+    payment = await service.process_refund(
+        payment=payment,
+        amount=request.amount,
+        reason=request.reason,
     )
+
+    response = RefundResponse(
+        payment_id=payment.id,
+        status=payment.status,
+        refunded_amount=request.amount or payment.amount,
+        refunded_at=payment.refunded_at,
+    )
+
+    # Store idempotency key to prevent duplicate refunds
+    if idempotency_key:
+        store_idempotency(
+            db, idempotency_key, "refund_payment",
+            request_hash, response.model_dump(mode="json"), "200",
+        )
+
+    return response

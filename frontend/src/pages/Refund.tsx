@@ -1,38 +1,38 @@
-import React from 'react';
-import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
-import { FaArrowLeft } from 'react-icons/fa';
+import React from "react";
+import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
+import { FaArrowLeft } from "react-icons/fa";
 
 export const Refund: React.FC = () => {
   const { t } = useTranslation();
 
   const sections = [
     {
-      title: t('refundPage.sections.noRefund.title'),
+      title: t("refundPage.sections.moneyBack.title"),
       content: [
-        t('refundPage.sections.noRefund.item1'),
-        t('refundPage.sections.noRefund.item2'),
-        t('refundPage.sections.noRefund.item3'),
+        t("refundPage.sections.moneyBack.item1"),
+        t("refundPage.sections.moneyBack.item2"),
+        t("refundPage.sections.moneyBack.item3"),
       ],
     },
     {
-      title: t('refundPage.sections.cancellation.title'),
+      title: t("refundPage.sections.cancellation.title"),
       content: [
-        t('refundPage.sections.cancellation.item1'),
-        t('refundPage.sections.cancellation.item2'),
-        t('refundPage.sections.cancellation.item3'),
+        t("refundPage.sections.cancellation.item1"),
+        t("refundPage.sections.cancellation.item2"),
+        t("refundPage.sections.cancellation.item3"),
       ],
     },
     {
-      title: t('refundPage.sections.payment.title'),
+      title: t("refundPage.sections.howToRequest.title"),
       content: [
-        t('refundPage.sections.payment.item1'),
-        t('refundPage.sections.payment.item2'),
+        t("refundPage.sections.howToRequest.item1"),
+        t("refundPage.sections.howToRequest.item2"),
       ],
     },
     {
-      title: t('refundPage.sections.contact.title'),
-      content: [t('refundPage.sections.contact.item1')],
+      title: t("refundPage.sections.contact.title"),
+      content: [t("refundPage.sections.contact.item1")],
     },
   ];
 
@@ -45,23 +45,23 @@ export const Refund: React.FC = () => {
           className="inline-flex items-center gap-2 theme-text-secondary hover:theme-text-primary theme-transition mb-8"
         >
           <FaArrowLeft className="w-4 h-4" />
-          {t('refundPage.backToHome')}
+          {t("refundPage.backToHome")}
         </Link>
 
         {/* Header */}
         <div className="mb-12">
           <h1 className="text-3xl md:text-4xl font-bold theme-text-primary mb-4">
-            {t('refundPage.title')}
+            {t("refundPage.title")}
           </h1>
           <p className="theme-text-secondary">
-            {t('refundPage.lastUpdated')}: {t('refundPage.updateDate')}
+            {t("refundPage.lastUpdated")}: {t("refundPage.updateDate")}
           </p>
         </div>
 
         {/* Introduction */}
         <div className="theme-surface theme-border border rounded-xl p-6 mb-8">
           <p className="theme-text-secondary leading-relaxed">
-            {t('refundPage.intro')}
+            {t("refundPage.intro")}
           </p>
         </div>
 
@@ -104,7 +104,7 @@ export const Refund: React.FC = () => {
         {/* Footer */}
         <div className="mt-12 pt-8 theme-border border-t text-center">
           <p className="theme-text-tertiary text-sm">
-            {t('refundPage.footer')}
+            {t("refundPage.footer")}
           </p>
         </div>
       </div>

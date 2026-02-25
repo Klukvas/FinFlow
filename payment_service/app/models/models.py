@@ -11,6 +11,7 @@ from sqlalchemy import (
     Index,
     Text,
     Boolean,
+    Integer,
     Numeric,
     Enum as SQLEnum,
 )
@@ -23,6 +24,7 @@ from ..database import Base
 
 class PaymentProvider(str, enum.Enum):
     WAYFORPAY = "WAYFORPAY"
+    PADDLE = "PADDLE"
 
 
 class PaymentPurpose(str, enum.Enum):
@@ -57,7 +59,7 @@ class Payment(Base):
             name="ck_payment_status",
         ),
         CheckConstraint(
-            "provider IN ('WAYFORPAY')",
+            "provider IN ('WAYFORPAY', 'PADDLE')",
             name="ck_payment_provider",
         ),
         CheckConstraint(
@@ -68,39 +70,47 @@ class Payment(Base):
         Index("idx_payments_workspace_created", "workspace_id", "created_at"),
         Index("idx_payments_status_created", "status", "created_at"),
         Index("idx_payments_order_reference", "order_reference", unique=True),
+        Index("idx_payments_paddle_customer_id", "paddle_customer_id"),
+        Index("idx_payments_paddle_subscription_id", "paddle_subscription_id"),
+        Index("idx_payments_paddle_transaction_id", "paddle_transaction_id"),
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    provider = Column(SQLEnum(PaymentProvider), nullable=False, default=PaymentProvider.WAYFORPAY)
+    provider = Column(SQLEnum(PaymentProvider), nullable=False, default=PaymentProvider.PADDLE)
     order_reference = Column(String(255), unique=True, nullable=False)
-    
+
     user_id = Column(String(128), nullable=False)  # String to support both int and UUID
     workspace_id = Column(String(128), nullable=True)  # String to support both int and UUID
-    
+
     purpose = Column(SQLEnum(PaymentPurpose), nullable=False, default=PaymentPurpose.SUBSCRIPTION)
     plan_code = Column(String(64), nullable=True)  # If purpose is SUBSCRIPTION
-    
+
     amount = Column(Numeric(10, 2), nullable=False)
     currency = Column(String(3), nullable=False, default="UAH")
-    
+
     status = Column(SQLEnum(PaymentStatus), nullable=False, default=PaymentStatus.CREATED)
-    
+
     provider_payment_url = Column(Text, nullable=True)
     provider_payload = Column(JSONB, nullable=True)
     provider_response = Column(JSONB, nullable=True)
-    
-    # Recurring payment support
-    recurring_token = Column(String(255), nullable=True)  # Token for recurring payments
-    is_recurring = Column(Boolean, default=False, nullable=False)  # Is this a recurring payment?
-    
+
+    # Recurring payment support (legacy field, Paddle manages subscriptions natively)
+    recurring_token = Column(String(255), nullable=True)
+    is_recurring = Column(Boolean, default=False, nullable=False)
+
+    # Paddle-specific fields
+    paddle_customer_id = Column(String(255), nullable=True)
+    paddle_subscription_id = Column(String(255), nullable=True)
+    paddle_transaction_id = Column(String(255), nullable=True)
+
     paid_at = Column(DateTime, nullable=True)
     failed_at = Column(DateTime, nullable=True)
     refunded_at = Column(DateTime, nullable=True)
-    
+
     failure_reason = Column(Text, nullable=True)
-    
-    extra_data = Column(JSONB, nullable=True)  # Additional flexible data (renamed from metadata)
-    
+
+    extra_data = Column(JSONB, nullable=True)  # Additional flexible data
+
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
@@ -117,20 +127,52 @@ class PaymentEvent(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     payment_id = Column(UUID(as_uuid=True), ForeignKey("payments.id", ondelete="CASCADE"), nullable=False)
-    
+
     event_type = Column(SQLEnum(PaymentEventType), nullable=False)
     provider_event_id = Column(String(255), nullable=True)
-    
+
     signature_valid = Column(Boolean, nullable=True)
     payload_raw = Column(JSONB, nullable=False)
-    
+
     status_before = Column(String(64), nullable=True)
     status_after = Column(String(64), nullable=True)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     # Relationships
     payment = relationship("Payment", back_populates="events")
+
+
+class ProcessedWebhookEvent(Base):
+    """Track processed webhook events for idempotent handling"""
+    __tablename__ = "processed_webhook_events"
+    __table_args__ = (
+        Index("idx_processed_webhook_events_event_id", "event_id", unique=True),
+    )
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    event_id = Column(String(255), unique=True, nullable=False)
+    event_type = Column(String(128), nullable=False)
+    processed_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    payload_hash = Column(String(64), nullable=False)
+
+
+class PaddlePriceMap(Base):
+    """Map plan codes to Paddle price IDs"""
+    __tablename__ = "paddle_price_map"
+    __table_args__ = (
+        Index("idx_paddle_price_map_plan_code", "plan_code", unique=True),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    plan_code = Column(String(64), unique=True, nullable=False)
+    paddle_price_id = Column(String(255), nullable=False)
+    billing_period = Column(String(16), nullable=False, default="monthly")
+    amount = Column(Numeric(10, 2), nullable=True)  # Canonical plan price for server-side validation
+    currency = Column(String(3), nullable=True, default="USD")
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
 class IdempotencyKey(Base):

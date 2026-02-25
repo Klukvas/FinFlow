@@ -91,7 +91,7 @@ This is a **personal finance management platform** that enables users to:
 | 9 | **goals_service** | 8006 | goals_db | Financial goals, milestones |
 | 10 | **recurring_service** | 8005 | recurring_db | Recurring payments automation |
 | 11 | **subscription_service** | 8011 | subscription_db | Plans, features, entitlements |
-| 12 | **payment_service** | 8013 | payment_db | Payment processing (WayForPay) |
+| 12 | **payment_service** | 8013 | payment_db | Payment processing (Paddle Billing) |
 | 13 | **scheduler_service** | 8014 | scheduler_db | Scheduled jobs (subscription renewal) |
 | 14 | **pdf_parser_service** | 8007 | pdf_parser_db | Bank statement parsing |
 | 15 | **admin_panel** | - | - | Administrative UI |
@@ -869,7 +869,7 @@ No database - stateless service with Redis caching.
 `features` - Available features
 `plan_features` - Feature limits per plan
 `subscriptions` - User subscriptions
-`subscription_consent_log` - WayForPay compliance audit
+`subscription_consent_log` - Paddle compliance audit
 
 **Storage:** PostgreSQL (`subscription_db`)
 
@@ -916,7 +916,7 @@ No database - stateless service with Redis caching.
 ## 3.12 Payment Service
 
 ### 3.12.1 Purpose
-**Why this service exists:** Integrates with WayForPay for payment processing.
+**Why this service exists:** Integrates with Paddle Billing for payment processing.
 
 **Business capability:** Payment creation, webhook handling, recurring charges.
 
@@ -950,7 +950,7 @@ No database - stateless service with Redis caching.
 
 | Service | Purpose |
 |---------|---------|
-| WayForPay API | Payment gateway |
+| Paddle API | Payment gateway |
 | subscription_service | Payment success/failure notifications |
 
 ### 3.12.5 Consumers (Inbound)
@@ -959,7 +959,7 @@ No database - stateless service with Redis caching.
 |---------|---------|
 | frontend | Create payments |
 | scheduler_service | Recurring payment execution |
-| WayForPay | Webhooks |
+| Paddle | Webhooks |
 
 ### 3.12.6 Failure Impact
 
@@ -1218,13 +1218,13 @@ subscription_service ←── ALL domain services (feature limits)
    - Create payment for selected plan
    - Include consent confirmation
 
-3. payment_service → WayForPay: Generate payment form
+3. payment_service → Paddle: Generate checkout URL
 
-4. Frontend: Redirect to WayForPay checkout
+4. Frontend: Redirect to Paddle checkout
 
-5. User completes payment on WayForPay
+5. User completes payment on Paddle
 
-6. WayForPay → payment_service: POST /v1/webhooks/wayforpay
+6. Paddle → payment_service: POST /v1/webhooks/paddle
    - Webhook with payment result
 
 7. payment_service: Verify signature, update payment status
@@ -1481,7 +1481,7 @@ subscription_service ←── ALL domain services (feature limits)
 
 ### Business Risks
 
-1. **Payment Provider Lock-in**: Deeply integrated with WayForPay
+1. **Payment Provider Lock-in**: Deeply integrated with Paddle
    - Risk: Difficult to switch providers or support multiple providers
    - Mitigation: Abstract payment provider interface
 

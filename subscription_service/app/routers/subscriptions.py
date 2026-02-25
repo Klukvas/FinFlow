@@ -10,6 +10,7 @@ from ..schemas.subscription import SetPlanIn, SubscriptionOut
 from ..schemas.cancellation import CancelSubscriptionRequest, CancelSubscriptionResponse
 from ..utils.errors import ConflictError, NotFoundError
 from ..utils.idempotency import IdempotencyStore
+from ..utils.auth import verify_internal_token
 
 
 router = APIRouter()
@@ -29,8 +30,14 @@ def get_subscription(user_id: str, db: Session = Depends(get_db)):
     return SubscriptionOut.model_validate(subscription, from_attributes=True)
 
 
-@router.post("/subscriptions/{user_id}:set_plan", response_model=SubscriptionOut)
-def set_plan(user_id: str, payload: SetPlanIn, db: Session = Depends(get_db), idempotency_key: str | None = Header(default=None, alias="Idempotency-Key")):
+@router.post("/subscriptions/{user_id}:set_plan")
+def set_plan(
+    user_id: str,
+    payload: SetPlanIn,
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_internal_token),
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+):
     if idempotency_key:
         store = IdempotencyStore()
         ok = store.check_and_set(idempotency_key, f"{user_id}:{payload.plan_code}")
@@ -38,8 +45,15 @@ def set_plan(user_id: str, payload: SetPlanIn, db: Session = Depends(get_db), id
             raise ConflictError("Idempotency-Key conflict", error_code="@subscription_service/IDEMPOTENCY_VIOLATION")
 
     service = SubscriptionService(db)
-    sub = service.set_plan(user_id, payload.plan_code, payload.status)
-    return SubscriptionOut.model_validate(sub, from_attributes=True)
+    result = service.set_plan(user_id, payload.plan_code, payload.status)
+    sub = result["subscription"]
+    response = SubscriptionOut.model_validate(sub, from_attributes=True).model_dump(mode="json")
+
+    if result["is_downgrade"]:
+        response["downgrade_impact"] = result["downgrade_impact"]
+        response["is_downgrade"] = True
+
+    return response
 
 
 @router.delete("/subscriptions/{user_id}/cancel", response_model=CancelSubscriptionResponse)
@@ -53,7 +67,7 @@ def cancel_subscription(
     Cancel the current user's subscription.
     
     **CRITICAL FOR COMPLIANCE:** This endpoint allows users to cancel their
-    subscription without contacting support, as required by WayForPay and
+    subscription without contacting support, as required by Paddle and
     consumer protection laws.
     
     **Two Cancellation Options:**

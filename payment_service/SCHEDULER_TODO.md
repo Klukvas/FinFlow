@@ -8,7 +8,7 @@ This document describes tasks that should be implemented in a future scheduler/c
 
 **Problem:** Payment went through successfully but webhook didn't arrive (network issues, server downtime, etc.)
 
-**Solution:** Periodic job that checks stale payments with WayForPay API
+**Solution:** Periodic job that checks stale payments with Paddle API
 
 ### Endpoint
 ```
@@ -20,7 +20,7 @@ Header: X-Internal-Token: {INTERNAL_SECRET_TOKEN}
 - **Frequency:** Every 5-10 minutes
 - **What it does:**
   1. Finds payments in `CREATED` or `PENDING` status older than 10 minutes
-  2. Calls WayForPay `CHECK_STATUS` API to verify actual status
+  2. Calls Paddle API to verify actual transaction status
   3. Updates payment status if changed
   4. Notifies `subscription_service` if payment was successful
 
@@ -70,13 +70,13 @@ POST /v1/internal/subscriptions/check-expired
 
 ### What to implement
 1. Find subscriptions expiring in next 3-7 days
-2. Use WayForPay `recToken` (saved from first payment) to charge automatically
+2. Use Paddle subscription API (Paddle handles recurring billing automatically)
 3. Extend subscription on successful charge
 4. Handle failed charges (retry logic, notifications)
 
 ### Prerequisites
-- Save `recToken` from WayForPay callback during first payment
-- Add `rec_token` field to payments/subscriptions table
+- Paddle manages recurring billing natively via subscriptions
+- Store Paddle subscription_id for tracking
 
 ### Schedule
 - **Frequency:** Daily

@@ -446,7 +446,7 @@ groups:
 1. View metrics: `GET /metrics | grep renewals_payment_failed`
 2. Query `renewal_attempts` table for failure reasons
 3. Verify payment_service is healthy
-4. Check WayForPay credentials and API status
+4. Check Paddle credentials and API status
 5. Verify subscriptions have valid recurring_token
 
 ### Missing Recurring Token
@@ -456,7 +456,7 @@ groups:
 **Cause:** Initial payment did not store recurring token
 
 **Solution:**
-1. Ensure payment_service stores `recurring_token` from WayForPay
+1. Ensure payment_service stores `recurring_token` from Paddle
 2. Ensure subscription_service persists token when payment succeeds
 3. Re-process initial payment or ask user to re-subscribe
 

@@ -29,7 +29,7 @@ def record_consent(
     Record user consent for subscription.
     
     This creates an immutable audit log entry with the full consent text,
-    timestamp, IP address, and user agent. Required for WayForPay compliance.
+    timestamp, IP address, and user agent. Required for payment provider compliance.
     
     This endpoint is typically called internally by the payment service
     after a successful initial subscription payment.

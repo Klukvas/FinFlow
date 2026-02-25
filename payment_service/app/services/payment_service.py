@@ -4,7 +4,7 @@ import logging
 import hashlib
 import json
 from decimal import Decimal
-from typing import Optional
+from typing import Optional, Any
 from uuid import UUID, uuid4
 from datetime import datetime
 from sqlalchemy.orm import Session
@@ -16,60 +16,128 @@ from ..models.models import (
     PaymentProvider,
     PaymentPurpose,
     PaymentEventType,
+    ProcessedWebhookEvent,
+    PaddlePriceMap,
 )
 from ..repositories.payment_repository import PaymentRepository
 from ..repositories.payment_event_repository import PaymentEventRepository
-from ..clients.wayforpay_client import WayForPayClient
+from ..clients.paddle_client import PaddleClient
 from ..clients.subscription_client import SubscriptionClient
-from ..schemas.payment import CreatePaymentRequest, WebhookWayForPayRequest
+from ..schemas.payment import CreatePaymentRequest, ChangePlanRequest, PaddleWebhookEvent
 from ..config import settings
 from ..utils.errors import ValidationError, ConflictError
 from ..utils.consent import validate_subscription_consent
+from ..models.outbox import OutboxEvent
+from sqlalchemy.exc import IntegrityError
 
 logger = logging.getLogger("payment_service.payment_service")
 
 
 class PaymentService:
-    """Service for payment operations"""
+    """Service for payment operations via Paddle Billing."""
 
     def __init__(self, db: Session):
         self.db = db
         self.payment_repo = PaymentRepository(db)
         self.event_repo = PaymentEventRepository(db)
-        self.wayforpay_client = WayForPayClient()
+        self.paddle_client = PaddleClient()
         self.subscription_client = SubscriptionClient()
 
-    def create_payment(self, request: CreatePaymentRequest) -> Payment:
-        """
-        Create a new payment
-        
+    # ------------------------------------------------------------------
+    # Payment creation
+    # ------------------------------------------------------------------
+
+    async def create_payment(self, request: CreatePaymentRequest) -> Payment:
+        """Create a new payment via Paddle checkout.
+
+        Validates the request, resolves the Paddle price from the DB,
+        creates a Paddle checkout session, and persists the payment record.
+
         Args:
-            request: Payment creation request
-        
+            request: Payment creation request.
+
         Returns:
-            Created payment
-        
+            The newly created Payment.
+
         Raises:
-            ValidationError: If validation fails
+            ValidationError: When request validation fails or price is not configured.
         """
-        # Validate request
         if request.purpose == PaymentPurpose.SUBSCRIPTION and not request.plan_code:
             raise ValidationError(
                 "plan_code is required for SUBSCRIPTION purpose",
                 error_code="@payment_service/MISSING_PLAN_CODE",
             )
-        
-        # CRITICAL: Validate user consent for subscription payments (WayForPay compliance)
+
         if request.purpose == PaymentPurpose.SUBSCRIPTION:
             validate_subscription_consent(request.metadata)
 
-        # Generate unique order reference
+        # Resolve Paddle price_id from DB
+        price_mapping = (
+            self.db.query(PaddlePriceMap)
+            .filter(
+                PaddlePriceMap.plan_code == request.plan_code,
+                PaddlePriceMap.is_active == True,  # noqa: E712
+            )
+            .first()
+        )
+
+        if not price_mapping:
+            raise ValidationError(
+                f"No Paddle price configured for plan '{request.plan_code}'",
+                error_code="@payment_service/PRICE_NOT_CONFIGURED",
+            )
+
+        # Server-side price validation: reject if amount doesn't match configured plan price
+        if price_mapping.amount is not None and request.amount != price_mapping.amount:
+            raise ValidationError(
+                f"Amount mismatch: expected {price_mapping.amount} {price_mapping.currency or 'USD'}, "
+                f"got {request.amount} {request.currency}",
+                error_code="@payment_service/PRICE_MISMATCH",
+            )
+
+        # Prevent double-click double-charge: reject if active payment already exists
+        existing_payment = self.payment_repo.get_active_payment_for_user_plan(
+            user_id=str(request.user_id),
+            plan_code=request.plan_code,
+        )
+        if existing_payment:
+            raise ConflictError(
+                f"Active payment already exists for plan '{request.plan_code}'",
+                error_code="@payment_service/DUPLICATE_PAYMENT",
+                details={"existing_payment_id": str(existing_payment.id)},
+            )
+
         order_reference = self._generate_order_reference()
+        payment_id = uuid4()
+
+        # Build success URL with tracking params
+        success_url = (
+            f"{settings.paddle_success_url}?paymentId={payment_id}"
+            f"&orderReference={order_reference}"
+        )
+
+        # Get user email from metadata
+        user_email = ""
+        if request.metadata:
+            user_email = request.metadata.get("user_email", "")
+
+        # Call Paddle API to create checkout session
+        checkout_result = await self.paddle_client.create_checkout_session(
+            customer_email=user_email,
+            price_id=price_mapping.paddle_price_id,
+            success_url=success_url,
+            custom_data={
+                "user_id": str(request.user_id),
+                "workspace_id": str(request.workspace_id) if request.workspace_id else "",
+                "order_reference": order_reference,
+                "plan_code": request.plan_code or "",
+            },
+        )
 
         # Create payment record
         payment = Payment(
-            id=uuid4(),
-            provider=PaymentProvider.WAYFORPAY,
+            id=payment_id,
+            provider=PaymentProvider.PADDLE,
             order_reference=order_reference,
             user_id=request.user_id,
             workspace_id=request.workspace_id,
@@ -78,85 +146,11 @@ class PaymentService:
             amount=request.amount,
             currency=request.currency,
             status=PaymentStatus.CREATED,
+            provider_payment_url=checkout_result.get("checkout_url", ""),
+            paddle_transaction_id=checkout_result.get("transaction_id"),
             extra_data=request.metadata,
         )
 
-        # Generate WayForPay payment form
-        # Use payment service as return URL proxy (WayForPay might POST)
-        # Extract base URL from callback URL and use /v1/payment/return
-        # Include orderReference and paymentId in return URL so frontend always has them
-        callback_base = settings.wayforpay_callback_url.rsplit('/v1/', 1)[0]
-        return_url = f"{callback_base}/v1/payment/return?orderReference={order_reference}&paymentId={payment.id}"
-        callback_url = settings.wayforpay_callback_url
-        
-        # Store original frontend return URL in payment metadata
-        if request.return_url:
-            if payment.extra_data is None:
-                payment.extra_data = {}
-            payment.extra_data['frontend_return_url'] = request.return_url
-
-        product_name = self._get_product_name(request)
-        
-        # Note: WayForPay automatically returns recToken in the webhook callback
-        # after a successful payment. No need to request it in the form data.
-        # The token will be captured from the webhook and stored for recurring payments.
-        
-        form_data = self.wayforpay_client.create_payment_form(
-            order_reference=order_reference,
-            amount=request.amount,
-            currency=request.currency,
-            product_name=product_name,
-            product_count=1,
-            product_price=request.amount,
-            return_url=return_url,
-            service_url=callback_url,
-            request_recurring_token=False,  # Deprecated: Token returned automatically
-        )
-
-        # Store form data and payment URL
-        payment.provider_payload = form_data
-        payment.provider_payment_url = "https://secure.wayforpay.com/pay"  # WayForPay checkout URL
-
-        # Validate form data completeness
-        required_fields = [
-            'merchantAccount', 'merchantDomainName', 'orderReference', 
-            'orderDate', 'amount', 'currency', 'productName', 
-            'productCount', 'productPrice', 'merchantSignature', 
-            'returnUrl', 'serviceUrl'
-        ]
-        missing_fields = [field for field in required_fields if not form_data.get(field)]
-        
-        if missing_fields:
-            logger.error(
-                f"⚠️ Form data incomplete for order {order_reference}! Missing fields: {missing_fields}",
-                extra={
-                    "order_reference": order_reference,
-                    "missing_fields": missing_fields,
-                    "available_fields": list(form_data.keys()),
-                }
-            )
-            raise ValidationError(
-                f"Payment form data incomplete: missing {', '.join(missing_fields)}",
-                error_code="@payment_service/INCOMPLETE_FORM_DATA",
-            )
-
-        logger.info(
-            f"WayForPay form data generated for order {order_reference}",
-            extra={
-                "order_reference": order_reference,
-                "payment_url": payment.provider_payment_url,
-                "has_form_data": bool(form_data),
-                "form_fields_count": len(form_data) if form_data else 0,
-                "form_fields": list(form_data.keys()) if form_data else [],
-                "merchant_account": form_data.get('merchantAccount'),
-                "has_signature": bool(form_data.get('merchantSignature')),
-                "signature_preview": form_data.get('merchantSignature', '')[:20] + '...' if form_data.get('merchantSignature') else None,
-                "payment_purpose": request.purpose.value,
-                "straightforward_flag": form_data.get('straightforward'),
-            },
-        )
-
-        # Save payment
         payment = self.payment_repo.create(payment)
 
         # Create initial event
@@ -179,76 +173,79 @@ class PaymentService:
                 "user_id": str(request.user_id),
                 "amount": str(request.amount),
                 "purpose": request.purpose.value,
-                "has_provider_payload": bool(payment.provider_payload),
-                "has_provider_payment_url": bool(payment.provider_payment_url),
+                "checkout_url_present": bool(checkout_result.get("checkout_url")),
             },
         )
-        
-        # Log info if using test credentials
-        if (self.wayforpay_client.merchant_account == "test_merch_n1" or 
-            self.wayforpay_client.secret_key == "flk3409refn54t54t*FNJRET"):
-            logger.info(
-                f"Payment {payment.id} created with test_merch_n1 credentials. "
-                "If payment form is skipped, check: 1) Ngrok URL is current and reachable, "
-                "2) Callback URL matches ngrok, 3) Payment service is accessible. "
-                "Run ./test_wayforpay_credentials.sh to diagnose.",
-                extra={
-                    "payment_id": str(payment.id),
-                    "order_reference": order_reference,
-                }
-            )
 
         return payment
+
+    # ------------------------------------------------------------------
+    # Recurring payment (scheduler renewals)
+    # ------------------------------------------------------------------
 
     async def create_recurring_payment(
         self,
         user_id: str,
         subscription_id: Optional[int],
         plan_code: str,
-        amount: str,
+        amount: Decimal,
         currency: str,
         recurring_token: str,
     ) -> Payment:
-        """
-        Create and execute recurring payment using stored token
-        
+        """Create a recurring payment for subscription renewal.
+
+        Called by the scheduler service to charge returning subscribers
+        using a stored recurring token. Creates a Paddle transaction
+        and persists the payment record.
+
         Args:
-            user_id: User ID
-            subscription_id: Subscription ID
-            plan_code: Plan code
-            amount: Amount as string
-            currency: Currency code
-            recurring_token: Recurring payment token
-        
+            user_id: User ID.
+            subscription_id: Subscription ID from subscription_service.
+            plan_code: Plan code being renewed.
+            amount: Payment amount.
+            currency: Currency code (e.g. ``"USD"``).
+            recurring_token: Stored payment token for recurring billing.
+
         Returns:
-            Created payment with status from WayForPay
+            The newly created Payment.
+
+        Raises:
+            ValidationError: When required fields are missing.
         """
-        # Generate unique order reference
+        if not plan_code:
+            raise ValidationError(
+                "plan_code is required for recurring payment",
+                error_code="@payment_service/MISSING_PLAN_CODE",
+            )
+
+        if not recurring_token:
+            raise ValidationError(
+                "recurring_token is required for recurring payment",
+                error_code="@payment_service/MISSING_RECURRING_TOKEN",
+            )
+
         order_reference = self._generate_order_reference()
-        
-        # Convert amount to Decimal
-        amount_decimal = Decimal(amount)
-        
-        # Create payment record
+        payment_id = uuid4()
+
         payment = Payment(
-            id=uuid4(),
-            provider=PaymentProvider.WAYFORPAY,
+            id=payment_id,
+            provider=PaymentProvider.PADDLE,
             order_reference=order_reference,
             user_id=user_id,
-            workspace_id=None,  # Subscription payments don't need workspace_id
             purpose=PaymentPurpose.SUBSCRIPTION,
             plan_code=plan_code,
-            amount=amount_decimal,
+            amount=amount,
             currency=currency,
-            status=PaymentStatus.PENDING,
-            recurring_token=recurring_token,
-            is_recurring=True,
-            extra_data={"subscription_id": subscription_id} if subscription_id else None,
+            status=PaymentStatus.CREATED,
+            extra_data={
+                "source": "scheduler",
+                "subscription_id": subscription_id,
+                "recurring_token": recurring_token,
+            },
         )
-        
-        # Save payment first
+
         payment = self.payment_repo.create(payment)
-        
+
         # Create initial event
         event = PaymentEvent(
             id=uuid4(),
@@ -256,228 +253,892 @@ class PaymentService:
             event_type=PaymentEventType.CREATED,
             signature_valid=None,
             payload_raw={
-                "type": "recurring",
+                "source": "scheduler",
+                "user_id": user_id,
                 "subscription_id": subscription_id,
                 "plan_code": plan_code,
+                "amount": str(amount),
+                "currency": currency,
             },
             status_before=None,
-            status_after=PaymentStatus.PENDING.value,
+            status_after=PaymentStatus.CREATED.value,
         )
         self.event_repo.create(event)
-        
+
         logger.info(
-            f"Attempting recurring payment: {payment.id}",
+            f"Recurring payment created: {payment.id}",
             extra={
                 "payment_id": str(payment.id),
                 "order_reference": order_reference,
                 "user_id": user_id,
                 "subscription_id": subscription_id,
-            },
-        )
-        
-        # Execute recurring charge via WayForPay
-        try:
-            product_name = f"Subscription Renewal: {plan_code}"
-            charge_result = await self.wayforpay_client.charge_recurring(
-                order_reference=order_reference,
-                amount=amount_decimal,
-                currency=currency,
-                recurring_token=recurring_token,
-                product_name=product_name,
-            )
-            
-            if not charge_result:
-                # Charge failed
-                self.payment_repo.update_status(
-                    payment,
-                    PaymentStatus.FAILED,
-                    reason="WayForPay recurring charge failed"
-                )
-                
-                logger.error(
-                    f"Recurring charge failed for payment {payment.id}",
-                    extra={"payment_id": str(payment.id)},
-                )
-                
-                return payment
-            
-            # Parse WayForPay response
-            transaction_status = charge_result.get("transactionStatus")
-            reason_code = charge_result.get("reasonCode")
-            
-            # Map to internal status
-            new_status = self._map_wayforpay_status(transaction_status)
-            
-            # Store provider response
-            payment.provider_response = charge_result
-            
-            # Update status
-            failure_reason = None
-            if new_status != PaymentStatus.PAID:
-                failure_reason = f"WayForPay: {transaction_status} (code: {reason_code})"
-            
-            self.payment_repo.update_status(payment, new_status, reason=failure_reason)
-            
-            # Create callback event
-            event = PaymentEvent(
-                id=uuid4(),
-                payment_id=payment.id,
-                event_type=PaymentEventType.CALLBACK,
-                provider_event_id=f"{order_reference}_recurring_{int(datetime.utcnow().timestamp())}",
-                signature_valid=True,
-                payload_raw=charge_result,
-                status_before=PaymentStatus.PENDING.value,
-                status_after=new_status.value,
-            )
-            self.event_repo.create(event)
-            
-            # Notify downstream if successful
-            if new_status == PaymentStatus.PAID:
-                await self._notify_payment_success(payment)
-            else:
-                await self._notify_payment_failure(payment, failure_reason)
-            
-            logger.info(
-                f"Recurring payment processed: {payment.id} - {new_status.value}",
-                extra={
-                    "payment_id": str(payment.id),
-                    "status": new_status.value,
-                    "transaction_status": transaction_status,
-                },
-            )
-            
-            return payment
-            
-        except Exception as e:
-            # Charge exception
-            logger.error(
-                f"Exception during recurring charge for payment {payment.id}: {e}",
-                extra={"payment_id": str(payment.id), "error": str(e)},
-            )
-            
-            self.payment_repo.update_status(
-                payment,
-                PaymentStatus.FAILED,
-                reason=f"Exception: {str(e)}"
-            )
-            
-            await self._notify_payment_failure(payment, str(e))
-            
-            return payment
-
-    async def process_wayforpay_callback(self, callback: WebhookWayForPayRequest) -> Payment:
-        """
-        Process WayForPay callback (webhook)
-        
-        Args:
-            callback: Callback payload from WayForPay
-        
-        Returns:
-            Updated payment
-        
-        Raises:
-            ValidationError: If signature is invalid
-            NotFoundError: If payment not found
-        """
-        order_reference = callback.orderReference
-
-        # Verify signature
-        signature_valid = self.wayforpay_client.verify_callback_signature(
-            callback.model_dump(exclude_none=True)
-        )
-
-        if not signature_valid:
-            logger.warning(
-                f"Invalid signature for callback: {order_reference}",
-                extra={
-                    "order_reference": order_reference,
-                    "merchant_account": callback.merchantAccount,
-                },
-            )
-            raise ValidationError(
-                "Invalid callback signature",
-                error_code="@payment_service/INVALID_SIGNATURE",
-                details={"order_reference": order_reference},
-            )
-
-        # Find payment
-        payment = self.payment_repo.get_by_order_reference_or_raise(order_reference)
-
-        # Check idempotency (prevent duplicate processing)
-        provider_event_id = f"{order_reference}_{callback.transactionStatus}_{callback.createdDate}"
-        payload_hash = self._compute_payload_hash(callback.model_dump(exclude_none=True))
-
-        if self.event_repo.has_callback_been_processed(payment.id, provider_event_id, payload_hash):
-            logger.info(
-                f"Callback already processed for payment {payment.id}",
-                extra={
-                    "payment_id": str(payment.id),
-                    "order_reference": order_reference,
-                    "provider_event_id": provider_event_id,
-                },
-            )
-            return payment
-
-        # Determine new status based on transaction status
-        old_status = payment.status
-        new_status = self._map_wayforpay_status(callback.transactionStatus)
-
-        # Create event
-        event = PaymentEvent(
-            id=uuid4(),
-            payment_id=payment.id,
-            event_type=PaymentEventType.CALLBACK,
-            provider_event_id=provider_event_id,
-            signature_valid=signature_valid,
-            payload_raw=callback.model_dump(mode="json", exclude_none=True),
-            status_before=old_status.value,
-            status_after=new_status.value,
-        )
-        self.event_repo.create(event)
-
-        # Extract recurring token from callback if present (before status update)
-        if callback.recToken and new_status == PaymentStatus.PAID:
-            payment.recurring_token = callback.recToken
-            # Commit immediately to ensure token is saved
-            self.payment_repo.db.commit()
-            self.payment_repo.db.refresh(payment)
-            logger.info(
-                f"Stored recurring token for payment {payment.id}",
-                extra={
-                    "payment_id": str(payment.id), 
-                    "has_token": True,
-                    "token_length": len(callback.recToken),
-                },
-            )
-        
-        # Update payment status if changed
-        if new_status != old_status:
-            reason = callback.reason if callback.reason else None
-            self.payment_repo.update_status(payment, new_status, reason=reason)
-
-            # Notify downstream services
-            if new_status == PaymentStatus.PAID:
-                await self._notify_payment_success(payment)
-            elif new_status in (PaymentStatus.FAILED, PaymentStatus.EXPIRED):
-                await self._notify_payment_failure(payment, reason)
-            elif new_status == PaymentStatus.REFUNDED:
-                await self._notify_payment_refunded(payment, reason)
-
-        logger.info(
-            f"Processed callback for payment {payment.id}",
-            extra={
-                "payment_id": str(payment.id),
-                "order_reference": order_reference,
-                "transaction_status": callback.transactionStatus,
-                "status_from": old_status.value,
-                "status_to": new_status.value,
+                "plan_code": plan_code,
+                "amount": str(amount),
+                "source": "scheduler",
             },
         )
 
         return payment
 
-    async def _notify_payment_success(self, payment: Payment):
-        """Notify subscription_service about successful payment"""
+    # ------------------------------------------------------------------
+    # Refunds
+    # ------------------------------------------------------------------
+
+    async def process_refund(
+        self,
+        payment: Payment,
+        amount: Optional[Decimal] = None,
+        reason: Optional[str] = None,
+    ) -> Payment:
+        """Process a refund for a payment via the Paddle Adjustments API.
+
+        Validates the payment is in PAID status, calls Paddle to create
+        an adjustment, updates the payment status, and notifies
+        subscription_service.
+
+        Args:
+            payment: The payment to refund.
+            amount: Refund amount (``None`` for full refund).
+            reason: Human-readable refund reason.
+
+        Returns:
+            The updated Payment with REFUNDED status.
+
+        Raises:
+            ValidationError: When payment is not in a refundable state
+                or has no Paddle transaction ID.
+        """
+        if payment.status != PaymentStatus.PAID:
+            raise ValidationError(
+                f"Cannot refund payment in status '{payment.status.value}' — must be PAID",
+                error_code="@payment_service/INVALID_REFUND_STATUS",
+            )
+
+        if not payment.paddle_transaction_id:
+            raise ValidationError(
+                "Cannot refund payment without a Paddle transaction ID",
+                error_code="@payment_service/MISSING_TRANSACTION_ID",
+            )
+
+        # Convert amount to cents for Paddle API (if partial refund)
+        paddle_amount: Optional[int] = None
+        if amount is not None:
+            paddle_amount = int(amount * 100)
+
+        # Call Paddle Adjustments API
+        adjustment = await self.paddle_client.create_adjustment(
+            transaction_id=payment.paddle_transaction_id,
+            reason=reason or "refund",
+            amount=paddle_amount,
+        )
+
+        refunded_amount = amount if amount is not None else payment.amount
+
+        # Update payment status
+        old_status = payment.status
+        self.payment_repo.update_status(payment, PaymentStatus.REFUNDED)
+
+        # Create audit event
+        pay_event = PaymentEvent(
+            id=uuid4(),
+            payment_id=payment.id,
+            event_type=PaymentEventType.REFUND,
+            signature_valid=None,
+            payload_raw={
+                "adjustment_id": adjustment.get("id"),
+                "reason": reason,
+                "refunded_amount": str(refunded_amount),
+            },
+            status_before=old_status.value,
+            status_after=PaymentStatus.REFUNDED.value,
+        )
+        self.event_repo.create(pay_event)
+
+        logger.info(
+            f"Payment {payment.id} refunded",
+            extra={
+                "payment_id": str(payment.id),
+                "adjustment_id": adjustment.get("id"),
+                "refunded_amount": str(refunded_amount),
+                "reason": reason,
+            },
+        )
+
+        # Notify subscription_service
+        await self._notify_payment_refunded(payment, reason)
+
+        return payment
+
+    # ------------------------------------------------------------------
+    # Plan change (upgrade / downgrade)
+    # ------------------------------------------------------------------
+
+    async def change_subscription_plan(self, request: ChangePlanRequest) -> dict:
+        """Change a Paddle subscription's plan via API update.
+
+        Used for upgrades and downgrades. Paddle handles proration
+        automatically. No new checkout session is needed.
+
+        Args:
+            request: Plan change request with user_id, new_plan_code,
+                paddle_subscription_id, and metadata (consent).
+
+        Returns:
+            Dict with ``success``, ``old_plan_code``, ``new_plan_code``,
+            ``paddle_subscription_id``.
+
+        Raises:
+            ValidationError: When consent is missing or price not configured.
+        """
+        # Validate consent
+        validate_subscription_consent(request.metadata)
+
+        # Resolve new Paddle price_id from DB
+        price_mapping = (
+            self.db.query(PaddlePriceMap)
+            .filter(
+                PaddlePriceMap.plan_code == request.new_plan_code,
+                PaddlePriceMap.is_active == True,  # noqa: E712
+            )
+            .first()
+        )
+
+        if not price_mapping:
+            raise ValidationError(
+                f"No Paddle price configured for plan '{request.new_plan_code}'",
+                error_code="@payment_service/PRICE_NOT_CONFIGURED",
+            )
+
+        # Resolve current plan_code from the existing price (reverse lookup)
+        existing_sub = await self.paddle_client.get_subscription(
+            request.paddle_subscription_id,
+        )
+        old_price_id = ""
+        items = existing_sub.get("items") or []
+        if items:
+            old_price_id = items[0].get("price", {}).get("id", "")
+
+        old_plan_code: Optional[str] = None
+        if old_price_id:
+            old_mapping = (
+                self.db.query(PaddlePriceMap)
+                .filter(
+                    PaddlePriceMap.paddle_price_id == old_price_id,
+                    PaddlePriceMap.is_active == True,  # noqa: E712
+                )
+                .first()
+            )
+            if old_mapping:
+                old_plan_code = old_mapping.plan_code
+
+        logger.info(
+            "Changing subscription plan",
+            extra={
+                "user_id": request.user_id,
+                "paddle_subscription_id": request.paddle_subscription_id,
+                "old_plan_code": old_plan_code,
+                "new_plan_code": request.new_plan_code,
+            },
+        )
+
+        # Call Paddle API to update the subscription
+        updated_sub = await self.paddle_client.update_subscription(
+            subscription_id=request.paddle_subscription_id,
+            new_price_id=price_mapping.paddle_price_id,
+        )
+
+        logger.info(
+            "Subscription plan changed successfully",
+            extra={
+                "paddle_subscription_id": request.paddle_subscription_id,
+                "paddle_status": updated_sub.get("status"),
+                "old_plan_code": old_plan_code,
+                "new_plan_code": request.new_plan_code,
+            },
+        )
+
+        # Extract currency from Paddle response (falls back to USD)
+        paddle_currency = (updated_sub.get("currency_code") or "USD").upper()
+
+        # Notify subscription_service about the plan change
+        await self.subscription_client.notify_payment_success(
+            payment_id=uuid4(),  # synthetic ID — no real payment for plan changes
+            user_id=request.user_id,
+            workspace_id=request.metadata.get("workspace_id") if request.metadata else None,
+            plan_code=request.new_plan_code,
+            amount=Decimal("0"),  # Paddle handles billing/proration
+            currency=paddle_currency,
+            paddle_subscription_id=request.paddle_subscription_id,
+            paddle_price_id=price_mapping.paddle_price_id,
+        )
+
+        return {
+            "success": True,
+            "old_plan_code": old_plan_code,
+            "new_plan_code": request.new_plan_code,
+            "paddle_subscription_id": request.paddle_subscription_id,
+        }
+
+    # ------------------------------------------------------------------
+    # Paddle webhook processing
+    # ------------------------------------------------------------------
+
+    async def process_paddle_webhook(self, event: PaddleWebhookEvent) -> Optional[Payment]:
+        """Process a Paddle webhook event with idempotency.
+
+        Checks whether the event has already been processed, routes to the
+        appropriate handler, and records the event for deduplication.
+
+        Args:
+            event: The parsed Paddle webhook event.
+
+        Returns:
+            The affected Payment, or ``None`` when the event was already
+            processed or does not map to a known handler.
+        """
+        # Idempotency: insert-first approach to avoid TOCTOU race condition.
+        # If two concurrent requests process the same event_id, only one
+        # succeeds — the other hits the UNIQUE constraint and returns early.
+        processed = ProcessedWebhookEvent(
+            event_id=event.event_id,
+            event_type=event.event_type,
+            payload_hash=self._compute_payload_hash(event.data),
+        )
+        try:
+            self.db.add(processed)
+            self.db.flush()
+        except IntegrityError:
+            self.db.rollback()
+            logger.info(
+                f"Webhook event already processed: {event.event_id}",
+                extra={"event_id": event.event_id},
+            )
+            return None
+
+        # Route by event type
+        handler_map: dict[str, Any] = {
+            "subscription.created": self._handle_subscription_created,
+            "subscription.activated": self._handle_subscription_activated,
+            "subscription.updated": self._handle_subscription_updated,
+            "subscription.canceled": self._handle_subscription_canceled,
+            "subscription.past_due": self._handle_subscription_past_due,
+            "subscription.paused": self._handle_subscription_paused,
+            "subscription.resumed": self._handle_subscription_resumed,
+            "transaction.completed": self._handle_transaction_completed,
+            "transaction.payment_failed": self._handle_transaction_payment_failed,
+            "transaction.refunded": self._handle_transaction_refunded,
+        }
+
+        handler = handler_map.get(event.event_type)
+
+        result: Optional[Payment] = None
+        if handler:
+            result = await handler(event)
+        else:
+            logger.warning(
+                f"Unhandled Paddle event type: {event.event_type}",
+                extra={"event_type": event.event_type},
+            )
+
+        self.db.commit()
+        return result
+
+    # ------------------------------------------------------------------
+    # Transaction handlers
+    # ------------------------------------------------------------------
+
+    async def _handle_transaction_completed(self, event: PaddleWebhookEvent) -> Optional[Payment]:
+        """Handle transaction.completed -- payment succeeded.
+
+        Extracts custom_data (user_id, order_reference, plan_code),
+        finds or creates the payment, updates status to PAID, and notifies
+        subscription_service with Paddle IDs.
+        """
+        data = event.data
+        custom_data = data.get("custom_data") or {}
+
+        user_id = custom_data.get("user_id", "")
+        order_reference = custom_data.get("order_reference", "")
+        plan_code = custom_data.get("plan_code", "")
+        workspace_id = custom_data.get("workspace_id", "")
+
+        paddle_customer_id = data.get("customer_id", "")
+        paddle_subscription_id = data.get("subscription_id", "")
+        paddle_transaction_id = data.get("id", "")
+
+        # Extract price_id from items
+        paddle_price_id = ""
+        items = data.get("items") or []
+        if items and isinstance(items, list):
+            first_item = items[0]
+            paddle_price_id = first_item.get("price_id", "") or first_item.get("price", {}).get("id", "")
+
+        # Find existing payment by order_reference or create one
+        payment = self.payment_repo.get_by_order_reference(order_reference) if order_reference else None
+
+        if not payment and user_id:
+            # Payment might have been created outside normal flow; create a record
+            webhook_amount_raw = data.get("details", {}).get("totals", {}).get("total", "0")
+            try:
+                webhook_amount = Decimal(str(webhook_amount_raw)) / 100
+            except Exception:
+                logger.error(
+                    "Invalid amount in webhook data",
+                    extra={"raw_amount": str(webhook_amount_raw), "event_id": event.event_id},
+                )
+                webhook_amount = Decimal("0")
+
+            if webhook_amount <= 0 or webhook_amount > Decimal("100000"):
+                logger.warning(
+                    "Suspicious webhook amount",
+                    extra={"amount": str(webhook_amount), "event_id": event.event_id},
+                )
+
+            payment = Payment(
+                id=uuid4(),
+                provider=PaymentProvider.PADDLE,
+                order_reference=order_reference or self._generate_order_reference(),
+                user_id=user_id,
+                workspace_id=workspace_id or None,
+                purpose=PaymentPurpose.SUBSCRIPTION if plan_code else PaymentPurpose.ONE_TIME,
+                plan_code=plan_code or None,
+                amount=webhook_amount,
+                currency=data.get("currency_code", "USD"),
+                status=PaymentStatus.CREATED,
+                paddle_customer_id=paddle_customer_id,
+                paddle_subscription_id=paddle_subscription_id or None,
+                paddle_transaction_id=paddle_transaction_id,
+            )
+            payment = self.payment_repo.create(payment)
+
+            logger.info(
+                f"Created payment from webhook: {payment.id}",
+                extra={
+                    "payment_id": str(payment.id),
+                    "order_reference": payment.order_reference,
+                    "user_id": user_id,
+                },
+            )
+
+        if not payment:
+            logger.error(
+                "Cannot resolve payment for transaction.completed",
+                extra={
+                    "event_id": event.event_id,
+                    "order_reference": order_reference,
+                    "transaction_id": paddle_transaction_id,
+                },
+            )
+            return None
+
+        # Update Paddle IDs on the payment
+        payment.paddle_customer_id = paddle_customer_id or payment.paddle_customer_id
+        payment.paddle_subscription_id = paddle_subscription_id or payment.paddle_subscription_id
+        payment.paddle_transaction_id = paddle_transaction_id or payment.paddle_transaction_id
+
+        old_status = payment.status
+
+        # Update status to PAID
+        self.payment_repo.update_status(payment, PaymentStatus.PAID)
+
+        # Create event
+        pay_event = PaymentEvent(
+            id=uuid4(),
+            payment_id=payment.id,
+            event_type=PaymentEventType.CALLBACK,
+            provider_event_id=event.event_id,
+            signature_valid=True,
+            payload_raw=data,
+            status_before=old_status.value,
+            status_after=PaymentStatus.PAID.value,
+        )
+        self.event_repo.create(pay_event)
+
+        logger.info(
+            f"Transaction completed for payment {payment.id}",
+            extra={
+                "payment_id": str(payment.id),
+                "paddle_transaction_id": paddle_transaction_id,
+                "paddle_subscription_id": paddle_subscription_id,
+                "paddle_customer_id": paddle_customer_id,
+                "old_status": old_status.value,
+            },
+        )
+
+        # Notify subscription_service
+        await self._notify_payment_success(
+            payment,
+            paddle_customer_id=paddle_customer_id,
+            paddle_subscription_id=paddle_subscription_id,
+            paddle_price_id=paddle_price_id,
+        )
+
+        return payment
+
+    async def _handle_transaction_payment_failed(self, event: PaddleWebhookEvent) -> Optional[Payment]:
+        """Handle transaction.payment_failed -- charge attempt failed."""
+        data = event.data
+        custom_data = data.get("custom_data") or {}
+
+        order_reference = custom_data.get("order_reference", "")
+        paddle_transaction_id = data.get("id", "")
+
+        payment = self.payment_repo.get_by_order_reference(order_reference) if order_reference else None
+
+        if not payment and paddle_transaction_id:
+            # Try to find by paddle_transaction_id
+            payment = (
+                self.db.query(Payment)
+                .filter(Payment.paddle_transaction_id == paddle_transaction_id)
+                .first()
+            )
+
+        if not payment:
+            logger.warning(
+                "Payment not found for transaction.payment_failed",
+                extra={
+                    "event_id": event.event_id,
+                    "order_reference": order_reference,
+                    "transaction_id": paddle_transaction_id,
+                },
+            )
+            return None
+
+        old_status = payment.status
+        failure_reason = data.get("payments", [{}])[0].get("error_code", "payment_failed") if data.get("payments") else "payment_failed"
+
+        self.payment_repo.update_status(payment, PaymentStatus.FAILED, reason=failure_reason)
+
+        pay_event = PaymentEvent(
+            id=uuid4(),
+            payment_id=payment.id,
+            event_type=PaymentEventType.CALLBACK,
+            provider_event_id=event.event_id,
+            signature_valid=True,
+            payload_raw=data,
+            status_before=old_status.value,
+            status_after=PaymentStatus.FAILED.value,
+        )
+        self.event_repo.create(pay_event)
+
+        logger.info(
+            f"Transaction payment failed for payment {payment.id}",
+            extra={
+                "payment_id": str(payment.id),
+                "failure_reason": failure_reason,
+            },
+        )
+
+        await self._notify_payment_failure(payment, failure_reason)
+
+        return payment
+
+    async def _handle_transaction_refunded(self, event: PaddleWebhookEvent) -> Optional[Payment]:
+        """Handle transaction.refunded -- refund processed by Paddle."""
+        data = event.data
+        paddle_transaction_id = data.get("id", "")
+
+        # Find payment by transaction ID
+        payment = (
+            self.db.query(Payment)
+            .filter(Payment.paddle_transaction_id == paddle_transaction_id)
+            .first()
+        ) if paddle_transaction_id else None
+
+        if not payment:
+            custom_data = data.get("custom_data") or {}
+            order_reference = custom_data.get("order_reference", "")
+            payment = self.payment_repo.get_by_order_reference(order_reference) if order_reference else None
+
+        if not payment:
+            logger.warning(
+                "Payment not found for transaction.refunded",
+                extra={
+                    "event_id": event.event_id,
+                    "transaction_id": paddle_transaction_id,
+                },
+            )
+            return None
+
+        old_status = payment.status
+        reason = data.get("reason", "refund")
+
+        self.payment_repo.update_status(payment, PaymentStatus.REFUNDED, reason=reason)
+
+        pay_event = PaymentEvent(
+            id=uuid4(),
+            payment_id=payment.id,
+            event_type=PaymentEventType.REFUND,
+            provider_event_id=event.event_id,
+            signature_valid=True,
+            payload_raw=data,
+            status_before=old_status.value,
+            status_after=PaymentStatus.REFUNDED.value,
+        )
+        self.event_repo.create(pay_event)
+
+        logger.info(
+            f"Transaction refunded for payment {payment.id}",
+            extra={
+                "payment_id": str(payment.id),
+                "paddle_transaction_id": paddle_transaction_id,
+                "reason": reason,
+            },
+        )
+
+        await self._notify_payment_refunded(payment, reason)
+
+        return payment
+
+    # ------------------------------------------------------------------
+    # Subscription handlers
+    # ------------------------------------------------------------------
+
+    async def _handle_subscription_created(self, event: PaddleWebhookEvent) -> Optional[Payment]:
+        """Handle subscription.created -- log for audit, no status change."""
+        data = event.data
+        custom_data = data.get("custom_data") or {}
+        user_id = custom_data.get("user_id", "")
+        paddle_subscription_id = data.get("id", "")
+
+        logger.info(
+            "Paddle subscription created",
+            extra={
+                "event_id": event.event_id,
+                "paddle_subscription_id": paddle_subscription_id,
+                "user_id": user_id,
+                "status": data.get("status"),
+            },
+        )
+
+        # Store audit event on the payment if we can find it
+        payment = self._find_payment_by_subscription_or_custom_data(data)
+        if payment:
+            pay_event = PaymentEvent(
+                id=uuid4(),
+                payment_id=payment.id,
+                event_type=PaymentEventType.CALLBACK,
+                provider_event_id=event.event_id,
+                signature_valid=True,
+                payload_raw=data,
+                status_before=payment.status.value,
+                status_after=payment.status.value,
+            )
+            self.event_repo.create(pay_event)
+
+        return payment
+
+    async def _handle_subscription_activated(self, event: PaddleWebhookEvent) -> Optional[Payment]:
+        """Handle subscription.activated -- notify subscription_service to activate."""
+        data = event.data
+        custom_data = data.get("custom_data") or {}
+        user_id = custom_data.get("user_id", "")
+        paddle_subscription_id = data.get("id", "")
+        paddle_customer_id = data.get("customer_id", "")
+
+        # Extract price_id from items
+        paddle_price_id = ""
+        items = data.get("items") or []
+        if items and isinstance(items, list):
+            first_item = items[0]
+            paddle_price_id = first_item.get("price_id", "") or first_item.get("price", {}).get("id", "")
+
+        logger.info(
+            "Paddle subscription activated",
+            extra={
+                "event_id": event.event_id,
+                "paddle_subscription_id": paddle_subscription_id,
+                "user_id": user_id,
+            },
+        )
+
+        if user_id:
+            await self.subscription_client.notify_paddle_subscription_event(
+                user_id=user_id,
+                paddle_subscription_id=paddle_subscription_id,
+                event_type="activated",
+            )
+
+        # Store audit event
+        payment = self._find_payment_by_subscription_or_custom_data(data)
+        if payment:
+            pay_event = PaymentEvent(
+                id=uuid4(),
+                payment_id=payment.id,
+                event_type=PaymentEventType.CALLBACK,
+                provider_event_id=event.event_id,
+                signature_valid=True,
+                payload_raw=data,
+                status_before=payment.status.value,
+                status_after=payment.status.value,
+            )
+            self.event_repo.create(pay_event)
+
+        return payment
+
+    async def _handle_subscription_updated(self, event: PaddleWebhookEvent) -> Optional[Payment]:
+        """Handle subscription.updated -- detect plan changes and notify.
+
+        When a subscription's price item changes (upgrade/downgrade),
+        reverse-lookup the new plan_code from PaddlePriceMap and notify
+        subscription_service so it can update the user's plan.
+        """
+        data = event.data
+        custom_data = data.get("custom_data") or {}
+        user_id = custom_data.get("user_id", "")
+        paddle_subscription_id = data.get("id", "")
+
+        # Extract current price_id from items
+        new_price_id = ""
+        items = data.get("items") or []
+        if items and isinstance(items, list):
+            first_item = items[0]
+            new_price_id = (
+                first_item.get("price_id", "")
+                or first_item.get("price", {}).get("id", "")
+            )
+
+        logger.info(
+            "Paddle subscription updated",
+            extra={
+                "event_id": event.event_id,
+                "paddle_subscription_id": paddle_subscription_id,
+                "user_id": user_id,
+                "status": data.get("status"),
+                "new_price_id": new_price_id,
+            },
+        )
+
+        # Reverse-lookup plan_code for the new price
+        new_plan_code: Optional[str] = None
+        if new_price_id:
+            price_mapping = (
+                self.db.query(PaddlePriceMap)
+                .filter(
+                    PaddlePriceMap.paddle_price_id == new_price_id,
+                    PaddlePriceMap.is_active == True,  # noqa: E712
+                )
+                .first()
+            )
+            if price_mapping:
+                new_plan_code = price_mapping.plan_code
+
+        # If we resolved a plan_code, notify subscription_service
+        if user_id and new_plan_code:
+            logger.info(
+                "Detected plan change via subscription.updated webhook",
+                extra={
+                    "user_id": user_id,
+                    "new_plan_code": new_plan_code,
+                    "new_price_id": new_price_id,
+                    "paddle_subscription_id": paddle_subscription_id,
+                },
+            )
+
+            webhook_currency = (data.get("currency_code") or "USD").upper()
+            workspace_id = custom_data.get("workspace_id") or None
+
+            await self.subscription_client.notify_payment_success(
+                payment_id=uuid4(),  # synthetic ID — no real payment for webhook plan change
+                user_id=user_id,
+                workspace_id=workspace_id,
+                plan_code=new_plan_code,
+                amount=Decimal("0"),  # Paddle handles billing/proration
+                currency=webhook_currency,
+                paddle_subscription_id=paddle_subscription_id,
+                paddle_price_id=new_price_id,
+            )
+
+        # Store audit event
+        payment = self._find_payment_by_subscription_or_custom_data(data)
+        if payment:
+            pay_event = PaymentEvent(
+                id=uuid4(),
+                payment_id=payment.id,
+                event_type=PaymentEventType.CALLBACK,
+                provider_event_id=event.event_id,
+                signature_valid=True,
+                payload_raw=data,
+                status_before=payment.status.value,
+                status_after=payment.status.value,
+            )
+            self.event_repo.create(pay_event)
+
+        return payment
+
+    async def _handle_subscription_canceled(self, event: PaddleWebhookEvent) -> Optional[Payment]:
+        """Handle subscription.canceled -- notify subscription_service."""
+        data = event.data
+        custom_data = data.get("custom_data") or {}
+        user_id = custom_data.get("user_id", "")
+        paddle_subscription_id = data.get("id", "")
+        effective_from = data.get("scheduled_change", {}).get("effective_at", "") if data.get("scheduled_change") else ""
+
+        logger.info(
+            "Paddle subscription canceled",
+            extra={
+                "event_id": event.event_id,
+                "paddle_subscription_id": paddle_subscription_id,
+                "user_id": user_id,
+                "effective_from": effective_from,
+            },
+        )
+
+        if user_id:
+            await self.subscription_client.notify_paddle_subscription_event(
+                user_id=user_id,
+                paddle_subscription_id=paddle_subscription_id,
+                event_type="canceled",
+                effective_from=effective_from or None,
+            )
+
+        payment = self._find_payment_by_subscription_or_custom_data(data)
+        if payment:
+            pay_event = PaymentEvent(
+                id=uuid4(),
+                payment_id=payment.id,
+                event_type=PaymentEventType.CALLBACK,
+                provider_event_id=event.event_id,
+                signature_valid=True,
+                payload_raw=data,
+                status_before=payment.status.value,
+                status_after=payment.status.value,
+            )
+            self.event_repo.create(pay_event)
+
+        return payment
+
+    async def _handle_subscription_past_due(self, event: PaddleWebhookEvent) -> Optional[Payment]:
+        """Handle subscription.past_due -- notify subscription_service."""
+        data = event.data
+        custom_data = data.get("custom_data") or {}
+        user_id = custom_data.get("user_id", "")
+        paddle_subscription_id = data.get("id", "")
+
+        logger.info(
+            "Paddle subscription past due",
+            extra={
+                "event_id": event.event_id,
+                "paddle_subscription_id": paddle_subscription_id,
+                "user_id": user_id,
+            },
+        )
+
+        if user_id:
+            await self.subscription_client.notify_paddle_subscription_event(
+                user_id=user_id,
+                paddle_subscription_id=paddle_subscription_id,
+                event_type="past_due",
+            )
+
+        payment = self._find_payment_by_subscription_or_custom_data(data)
+        if payment:
+            pay_event = PaymentEvent(
+                id=uuid4(),
+                payment_id=payment.id,
+                event_type=PaymentEventType.CALLBACK,
+                provider_event_id=event.event_id,
+                signature_valid=True,
+                payload_raw=data,
+                status_before=payment.status.value,
+                status_after=payment.status.value,
+            )
+            self.event_repo.create(pay_event)
+
+        return payment
+
+    async def _handle_subscription_paused(self, event: PaddleWebhookEvent) -> Optional[Payment]:
+        """Handle subscription.paused -- notify subscription_service."""
+        data = event.data
+        custom_data = data.get("custom_data") or {}
+        user_id = custom_data.get("user_id", "")
+        paddle_subscription_id = data.get("id", "")
+        effective_from = data.get("paused_at", "")
+
+        logger.info(
+            "Paddle subscription paused",
+            extra={
+                "event_id": event.event_id,
+                "paddle_subscription_id": paddle_subscription_id,
+                "user_id": user_id,
+            },
+        )
+
+        if user_id:
+            await self.subscription_client.notify_paddle_subscription_event(
+                user_id=user_id,
+                paddle_subscription_id=paddle_subscription_id,
+                event_type="paused",
+                effective_from=effective_from or None,
+            )
+
+        payment = self._find_payment_by_subscription_or_custom_data(data)
+        if payment:
+            pay_event = PaymentEvent(
+                id=uuid4(),
+                payment_id=payment.id,
+                event_type=PaymentEventType.CALLBACK,
+                provider_event_id=event.event_id,
+                signature_valid=True,
+                payload_raw=data,
+                status_before=payment.status.value,
+                status_after=payment.status.value,
+            )
+            self.event_repo.create(pay_event)
+
+        return payment
+
+    async def _handle_subscription_resumed(self, event: PaddleWebhookEvent) -> Optional[Payment]:
+        """Handle subscription.resumed -- notify subscription_service."""
+        data = event.data
+        custom_data = data.get("custom_data") or {}
+        user_id = custom_data.get("user_id", "")
+        paddle_subscription_id = data.get("id", "")
+
+        logger.info(
+            "Paddle subscription resumed",
+            extra={
+                "event_id": event.event_id,
+                "paddle_subscription_id": paddle_subscription_id,
+                "user_id": user_id,
+            },
+        )
+
+        if user_id:
+            await self.subscription_client.notify_paddle_subscription_event(
+                user_id=user_id,
+                paddle_subscription_id=paddle_subscription_id,
+                event_type="resumed",
+            )
+
+        payment = self._find_payment_by_subscription_or_custom_data(data)
+        if payment:
+            pay_event = PaymentEvent(
+                id=uuid4(),
+                payment_id=payment.id,
+                event_type=PaymentEventType.CALLBACK,
+                provider_event_id=event.event_id,
+                signature_valid=True,
+                payload_raw=data,
+                status_before=payment.status.value,
+                status_after=payment.status.value,
+            )
+            self.event_repo.create(pay_event)
+
+        return payment
+
+    # ------------------------------------------------------------------
+    # Downstream notifications
+    # ------------------------------------------------------------------
+
+    async def _notify_payment_success(
+        self,
+        payment: Payment,
+        paddle_customer_id: Optional[str] = None,
+        paddle_subscription_id: Optional[str] = None,
+        paddle_price_id: Optional[str] = None,
+    ) -> None:
+        """Queue notification to subscription_service about a successful payment via outbox."""
         if payment.purpose != PaymentPurpose.SUBSCRIPTION or not payment.plan_code:
             logger.info(
                 f"Payment {payment.id} is not a subscription payment, skipping notification",
@@ -485,37 +1146,55 @@ class PaymentService:
             )
             return
 
-        success = await self.subscription_client.notify_payment_success(
-            payment_id=payment.id,
-            user_id=payment.user_id,
-            workspace_id=payment.workspace_id,
-            plan_code=payment.plan_code,
-            amount=payment.amount,
-            currency=payment.currency,
-            recurring_token=payment.recurring_token,
+        payload = {
+            "payment_id": str(payment.id),
+            "user_id": payment.user_id,
+            "workspace_id": payment.workspace_id,
+            "plan_code": payment.plan_code,
+            "amount": str(payment.amount),
+            "currency": payment.currency,
+            "paddle_customer_id": paddle_customer_id,
+            "paddle_subscription_id": paddle_subscription_id,
+            "paddle_price_id": paddle_price_id,
+        }
+
+        outbox_event = OutboxEvent(
+            aggregate_type="payment",
+            aggregate_id=payment.id,
+            event_type="payment_success",
+            payload=payload,
+            destination_url=f"{settings.subscription_service_url}/v1/internal/subscriptions/activate",
+        )
+        self.db.add(outbox_event)
+
+        logger.info(
+            f"Queued payment_success outbox event for payment {payment.id}",
+            extra={"payment_id": str(payment.id), "outbox_event_id": str(outbox_event.id)},
         )
 
-        if not success:
-            logger.error(
-                f"Failed to notify subscription_service about payment {payment.id}",
-                extra={"payment_id": str(payment.id)},
-            )
-            # In production: store in outbox for retry
-
-    async def _notify_payment_failure(self, payment: Payment, reason: Optional[str]):
-        """Notify subscription_service about failed payment"""
+    async def _notify_payment_failure(self, payment: Payment, reason: Optional[str]) -> None:
+        """Queue notification to subscription_service about a failed payment via outbox."""
         if payment.purpose != PaymentPurpose.SUBSCRIPTION:
             return
 
-        await self.subscription_client.notify_payment_failure(
-            payment_id=payment.id,
-            user_id=payment.user_id,
-            plan_code=payment.plan_code,
-            reason=reason,
-        )
+        payload = {
+            "payment_id": str(payment.id),
+            "user_id": payment.user_id,
+            "plan_code": payment.plan_code,
+            "reason": reason,
+        }
 
-    async def _notify_payment_refunded(self, payment: Payment, reason: Optional[str]):
-        """Notify subscription_service about refunded payment (cancels subscription)"""
+        outbox_event = OutboxEvent(
+            aggregate_type="payment",
+            aggregate_id=payment.id,
+            event_type="payment_failed",
+            payload=payload,
+            destination_url=f"{settings.subscription_service_url}/v1/internal/subscriptions/payment-failed",
+        )
+        self.db.add(outbox_event)
+
+    async def _notify_payment_refunded(self, payment: Payment, reason: Optional[str]) -> None:
+        """Queue notification to subscription_service about a refund via outbox."""
         if payment.purpose != PaymentPurpose.SUBSCRIPTION:
             logger.info(
                 f"Payment {payment.id} is not a subscription payment, skipping refund notification",
@@ -523,43 +1202,70 @@ class PaymentService:
             )
             return
 
-        success = await self.subscription_client.notify_payment_refunded(
-            payment_id=payment.id,
-            user_id=payment.user_id,
-            reason=reason,
+        payload = {
+            "payment_id": str(payment.id),
+            "user_id": payment.user_id,
+            "reason": reason,
+        }
+
+        outbox_event = OutboxEvent(
+            aggregate_type="payment",
+            aggregate_id=payment.id,
+            event_type="payment_refunded",
+            payload=payload,
+            destination_url=f"{settings.subscription_service_url}/v1/internal/subscriptions/payment-refunded",
+        )
+        self.db.add(outbox_event)
+
+        logger.info(
+            f"Queued payment_refunded outbox event for payment {payment.id}",
+            extra={"payment_id": str(payment.id)},
         )
 
-        if not success:
-            logger.error(
-                f"Failed to notify subscription_service about refund for payment {payment.id}",
-                extra={"payment_id": str(payment.id)},
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
+
+    def _find_payment_by_subscription_or_custom_data(self, data: dict[str, Any]) -> Optional[Payment]:
+        """Try to find a payment matching the webhook data.
+
+        Looks up by paddle_subscription_id first, then falls back to
+        order_reference from custom_data.
+        """
+        paddle_subscription_id = data.get("id", "") or data.get("subscription_id", "")
+
+        if paddle_subscription_id:
+            payment = (
+                self.db.query(Payment)
+                .filter(Payment.paddle_subscription_id == paddle_subscription_id)
+                .order_by(Payment.created_at.desc())
+                .first()
             )
-            # In production: store in outbox for retry
+            if payment:
+                return payment
 
-    def _map_wayforpay_status(self, transaction_status: str) -> PaymentStatus:
-        """Map WayForPay transaction status to internal payment status"""
-        mapping = {
-            "Approved": PaymentStatus.PAID,
-            "Pending": PaymentStatus.PENDING,
-            "Declined": PaymentStatus.FAILED,
-            "Expired": PaymentStatus.EXPIRED,
-            "Refunded": PaymentStatus.REFUNDED,
-            "Voided": PaymentStatus.CANCELED,
-        }
-        return mapping.get(transaction_status, PaymentStatus.FAILED)
+        custom_data = data.get("custom_data") or {}
+        order_reference = custom_data.get("order_reference", "")
+        if order_reference:
+            return self.payment_repo.get_by_order_reference(order_reference)
 
-    def _generate_order_reference(self) -> str:
-        """Generate unique order reference"""
+        return None
+
+    @staticmethod
+    def _generate_order_reference() -> str:
+        """Generate a unique order reference."""
         timestamp = int(datetime.utcnow().timestamp() * 1000)
-        return f"ORDER_{timestamp}_{uuid4().hex[:8]}"
+        return f"ORDER_{timestamp}_{uuid4().hex[:16]}"
 
-    def _get_product_name(self, request: CreatePaymentRequest) -> str:
-        """Get product name for payment"""
+    @staticmethod
+    def _get_product_name(request: CreatePaymentRequest) -> str:
+        """Get product name for the payment."""
         if request.purpose == PaymentPurpose.SUBSCRIPTION:
             return f"Subscription: {request.plan_code}"
         return "One-time payment"
 
-    def _compute_payload_hash(self, payload: dict) -> str:
-        """Compute hash of payload for idempotency"""
+    @staticmethod
+    def _compute_payload_hash(payload: dict) -> str:
+        """Compute SHA-256 hash of payload for idempotency."""
         payload_str = json.dumps(payload, sort_keys=True, default=str)
         return hashlib.sha256(payload_str.encode()).hexdigest()

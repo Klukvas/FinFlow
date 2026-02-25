@@ -12,6 +12,34 @@ from ..utils.errors import NotFoundError
 
 logger = logging.getLogger("payment_service.payment_repository")
 
+# Valid payment status transitions. Any transition not listed here is rejected.
+VALID_TRANSITIONS: dict[PaymentStatus, set[PaymentStatus]] = {
+    PaymentStatus.CREATED: {
+        PaymentStatus.PENDING,
+        PaymentStatus.PAID,
+        PaymentStatus.FAILED,
+        PaymentStatus.CANCELED,
+        PaymentStatus.EXPIRED,
+    },
+    PaymentStatus.PENDING: {
+        PaymentStatus.PAID,
+        PaymentStatus.FAILED,
+        PaymentStatus.CANCELED,
+        PaymentStatus.EXPIRED,
+    },
+    PaymentStatus.PAID: {
+        PaymentStatus.REFUNDED,
+        PaymentStatus.PARTIALLY_REFUNDED,
+    },
+    PaymentStatus.FAILED: set(),
+    PaymentStatus.CANCELED: set(),
+    PaymentStatus.EXPIRED: set(),
+    PaymentStatus.REFUNDED: set(),
+    PaymentStatus.PARTIALLY_REFUNDED: {
+        PaymentStatus.REFUNDED,
+    },
+}
+
 
 class PaymentRepository:
     """Repository for Payment operations"""
@@ -105,8 +133,19 @@ class PaymentRepository:
         new_status: PaymentStatus,
         reason: Optional[str] = None,
     ) -> Payment:
-        """Update payment status"""
+        """Update payment status with transition validation.
+
+        Raises:
+            ValueError: When the transition is not allowed.
+        """
         old_status = payment.status
+
+        allowed = VALID_TRANSITIONS.get(old_status, set())
+        if new_status not in allowed:
+            raise ValueError(
+                f"Invalid status transition: {old_status.value} -> {new_status.value}"
+            )
+
         payment.status = new_status
         payment.updated_at = datetime.utcnow()
 
@@ -141,6 +180,26 @@ class PaymentRepository:
         self.db.commit()
         self.db.refresh(payment)
         return payment
+
+    def get_active_payment_for_user_plan(
+        self,
+        user_id: str,
+        plan_code: str,
+    ) -> Optional[Payment]:
+        """Check for an existing CREATED/PENDING payment for this user+plan.
+
+        Used to prevent double-click double-charge scenarios.
+        """
+        return (
+            self.db.query(Payment)
+            .filter(
+                Payment.user_id == str(user_id),
+                Payment.plan_code == plan_code,
+                Payment.status.in_([PaymentStatus.CREATED, PaymentStatus.PENDING]),
+            )
+            .order_by(desc(Payment.created_at))
+            .first()
+        )
 
     def count_by_status(self, status: PaymentStatus) -> int:
         """Count payments by status"""

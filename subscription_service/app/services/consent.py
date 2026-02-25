@@ -1,5 +1,5 @@
 """
-Consent recording and management service for WayForPay compliance
+Consent recording and management service for payment provider compliance
 """
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ CONSENT_TEXTS = {
         "en": """I agree to subscribe to {plan_name} plan
 
 By subscribing, I confirm that:
-• My payment card details will be securely tokenized and stored by WayForPay payment processor
+• My payment card details will be securely tokenized and stored by Paddle payment processor
 • I authorize automatic monthly charges of {amount} {currency} to my payment card
 • Charges will occur on the {day} of each month starting from {start_date}
 • I can cancel my subscription at any time from my account settings
@@ -30,7 +30,7 @@ I have read and agree to the Terms of Service and Subscription & Payment Policy.
         "uk": """Я погоджуюся оформити підписку на план {plan_name}
 
 Підписуючись, я підтверджую, що:
-• Дані моєї платіжної картки будуть безпечно токенізовані та збережені платіжною системою WayForPay
+• Дані моєї платіжної картки будуть безпечно токенізовані та збережені платіжною системою Paddle
 • Я надаю дозвіл на автоматичне щомісячне списання {amount} {currency} з моєї платіжної картки
 • Списання відбуватиметься {day} числа кожного місяця, починаючи з {start_date}
 • Я можу скасувати підписку в будь-який час в налаштуваннях мого облікового запису
@@ -65,7 +65,7 @@ class ConsentService:
         Record user consent for subscription in audit log.
         
         This creates an immutable record of what the user agreed to,
-        when they agreed, and from where. Required for WayForPay compliance.
+        when they agreed, and from where. Required for payment provider compliance.
         
         Args:
             subscription_id: Subscription ID

@@ -40,7 +40,7 @@ services:
       CORS_ORIGINS: "http://localhost:3000,http://localhost:3002,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:3002,http://127.0.0.1:5173"
       SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
       WORKSPACE_SERVICE_URL: "http://workspace_service:8000"
-      INTERNAL_SECRET_TOKEN: "my-secret-token"
+      INTERNAL_SECRET_TOKEN: "${INTERNAL_SECRET_TOKEN:-changeme-in-production}"
     env_file:
       - ./user_service/.env.docker
     depends_on:
@@ -71,9 +71,9 @@ services:
       SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
       WORKSPACE_SERVICE_URL: "http://workspace_service:8000"
       DATABASE_URL: "postgresql://postgres:postgres@db:5432/category_db"
-      SECRET_KEY: "your-secret-key-here"
+      SECRET_KEY: "${SECRET_KEY:-changeme-in-production}"
       ALGORITHM: "HS256"
-      INTERNAL_SECRET_TOKEN: "my-secret-token"
+      INTERNAL_SECRET_TOKEN: "${INTERNAL_SECRET_TOKEN:-changeme-in-production}"
       LOG_LEVEL: "INFO"
     depends_on:
       db:
@@ -97,9 +97,9 @@ services:
       ACCOUNT_SERVICE_URL: "http://account_service:8000"
       CURRENCY_SERVICE_URL: "http://currency_service:8000"
       WORKSPACE_SERVICE_URL: "http://workspace_service:8000"
-      INTERNAL_SECRET_TOKEN: "my-secret-token"
+      INTERNAL_SECRET_TOKEN: "${INTERNAL_SECRET_TOKEN:-changeme-in-production}"
       DATABASE_URL: "postgresql://postgres:postgres@db:5432/expense_db"
-      SECRET_KEY: "your-secret-key-here"
+      SECRET_KEY: "${SECRET_KEY:-changeme-in-production}"
       SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
     env_file:
       - ./expense_service/.env.docker
@@ -126,9 +126,9 @@ services:
       CATEGORY_SERVICE_URL: "http://category_service:8000"
       ACCOUNT_SERVICE_URL: "http://account_service:8000"
       WORKSPACE_SERVICE_URL: "http://workspace_service:8000"
-      INTERNAL_SECRET_TOKEN: "my-secret-token"
+      INTERNAL_SECRET_TOKEN: "${INTERNAL_SECRET_TOKEN:-changeme-in-production}"
       DATABASE_URL: "postgresql://postgres:postgres@db:5432/income_db"
-      SECRET_KEY: "your-secret-key-here"
+      SECRET_KEY: "${SECRET_KEY:-changeme-in-production}"
       SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
     env_file:
       - ./income_service/.env.docker
@@ -159,9 +159,9 @@ services:
     environment:
       CORS_ORIGINS: "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
       DATABASE_URL: "postgresql://postgres:postgres@db:5432/recurring_db"
-      SECRET_KEY: "your-secret-key-here"
+      SECRET_KEY: "${SECRET_KEY:-changeme-in-production}"
       WORKSPACE_SERVICE_URL: "http://workspace_service:8000"
-      INTERNAL_SECRET_TOKEN: "my-secret-token"
+      INTERNAL_SECRET_TOKEN: "${INTERNAL_SECRET_TOKEN:-changeme-in-production}"
       SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
     env_file:
       - ./recurring_service/.env.docker
@@ -192,8 +192,8 @@ services:
     environment:
       CORS_ORIGINS: "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
       DATABASE_URL: "postgresql://postgres:postgres@db:5432/goals_db"
-      SECRET_KEY: "your-secret-key-here"
-      INTERNAL_SECRET_TOKEN: "my-secret-token"
+      SECRET_KEY: "${SECRET_KEY:-changeme-in-production}"
+      INTERNAL_SECRET_TOKEN: "${INTERNAL_SECRET_TOKEN:-changeme-in-production}"
       SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
       USER_SERVICE_URL: "http://user_service:8000"
       CURRENCY_SERVICE_URL: "http://currency_service:8000"
@@ -228,8 +228,8 @@ services:
       CATEGORY_SERVICE_URL: "http://category_service:8000"
       SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
       DATABASE_URL: "postgresql://postgres:postgres@db:5432/pdf_parser_db"
-      INTERNAL_SERVICE_TOKEN: "my-secret-token"
-      SECRET_KEY: "your-secret-key-here"
+      INTERNAL_SERVICE_TOKEN: "${INTERNAL_SECRET_TOKEN:-changeme-in-production}"
+      SECRET_KEY: "${SECRET_KEY:-changeme-in-production}"
       ALGORITHM: "HS256"
     env_file:
       - ./pdf_parser_service/.env.docker
@@ -256,9 +256,9 @@ services:
     environment:
       CORS_ORIGINS: "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
       DATABASE_URL: "postgresql://postgres:postgres@db:5432/debt_db"
-      SECRET_KEY: "your-secret-key-here"
+      SECRET_KEY: "${SECRET_KEY:-changeme-in-production}"
       WORKSPACE_SERVICE_URL: "http://workspace_service:8000"
-      INTERNAL_SECRET_TOKEN: "my-secret-token"
+      INTERNAL_SECRET_TOKEN: "${INTERNAL_SECRET_TOKEN:-changeme-in-production}"
       USER_SERVICE_URL: "http://user_service:8000"
       CURRENCY_SERVICE_URL: "http://currency_service:8000"
       CATEGORY_SERVICE_URL: "http://category_service:8000"
@@ -291,9 +291,9 @@ services:
       CORS_ORIGINS: "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
       REDIS_URL: "redis://redis:6379"
       DATABASE_URL: "postgresql://postgres:postgres@db:5432/account_db"
-      SECRET_KEY: "your-secret-key-here"
+      SECRET_KEY: "${SECRET_KEY:-changeme-in-production}"
       WORKSPACE_SERVICE_URL: "http://workspace_service:8000"
-      INTERNAL_SECRET_TOKEN: "my-secret-token"
+      INTERNAL_SECRET_TOKEN: "${INTERNAL_SECRET_TOKEN:-changeme-in-production}"
       SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
     env_file:
       - ./account_service/.env.docker
@@ -353,10 +353,10 @@ services:
       # App settings (SUBS_ prefix)
       DATABASE_URL: "postgresql://postgres:postgres@db:5432/subscription_db"
       REDIS_URL: "redis://redis:6379/0"
-      SECRET_KEY: "your-secret-key-here"
-      INTERNAL_SECRET_TOKEN: "my-secret-token"
+      SECRET_KEY: "${SECRET_KEY:-changeme-in-production}"
+      INTERNAL_SECRET_TOKEN: "${INTERNAL_SECRET_TOKEN:-changeme-in-production}"
       # JWT secret for admin token verification (must match user_service)
-      JWT_SECRET_KEY: "your-secret-key-here"
+      JWT_SECRET_KEY: "${JWT_SECRET_KEY:-changeme-in-production}"
     env_file:
       - ./subscription_service/.env.docker
     depends_on:
@@ -375,12 +375,12 @@ services:
         max-file: "3"
         labels: "service=subscription_service"
 
-  # IMPORTANT: Payment Service requires WayForPay configuration
+  # IMPORTANT: Payment Service requires Paddle Billing configuration
   # Before using, you MUST:
-  # 1. Get real WayForPay merchant credentials (not test_merch_n1)
-  # 2. Configure payment_service/.env.docker with your credentials
-  # 3. Run diagnostic: docker-compose exec payment_service python check_wayforpay_config.py
-  # See: WAYFORPAY_SETUP.md for complete setup instructions
+  # 1. Get Paddle API key and webhook secret from https://vendors.paddle.com
+  # 2. Configure payment_service/.env.docker with your Paddle credentials
+  # 3. Verify Paddle webhook URL is configured in Paddle notification settings
+  # See: payment_service/README.md for complete setup instructions
   payment_service:
     build:
       context: .
@@ -392,13 +392,13 @@ services:
       DATABASE_URL: "postgresql://postgres:postgres@db:5432/payment_db"
       REDIS_URL: "redis://redis:6379/0"
       LOG_LEVEL: "INFO"
-      INTERNAL_SECRET_TOKEN: "my-secret-token"
-      JWT_SECRET_KEY: "your-secret-key-here"
+      INTERNAL_SECRET_TOKEN: "${INTERNAL_SECRET_TOKEN:-changeme-in-production}"
+      JWT_SECRET_KEY: "${JWT_SECRET_KEY:-changeme-in-production}"
       JWT_ALGORITHM: "HS256"
       SERVICE_BASE_URL: "http://payment_service:8000"
       SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
       IDEMPOTENCY_TTL_SECONDS: "86400"
-      PAYMENTS_ENABLED: "false"  # Set to true when Wayforpay approval is received
+      # PAYMENTS_ENABLED is set in payment_service/.env.docker
     depends_on:
       db:
         condition: service_healthy
@@ -429,7 +429,7 @@ services:
       DATABASE_URL: "postgresql://postgres:postgres@db:5432/scheduler_db"
       REDIS_URL: "redis://redis:6379/0"
       LOG_LEVEL: "INFO"
-      INTERNAL_SECRET_TOKEN: "my-secret-token"
+      INTERNAL_SECRET_TOKEN: "${INTERNAL_SECRET_TOKEN:-changeme-in-production}"
       # Service URLs
       SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
       PAYMENT_SERVICE_URL: "http://payment_service:8000"
@@ -473,9 +473,9 @@ services:
     environment:
       CORS_ORIGINS: "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
       DATABASE_URL: "postgresql://postgres:postgres@db:5432/workspace_db"
-      SECRET_KEY: "your-secret-key-here"
+      SECRET_KEY: "${SECRET_KEY:-changeme-in-production}"
       ALGORITHM: "HS256"
-      INTERNAL_SECRET_TOKEN: "my-secret-token"
+      INTERNAL_SECRET_TOKEN: "${INTERNAL_SECRET_TOKEN:-changeme-in-production}"
       USER_SERVICE_URL: "http://user_service:8000"
       SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
       LOG_LEVEL: "INFO"

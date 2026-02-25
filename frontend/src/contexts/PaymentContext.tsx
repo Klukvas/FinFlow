@@ -1,15 +1,26 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { useApiClients } from '@/hooks/useApiClients';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  ReactNode,
+} from "react";
+import { useApiClients } from "@/hooks/useApiClients";
 import {
   CreatePaymentRequest,
+  ChangePlanRequest,
+  ChangePlanResponse,
   Payment,
   PaymentUIState,
-} from '@/types/payment';
-import { useAuth } from './AuthContext';
+} from "@/types/payment";
+import { useAuth } from "./AuthContext";
 
 interface PaymentContextType {
   state: PaymentUIState;
   createPayment: (request: CreatePaymentRequest) => Promise<Payment | null>;
+  changePlan: (
+    request: ChangePlanRequest,
+  ) => Promise<ChangePlanResponse | null>;
   getPayment: (paymentId: string) => Promise<Payment | null>;
   getPaymentByOrderRef: (orderReference: string) => Promise<Payment | null>;
   pollPaymentStatus: (paymentId: string) => Promise<Payment | null>;
@@ -20,7 +31,9 @@ interface PaymentContextType {
 
 const PaymentContext = createContext<PaymentContextType | undefined>(undefined);
 
-export const PaymentProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const PaymentProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const { user } = useAuth();
   const { payment: paymentApi } = useApiClients();
   const [state, setState] = useState<PaymentUIState>({
@@ -36,7 +49,7 @@ export const PaymentProvider: React.FC<{ children: ReactNode }> = ({ children })
       if (!user?.id) {
         setState((prev) => ({
           ...prev,
-          error: 'User not authenticated',
+          error: "User not authenticated",
         }));
         return null;
       }
@@ -48,19 +61,23 @@ export const PaymentProvider: React.FC<{ children: ReactNode }> = ({ children })
         const requestWithStringId = {
           ...request,
           user_id: String(request.user_id),
-          workspace_id: request.workspace_id ? String(request.workspace_id) : undefined,
+          workspace_id: request.workspace_id
+            ? String(request.workspace_id)
+            : undefined,
         };
 
-        // Generate idempotency key
-        const idempotencyKey = `${user.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        // Deterministic idempotency key: same key for same user+plan within a 5-min window
+        // This ensures server-side dedup works if the user double-clicks or retries quickly
+        const IDEMPOTENCY_WINDOW_MS = 5 * 60 * 1000;
+        const timeWindow = Math.floor(Date.now() / IDEMPOTENCY_WINDOW_MS);
+        const idempotencyKey = `${user.id}-${requestWithStringId.plan_code}-${timeWindow}`;
 
-        console.log('PaymentContext: Calling API to create payment', requestWithStringId);
-        const response = await paymentApi.createPayment(requestWithStringId, idempotencyKey);
-        console.log('PaymentContext: API response:', response);
-        console.log('PaymentContext: response.payment_url:', response.payment_url);
-        console.log('PaymentContext: response.provider_form_fields:', response.provider_form_fields);
+        const response = await paymentApi.createPayment(
+          requestWithStringId,
+          idempotencyKey,
+        );
 
-        if ('error' in response) {
+        if ("error" in response) {
           setState((prev) => ({
             ...prev,
             isProcessing: false,
@@ -69,8 +86,8 @@ export const PaymentProvider: React.FC<{ children: ReactNode }> = ({ children })
           return null;
         }
 
-        // Store payment info with form fields
-        const payment: Payment & { provider_form_fields?: Record<string, any> } = {
+        // Store payment info
+        const payment: Payment = {
           id: response.payment_id,
           order_reference: response.order_reference,
           provider: response.provider,
@@ -78,7 +95,8 @@ export const PaymentProvider: React.FC<{ children: ReactNode }> = ({ children })
           currency: response.currency,
           status: response.status,
           provider_payment_url: response.payment_url,
-          provider_form_fields: response.provider_form_fields,
+          checkout_url: response.checkout_url,
+          transaction_id: response.transaction_id,
           user_id: request.user_id,
           workspace_id: request.workspace_id,
           purpose: request.purpose,
@@ -87,10 +105,6 @@ export const PaymentProvider: React.FC<{ children: ReactNode }> = ({ children })
           created_at: response.created_at,
           updated_at: response.created_at,
         };
-        
-        console.log('PaymentContext: Created payment object:', payment);
-        console.log('PaymentContext: payment.provider_payment_url:', payment.provider_payment_url);
-        console.log('PaymentContext: payment.provider_form_fields:', payment.provider_form_fields);
 
         setState((prev) => ({
           ...prev,
@@ -100,125 +114,181 @@ export const PaymentProvider: React.FC<{ children: ReactNode }> = ({ children })
 
         return payment;
       } catch (error) {
-        console.error('Failed to create payment:', error);
+        console.error("Failed to create payment:", error);
         setState((prev) => ({
           ...prev,
           isProcessing: false,
-          error: error instanceof Error ? error.message : 'Failed to create payment',
+          error:
+            error instanceof Error ? error.message : "Failed to create payment",
         }));
         return null;
       }
     },
-    [user, paymentApi]
+    [user, paymentApi],
   );
 
-  const getPayment = useCallback(async (paymentId: string): Promise<Payment | null> => {
-    setState((prev) => ({ ...prev, isProcessing: true, error: undefined }));
-
-    try {
-      const response = await paymentApi.getPayment(paymentId);
-
-      if ('error' in response) {
+  const changePlan = useCallback(
+    async (request: ChangePlanRequest): Promise<ChangePlanResponse | null> => {
+      if (!user?.id) {
         setState((prev) => ({
           ...prev,
-          isProcessing: false,
-          error: response.error,
+          error: "User not authenticated",
         }));
         return null;
       }
 
-      setState((prev) => ({
-        ...prev,
-        isProcessing: false,
-        currentPayment: response,
-      }));
+      setState((prev) => ({ ...prev, isProcessing: true, error: undefined }));
 
-      return response;
-    } catch (error) {
-      console.error('Failed to get payment:', error);
-      setState((prev) => ({
-        ...prev,
-        isProcessing: false,
-        error: error instanceof Error ? error.message : 'Failed to get payment',
-      }));
-      return null;
-    }
-  }, [paymentApi]);
+      try {
+        const response = await paymentApi.changePlan(request);
 
-  const getPaymentByOrderRef = useCallback(async (orderReference: string): Promise<Payment | null> => {
-    setState((prev) => ({ ...prev, isProcessing: true, error: undefined }));
+        if ("error" in response) {
+          setState((prev) => ({
+            ...prev,
+            isProcessing: false,
+            error: response.error,
+          }));
+          return null;
+        }
 
-    try {
-      const response = await paymentApi.getPaymentByOrderRef(orderReference);
-
-      if ('error' in response) {
+        setState((prev) => ({ ...prev, isProcessing: false }));
+        return response;
+      } catch (error) {
+        console.error("Failed to change plan:", error);
         setState((prev) => ({
           ...prev,
           isProcessing: false,
-          error: response.error,
+          error:
+            error instanceof Error ? error.message : "Failed to change plan",
         }));
         return null;
       }
+    },
+    [user, paymentApi],
+  );
 
-      setState((prev) => ({
-        ...prev,
-        isProcessing: false,
-        currentPayment: response,
-      }));
+  const getPayment = useCallback(
+    async (paymentId: string): Promise<Payment | null> => {
+      setState((prev) => ({ ...prev, isProcessing: true, error: undefined }));
 
-      return response;
-    } catch (error) {
-      console.error('Failed to get payment by order ref:', error);
-      setState((prev) => ({
-        ...prev,
-        isProcessing: false,
-        error: error instanceof Error ? error.message : 'Failed to get payment',
-      }));
-      return null;
-    }
-  }, [paymentApi]);
+      try {
+        const response = await paymentApi.getPayment(paymentId);
 
-  const pollPaymentStatus = useCallback(async (paymentId: string): Promise<Payment | null> => {
-    setState((prev) => ({ ...prev, isProcessing: true, error: undefined }));
+        if ("error" in response) {
+          setState((prev) => ({
+            ...prev,
+            isProcessing: false,
+            error: response.error,
+          }));
+          return null;
+        }
 
-    try {
-      const response = await paymentApi.pollPaymentStatus(paymentId);
-
-      if ('error' in response) {
         setState((prev) => ({
           ...prev,
           isProcessing: false,
-          error: response.error,
+          currentPayment: response,
+        }));
+
+        return response;
+      } catch (error) {
+        console.error("Failed to get payment:", error);
+        setState((prev) => ({
+          ...prev,
+          isProcessing: false,
+          error:
+            error instanceof Error ? error.message : "Failed to get payment",
         }));
         return null;
       }
+    },
+    [paymentApi],
+  );
 
-      setState((prev) => ({
-        ...prev,
-        isProcessing: false,
-        currentPayment: response,
-      }));
+  const getPaymentByOrderRef = useCallback(
+    async (orderReference: string): Promise<Payment | null> => {
+      setState((prev) => ({ ...prev, isProcessing: true, error: undefined }));
 
-      return response;
-    } catch (error) {
-      console.error('Failed to poll payment status:', error);
-      setState((prev) => ({
-        ...prev,
-        isProcessing: false,
-        error: error instanceof Error ? error.message : 'Failed to poll payment status',
-      }));
-      return null;
-    }
-  }, [paymentApi]);
+      try {
+        const response = await paymentApi.getPaymentByOrderRef(orderReference);
+
+        if ("error" in response) {
+          setState((prev) => ({
+            ...prev,
+            isProcessing: false,
+            error: response.error,
+          }));
+          return null;
+        }
+
+        setState((prev) => ({
+          ...prev,
+          isProcessing: false,
+          currentPayment: response,
+        }));
+
+        return response;
+      } catch (error) {
+        console.error("Failed to get payment by order ref:", error);
+        setState((prev) => ({
+          ...prev,
+          isProcessing: false,
+          error:
+            error instanceof Error ? error.message : "Failed to get payment",
+        }));
+        return null;
+      }
+    },
+    [paymentApi],
+  );
+
+  const pollPaymentStatus = useCallback(
+    async (paymentId: string): Promise<Payment | null> => {
+      setState((prev) => ({ ...prev, isProcessing: true, error: undefined }));
+
+      try {
+        const response = await paymentApi.pollPaymentStatus(paymentId);
+
+        if ("error" in response) {
+          setState((prev) => ({
+            ...prev,
+            isProcessing: false,
+            error: response.error,
+          }));
+          return null;
+        }
+
+        setState((prev) => ({
+          ...prev,
+          isProcessing: false,
+          currentPayment: response,
+        }));
+
+        return response;
+      } catch (error) {
+        console.error("Failed to poll payment status:", error);
+        setState((prev) => ({
+          ...prev,
+          isProcessing: false,
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to poll payment status",
+        }));
+        return null;
+      }
+    },
+    [paymentApi],
+  );
 
   const redirectToPayment = useCallback((paymentUrl: string) => {
-    // Redirect to WayForPay or other payment provider
+    // Redirect to payment provider checkout
     window.location.href = paymentUrl;
   }, []);
 
   const value: PaymentContextType = {
     state,
     createPayment,
+    changePlan,
     getPayment,
     getPaymentByOrderRef,
     pollPaymentStatus,
@@ -227,13 +297,15 @@ export const PaymentProvider: React.FC<{ children: ReactNode }> = ({ children })
     isProcessing: state.isProcessing,
   };
 
-  return <PaymentContext.Provider value={value}>{children}</PaymentContext.Provider>;
+  return (
+    <PaymentContext.Provider value={value}>{children}</PaymentContext.Provider>
+  );
 };
 
 export const usePayment = (): PaymentContextType => {
   const context = useContext(PaymentContext);
   if (!context) {
-    throw new Error('usePayment must be used within a PaymentProvider');
+    throw new Error("usePayment must be used within a PaymentProvider");
   }
   return context;
 };

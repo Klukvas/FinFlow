@@ -42,7 +42,7 @@ if self.event_repo.has_callback_been_processed(payment.id, provider_event_id, pa
 
 **Webhook не приходит вообще:**
 - ✅ Reconciliation service exists (`SCHEDULER_TODO.md`)
-- ✅ `verify_payment_status()` API call to WayForPay CHECK_STATUS
+- ✅ `verify_payment_status()` API call to Paddle CHECK_STATUS
 - ⚠️ **NOT AUTOMATED**: Cron job not set up yet
 
 ### Risks:
@@ -109,7 +109,7 @@ Subscription.status: 'active' | 'past_due' | 'canceled' | 'paused'
 - 🔴 **HIGH RISK**: No automatic retry = lost revenue
 
 ### TODO:
-- [ ] Add recurring payment support (save recToken from WayForPay)
+- [ ] Add recurring payment support (save recToken from Paddle)
 - [ ] Implement retry logic (3 attempts over 7 days)
 - [ ] Add grace period (e.g., 7 days of access after expiry)
 - [ ] Send dunning emails
@@ -132,11 +132,11 @@ class PaymentStatus(str, enum.Enum):
 
 ```python
 # internal.py - refund endpoint
-# TODO: Implement actual refund via WayForPay API
+# TODO: Implement actual refund via Paddle API
 ```
 
 **Webhook:**
-- ✅ "Refunded" status from WayForPay is mapped to REFUNDED
+- ✅ "Refunded" status from Paddle is mapped to REFUNDED
 
 **Problem:**
 - ❌ Refund does NOT automatically cancel subscription
@@ -147,7 +147,7 @@ class PaymentStatus(str, enum.Enum):
 - 🔴 **HIGH RISK**: No chargeback handling
 
 ### TODO:
-- [ ] Implement actual refund via WayForPay API
+- [ ] Implement actual refund via Paddle API
 - [ ] On refund → cancel subscription OR downgrade to free
 - [ ] Add chargeback webhook handling
 - [ ] Add chargeback alerting
@@ -182,7 +182,7 @@ amount = Column(Numeric(10, 2), nullable=False)
 ### Текущая реализация:
 
 **Code exists:**
-- ✅ `WayForPayClient.verify_payment_status()` - CHECK_STATUS API
+- ✅ `PaddleClient.verify_payment_status()` - CHECK_STATUS API
 - ✅ Reconciliation logic documented in `SCHEDULER_TODO.md`
 
 **Not automated:**
@@ -206,7 +206,7 @@ amount = Column(Numeric(10, 2), nullable=False)
 
 **Webhook Signature Verification:**
 ```python
-# wayforpay_client.py:128-163
+# paddle_client.py (webhook signature verification)
 def verify_callback_signature(self, callback_data: dict[str, Any]) -> bool:
     # HMAC verification with merchant secret key
     signature_fields = [merchantAccount, orderReference, amount, currency, ...]
@@ -226,11 +226,11 @@ def verify_internal_token(x_internal_token: str = Header(...)):
 ```
 
 ### Risks:
-- ⚠️ **LOW RISK**: No IP whitelist for WayForPay webhooks
+- ⚠️ **LOW RISK**: No IP whitelist for Paddle webhooks
 - ⚠️ **LOW RISK**: No rate limiting on webhook endpoint
 
 ### TODO:
-- [ ] Add IP whitelist for WayForPay (optional, signature is enough)
+- [ ] Add IP whitelist for Paddle (optional, signature is enough)
 - [ ] Add rate limiting on webhook endpoint
 
 ---

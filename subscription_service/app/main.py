@@ -30,6 +30,7 @@ def create_app() -> FastAPI:
     from .routers.features import router as features_router
     from .routers.internal import router as internal_router
     from .routers.admin_plans import router as admin_plans_router
+    from .routers.admin_subscriptions import router as admin_subs_router
     from .routers.consent import router as consent_router
 
     app.include_router(plans_router, prefix="/v1", tags=["plans"])
@@ -38,6 +39,7 @@ def create_app() -> FastAPI:
     app.include_router(features_router, prefix="/v1", tags=["features"])
     app.include_router(internal_router, prefix="/v1", tags=["internal"])
     app.include_router(admin_plans_router, prefix="/v1", tags=["admin"])
+    app.include_router(admin_subs_router, prefix="/v1", tags=["admin"])
     app.include_router(consent_router, prefix="/v1", tags=["consent"])
 
     app.add_exception_handler(ServiceError, service_exception_handler)

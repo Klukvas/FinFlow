@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import hashlib
 import httpx
+from datetime import date
 from typing import Dict, Any, Optional
 from decimal import Decimal
 
@@ -49,6 +51,11 @@ class PaymentClient:
         """
         url = f"{self.base_url}/v1/internal/payments:recurring"
 
+        # Deterministic idempotency key prevents duplicate charges on retry
+        idempotency_key = hashlib.sha256(
+            f"renewal_{subscription_id}_{date.today().isoformat()}".encode()
+        ).hexdigest()
+
         payload = {
             "user_id": user_id,
             "subscription_id": subscription_id,
@@ -58,10 +65,12 @@ class PaymentClient:
             "recurring_token": recurring_token,
         }
 
+        headers = {**self._get_headers(), "Idempotency-Key": idempotency_key}
+
         try:
             async with httpx.AsyncClient(timeout=60.0) as client:
                 response = await client.post(
-                    url, json=payload, headers=self._get_headers()
+                    url, json=payload, headers=headers
                 )
                 response.raise_for_status()
                 data = response.json()

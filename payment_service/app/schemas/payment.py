@@ -4,9 +4,13 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Optional, Any
 from uuid import UUID
-from pydantic import BaseModel, Field, ConfigDict
+import re
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 from ..models.models import PaymentStatus, PaymentProvider, PaymentPurpose
+
+
+_CURRENCY_RE = re.compile(r"^[A-Z]{3}$")
 
 
 class CreatePaymentRequest(BaseModel):
@@ -20,6 +24,14 @@ class CreatePaymentRequest(BaseModel):
     return_url: Optional[str] = None
     metadata: Optional[dict[str, Any]] = None
 
+    @field_validator("currency")
+    @classmethod
+    def validate_currency(cls, v: str) -> str:
+        v = v.upper()
+        if not _CURRENCY_RE.match(v):
+            raise ValueError("currency must be a 3-letter ISO 4217 code (e.g. USD, EUR, UAH)")
+        return v
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -32,7 +44,9 @@ class CreatePaymentResponse(BaseModel):
     currency: str
     status: PaymentStatus
     payment_url: Optional[str] = None
-    provider_form_fields: Optional[dict[str, Any]] = None  # Form fields for POST
+    checkout_url: Optional[str] = None  # Paddle checkout URL
+    transaction_id: Optional[str] = None  # Paddle transaction ID for Paddle.js overlay
+    provider_form_fields: Optional[dict[str, Any]] = None  # Legacy form fields
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -77,24 +91,39 @@ class PaymentOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class WebhookWayForPayRequest(BaseModel):
-    """WayForPay webhook/callback payload"""
-    merchantAccount: str
-    orderReference: str
-    merchantSignature: str
-    amount: Decimal
-    currency: str
-    authCode: Optional[str] = None
-    cardPan: Optional[str] = None
-    transactionStatus: str
-    reasonCode: Optional[int] = None
-    reason: Optional[str] = None
-    createdDate: Optional[int] = None
-    processingDate: Optional[int] = None
-    fee: Optional[Decimal] = None
-    paymentSystem: Optional[str] = None
-    recToken: Optional[str] = None  # Recurring payment token
-    
+class PaddleWebhookEvent(BaseModel):
+    """Paddle Billing webhook event payload.
+
+    Paddle sends a JSON body with these top-level fields for every
+    notification.  The ``data`` dict contains the event-specific
+    payload (transaction, subscription, etc.).
+    """
+    event_id: str
+    event_type: str
+    occurred_at: str
+    data: dict[str, Any]
+    notification_id: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ChangePlanRequest(BaseModel):
+    """Request to change subscription plan (upgrade/downgrade)."""
+    user_id: str
+    new_plan_code: str
+    paddle_subscription_id: str
+    metadata: Optional[dict[str, Any]] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ChangePlanResponse(BaseModel):
+    """Response after plan change."""
+    success: bool
+    old_plan_code: Optional[str] = None
+    new_plan_code: str
+    paddle_subscription_id: str
+
     model_config = ConfigDict(from_attributes=True)
 
 

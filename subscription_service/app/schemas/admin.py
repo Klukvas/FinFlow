@@ -77,3 +77,48 @@ class FeatureOut(BaseModel):
 class AdminFeaturesListResponse(BaseModel):
     """List of features for admin"""
     items: List[FeatureOut]
+
+
+# --- Admin Subscription schemas ---
+
+class AdminSubscriptionOut(BaseModel):
+    """Full subscription details for admin view"""
+    id: int
+    user_id: str
+    plan_code: str
+    status: str
+    started_at: datetime
+    expires_at: Optional[datetime] = None
+    canceled_at: Optional[datetime] = None
+    auto_renew: bool = True
+    payment_provider: Optional[str] = None
+    last_payment_id: Optional[str] = None
+    next_billing_date: Optional[datetime] = None
+    paddle_customer_id: Optional[str] = None
+    paddle_subscription_id: Optional[str] = None
+    paddle_price_id: Optional[str] = None
+    cancellation_reason: Optional[str] = None
+    cancellation_comment: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class AdminSubscriptionsListResponse(BaseModel):
+    """Paginated list of subscriptions for admin"""
+    items: List[AdminSubscriptionOut]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
+class SubscriptionStatsOut(BaseModel):
+    """Subscription status counts"""
+    total: int
+    active: int
+    past_due: int
+    canceled: int
+    paused: int

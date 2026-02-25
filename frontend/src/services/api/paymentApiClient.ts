@@ -1,11 +1,13 @@
 import {
   CreatePaymentRequest,
   CreatePaymentResponse,
+  ChangePlanRequest,
+  ChangePlanResponse,
   Payment,
   PaymentHistoryFilters,
-} from '@/types/payment';
-import { AuthHttpClient } from './AuthHttpClient';
-import { config } from '@/config/env';
+} from "@/types/payment";
+import { AuthHttpClient } from "./AuthHttpClient";
+import { config } from "@/config/env";
 
 export interface PaymentErrorResponse {
   error: string;
@@ -16,14 +18,14 @@ export class PaymentApiClient {
 
   constructor(
     getToken: () => string | null,
-    refreshToken: () => Promise<boolean>
+    refreshToken: () => Promise<boolean>,
   ) {
-    const baseUrl = config.api.paymentServiceUrl || 'http://localhost:8013';
+    const baseUrl = config.api.paymentServiceUrl || "http://localhost:8013";
     this.httpClient = new AuthHttpClient(
       `${baseUrl}/v1`,
       getToken,
       refreshToken,
-      true // skip workspace header for payment service
+      true, // skip workspace header for payment service
     );
   }
 
@@ -32,14 +34,18 @@ export class PaymentApiClient {
    */
   async createPayment(
     request: CreatePaymentRequest,
-    idempotencyKey?: string
+    idempotencyKey?: string,
   ): Promise<CreatePaymentResponse | PaymentErrorResponse> {
     const headers: Record<string, string> = {};
     if (idempotencyKey) {
-      headers['Idempotency-Key'] = idempotencyKey;
+      headers["Idempotency-Key"] = idempotencyKey;
     }
 
-    return this.httpClient.post<CreatePaymentResponse>('/payments', request, headers);
+    return this.httpClient.post<CreatePaymentResponse>(
+      "/payments",
+      request,
+      headers,
+    );
   }
 
   /**
@@ -52,7 +58,9 @@ export class PaymentApiClient {
   /**
    * Get payment by order reference
    */
-  async getPaymentByOrderRef(orderReference: string): Promise<Payment | PaymentErrorResponse> {
+  async getPaymentByOrderRef(
+    orderReference: string,
+  ): Promise<Payment | PaymentErrorResponse> {
     return this.httpClient.get<Payment>(`/payments/by-order/${orderReference}`);
   }
 
@@ -60,16 +68,28 @@ export class PaymentApiClient {
    * List user's payments
    */
   async listPayments(
-    filters: PaymentHistoryFilters = {}
+    filters: PaymentHistoryFilters = {},
   ): Promise<Payment[] | PaymentErrorResponse> {
     const params = new URLSearchParams();
-    if (filters.limit) params.append('limit', filters.limit.toString());
-    if (filters.offset) params.append('offset', filters.offset.toString());
+    if (filters.limit) params.append("limit", filters.limit.toString());
+    if (filters.offset) params.append("offset", filters.offset.toString());
 
     const queryString = params.toString();
-    const endpoint = `/payments${queryString ? `?${queryString}` : ''}`;
+    const endpoint = `/payments${queryString ? `?${queryString}` : ""}`;
 
     return this.httpClient.get<Payment[]>(endpoint);
+  }
+
+  /**
+   * Change subscription plan (upgrade/downgrade) via Paddle API
+   */
+  async changePlan(
+    request: ChangePlanRequest,
+  ): Promise<ChangePlanResponse | PaymentErrorResponse> {
+    return this.httpClient.post<ChangePlanResponse>(
+      "/payments/change-plan",
+      request,
+    );
   }
 
   /**
@@ -78,17 +98,17 @@ export class PaymentApiClient {
   async pollPaymentStatus(
     paymentId: string,
     maxAttempts: number = 30,
-    intervalMs: number = 5000
+    intervalMs: number = 5000,
   ): Promise<Payment | PaymentErrorResponse> {
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       const result = await this.getPayment(paymentId);
 
-      if ('error' in result) {
+      if ("error" in result) {
         return result;
       }
 
       // If payment is in terminal state, return it
-      if (['PAID', 'FAILED', 'EXPIRED', 'CANCELED'].includes(result.status)) {
+      if (["PAID", "FAILED", "EXPIRED", "CANCELED"].includes(result.status)) {
         return result;
       }
 
@@ -99,7 +119,7 @@ export class PaymentApiClient {
     }
 
     return {
-      error: 'Payment status polling timeout',
+      error: "Payment status polling timeout",
     };
   }
 }

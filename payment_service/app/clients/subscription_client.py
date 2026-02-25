@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 from decimal import Decimal
-from typing import Optional
+from typing import Optional, Any
 from uuid import UUID
 import httpx
 
@@ -10,13 +11,82 @@ from ..config import settings
 
 logger = logging.getLogger("payment_service.subscription_client")
 
+# Retry configuration
+MAX_RETRIES = 3
+INITIAL_BACKOFF_SECONDS = 1.0  # 1s, 2s, 4s
+
 
 class SubscriptionClient:
-    """Client for communicating with subscription_service"""
+    """Client for communicating with subscription_service."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.base_url = settings.subscription_service_url.rstrip("/")
         self.internal_token = settings.internal_secret_token
+        self._timeout = httpx.Timeout(connect=5.0, read=15.0, write=10.0, pool=5.0)
+
+    # ------------------------------------------------------------------
+    # Retry helper
+    # ------------------------------------------------------------------
+
+    async def _post_with_retry(
+        self,
+        url: str,
+        payload: dict[str, Any],
+        *,
+        max_retries: int = MAX_RETRIES,
+    ) -> tuple[bool, Optional[httpx.Response]]:
+        """POST with exponential backoff retry.
+
+        Retries on 5xx errors and connection/timeout failures.
+        Returns immediately on 2xx success or 4xx client errors.
+
+        Args:
+            url: Target URL.
+            payload: JSON body.
+            max_retries: Maximum number of attempts.
+
+        Returns:
+            Tuple of (success: bool, response or None).
+        """
+        headers = self._build_headers()
+        last_exc: Optional[Exception] = None
+
+        for attempt in range(1, max_retries + 1):
+            try:
+                async with httpx.AsyncClient(timeout=self._timeout) as client:
+                    response = await client.post(url, json=payload, headers=headers)
+                    if response.is_success:
+                        return True, response
+                    # Don't retry on 4xx — it's a client error
+                    if response.status_code < 500:
+                        return False, response
+                    last_exc = httpx.HTTPStatusError(
+                        f"HTTP {response.status_code}",
+                        request=response.request,
+                        response=response,
+                    )
+            except (httpx.ConnectError, httpx.ReadTimeout, httpx.WriteTimeout, httpx.PoolTimeout) as exc:
+                last_exc = exc
+            except Exception as exc:
+                last_exc = exc
+
+            if attempt < max_retries:
+                backoff = INITIAL_BACKOFF_SECONDS * (2 ** (attempt - 1))
+                logger.warning(
+                    f"Retry {attempt}/{max_retries} for {url} in {backoff}s",
+                    extra={"url": url, "attempt": attempt, "backoff": backoff},
+                )
+                await asyncio.sleep(backoff)
+
+        logger.error(
+            f"All {max_retries} attempts failed for {url}",
+            extra={"url": url, "last_error": str(last_exc)},
+        )
+        return False, None
+
+    # ------------------------------------------------------------------
+    # Payment lifecycle notifications
+    # ------------------------------------------------------------------
 
     async def notify_payment_success(
         self,
@@ -27,24 +97,14 @@ class SubscriptionClient:
         amount: Decimal,
         currency: str,
         recurring_token: Optional[str] = None,
+        paddle_customer_id: Optional[str] = None,
+        paddle_subscription_id: Optional[str] = None,
+        paddle_price_id: Optional[str] = None,
     ) -> bool:
-        """
-        Notify subscription_service about successful payment
-        
-        Args:
-            payment_id: Payment ID
-            user_id: User ID who made the payment
-            workspace_id: Workspace ID (if applicable)
-            plan_code: Plan code to activate
-            amount: Payment amount
-            currency: Payment currency
-        
-        Returns:
-            True if notification was successful
-        """
+        """Notify subscription_service about a successful payment."""
         url = f"{self.base_url}/v1/internal/subscriptions/activate"
-        
-        payload = {
+
+        payload: dict[str, Any] = {
             "payment_id": str(payment_id),
             "user_id": str(user_id),
             "workspace_id": str(workspace_id) if workspace_id else None,
@@ -52,51 +112,35 @@ class SubscriptionClient:
             "amount": str(amount),
             "currency": currency,
         }
-        
-        # Include recurring token if available
+
         if recurring_token:
             payload["recurring_token"] = recurring_token
+        if paddle_customer_id:
+            payload["paddle_customer_id"] = paddle_customer_id
+        if paddle_subscription_id:
+            payload["paddle_subscription_id"] = paddle_subscription_id
+        if paddle_price_id:
+            payload["paddle_price_id"] = paddle_price_id
 
-        headers = {
-            "X-Internal-Token": self.internal_token,
-            "Content-Type": "application/json",
-        }
+        success, _ = await self._post_with_retry(url, payload)
 
-        try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                response = await client.post(url, json=payload, headers=headers)
-                response.raise_for_status()
-
-                logger.info(
-                    f"Successfully notified subscription_service about payment {payment_id}",
-                    extra={
-                        "payment_id": str(payment_id),
-                        "user_id": str(user_id),
-                        "plan_code": plan_code,
-                    },
-                )
-                return True
-
-        except httpx.HTTPStatusError as e:
-            logger.error(
-                f"Failed to notify subscription_service (HTTP {e.response.status_code}): {e}",
+        if success:
+            logger.info(
+                f"Successfully notified subscription_service about payment {payment_id}",
                 extra={
                     "payment_id": str(payment_id),
-                    "status_code": e.response.status_code,
-                    "error": str(e),
+                    "user_id": str(user_id),
+                    "plan_code": plan_code,
+                    "has_paddle_ids": bool(paddle_subscription_id),
                 },
             )
-            return False
-
-        except Exception as e:
+        else:
             logger.error(
-                f"Failed to notify subscription_service: {e}",
-                extra={
-                    "payment_id": str(payment_id),
-                    "error": str(e),
-                },
+                f"Failed to notify subscription_service about payment {payment_id} after retries",
+                extra={"payment_id": str(payment_id)},
             )
-            return False
+
+        return success
 
     async def notify_payment_failure(
         self,
@@ -105,59 +149,30 @@ class SubscriptionClient:
         plan_code: Optional[str],
         reason: Optional[str],
     ) -> bool:
-        """
-        Notify subscription_service about failed payment
-        
-        Args:
-            payment_id: Payment ID
-            user_id: User ID
-            plan_code: Plan code (if applicable)
-            reason: Failure reason
-        
-        Returns:
-            True if notification was successful
-        """
+        """Notify subscription_service about a failed payment."""
         url = f"{self.base_url}/v1/internal/subscriptions/payment-failed"
-        
-        payload = {
+
+        payload: dict[str, Any] = {
             "payment_id": str(payment_id),
             "user_id": str(user_id),
             "plan_code": plan_code,
             "reason": reason,
         }
 
-        headers = {
-            "X-Internal-Token": self.internal_token,
-            "Content-Type": "application/json",
-        }
+        success, _ = await self._post_with_retry(url, payload)
 
-        try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                response = await client.post(url, json=payload, headers=headers)
-                # Don't raise on 4xx/5xx - this is optional notification
-                
-                if response.is_success:
-                    logger.info(
-                        f"Notified subscription_service about payment failure {payment_id}",
-                        extra={"payment_id": str(payment_id)},
-                    )
-                    return True
-                else:
-                    logger.warning(
-                        f"Failed to notify subscription_service about payment failure",
-                        extra={
-                            "payment_id": str(payment_id),
-                            "status_code": response.status_code,
-                        },
-                    )
-                    return False
-
-        except Exception as e:
-            logger.warning(
-                f"Exception notifying subscription_service about payment failure: {e}",
-                extra={"payment_id": str(payment_id), "error": str(e)},
+        if success:
+            logger.info(
+                f"Notified subscription_service about payment failure {payment_id}",
+                extra={"payment_id": str(payment_id)},
             )
-            return False
+        else:
+            logger.warning(
+                f"Failed to notify subscription_service about payment failure {payment_id}",
+                extra={"payment_id": str(payment_id)},
+            )
+
+        return success
 
     async def notify_payment_refunded(
         self,
@@ -165,63 +180,83 @@ class SubscriptionClient:
         user_id: str,
         reason: Optional[str] = None,
     ) -> bool:
-        """
-        Notify subscription_service about refunded/chargebacked payment.
-        
-        This will cancel the user's subscription.
-        
-        Args:
-            payment_id: Payment ID
-            user_id: User ID
-            reason: Refund reason
-        
-        Returns:
-            True if notification was successful
-        """
+        """Notify subscription_service about a refunded payment."""
         url = f"{self.base_url}/v1/internal/subscriptions/payment-refunded"
-        
-        payload = {
+
+        payload: dict[str, Any] = {
             "payment_id": str(payment_id),
             "user_id": str(user_id),
             "reason": reason,
         }
 
-        headers = {
+        success, _ = await self._post_with_retry(url, payload)
+
+        if success:
+            logger.info(
+                f"Notified subscription_service about payment refund {payment_id}",
+                extra={"payment_id": str(payment_id), "user_id": str(user_id)},
+            )
+        else:
+            logger.error(
+                f"Failed to notify subscription_service about refund for payment {payment_id}",
+                extra={"payment_id": str(payment_id)},
+            )
+
+        return success
+
+    # ------------------------------------------------------------------
+    # Paddle subscription lifecycle events
+    # ------------------------------------------------------------------
+
+    async def notify_paddle_subscription_event(
+        self,
+        user_id: str,
+        paddle_subscription_id: str,
+        event_type: str,
+        effective_from: Optional[str] = None,
+        reason: Optional[str] = None,
+    ) -> bool:
+        """Notify subscription_service about a Paddle subscription lifecycle event."""
+        url = f"{self.base_url}/v1/internal/subscriptions/paddle-event"
+
+        payload: dict[str, Any] = {
+            "user_id": user_id,
+            "paddle_subscription_id": paddle_subscription_id,
+            "event_type": event_type,
+            "effective_from": effective_from,
+            "reason": reason,
+        }
+
+        success, _ = await self._post_with_retry(url, payload)
+
+        if success:
+            logger.info(
+                f"Notified subscription_service about Paddle event: {event_type}",
+                extra={
+                    "user_id": user_id,
+                    "paddle_subscription_id": paddle_subscription_id,
+                    "event_type": event_type,
+                },
+            )
+        else:
+            logger.error(
+                f"Failed to notify subscription_service about Paddle event: {event_type}",
+                extra={
+                    "user_id": user_id,
+                    "paddle_subscription_id": paddle_subscription_id,
+                    "event_type": event_type,
+                },
+            )
+
+        return success
+
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
+
+    def _build_headers(self) -> dict[str, str]:
+        """Return standard internal-auth headers."""
+        return {
             "X-Internal-Token": self.internal_token,
             "Content-Type": "application/json",
         }
-
-        try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                response = await client.post(url, json=payload, headers=headers)
-                response.raise_for_status()
-
-                logger.info(
-                    f"Notified subscription_service about payment refund {payment_id}",
-                    extra={
-                        "payment_id": str(payment_id),
-                        "user_id": str(user_id),
-                    },
-                )
-                return True
-
-        except httpx.HTTPStatusError as e:
-            logger.error(
-                f"Failed to notify subscription_service about refund (HTTP {e.response.status_code}): {e}",
-                extra={
-                    "payment_id": str(payment_id),
-                    "status_code": e.response.status_code,
-                    "error": str(e),
-                },
-            )
-            return False
-
-        except Exception as e:
-            logger.error(
-                f"Failed to notify subscription_service about refund: {e}",
-                extra={
-                    "payment_id": str(payment_id),
-                    "error": str(e),
-                },
-            )
-            return False

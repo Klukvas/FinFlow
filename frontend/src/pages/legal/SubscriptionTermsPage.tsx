@@ -1,9 +1,9 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { FaArrowLeft } from 'react-icons/fa';
+import React from "react";
+import { Link } from "react-router-dom";
+import { FaArrowLeft } from "react-icons/fa";
 
 export const SubscriptionTermsPage: React.FC = () => {
-  const lastUpdated = 'January 28, 2026';
+  const lastUpdated = "February 25, 2026";
 
   return (
     <div className="min-h-screen theme-bg-primary">
@@ -32,36 +32,41 @@ export const SubscriptionTermsPage: React.FC = () => {
               <p className="mb-4">We offer the following subscription plans:</p>
               <ul className="list-disc pl-6 space-y-2">
                 <li>
-                  <strong>Basic Plan:</strong> Free - Limited features for personal use
+                  <strong>Basic Plan:</strong> Free - Limited features for
+                  personal use
                 </li>
                 <li>
-                  <strong>Professional Plan:</strong> 9.99 UAH/month - Enhanced features for
-                  professionals
+                  <strong>Professional Plan:</strong> 9.99 USD/month - Enhanced
+                  features for professionals
                 </li>
                 <li>
-                  <strong>Enterprise Plan:</strong> 29.99 UAH/month - Full features for teams and
-                  businesses
+                  <strong>Enterprise Plan:</strong> 29.99 USD/month - Full
+                  features for teams and businesses
                 </li>
               </ul>
             </section>
 
             {/* Section 2 */}
             <section>
-              <h2 className="text-2xl font-bold mb-4">2. Billing and Payment</h2>
+              <h2 className="text-2xl font-bold mb-4">
+                2. Billing and Payment
+              </h2>
               <ul className="list-disc pl-6 space-y-2">
                 <li>Subscriptions are billed on a monthly basis</li>
                 <li>
-                  Payment is processed automatically on your billing date (the date you first
-                  subscribed)
+                  Payment is processed automatically on your billing date (the
+                  date you first subscribed)
                 </li>
                 <li>
-                  We accept Visa and Mastercard via WayForPay, our secure payment processor
+                  We accept Visa and Mastercard via Paddle, our secure payment
+                  processor
                 </li>
                 <li>
-                  Your payment card details are securely tokenized and stored by WayForPay payment
-                  processor. We do not store your full card details on our servers.
+                  Your payment card details are securely tokenized and stored by
+                  the payment provider. We do not store your full card details
+                  on our servers.
                 </li>
-                <li>All prices are in Ukrainian Hryvnia (UAH)</li>
+                <li>All prices are in US Dollars (USD)</li>
               </ul>
             </section>
 
@@ -69,19 +74,21 @@ export const SubscriptionTermsPage: React.FC = () => {
             <section>
               <h2 className="text-2xl font-bold mb-4">3. Automatic Renewal</h2>
               <p className="mb-4">
-                Your subscription will automatically renew each month unless you cancel. By
-                subscribing, you authorize us to charge your payment method on file for each
-                renewal.
+                Your subscription will automatically renew each month unless you
+                cancel. By subscribing, you authorize us to charge your payment
+                method on file for each renewal.
               </p>
               <p className="mb-4">Key points:</p>
               <ul className="list-disc pl-6 space-y-2">
                 <li>Charges occur monthly on your billing date</li>
                 <li>You will be charged the same amount each month</li>
                 <li>
-                  You can cancel your subscription at any time to stop future charges (see Section
-                  4)
+                  You can cancel your subscription at any time to stop future
+                  charges (see Section 4)
                 </li>
-                <li>We'll send you a reminder email 3 days before each renewal</li>
+                <li>
+                  We'll send you a reminder email 3 days before each renewal
+                </li>
               </ul>
             </section>
 
@@ -89,21 +96,27 @@ export const SubscriptionTermsPage: React.FC = () => {
             <section>
               <h2 className="text-2xl font-bold mb-4">4. Cancellation</h2>
               <p className="mb-4">
-                You can cancel your subscription at any time from your Account → Billing page. No
-                phone calls or emails to support are required.
+                You can cancel your subscription at any time from your Account →
+                Billing page. No phone calls or emails to support are required.
               </p>
               <p className="mb-4">
                 <strong>What happens when you cancel:</strong>
               </p>
               <ul className="list-disc pl-6 space-y-2">
                 <li>No future charges will be made to your payment method</li>
-                <li>You'll retain full access until the end of your current billing period</li>
+                <li>
+                  You'll retain full access until the end of your current
+                  billing period
+                </li>
                 <li>Your data will be preserved and not deleted</li>
                 <li>You can reactivate your subscription at any time</li>
               </ul>
               <p className="mt-4">
-                For detailed cancellation instructions, see our{' '}
-                <Link to="/help/cancel-subscription" className="theme-accent hover:underline">
+                For detailed cancellation instructions, see our{" "}
+                <Link
+                  to="/cancel-subscription"
+                  className="theme-accent hover:underline"
+                >
                   Cancellation Help Page
                 </Link>
                 .
@@ -114,28 +127,34 @@ export const SubscriptionTermsPage: React.FC = () => {
             <section>
               <h2 className="text-2xl font-bold mb-4">5. Refunds</h2>
               <p className="mb-4">
-                We offer refunds under the following conditions:
+                We offer a <strong>10-day money-back guarantee</strong> for
+                first-time subscription payments:
               </p>
               <ul className="list-disc pl-6 space-y-2">
                 <li>
-                  <strong>First-time subscriptions:</strong> Full refund if canceled within 7 days
-                  of first payment
+                  <strong>First-time subscriptions:</strong> Full refund if
+                  requested within 10 days of first payment — no questions asked
                 </li>
                 <li>
-                  <strong>Service outages:</strong> Pro-rata refund for documented service
-                  unavailability exceeding 24 hours
+                  <strong>Service outages:</strong> Pro-rata refund for
+                  documented service unavailability exceeding 24 hours
                 </li>
                 <li>
-                  <strong>Unauthorized charges:</strong> Full refund for charges made after
-                  cancellation
+                  <strong>Unauthorized charges:</strong> Full refund for charges
+                  made after cancellation
                 </li>
               </ul>
               <p className="mt-4">
-                To request a refund, contact us at{' '}
-                <a href="mailto:billing@yourapp.com" className="theme-accent hover:underline">
-                  billing@yourapp.com
-                </a>{' '}
-                with your order details.
+                After the 10-day period, subscription payments are
+                non-refundable. To request a refund, contact us at{" "}
+                <a
+                  href="mailto:finflow@flux-lab.dev"
+                  className="theme-accent hover:underline"
+                >
+                  finflow@flux-lab.dev
+                </a>{" "}
+                with your account email and order details. Refunds are typically
+                processed within 5-10 business days.
               </p>
             </section>
 
@@ -143,13 +162,15 @@ export const SubscriptionTermsPage: React.FC = () => {
             <section>
               <h2 className="text-2xl font-bold mb-4">6. Payment Security</h2>
               <p className="mb-4">
-                We use WayForPay, a PCI DSS Level 1 compliant payment processor, to handle all
-                payment transactions.
+                We use Paddle, a PCI DSS Level 1 compliant payment processor, to
+                handle all payment transactions.
               </p>
               <ul className="list-disc pl-6 space-y-2">
                 <li>Your card details are tokenized and encrypted</li>
                 <li>We do not store your full card number on our servers</li>
-                <li>Only the last 4 digits and expiration date are visible to us</li>
+                <li>
+                  Only the last 4 digits and expiration date are visible to us
+                </li>
                 <li>All payment data transmission uses TLS 1.2+ encryption</li>
               </ul>
             </section>
@@ -158,12 +179,19 @@ export const SubscriptionTermsPage: React.FC = () => {
             <section>
               <h2 className="text-2xl font-bold mb-4">7. Price Changes</h2>
               <p className="mb-4">
-                We reserve the right to change subscription prices. If we increase prices:
+                We reserve the right to change subscription prices. If we
+                increase prices:
               </p>
               <ul className="list-disc pl-6 space-y-2">
                 <li>We'll notify you at least 30 days in advance via email</li>
-                <li>The new price will apply to your next billing cycle after the notice period</li>
-                <li>You can cancel your subscription before the new price takes effect</li>
+                <li>
+                  The new price will apply to your next billing cycle after the
+                  notice period
+                </li>
+                <li>
+                  You can cancel your subscription before the new price takes
+                  effect
+                </li>
               </ul>
             </section>
 
@@ -174,28 +202,39 @@ export const SubscriptionTermsPage: React.FC = () => {
               <ul className="list-disc pl-6 space-y-2">
                 <li>We'll notify you immediately via email</li>
                 <li>We'll retry the payment after 3 days</li>
-                <li>After 3 failed attempts, your subscription will be paused</li>
                 <li>
-                  You can update your payment method anytime from your Account → Billing page
+                  After 3 failed attempts, your subscription will be paused
+                </li>
+                <li>
+                  You can update your payment method anytime from your Account →
+                  Billing page
                 </li>
               </ul>
             </section>
 
             {/* Section 9 */}
             <section>
-              <h2 className="text-2xl font-bold mb-4">9. Contact Information</h2>
+              <h2 className="text-2xl font-bold mb-4">
+                9. Contact Information
+              </h2>
               <p className="mb-4">For billing inquiries or support:</p>
               <ul className="list-disc pl-6 space-y-2">
                 <li>
-                  Email:{' '}
-                  <a href="mailto:billing@yourapp.com" className="theme-accent hover:underline">
-                    billing@yourapp.com
+                  Email:{" "}
+                  <a
+                    href="mailto:finflow@flux-lab.dev"
+                    className="theme-accent hover:underline"
+                  >
+                    finflow@flux-lab.dev
                   </a>
                 </li>
                 <li>
-                  Support:{' '}
-                  <a href="mailto:support@yourapp.com" className="theme-accent hover:underline">
-                    support@yourapp.com
+                  Support:{" "}
+                  <a
+                    href="mailto:finflow@flux-lab.dev"
+                    className="theme-accent hover:underline"
+                  >
+                    finflow@flux-lab.dev
                   </a>
                 </li>
                 <li>Business hours: Monday-Friday, 9:00 AM - 6:00 PM EET</li>
@@ -206,8 +245,9 @@ export const SubscriptionTermsPage: React.FC = () => {
             <section>
               <h2 className="text-2xl font-bold mb-4">10. Governing Law</h2>
               <p className="mb-4">
-                These subscription terms are governed by the laws of Ukraine. Any disputes shall be
-                resolved in accordance with Ukrainian consumer protection laws.
+                These subscription terms are governed by the laws of Ukraine.
+                Any disputes shall be resolved in accordance with Ukrainian
+                consumer protection laws.
               </p>
             </section>
 
@@ -216,17 +256,20 @@ export const SubscriptionTermsPage: React.FC = () => {
               <h2 className="text-2xl font-bold mb-4">Related Documents</h2>
               <ul className="space-y-2">
                 <li>
-                  <Link to="/legal/terms" className="theme-accent hover:underline">
+                  <Link to="/terms" className="theme-accent hover:underline">
                     Terms of Service
                   </Link>
                 </li>
                 <li>
-                  <Link to="/legal/privacy" className="theme-accent hover:underline">
+                  <Link to="/privacy" className="theme-accent hover:underline">
                     Privacy Policy
                   </Link>
                 </li>
                 <li>
-                  <Link to="/help/cancel-subscription" className="theme-accent hover:underline">
+                  <Link
+                    to="/cancel-subscription"
+                    className="theme-accent hover:underline"
+                  >
                     How to Cancel Your Subscription
                   </Link>
                 </li>

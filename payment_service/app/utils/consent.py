@@ -1,5 +1,5 @@
 """
-Consent validation utilities for WayForPay compliance
+Consent validation utilities for Paddle compliance
 """
 from datetime import datetime, timezone
 from typing import Dict, Optional
@@ -16,7 +16,7 @@ def validate_subscription_consent(metadata: Optional[Dict]) -> None:
     """
     Validate that user consent is properly recorded for subscription payments.
     
-    This is required for WayForPay compliance and consumer protection laws.
+    This is required for Paddle compliance and consumer protection laws.
     
     Args:
         metadata: Payment metadata containing consent information

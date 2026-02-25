@@ -3,7 +3,9 @@ from .payment import (
     CreatePaymentResponse,
     PaymentOut,
     PaymentEventOut,
-    WebhookWayForPayRequest,
+    PaddleWebhookEvent,
+    ChangePlanRequest,
+    ChangePlanResponse,
     RefundRequest,
     RefundResponse,
 )
@@ -13,7 +15,9 @@ __all__ = [
     "CreatePaymentResponse",
     "PaymentOut",
     "PaymentEventOut",
-    "WebhookWayForPayRequest",
+    "PaddleWebhookEvent",
+    "ChangePlanRequest",
+    "ChangePlanResponse",
     "RefundRequest",
     "RefundResponse",
 ]
