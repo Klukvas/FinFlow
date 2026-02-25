@@ -12,7 +12,10 @@ class SubscriptionClient:
 
     def set_basic_plan(self, user_id: int, plan_code: str = "basic") -> None:
         url = f"{self.base_url}/v1/subscriptions/{user_id}:set_plan"
-        headers = {"Idempotency-Key": f"user-{user_id}-bootstrap"}
+        headers = {
+            "Idempotency-Key": f"user-{user_id}-bootstrap",
+            "X-Internal-Token": settings.INTERNAL_SECRET_TOKEN or "",
+        }
         payload = {"plan_code": plan_code}
         try:
             resp = self.client.post(url, json=payload, headers=headers)
