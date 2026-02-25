@@ -154,8 +154,8 @@ def read_expense(
     }
 )
 def update_expense(
-    expense_id: int = Path(description="Expense ID", gt=0),
     data: ExpenseUpdate,
+    expense_id: int = Path(description="Expense ID", gt=0),
     service: ExpenseService = Depends(get_expense_service),
     user_id: int = Depends(get_current_user_id),
     workspace_id: UUID = Depends(get_workspace_id)
