@@ -170,6 +170,7 @@ class ExpenseService(WorkspaceAuthorizationMixin):
             current_month_start = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             current_count = self.db.query(Expense).filter(
                 Expense.user_id == user_id,
+                Expense.workspace_id == workspace_id,
                 Expense.created_at >= current_month_start
             ).count()
             if not self.subscription_client.check_expense_limit(user_id, current_count):
@@ -558,3 +559,19 @@ class ExpenseService(WorkspaceAuthorizationMixin):
                 ErrorCode.EXPENSE_RETRIEVAL_FAILED,
                 {"original_error": str(e), "start_date": str(start_date), "end_date": str(end_date)}
             )
+
+    def get_current_month_count(self, user_id: int, workspace_id: UUID) -> dict:
+        """Get current month expense count and limit"""
+        self.authorize_workspace_access(workspace_id, user_id, "viewer", "get_current_month_count")
+        current_month_start = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        count = self.db.query(Expense).filter(
+            Expense.user_id == user_id,
+            Expense.workspace_id == workspace_id,
+            Expense.created_at >= current_month_start
+        ).count()
+
+        features = self.subscription_client.get_user_features(user_id)
+        expense_feature = features.get("expenses", {})
+        limit = expense_feature.get("limit_value")
+
+        return {"count": count, "limit": limit}

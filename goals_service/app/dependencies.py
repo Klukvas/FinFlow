@@ -1,3 +1,5 @@
+import secrets
+
 from fastapi import Depends, HTTPException, status, Header
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -47,7 +49,7 @@ def get_workspace_id(x_workspace_id: str = Header(..., alias="X-Workspace-Id")) 
 
 def verify_internal_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> None:
     """Verify internal service token"""
-    if credentials.credentials != settings.INTERNAL_SECRET_TOKEN:
+    if not credentials or not credentials.credentials or not secrets.compare_digest(credentials.credentials, settings.INTERNAL_SECRET_TOKEN):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid internal token"

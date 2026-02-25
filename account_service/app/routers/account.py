@@ -17,7 +17,7 @@ from app.schemas.account import (
 router = APIRouter(prefix="/accounts", tags=["accounts"])
 
 @router.post("/", response_model=AccountResponse, status_code=status.HTTP_201_CREATED)
-async def create_account(
+def create_account(
     account_data: AccountCreate,
     user_id: int = Depends(get_current_user_id),
     workspace_id: UUID = Depends(get_workspace_id),
@@ -28,7 +28,7 @@ async def create_account(
     return AccountResponse.model_validate(account)
 
 @router.get("/", response_model=List[AccountResponse])
-async def list_accounts(
+def list_accounts(
     include_archived: bool = Query(False, description="Include archived accounts"),
     user_id: int = Depends(get_current_user_id),
     workspace_id: UUID = Depends(get_workspace_id),
@@ -39,7 +39,7 @@ async def list_accounts(
     return [AccountResponse.model_validate(account) for account in accounts]
 
 @router.get("/summaries", response_model=List[AccountSummary])
-async def get_account_summaries(
+def get_account_summaries(
     user_id: int = Depends(get_current_user_id),
     workspace_id: UUID = Depends(get_workspace_id),
     service: AccountService = Depends(get_account_service)
@@ -57,7 +57,7 @@ async def get_account_statistics(
     return await service.get_account_statistics(user_id, workspace_id)
 
 @router.get("/{account_id}", response_model=AccountResponse)
-async def get_account(
+def get_account(
     account_id: int,
     user_id: int = Depends(get_current_user_id),
     workspace_id: UUID = Depends(get_workspace_id),
@@ -68,7 +68,7 @@ async def get_account(
     return AccountResponse.model_validate(account)
 
 @router.put("/{account_id}", response_model=AccountResponse)
-async def update_account(
+def update_account(
     account_id: int,
     account_data: AccountUpdate,
     user_id: int = Depends(get_current_user_id),
@@ -80,7 +80,7 @@ async def update_account(
     return AccountResponse.model_validate(account)
 
 @router.patch("/{account_id}/archive", response_model=AccountResponse)
-async def archive_account(
+def archive_account(
     account_id: int,
     user_id: int = Depends(get_current_user_id),
     workspace_id: UUID = Depends(get_workspace_id),
@@ -91,7 +91,7 @@ async def archive_account(
     return AccountResponse.model_validate(account)
 
 @router.get("/{account_id}/summary", response_model=AccountSummary)
-async def get_account_summary(
+def get_account_summary(
     account_id: int,
     user_id: int = Depends(get_current_user_id),
     workspace_id: UUID = Depends(get_workspace_id),
@@ -101,7 +101,7 @@ async def get_account_summary(
     return service.get_account_summary(account_id, user_id, workspace_id)
 
 @router.get("/{account_id}/transactions", response_model=AccountTransactionSummary)
-async def get_account_transactions(
+def get_account_transactions(
     account_id: int,
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of transactions to return"),
     offset: int = Query(0, ge=0, description="Number of transactions to skip"),
@@ -113,7 +113,7 @@ async def get_account_transactions(
     return service.get_account_transactions(account_id, user_id, workspace_id, limit, offset)
 
 @router.patch("/{account_id}/balance", response_model=AccountResponse)
-async def update_balance(
+def update_balance(
     account_id: int,
     balance: float,
     user_id: int = Depends(get_current_user_id),

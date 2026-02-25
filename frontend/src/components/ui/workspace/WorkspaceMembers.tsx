@@ -1,27 +1,36 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useAuth } from '@/contexts/AuthContext';
-import { WorkspaceApiClient } from '@/services/api/workspaceApiClient';
-import { 
-  Workspace, 
-  WorkspaceMember, 
-  WorkspaceMemberListResponse, 
-  WorkspaceInvite, 
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { logger } from "@/utils/logger";
+import { useAuth } from "@/contexts/AuthContext";
+import { WorkspaceApiClient } from "@/services/api/workspaceApiClient";
+import {
+  Workspace,
+  WorkspaceMember,
+  WorkspaceMemberListResponse,
+  WorkspaceInvite,
   WorkspaceInviteListResponse,
   WorkspaceInviteCreate,
-  AssignableRole 
-} from '@/types';
-import { MemberCard } from './MemberCard';
-import { InviteCard } from './InviteCard';
-import { InviteForm } from './InviteForm';
-import { FaUsers, FaEnvelope, FaPlus, FaSpinner, FaTimes, FaUserPlus } from 'react-icons/fa';
+  AssignableRole,
+} from "@/types";
+import { MemberCard } from "./MemberCard";
+import { InviteCard } from "./InviteCard";
+import { InviteForm } from "./InviteForm";
+import {
+  FaUsers,
+  FaEnvelope,
+  FaPlus,
+  FaSpinner,
+  FaTimes,
+  FaUserPlus,
+} from "react-icons/fa";
+import { Skeleton } from "@/components/ui/shared/Skeleton";
 
 interface WorkspaceMembersProps {
   workspace: Workspace;
   onClose: () => void;
 }
 
-type TabType = 'members' | 'invites';
+type TabType = "members" | "invites";
 
 export const WorkspaceMembers: React.FC<WorkspaceMembersProps> = ({
   workspace,
@@ -30,7 +39,7 @@ export const WorkspaceMembers: React.FC<WorkspaceMembersProps> = ({
   const { t } = useTranslation();
   const { token, refreshAccessToken, user } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<TabType>('members');
+  const [activeTab, setActiveTab] = useState<TabType>("members");
   const [members, setMembers] = useState<WorkspaceMember[]>([]);
   const [invites, setInvites] = useState<WorkspaceInvite[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -46,36 +55,36 @@ export const WorkspaceMembers: React.FC<WorkspaceMembersProps> = ({
     return new WorkspaceApiClient(getToken, refreshTokenFn);
   }, [token, refreshAccessToken]);
 
-  const isOwner = workspace.current_user_role === 'owner';
+  const isOwner = workspace.current_user_role === "owner";
 
   // Fetch members
   const fetchMembers = useCallback(async () => {
     try {
       const response = await workspaceApi.getMembers(workspace.id);
-      if ('error' in response) {
+      if ("error" in response) {
         setError(response.error);
         return;
       }
       setMembers((response as WorkspaceMemberListResponse).members);
     } catch (err) {
-      console.error('Failed to fetch members:', err);
-      setError(t('workspace.members.fetchError', 'Failed to load members'));
+      logger.error("Failed to fetch members:", err);
+      setError(t("workspace.members.fetchError", "Failed to load members"));
     }
   }, [workspaceApi, workspace.id, t]);
 
   // Fetch invites
   const fetchInvites = useCallback(async () => {
     if (!isOwner) return;
-    
+
     try {
       const response = await workspaceApi.getWorkspaceInvites(workspace.id);
-      if ('error' in response) {
+      if ("error" in response) {
         setError(response.error);
         return;
       }
       setInvites((response as WorkspaceInviteListResponse).invites);
     } catch (err) {
-      console.error('Failed to fetch invites:', err);
+      logger.error("Failed to fetch invites:", err);
     }
   }, [workspaceApi, workspace.id, isOwner]);
 
@@ -97,18 +106,20 @@ export const WorkspaceMembers: React.FC<WorkspaceMembersProps> = ({
 
     try {
       const response = await workspaceApi.createInvite(workspace.id, data);
-      
-      if ('error' in response) {
+
+      if ("error" in response) {
         setInviteError(response.error);
         return;
       }
 
       // Add to invites list
-      setInvites(prev => [response as WorkspaceInvite, ...prev]);
+      setInvites((prev) => [response as WorkspaceInvite, ...prev]);
       setShowInviteForm(false);
     } catch (err) {
-      console.error('Failed to create invite:', err);
-      setInviteError(t('workspace.invite.createError', 'Failed to send invitation'));
+      logger.error("Failed to create invite:", err);
+      setInviteError(
+        t("workspace.invite.createError", "Failed to send invitation"),
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -118,54 +129,69 @@ export const WorkspaceMembers: React.FC<WorkspaceMembersProps> = ({
   const handleCancelInvite = async (inviteId: string) => {
     try {
       const response = await workspaceApi.cancelInvite(workspace.id, inviteId);
-      if (response && 'error' in response) {
+      if (response && "error" in response) {
         setError(response.error);
         return;
       }
-      setInvites(prev => prev.filter(i => i.id !== inviteId));
+      setInvites((prev) => prev.filter((i) => i.id !== inviteId));
     } catch (err) {
-      console.error('Failed to cancel invite:', err);
-      setError(t('workspace.invite.cancelError', 'Failed to cancel invitation'));
+      logger.error("Failed to cancel invite:", err);
+      setError(
+        t("workspace.invite.cancelError", "Failed to cancel invitation"),
+      );
     }
   };
 
   // Handle role change
   const handleRoleChange = async (userId: number, newRole: AssignableRole) => {
     try {
-      const response = await workspaceApi.updateMemberRole(workspace.id, userId, { role: newRole });
-      if ('error' in response) {
+      const response = await workspaceApi.updateMemberRole(
+        workspace.id,
+        userId,
+        { role: newRole },
+      );
+      if ("error" in response) {
         setError(response.error);
         return;
       }
-      setMembers(prev => prev.map(m => 
-        m.user_id === userId ? { ...m, role: newRole } : m
-      ));
+      setMembers((prev) =>
+        prev.map((m) => (m.user_id === userId ? { ...m, role: newRole } : m)),
+      );
     } catch (err) {
-      console.error('Failed to update role:', err);
-      setError(t('workspace.member.roleUpdateError', 'Failed to update role'));
+      logger.error("Failed to update role:", err);
+      setError(t("workspace.member.roleUpdateError", "Failed to update role"));
     }
   };
 
   // Handle remove member
   const handleRemoveMember = async (userId: number) => {
-    if (!confirm(t('workspace.member.removeConfirm', 'Are you sure you want to remove this member?'))) {
+    if (
+      !confirm(
+        t(
+          "workspace.member.removeConfirm",
+          "Are you sure you want to remove this member?",
+        ),
+      )
+    ) {
       return;
     }
 
     try {
       const response = await workspaceApi.removeMember(workspace.id, userId);
-      if (response && 'error' in response) {
+      if (response && "error" in response) {
         setError(response.error);
         return;
       }
-      setMembers(prev => prev.filter(m => m.user_id !== userId));
+      setMembers((prev) => prev.filter((m) => m.user_id !== userId));
     } catch (err) {
-      console.error('Failed to remove member:', err);
-      setError(t('workspace.member.removeError', 'Failed to remove member'));
+      logger.error("Failed to remove member:", err);
+      setError(t("workspace.member.removeError", "Failed to remove member"));
     }
   };
 
-  const pendingInvitesCount = invites.filter(i => i.status === 'pending' && !i.is_expired).length;
+  const pendingInvitesCount = invites.filter(
+    (i) => i.status === "pending" && !i.is_expired,
+  ).length;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -178,7 +204,10 @@ export const WorkspaceMembers: React.FC<WorkspaceMembersProps> = ({
               {workspace.name}
             </h2>
             <p className="text-sm theme-text-secondary mt-1">
-              {t('workspace.members.subtitle', 'Manage members and invitations')}
+              {t(
+                "workspace.members.subtitle",
+                "Manage members and invitations",
+              )}
             </p>
           </div>
           <button
@@ -192,27 +221,27 @@ export const WorkspaceMembers: React.FC<WorkspaceMembersProps> = ({
         {/* Tabs */}
         <div className="flex border-b theme-border">
           <button
-            onClick={() => setActiveTab('members')}
+            onClick={() => setActiveTab("members")}
             className={`flex items-center gap-2 px-6 py-3 text-sm font-medium theme-transition border-b-2 ${
-              activeTab === 'members'
-                ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                : 'border-transparent theme-text-secondary hover:theme-text-primary'
+              activeTab === "members"
+                ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                : "border-transparent theme-text-secondary hover:theme-text-primary"
             }`}
           >
             <FaUsers className="w-4 h-4" />
-            {t('workspace.tabs.members', 'Members')} ({members.length})
+            {t("workspace.tabs.members", "Members")} ({members.length})
           </button>
           {isOwner && (
             <button
-              onClick={() => setActiveTab('invites')}
+              onClick={() => setActiveTab("invites")}
               className={`flex items-center gap-2 px-6 py-3 text-sm font-medium theme-transition border-b-2 ${
-                activeTab === 'invites'
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent theme-text-secondary hover:theme-text-primary'
+                activeTab === "invites"
+                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                  : "border-transparent theme-text-secondary hover:theme-text-primary"
               }`}
             >
               <FaEnvelope className="w-4 h-4" />
-              {t('workspace.tabs.invites', 'Invitations')}
+              {t("workspace.tabs.invites", "Invitations")}
               {pendingInvitesCount > 0 && (
                 <span className="px-1.5 py-0.5 text-xs rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
                   {pendingInvitesCount}
@@ -233,17 +262,29 @@ export const WorkspaceMembers: React.FC<WorkspaceMembersProps> = ({
 
           {/* Loading */}
           {isLoading && (
-            <div className="flex items-center justify-center py-12">
-              <FaSpinner className="w-8 h-8 theme-text-secondary animate-spin" />
+            <div className="space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-3 p-3 rounded-lg border theme-border"
+                >
+                  <Skeleton className="w-10 h-10 rounded-full" />
+                  <div className="space-y-2 flex-1">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                  <Skeleton className="h-6 w-16 rounded-full" />
+                </div>
+              ))}
             </div>
           )}
 
           {/* Members Tab */}
-          {!isLoading && activeTab === 'members' && (
+          {!isLoading && activeTab === "members" && (
             <div className="space-y-3">
               {members.length === 0 ? (
                 <div className="text-center py-8 theme-text-secondary">
-                  {t('workspace.members.empty', 'No members yet')}
+                  {t("workspace.members.empty", "No members yet")}
                 </div>
               ) : (
                 members.map((member) => (
@@ -261,13 +302,13 @@ export const WorkspaceMembers: React.FC<WorkspaceMembersProps> = ({
           )}
 
           {/* Invites Tab */}
-          {!isLoading && activeTab === 'invites' && isOwner && (
+          {!isLoading && activeTab === "invites" && isOwner && (
             <div className="space-y-4">
               {/* Invite Form or Button */}
               {showInviteForm ? (
                 <div className="p-4 rounded-xl border theme-border">
                   <h3 className="font-medium theme-text-primary mb-4">
-                    {t('workspace.invite.newTitle', 'Invite a Team Member')}
+                    {t("workspace.invite.newTitle", "Invite a Team Member")}
                   </h3>
                   <InviteForm
                     onSubmit={handleCreateInvite}
@@ -286,7 +327,7 @@ export const WorkspaceMembers: React.FC<WorkspaceMembersProps> = ({
                 >
                   <FaUserPlus className="w-5 h-5" />
                   <span className="font-medium">
-                    {t('workspace.invite.addButton', 'Invite Someone')}
+                    {t("workspace.invite.addButton", "Invite Someone")}
                   </span>
                 </button>
               )}
@@ -295,7 +336,7 @@ export const WorkspaceMembers: React.FC<WorkspaceMembersProps> = ({
               {invites.length > 0 && (
                 <div className="space-y-3">
                   <h4 className="text-sm font-medium theme-text-secondary">
-                    {t('workspace.invite.pendingTitle', 'Pending Invitations')}
+                    {t("workspace.invite.pendingTitle", "Pending Invitations")}
                   </h4>
                   {invites.map((invite) => (
                     <InviteCard
@@ -310,7 +351,7 @@ export const WorkspaceMembers: React.FC<WorkspaceMembersProps> = ({
               {/* Empty state */}
               {invites.length === 0 && !showInviteForm && (
                 <div className="text-center py-8 theme-text-tertiary text-sm">
-                  {t('workspace.invite.emptyState', 'No pending invitations')}
+                  {t("workspace.invite.emptyState", "No pending invitations")}
                 </div>
               )}
             </div>

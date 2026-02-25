@@ -97,15 +97,6 @@ class IncomeService(WorkspaceAuthorizationMixin):
             if income.amount > 999999.99:
                 raise IncomeAmountError("Income amount cannot exceed 999,999.99", IncomeErrorCodes.INCOME_AMOUNT_TOO_LARGE)
             
-            # Validate date
-            if income.date:
-                try:
-                    income_date = date.fromisoformat(income.date)
-                    if income_date > datetime.now().date():
-                        raise IncomeDateError("Income date cannot be in the future", IncomeErrorCodes.INCOME_DATE_FUTURE)
-                except ValueError:
-                    raise IncomeDateError("Invalid date format. Use YYYY-MM-DD format", IncomeErrorCodes.INCOME_DATE_INVALID_FORMAT)
-            
             # Validate description
             if income.description and len(income.description) > 500:
                 raise IncomeDescriptionError("Description cannot exceed 500 characters", IncomeErrorCodes.INCOME_DESCRIPTION_TOO_LONG)
@@ -121,12 +112,14 @@ class IncomeService(WorkspaceAuthorizationMixin):
                 await self.account_client.update_account_balance(income.account_id, user_id, income.amount, income.currency)
             
             # Create income
-            income_date = datetime.now()
+            income_date = datetime.utcnow()
             if income.date:
                 try:
                     income_date = datetime.fromisoformat(income.date)
                 except ValueError:
                     raise IncomeDateError("Invalid date format. Use YYYY-MM-DD format", IncomeErrorCodes.INCOME_DATE_INVALID_FORMAT)
+                if income_date.date() > datetime.utcnow().date():
+                    raise IncomeDateError("Income date cannot be in the future", IncomeErrorCodes.INCOME_DATE_FUTURE)
             
             db_income = Income(
                 user_id=user_id,
@@ -148,11 +141,18 @@ class IncomeService(WorkspaceAuthorizationMixin):
             
         except Exception as e:
             self.db.rollback()
-            if isinstance(e, (IncomeAmountError, IncomeDateError, IncomeDescriptionError, IncomeValidationError)):
+            # Compensate balance if it was already updated
+            if income.account_id is not None and hasattr(income, 'amount'):
+                try:
+                    await self.account_client.update_account_balance(income.account_id, user_id, -income.amount, income.currency)
+                    logger.warning(f"Compensated balance after failed income creation for account {income.account_id}")
+                except Exception as comp_err:
+                    logger.error(f"CRITICAL: Failed to compensate balance after failed create: {comp_err}")
+            if isinstance(e, (IncomeAmountError, IncomeDateError, IncomeDescriptionError, IncomeValidationError, IncomeLimitExceededError, ExternalServiceError)):
                 raise
             logger.error(f"Error creating income: {e}")
             raise IncomeValidationError("Failed to create income", IncomeErrorCodes.INCOME_VALIDATION_FAILED)
-    
+
     def get_by_id(self, income_id: int, user_id: int, workspace_id: UUID) -> IncomeOut:
         """Get income by ID"""
         # 1. Authorize workspace access (viewer role required for read)
@@ -193,10 +193,14 @@ class IncomeService(WorkspaceAuthorizationMixin):
 
         return incomes, total
 
-    async def get_by_category(self, category_id: int, user_id: int) -> IncomesByCategoryResponse:
+    async def get_by_category(self, category_id: int, user_id: int, workspace_id: UUID = None) -> IncomesByCategoryResponse:
         """Get all incomes for a specific category with statistics"""
+        filters = [Income.category_id == category_id, Income.user_id == user_id]
+        if workspace_id is not None:
+            self.authorize_workspace_access(workspace_id, user_id, "viewer", "get_incomes_by_category")
+            filters.append(Income.workspace_id == workspace_id)
         incomes = self.db.query(Income).filter(
-            and_(Income.category_id == category_id, Income.user_id == user_id)
+            and_(*filters)
         ).order_by(desc(Income.date)).all()
         
         # Get user's base currency
@@ -270,7 +274,7 @@ class IncomeService(WorkspaceAuthorizationMixin):
                 db_income.amount = round(income_update.amount, 2)
             
             if income_update.date is not None:
-                if income_update.date > datetime.now():
+                if income_update.date > datetime.utcnow():
                     raise IncomeDateError("Income date cannot be in the future", IncomeErrorCodes.INCOME_DATE_FUTURE)
                 db_income.date = income_update.date
             
@@ -282,12 +286,7 @@ class IncomeService(WorkspaceAuthorizationMixin):
             if income_update.category_id is not None:
                 # Validate category if provided
                 if income_update.category_id > 0:
-                    try:
-                        # Note: This would need to be async in real implementation
-                        pass  # await category_client.get(f"/internal/categories/{income_update.category_id}", {"user_id": user_id})
-                    except Exception as e:
-                        logger.warning(f"Category validation failed: {e}")
-                        raise IncomeValidationError("Invalid category ID", IncomeErrorCodes.CATEGORY_VALIDATION_FAILED)
+                    await self._validate_category(income_update.category_id, user_id, workspace_id)
                 db_income.category_id = income_update.category_id
             
             if income_update.account_id is not None:
@@ -296,13 +295,13 @@ class IncomeService(WorkspaceAuthorizationMixin):
                     await self._validate_account(income_update.account_id, user_id)
                 db_income.account_id = income_update.account_id
             
+            # Handle account balance updates (before currency change, so old currency is used for restoration)
+            await self._handle_balance_updates(db_income, old_amount, old_account_id, user_id)
+
             if income_update.currency is not None:
                 db_income.currency = income_update.currency
             
-            # Handle account balance updates
-            await self._handle_balance_updates(db_income, old_amount, old_account_id, user_id)
-            
-            db_income.updated_at = datetime.now()
+            db_income.updated_at = datetime.utcnow()
             self.db.commit()
             self.db.refresh(db_income)
             
@@ -332,18 +331,31 @@ class IncomeService(WorkspaceAuthorizationMixin):
         if db_income.account_id is not None:
             await self.account_client.update_account_balance(db_income.account_id, user_id, -db_income.amount, db_income.currency)
             logger.info(f"Restored {db_income.amount} {db_income.currency} from account {db_income.account_id} after income deletion")
-        
-        self.db.delete(db_income)
-        self.db.commit()
-        
+
+        try:
+            self.db.delete(db_income)
+            self.db.commit()
+        except Exception as e:
+            self.db.rollback()
+            # Compensate: reverse the balance change
+            if db_income.account_id is not None:
+                try:
+                    await self.account_client.update_account_balance(db_income.account_id, user_id, db_income.amount, db_income.currency)
+                    logger.warning(f"Compensated balance after failed delete for income {income_id}")
+                except Exception as comp_err:
+                    logger.error(f"CRITICAL: Failed to compensate balance after failed delete: {comp_err}")
+            raise IncomeValidationError("Failed to delete income", IncomeErrorCodes.INCOME_VALIDATION_FAILED)
+
         logger.info(f"Deleted income {income_id} for user {user_id}")
         return True
     
-    def get_summary(self, user_id: int, start_date: datetime, end_date: datetime) -> IncomeSummary:
+    def get_summary(self, user_id: int, workspace_id: UUID, start_date: datetime, end_date: datetime) -> IncomeSummary:
         """Get income summary for date range"""
+        self.authorize_workspace_access(workspace_id, user_id, "viewer", "get_income_summary")
         incomes = self.db.query(Income).filter(
             and_(
                 Income.user_id == user_id,
+                Income.workspace_id == workspace_id,
                 Income.date >= start_date,
                 Income.date <= end_date
             )
@@ -361,40 +373,37 @@ class IncomeService(WorkspaceAuthorizationMixin):
             period_end=end_date
         )
     
-    def get_stats(self, user_id: int) -> IncomeStats:
-        """Get income statistics for user"""
-        now = datetime.now()
+    def get_stats(self, user_id: int, workspace_id: UUID) -> IncomeStats:
+        """Get income statistics for user in workspace"""
+        self.authorize_workspace_access(workspace_id, user_id, "viewer", "get_income_stats")
+        now = datetime.utcnow()
         current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         current_year_start = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
-        
+
+        base_filter = and_(Income.user_id == user_id, Income.workspace_id == workspace_id)
+
         # Total income
         total_income = self.db.query(func.sum(Income.amount)).filter(
-            Income.user_id == user_id
+            base_filter
         ).scalar() or 0
-        
+
         # Monthly income
         monthly_income = self.db.query(func.sum(Income.amount)).filter(
-            and_(
-                Income.user_id == user_id,
-                Income.date >= current_month_start
-            )
+            and_(base_filter, Income.date >= current_month_start)
         ).scalar() or 0
-        
+
         # Yearly income
         yearly_income = self.db.query(func.sum(Income.amount)).filter(
-            and_(
-                Income.user_id == user_id,
-                Income.date >= current_year_start
-            )
+            and_(base_filter, Income.date >= current_year_start)
         ).scalar() or 0
-        
+
         # Count and average
         income_count = self.db.query(func.count(Income.id)).filter(
-            Income.user_id == user_id
+            base_filter
         ).scalar() or 0
-        
+
         average_income = total_income / income_count if income_count > 0 else 0
-        
+
         return IncomeStats(
             total_income=total_income,
             monthly_income=monthly_income,
@@ -402,3 +411,21 @@ class IncomeService(WorkspaceAuthorizationMixin):
             income_count=income_count,
             average_income=average_income
         )
+
+    def get_current_month_count(self, user_id: int, workspace_id: UUID) -> dict:
+        """Get current month income count and limit"""
+        self.authorize_workspace_access(workspace_id, user_id, "viewer", "get_current_month_count")
+        current_month_start = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        count = self.db.query(Income).filter(
+            and_(
+                Income.user_id == user_id,
+                Income.workspace_id == workspace_id,
+                Income.created_at >= current_month_start
+            )
+        ).count()
+
+        features = self.subscription_client.get_user_features(user_id)
+        income_feature = features.get("incomes", {})
+        limit = income_feature.get("limit_value")
+
+        return {"count": count, "limit": limit}

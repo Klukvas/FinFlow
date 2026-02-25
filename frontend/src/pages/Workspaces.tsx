@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useWorkspace } from '@/contexts/WorkspaceContext';
-import { setStoredWorkspaceId } from '@/utils/workspaceStorage';
-import { Workspace, WorkspaceCreate, WorkspaceUpdate } from '@/types';
-import { WorkspaceCard, WorkspaceForm, WorkspaceMembers } from '@/components/ui/workspace';
-import { FaPlus, FaUsers, FaSpinner } from 'react-icons/fa';
+import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { setStoredWorkspaceId } from "@/utils/workspaceStorage";
+import { Workspace, WorkspaceCreate, WorkspaceUpdate } from "@/types";
+import {
+  WorkspaceCard,
+  WorkspaceForm,
+  WorkspaceMembers,
+} from "@/components/ui/workspace";
+import { FaPlus, FaUsers, FaSpinner } from "react-icons/fa";
+import { Skeleton } from "@/components/ui/shared/Skeleton";
 
 // Modal Component
 interface ModalProps {
@@ -38,7 +43,7 @@ interface ConfirmDialogProps {
   title: string;
   message: string;
   confirmText?: string;
-  confirmVariant?: 'danger' | 'warning';
+  confirmVariant?: "danger" | "warning";
   isLoading?: boolean;
 }
 
@@ -48,8 +53,8 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   onConfirm,
   title,
   message,
-  confirmText = 'Confirm',
-  confirmVariant = 'danger',
+  confirmText = "Confirm",
+  confirmVariant = "danger",
   isLoading = false,
 }) => {
   if (!isOpen) return null;
@@ -58,7 +63,9 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="fixed inset-0 bg-black/50" onClick={onClose} />
       <div className="relative w-full max-w-md mx-4 theme-surface rounded-2xl shadow-2xl p-6">
-        <h3 className="text-lg font-semibold theme-text-primary mb-2">{title}</h3>
+        <h3 className="text-lg font-semibold theme-text-primary mb-2">
+          {title}
+        </h3>
         <p className="theme-text-secondary mb-6">{message}</p>
         <div className="flex justify-end gap-3">
           <button
@@ -71,13 +78,17 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           <button
             onClick={onConfirm}
             className={`px-4 py-2 rounded-lg text-white font-medium theme-transition disabled:opacity-50 ${
-              confirmVariant === 'danger' 
-                ? 'bg-red-600 hover:bg-red-700' 
-                : 'bg-orange-500 hover:bg-orange-600'
+              confirmVariant === "danger"
+                ? "bg-red-600 hover:bg-red-700"
+                : "bg-orange-500 hover:bg-orange-600"
             }`}
             disabled={isLoading}
           >
-            {isLoading ? <FaSpinner className="animate-spin w-4 h-4" /> : confirmText}
+            {isLoading ? (
+              <FaSpinner className="animate-spin w-4 h-4" />
+            ) : (
+              confirmText
+            )}
           </button>
         </div>
       </div>
@@ -87,10 +98,10 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 
 export const Workspaces: React.FC = () => {
   const { t } = useTranslation();
-  const { 
-    workspaces, 
-    currentWorkspaceId, 
-    isLoading, 
+  const {
+    workspaces,
+    currentWorkspaceId,
+    isLoading,
     error,
     setCurrentWorkspace,
     createWorkspace,
@@ -101,13 +112,22 @@ export const Workspaces: React.FC = () => {
 
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null);
-  const [archivingWorkspace, setArchivingWorkspace] = useState<Workspace | null>(null);
-  const [leavingWorkspace, setLeavingWorkspace] = useState<Workspace | null>(null);
-  const [managingWorkspace, setManagingWorkspace] = useState<Workspace | null>(null);
+  const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(
+    null,
+  );
+  const [archivingWorkspace, setArchivingWorkspace] =
+    useState<Workspace | null>(null);
+  const [leavingWorkspace, setLeavingWorkspace] = useState<Workspace | null>(
+    null,
+  );
+  const [managingWorkspace, setManagingWorkspace] = useState<Workspace | null>(
+    null,
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleCreateWorkspace = async (data: WorkspaceCreate | WorkspaceUpdate) => {
+  const handleCreateWorkspace = async (
+    data: WorkspaceCreate | WorkspaceUpdate,
+  ) => {
     setIsSubmitting(true);
     try {
       const result = await createWorkspace(data as WorkspaceCreate);
@@ -119,11 +139,16 @@ export const Workspaces: React.FC = () => {
     }
   };
 
-  const handleUpdateWorkspace = async (data: WorkspaceCreate | WorkspaceUpdate) => {
+  const handleUpdateWorkspace = async (
+    data: WorkspaceCreate | WorkspaceUpdate,
+  ) => {
     if (!editingWorkspace) return;
     setIsSubmitting(true);
     try {
-      const result = await updateWorkspace(editingWorkspace.id, data as WorkspaceUpdate);
+      const result = await updateWorkspace(
+        editingWorkspace.id,
+        data as WorkspaceUpdate,
+      );
       if (result) {
         setEditingWorkspace(null);
       }
@@ -176,10 +201,13 @@ export const Workspaces: React.FC = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold theme-text-primary">
-              {t('workspace.title', 'Workspaces')}
+              {t("workspace.title", "Workspaces")}
             </h1>
             <p className="mt-1 theme-text-secondary">
-              {t('workspace.subtitle', 'Manage your workspaces and collaborate with others')}
+              {t(
+                "workspace.subtitle",
+                "Manage your workspaces and collaborate with others",
+              )}
             </p>
           </div>
           <button
@@ -187,7 +215,7 @@ export const Workspaces: React.FC = () => {
             className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 theme-transition shadow-sm"
           >
             <FaPlus className="w-4 h-4" />
-            <span>{t('workspace.createButton', 'Create Workspace')}</span>
+            <span>{t("workspace.createButton", "Create Workspace")}</span>
           </button>
         </div>
       </div>
@@ -213,17 +241,20 @@ export const Workspaces: React.FC = () => {
             <FaUsers className="w-8 h-8 theme-text-tertiary" />
           </div>
           <h3 className="text-lg font-medium theme-text-primary mb-2">
-            {t('workspace.empty.title', 'No workspaces yet')}
+            {t("workspace.empty.title", "No workspaces yet")}
           </h3>
           <p className="theme-text-secondary mb-6">
-            {t('workspace.empty.description', 'Create your first workspace to get started')}
+            {t(
+              "workspace.empty.description",
+              "Create your first workspace to get started",
+            )}
           </p>
           <button
             onClick={() => setShowCreateModal(true)}
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 theme-transition"
           >
             <FaPlus className="w-4 h-4" />
-            <span>{t('workspace.createButton', 'Create Workspace')}</span>
+            <span>{t("workspace.createButton", "Create Workspace")}</span>
           </button>
         </div>
       )}
@@ -249,7 +280,7 @@ export const Workspaces: React.FC = () => {
       <Modal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        title={t('workspace.createModal.title', 'Create New Workspace')}
+        title={t("workspace.createModal.title", "Create New Workspace")}
       >
         <WorkspaceForm
           onSubmit={handleCreateWorkspace}
@@ -262,7 +293,7 @@ export const Workspaces: React.FC = () => {
       <Modal
         isOpen={!!editingWorkspace}
         onClose={() => setEditingWorkspace(null)}
-        title={t('workspace.editModal.title', 'Edit Workspace')}
+        title={t("workspace.editModal.title", "Edit Workspace")}
       >
         <WorkspaceForm
           workspace={editingWorkspace}
@@ -277,12 +308,12 @@ export const Workspaces: React.FC = () => {
         isOpen={!!archivingWorkspace}
         onClose={() => setArchivingWorkspace(null)}
         onConfirm={handleArchiveWorkspace}
-        title={t('workspace.archiveConfirm.title', 'Archive Workspace')}
+        title={t("workspace.archiveConfirm.title", "Archive Workspace")}
         message={t(
-          'workspace.archiveConfirm.message', 
-          `Are you sure you want to archive "${archivingWorkspace?.name}"? This will hide it from your workspace list but data will be preserved.`
+          "workspace.archiveConfirm.message",
+          `Are you sure you want to archive "${archivingWorkspace?.name}"? This will hide it from your workspace list but data will be preserved.`,
         )}
-        confirmText={t('workspace.archive', 'Archive')}
+        confirmText={t("workspace.archive", "Archive")}
         confirmVariant="warning"
         isLoading={isSubmitting}
       />
@@ -292,12 +323,12 @@ export const Workspaces: React.FC = () => {
         isOpen={!!leavingWorkspace}
         onClose={() => setLeavingWorkspace(null)}
         onConfirm={handleLeaveWorkspace}
-        title={t('workspace.leaveConfirm.title', 'Leave Workspace')}
+        title={t("workspace.leaveConfirm.title", "Leave Workspace")}
         message={t(
-          'workspace.leaveConfirm.message', 
-          `Are you sure you want to leave "${leavingWorkspace?.name}"? You will lose access to all data in this workspace.`
+          "workspace.leaveConfirm.message",
+          `Are you sure you want to leave "${leavingWorkspace?.name}"? You will lose access to all data in this workspace.`,
         )}
-        confirmText={t('workspace.leave', 'Leave')}
+        confirmText={t("workspace.leave", "Leave")}
         confirmVariant="danger"
         isLoading={isSubmitting}
       />
@@ -314,4 +345,3 @@ export const Workspaces: React.FC = () => {
 };
 
 export default Workspaces;
-

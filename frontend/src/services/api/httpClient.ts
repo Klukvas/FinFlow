@@ -1,6 +1,7 @@
-import { config } from '@/config/env';
+import { config } from "@/config/env";
+import { logger } from "@/utils/logger";
 
-const TOKEN_KEY = 'access_token';
+const TOKEN_KEY = "access_token";
 
 export interface ApiError {
   error: string;
@@ -22,25 +23,25 @@ export class HttpClient {
     try {
       return localStorage.getItem(TOKEN_KEY);
     } catch (error) {
-      console.error('Failed to get token from localStorage:', error);
+      logger.error("Failed to get token from localStorage:", error);
       return null;
     }
   }
 
   private async request<T>(
-    method: string, 
-    path: string, 
-    data?: unknown
+    method: string,
+    path: string,
+    data?: unknown,
   ): Promise<T> {
     const url = `${this.baseUrl}${path}`;
     const token = this.getToken();
-    
+
     const headers: HeadersInit = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     };
 
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers["Authorization"] = `Bearer ${token}`;
     }
 
     if (config.debug) {
@@ -70,11 +71,11 @@ export class HttpClient {
       return await this.parseSuccessResponse<T>(response);
     } catch (error) {
       clearTimeout(timeoutId);
-      
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw { error: 'Request timeout' };
+
+      if (error instanceof Error && error.name === "AbortError") {
+        throw { error: "Request timeout" };
       }
-      
+
       throw error;
     }
   }
@@ -83,7 +84,7 @@ export class HttpClient {
     try {
       const text = await response.text();
       let errorData: any = {};
-      
+
       if (text) {
         try {
           errorData = JSON.parse(text);
@@ -92,24 +93,24 @@ export class HttpClient {
           errorData = { error: text };
         }
       }
-      
+
       // If no error message in response, use a generic one based on status
       if (!errorData.error && !errorData.message) {
         errorData.error = this.getGenericErrorMessage(response.status);
       }
-      
+
       if (config.debug) {
-        console.error('Error response:', errorData);
+        logger.error("Error response:", errorData);
       }
-      
+
       return {
         ...errorData,
         status: response.status,
         errorCode: errorData.errorCode, // Preserve errorCode from backend
       };
     } catch (e) {
-      console.error('Error parsing error response:', e);
-      return { 
+      logger.error("Error parsing error response:", e);
+      return {
         error: this.getGenericErrorMessage(response.status),
         status: response.status,
       };
@@ -118,17 +119,17 @@ export class HttpClient {
 
   private getGenericErrorMessage(status: number): string {
     const statusMessages: Record<number, string> = {
-      400: 'Неверные данные. Проверьте введенную информацию.',
-      401: 'Сессия истекла. Пожалуйста, войдите в систему заново.',
-      403: 'У вас нет прав для выполнения этого действия.',
-      404: 'Запрашиваемый ресурс не найден.',
-      409: 'Конфликт данных. Возможно, запись уже существует.',
-      422: 'Ошибка валидации данных. Проверьте введенную информацию.',
-      429: 'Слишком много запросов. Попробуйте позже.',
-      500: 'Внутренняя ошибка сервера. Попробуйте позже.',
-      502: 'Сервер временно недоступен. Попробуйте позже.',
-      503: 'Сервис временно недоступен. Попробуйте позже.',
-      504: 'Время ожидания истекло. Попробуйте позже.',
+      400: "Неверные данные. Проверьте введенную информацию.",
+      401: "Сессия истекла. Пожалуйста, войдите в систему заново.",
+      403: "У вас нет прав для выполнения этого действия.",
+      404: "Запрашиваемый ресурс не найден.",
+      409: "Конфликт данных. Возможно, запись уже существует.",
+      422: "Ошибка валидации данных. Проверьте введенную информацию.",
+      429: "Слишком много запросов. Попробуйте позже.",
+      500: "Внутренняя ошибка сервера. Попробуйте позже.",
+      502: "Сервер временно недоступен. Попробуйте позже.",
+      503: "Сервис временно недоступен. Попробуйте позже.",
+      504: "Время ожидания истекло. Попробуйте позже.",
     };
 
     return statusMessages[status] || `Ошибка сервера (${status})`;
@@ -137,38 +138,38 @@ export class HttpClient {
   private async parseSuccessResponse<T>(response: Response): Promise<T> {
     try {
       const text = await response.text();
-      
+
       if (!text) {
-        throw new Error('Empty response from server');
+        throw new Error("Empty response from server");
       }
-      
+
       if (config.debug) {
       }
-      
+
       return JSON.parse(text);
     } catch (e) {
-      console.error('Error parsing success response:', e);
-      throw { error: 'Invalid JSON response' };
+      logger.error("Error parsing success response:", e);
+      throw { error: "Invalid JSON response" };
     }
   }
 
   async get<T>(path: string): Promise<T> {
-    return this.request<T>('GET', path);
+    return this.request<T>("GET", path);
   }
 
   async post<T>(path: string, data?: unknown): Promise<T> {
-    return this.request<T>('POST', path, data);
+    return this.request<T>("POST", path, data);
   }
 
   async put<T>(path: string, data?: unknown): Promise<T> {
-    return this.request<T>('PUT', path, data);
+    return this.request<T>("PUT", path, data);
   }
 
   async delete<T>(path: string): Promise<T> {
-    return this.request<T>('DELETE', path);
+    return this.request<T>("DELETE", path);
   }
 
   async patch<T>(path: string, data?: unknown): Promise<T> {
-    return this.request<T>('PATCH', path, data);
+    return this.request<T>("PATCH", path, data);
   }
 }

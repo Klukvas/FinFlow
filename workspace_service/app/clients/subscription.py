@@ -52,11 +52,11 @@ class SubscriptionClient:
         features = self.get_user_features(user_id)
         workspace_feature = features.get("workspaces", {})
         
-        # If feature doesn't exist or is disabled, allow by default
-        # (backwards compatibility)
+        # If feature doesn't exist or is disabled, deny by default
+        # (fail-closed: do not allow when subscription service is unreachable)
         if not workspace_feature:
-            logger.warning(f"No workspace feature found for user {user_id}, allowing by default")
-            return True
+            logger.warning(f"No workspace feature found for user {user_id}, denying by default")
+            return False
             
         if not workspace_feature.get("enabled", False):
             logger.warning(f"Workspace feature disabled for user {user_id}")

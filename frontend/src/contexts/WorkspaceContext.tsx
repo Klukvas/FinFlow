@@ -1,8 +1,25 @@
-import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode, useMemo } from 'react';
-import { Workspace, WorkspaceCreate, WorkspaceUpdate, WorkspaceListResponse } from '@/types';
-import { WorkspaceApiClient } from '@/services/api/workspaceApiClient';
-import { useAuth } from './AuthContext';
-import { getStoredWorkspaceId, setStoredWorkspaceId } from '@/utils/workspaceStorage';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  ReactNode,
+  useMemo,
+} from "react";
+import {
+  Workspace,
+  WorkspaceCreate,
+  WorkspaceUpdate,
+  WorkspaceListResponse,
+} from "@/types";
+import { WorkspaceApiClient } from "@/services/api/workspaceApiClient";
+import { useAuth } from "./AuthContext";
+import {
+  getStoredWorkspaceId,
+  setStoredWorkspaceId,
+} from "@/utils/workspaceStorage";
+import { logger } from "@/utils/logger";
 
 interface WorkspaceContextType {
   workspaces: Workspace[];
@@ -14,22 +31,31 @@ interface WorkspaceContextType {
   setCurrentWorkspace: (workspaceId: string) => void;
   refreshWorkspaces: () => Promise<void>;
   createWorkspace: (data: WorkspaceCreate) => Promise<Workspace | null>;
-  updateWorkspace: (workspaceId: string, data: WorkspaceUpdate) => Promise<Workspace | null>;
+  updateWorkspace: (
+    workspaceId: string,
+    data: WorkspaceUpdate,
+  ) => Promise<Workspace | null>;
   archiveWorkspace: (workspaceId: string) => Promise<boolean>;
   unarchiveWorkspace: (workspaceId: string) => Promise<boolean>;
   leaveWorkspace: (workspaceId: string) => Promise<boolean>;
 }
 
-const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
+const WorkspaceContext = createContext<WorkspaceContextType | undefined>(
+  undefined,
+);
 
 interface WorkspaceProviderProps {
   children: ReactNode;
 }
 
-export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }) => {
+export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({
+  children,
+}) => {
   const { token, isAuthenticated, refreshAccessToken } = useAuth();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-  const [currentWorkspaceId, setCurrentWorkspaceId] = useState<string | null>(() => getStoredWorkspaceId());
+  const [currentWorkspaceId, setCurrentWorkspaceId] = useState<string | null>(
+    () => getStoredWorkspaceId(),
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +70,7 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
   // Find current workspace from list
   const currentWorkspace = useMemo(() => {
     if (!currentWorkspaceId) return null;
-    return workspaces.find(w => w.id === currentWorkspaceId) || null;
+    return workspaces.find((w) => w.id === currentWorkspaceId) || null;
   }, [workspaces, currentWorkspaceId]);
 
   // Fetch workspaces
@@ -56,8 +82,8 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
 
     try {
       const response = await workspaceApi.getWorkspaces();
-      
-      if ('error' in response) {
+
+      if ("error" in response) {
         setError(response.error);
         return;
       }
@@ -67,14 +93,25 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
       // If no workspaces exist, try to create a personal workspace
       // This handles the case where backend workspace creation failed during registration
       if (workspaceList.length === 0) {
-        console.log('[WorkspaceContext] No workspaces found, creating personal workspace...');
-        const createResponse = await workspaceApi.createWorkspace({ name: 'Personal', type: 'personal' });
-        if (!('error' in createResponse)) {
+        logger.info(
+          "[WorkspaceContext] No workspaces found, creating personal workspace...",
+        );
+        const createResponse = await workspaceApi.createWorkspace({
+          name: "Personal",
+          type: "personal",
+        });
+        if (!("error" in createResponse)) {
           const newWorkspace = createResponse as Workspace;
           workspaceList = [newWorkspace];
-          console.log('[WorkspaceContext] Personal workspace created:', newWorkspace.id);
+          logger.info(
+            "[WorkspaceContext] Personal workspace created:",
+            newWorkspace.id,
+          );
         } else {
-          console.error('[WorkspaceContext] Failed to create personal workspace:', createResponse.error);
+          logger.error(
+            "[WorkspaceContext] Failed to create personal workspace:",
+            createResponse.error,
+          );
         }
       }
 
@@ -84,21 +121,24 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
       const storedId = getStoredWorkspaceId();
 
       // Check if stored workspace exists in the list
-      const storedWorkspaceExists = storedId && workspaceList.some(w => w.id === storedId);
+      const storedWorkspaceExists =
+        storedId && workspaceList.some((w) => w.id === storedId);
 
       if (storedWorkspaceExists) {
         // If stored workspace exists, make sure React state matches localStorage
         setCurrentWorkspaceId(storedId);
       } else if (workspaceList.length > 0) {
         // If no valid stored workspace, set default (personal or first)
-        const personalWorkspace = workspaceList.find(w => w.type === 'personal');
+        const personalWorkspace = workspaceList.find(
+          (w) => w.type === "personal",
+        );
         const defaultWorkspace = personalWorkspace || workspaceList[0];
         setCurrentWorkspaceId(defaultWorkspace.id);
         setStoredWorkspaceId(defaultWorkspace.id);
       }
     } catch (err) {
-      console.error('Failed to fetch workspaces:', err);
-      setError('Failed to load workspaces');
+      logger.error("Failed to fetch workspaces:", err);
+      setError("Failed to load workspaces");
     } finally {
       setIsLoading(false);
       setHasInitiallyLoaded(true);
@@ -112,133 +152,157 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
   }, []);
 
   // Create workspace
-  const createWorkspace = useCallback(async (data: WorkspaceCreate): Promise<Workspace | null> => {
-    setError(null);
-    try {
-      const response = await workspaceApi.createWorkspace(data);
-      
-      if ('error' in response) {
-        setError(response.error);
+  const createWorkspace = useCallback(
+    async (data: WorkspaceCreate): Promise<Workspace | null> => {
+      setError(null);
+      try {
+        const response = await workspaceApi.createWorkspace(data);
+
+        if ("error" in response) {
+          setError(response.error);
+          return null;
+        }
+
+        const newWorkspace = response as Workspace;
+        setWorkspaces((prev) => [...prev, newWorkspace]);
+        return newWorkspace;
+      } catch (err) {
+        logger.error("Failed to create workspace:", err);
+        setError("Failed to create workspace");
         return null;
       }
-
-      const newWorkspace = response as Workspace;
-      setWorkspaces(prev => [...prev, newWorkspace]);
-      return newWorkspace;
-    } catch (err) {
-      console.error('Failed to create workspace:', err);
-      setError('Failed to create workspace');
-      return null;
-    }
-  }, [workspaceApi]);
+    },
+    [workspaceApi],
+  );
 
   // Update workspace
-  const updateWorkspace = useCallback(async (workspaceId: string, data: WorkspaceUpdate): Promise<Workspace | null> => {
-    setError(null);
-    try {
-      const response = await workspaceApi.updateWorkspace(workspaceId, data);
-      
-      if ('error' in response) {
-        setError(response.error);
+  const updateWorkspace = useCallback(
+    async (
+      workspaceId: string,
+      data: WorkspaceUpdate,
+    ): Promise<Workspace | null> => {
+      setError(null);
+      try {
+        const response = await workspaceApi.updateWorkspace(workspaceId, data);
+
+        if ("error" in response) {
+          setError(response.error);
+          return null;
+        }
+
+        const updatedWorkspace = response as Workspace;
+        setWorkspaces((prev) =>
+          prev.map((w) => (w.id === workspaceId ? updatedWorkspace : w)),
+        );
+        return updatedWorkspace;
+      } catch (err) {
+        logger.error("Failed to update workspace:", err);
+        setError("Failed to update workspace");
         return null;
       }
-
-      const updatedWorkspace = response as Workspace;
-      setWorkspaces(prev => prev.map(w => w.id === workspaceId ? updatedWorkspace : w));
-      return updatedWorkspace;
-    } catch (err) {
-      console.error('Failed to update workspace:', err);
-      setError('Failed to update workspace');
-      return null;
-    }
-  }, [workspaceApi]);
+    },
+    [workspaceApi],
+  );
 
   // Archive workspace
-  const archiveWorkspace = useCallback(async (workspaceId: string): Promise<boolean> => {
-    setError(null);
-    try {
-      const response = await workspaceApi.archiveWorkspace(workspaceId);
-      
-      if ('error' in response) {
-        setError(response.error);
+  const archiveWorkspace = useCallback(
+    async (workspaceId: string): Promise<boolean> => {
+      setError(null);
+      try {
+        const response = await workspaceApi.archiveWorkspace(workspaceId);
+
+        if ("error" in response) {
+          setError(response.error);
+          return false;
+        }
+
+        // Remove from active workspaces list
+        setWorkspaces((prev) => prev.filter((w) => w.id !== workspaceId));
+
+        // If archived workspace was current, switch to another
+        if (currentWorkspaceId === workspaceId) {
+          const remaining = workspaces.filter((w) => w.id !== workspaceId);
+          if (remaining.length > 0) {
+            const personalWorkspace = remaining.find(
+              (w) => w.type === "personal",
+            );
+            const newCurrent = personalWorkspace || remaining[0];
+            setCurrentWorkspace(newCurrent.id);
+          } else {
+            setCurrentWorkspaceId(null);
+            setStoredWorkspaceId(null);
+          }
+        }
+
+        return true;
+      } catch (err) {
+        logger.error("Failed to archive workspace:", err);
+        setError("Failed to archive workspace");
         return false;
       }
-
-      // Remove from active workspaces list
-      setWorkspaces(prev => prev.filter(w => w.id !== workspaceId));
-      
-      // If archived workspace was current, switch to another
-      if (currentWorkspaceId === workspaceId) {
-        const remaining = workspaces.filter(w => w.id !== workspaceId);
-        if (remaining.length > 0) {
-          const personalWorkspace = remaining.find(w => w.type === 'personal');
-          const newCurrent = personalWorkspace || remaining[0];
-          setCurrentWorkspace(newCurrent.id);
-        } else {
-          setCurrentWorkspaceId(null);
-          setStoredWorkspaceId(null);
-        }
-      }
-      
-      return true;
-    } catch (err) {
-      console.error('Failed to archive workspace:', err);
-      setError('Failed to archive workspace');
-      return false;
-    }
-  }, [workspaceApi, currentWorkspaceId, workspaces, setCurrentWorkspace]);
+    },
+    [workspaceApi, currentWorkspaceId, workspaces, setCurrentWorkspace],
+  );
 
   // Unarchive workspace
-  const unarchiveWorkspace = useCallback(async (workspaceId: string): Promise<boolean> => {
-    setError(null);
-    try {
-      const response = await workspaceApi.unarchiveWorkspace(workspaceId);
-      
-      if ('error' in response) {
-        setError(response.error);
+  const unarchiveWorkspace = useCallback(
+    async (workspaceId: string): Promise<boolean> => {
+      setError(null);
+      try {
+        const response = await workspaceApi.unarchiveWorkspace(workspaceId);
+
+        if ("error" in response) {
+          setError(response.error);
+          return false;
+        }
+
+        await refreshWorkspaces();
+        return true;
+      } catch (err) {
+        logger.error("Failed to unarchive workspace:", err);
+        setError("Failed to unarchive workspace");
         return false;
       }
-
-      await refreshWorkspaces();
-      return true;
-    } catch (err) {
-      console.error('Failed to unarchive workspace:', err);
-      setError('Failed to unarchive workspace');
-      return false;
-    }
-  }, [workspaceApi, refreshWorkspaces]);
+    },
+    [workspaceApi, refreshWorkspaces],
+  );
 
   // Leave workspace
-  const leaveWorkspace = useCallback(async (workspaceId: string): Promise<boolean> => {
-    setError(null);
-    try {
-      const response = await workspaceApi.leaveWorkspace(workspaceId);
-      
-      if (response && 'error' in response) {
-        setError(response.error);
+  const leaveWorkspace = useCallback(
+    async (workspaceId: string): Promise<boolean> => {
+      setError(null);
+      try {
+        const response = await workspaceApi.leaveWorkspace(workspaceId);
+
+        if (response && "error" in response) {
+          setError(response.error);
+          return false;
+        }
+
+        // Remove from workspaces list
+        setWorkspaces((prev) => prev.filter((w) => w.id !== workspaceId));
+
+        // If left workspace was current, switch to another
+        if (currentWorkspaceId === workspaceId) {
+          const remaining = workspaces.filter((w) => w.id !== workspaceId);
+          if (remaining.length > 0) {
+            const personalWorkspace = remaining.find(
+              (w) => w.type === "personal",
+            );
+            const newCurrent = personalWorkspace || remaining[0];
+            setCurrentWorkspace(newCurrent.id);
+          }
+        }
+
+        return true;
+      } catch (err) {
+        logger.error("Failed to leave workspace:", err);
+        setError("Failed to leave workspace");
         return false;
       }
-
-      // Remove from workspaces list
-      setWorkspaces(prev => prev.filter(w => w.id !== workspaceId));
-      
-      // If left workspace was current, switch to another
-      if (currentWorkspaceId === workspaceId) {
-        const remaining = workspaces.filter(w => w.id !== workspaceId);
-        if (remaining.length > 0) {
-          const personalWorkspace = remaining.find(w => w.type === 'personal');
-          const newCurrent = personalWorkspace || remaining[0];
-          setCurrentWorkspace(newCurrent.id);
-        }
-      }
-      
-      return true;
-    } catch (err) {
-      console.error('Failed to leave workspace:', err);
-      setError('Failed to leave workspace');
-      return false;
-    }
-  }, [workspaceApi, currentWorkspaceId, workspaces, setCurrentWorkspace]);
+    },
+    [workspaceApi, currentWorkspaceId, workspaces, setCurrentWorkspace],
+  );
 
   // Load workspaces on auth change
   useEffect(() => {
@@ -277,8 +341,7 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
 export const useWorkspace = (): WorkspaceContextType => {
   const context = useContext(WorkspaceContext);
   if (context === undefined) {
-    throw new Error('useWorkspace must be used within a WorkspaceProvider');
+    throw new Error("useWorkspace must be used within a WorkspaceProvider");
   }
   return context;
 };
-

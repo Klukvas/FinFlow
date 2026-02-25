@@ -1,5 +1,6 @@
 import { config } from "@/config/env";
 import { getStoredWorkspaceId } from "@/utils/workspaceStorage";
+import { logger } from "@/utils/logger";
 
 export interface ApiError {
   error: string;
@@ -102,7 +103,7 @@ export class AuthHttpClient {
         return {} as T;
       }
     } catch (error) {
-      console.error("Request failed:", error);
+      logger.error("Request failed:", error);
       return {
         error: error instanceof Error ? error.message : "Network error",
       };

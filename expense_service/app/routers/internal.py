@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from typing import Annotated, List
+from uuid import UUID
 
 from app.schemas.expense import ExpenseCreate, ExpenseResponse
 from app.services.expense import ExpenseService
@@ -27,6 +28,7 @@ logger = get_logger(__name__)
 async def internal_expense_create(
     expense: ExpenseCreate,
     user_id: Annotated[int, Query(description="User ID to validate ownership", gt=0)],
+    workspace_id: Annotated[UUID, Query(description="Workspace ID for the expense")],
     service: ExpenseService = Depends(get_expense_service_internal),
     _: None = Depends(verify_internal_token)
 ) -> ExpenseResponse:
@@ -51,7 +53,7 @@ async def internal_expense_create(
         HTTPException: 400 if invalid expense data
     """
     try:
-        created_expense = service.create(expense, user_id)
+        created_expense = service.create(expense, user_id, workspace_id)
         
         logger.info(f"Internal expense created: {created_expense.id} for user {user_id}")
         
@@ -80,6 +82,7 @@ async def internal_expense_create(
 async def get_expenses_by_account(
     account_id: int,
     user_id: Annotated[int, Query(description="User ID to validate ownership", gt=0)],
+    workspace_id: Annotated[UUID, Query(description="Workspace ID")] = None,
     limit: Annotated[int, Query(description="Maximum number of expenses to return", ge=1, le=1000)] = 100,
     offset: Annotated[int, Query(description="Number of expenses to skip", ge=0)] = 0,
     service: ExpenseService = Depends(get_expense_service_internal),
@@ -87,32 +90,36 @@ async def get_expenses_by_account(
 ) -> List[ExpenseResponse]:
     """
     Internal endpoint to get expenses for a specific account.
-    
+
     This endpoint is used by the account service to:
     - Fetch expenses associated with a specific account
     - Validate account ownership
     - Support account transaction summaries
-    
+
     Args:
         account_id: The ID of the account
         user_id: The ID of the user who owns the account
+        workspace_id: Optional workspace ID for workspace isolation
         limit: Maximum number of expenses to return
         offset: Number of expenses to skip
         service: Injected expense service instance
-        
+
     Returns:
         List[ExpenseResponse]: List of expenses for the account
-        
+
     Raises:
         HTTPException: 403 if invalid internal token
         HTTPException: 404 if account not found
     """
     try:
         # Get expenses for the account
-        expenses = service.db.query(Expense).filter(
+        filters = [
             Expense.account_id == account_id,
             Expense.user_id == user_id
-        ).order_by(Expense.date.desc()).offset(offset).limit(limit).all()
+        ]
+        if workspace_id is not None:
+            filters.append(Expense.workspace_id == workspace_id)
+        expenses = service.db.query(Expense).filter(*filters).order_by(Expense.date.desc()).offset(offset).limit(limit).all()
         
         logger.info(f"Retrieved {len(expenses)} expenses for account {account_id} and user {user_id}")
         

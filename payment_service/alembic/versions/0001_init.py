@@ -47,7 +47,7 @@ def upgrade() -> None:
             name='ck_payment_status',
         ),
         sa.CheckConstraint(
-            "provider IN ('WAYFORPAY')",
+            "provider IN ('WAYFORPAY', 'PADDLE')",
             name='ck_payment_provider',
         ),
         sa.CheckConstraint(

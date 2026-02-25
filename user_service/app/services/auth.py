@@ -190,6 +190,11 @@ class AuthService:
                 log_authentication_attempt(self.logger, email, False, "Invalid password")
                 raise UserAuthenticationError("Invalid email or password")
 
+            # Check account is active
+            if getattr(user, 'status', 'active') != "active":
+                log_security_event(self.logger, "Login attempt for disabled account", user_id=user.id)
+                raise UserAuthenticationError("Account is disabled")
+
             # Successful authentication
             rate_limiter.record_successful_login(email)
             log_authentication_attempt(self.logger, email, True)
@@ -254,10 +259,12 @@ class AuthService:
         try:
             payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
             user_id = int(payload["sub"])
-            
-            # Verify user still exists
-            self.get_user_by_id(user_id)
-            
+
+            # Verify user still exists and is active
+            user = self.get_user_by_id(user_id)
+            if getattr(user, 'status', 'active') != "active":
+                raise UserAuthenticationError("Account is disabled")
+
             return user_id
         except JWTError as e:
             log_security_event(
@@ -287,7 +294,10 @@ class AuthService:
             
             user_id = int(payload["sub"])
             user = self.get_user_by_id(user_id)
-            
+
+            if getattr(user, 'status', 'active') != "active":
+                raise UserAuthenticationError("Account is disabled")
+
             return self.create_token(user)
         except JWTError:
             raise UserAuthenticationError("Invalid refresh token")

@@ -9,6 +9,7 @@ import { PaymentPurpose } from "@/types/payment";
 import { FaSpinner, FaCrown, FaLock } from "react-icons/fa";
 import { toast } from "sonner";
 import { config } from "@/config/env";
+import { logger } from "@/utils/logger";
 
 interface ConsentData {
   consent_given: boolean;
@@ -112,7 +113,7 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
       localStorage.setItem("pending_payment_id", payment.id);
       localStorage.setItem("pending_plan_code", planCode);
 
-      console.log("Payment created:", {
+      logger.info("Payment created:", {
         transaction_id: payment.transaction_id,
         checkout_url: payment.checkout_url,
         provider_payment_url: payment.provider_payment_url,
@@ -144,7 +145,7 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
       toast.error("No transaction ID returned. Cannot open checkout.");
       setIsCreating(false);
     } catch (error) {
-      console.error("Payment creation failed:", error);
+      logger.error("Payment creation failed:", error);
       toast.error(t("payment.errors.unexpected"));
       setIsCreating(false);
     }

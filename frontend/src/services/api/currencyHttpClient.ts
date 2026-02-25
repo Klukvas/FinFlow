@@ -1,4 +1,5 @@
-import { config } from '@/config/env';
+import { config } from "@/config/env";
+import { logger } from "@/utils/logger";
 
 export interface ApiError {
   error: string;
@@ -16,12 +17,12 @@ export class CurrencyHttpClient {
 
   private async makeRequest<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
   ): Promise<T | ApiError> {
     const url = `${this.baseUrl}${endpoint}`;
-    
+
     const defaultHeaders = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     };
 
     try {
@@ -36,35 +37,39 @@ export class CurrencyHttpClient {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         return {
-          error: errorData.error || errorData.detail || errorData.message || `HTTP ${response.status}`,
+          error:
+            errorData.error ||
+            errorData.detail ||
+            errorData.message ||
+            `HTTP ${response.status}`,
           status: response.status,
           errorCode: errorData.errorCode, // Preserve errorCode from backend
         };
       }
 
       // Handle empty responses
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
         return await response.json();
       } else {
         return {} as T;
       }
     } catch (error) {
-      console.error('Request failed:', error);
+      logger.error("Request failed:", error);
       return {
-        error: 'Network error occurred',
-        errorCode: 'NETWORK_ERROR',
+        error: "Network error occurred",
+        errorCode: "NETWORK_ERROR",
       };
     }
   }
 
   async get<T>(endpoint: string): Promise<T | ApiError> {
-    return this.makeRequest<T>(endpoint, { method: 'GET' });
+    return this.makeRequest<T>(endpoint, { method: "GET" });
   }
 
   async post<T>(endpoint: string, data?: any): Promise<T | ApiError> {
     return this.makeRequest<T>(endpoint, {
-      method: 'POST',
+      method: "POST",
       body: data ? JSON.stringify(data) : null,
     });
   }

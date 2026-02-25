@@ -10,8 +10,8 @@ class PaymentScheduleResponse(BaseModel):
     recurring_payment_id: UUID
     execution_date: date
     status: str
-    created_expense_id: Optional[UUID]
-    created_income_id: Optional[UUID]
+    created_expense_id: Optional[int]
+    created_income_id: Optional[int]
     error_message: Optional[str]
     executed_at: Optional[datetime]
     created_at: datetime

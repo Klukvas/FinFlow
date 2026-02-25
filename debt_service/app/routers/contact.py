@@ -69,7 +69,8 @@ def delete_contact(
 @router.get("/summaries/", response_model=List[ContactSummary])
 def get_contact_summaries(
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     service: ContactService = Depends(get_contact_service)
 ):
     """Get contact summaries with debt information"""
-    return service.get_contact_summaries(user_id)
+    return service.get_contact_summaries(user_id, workspace_id)

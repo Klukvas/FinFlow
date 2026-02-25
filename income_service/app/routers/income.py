@@ -200,16 +200,17 @@ def get_income_summary(
     start_date: date = Query(..., description="Start date for summary"),
     end_date: date = Query(..., description="End date for summary"),
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     service: IncomeService = Depends(get_income_service)
 ) -> IncomeSummary:
     """
     Get income summary for a specific date range.
-    
+
     Returns total income, count, and average for the specified period.
     """
     start_datetime = datetime.combine(start_date, datetime.min.time())
     end_datetime = datetime.combine(end_date, datetime.max.time())
-    return service.get_summary(user_id, start_datetime, end_datetime)
+    return service.get_summary(user_id, workspace_id, start_datetime, end_datetime)
 
 @router.get(
     "/stats/overview",
@@ -223,14 +224,15 @@ def get_income_summary(
 )
 def get_income_stats(
     user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
     service: IncomeService = Depends(get_income_service)
 ) -> IncomeStats:
     """
     Get overall income statistics.
-    
+
     Returns total, monthly, yearly income and other statistics.
     """
-    return service.get_stats(user_id)
+    return service.get_stats(user_id, workspace_id)
 
 @router.get(
     "/category/{category_id}",
@@ -247,15 +249,16 @@ def get_income_stats(
 async def get_incomes_by_category(
     category_id: int = Path(description="Category ID", gt=0),
     service: IncomeService = Depends(get_income_service),
-    user_id: int = Depends(get_current_user_id)
+    user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id)
 ) -> IncomesByCategoryResponse:
     """
     Get all incomes for a specific category with statistics.
-    
+
     Returns a list of incomes for the specified category (ordered by date, newest first) along with
     statistics including total amount, count, and average amount, all converted to the user's base currency.
     """
-    return await service.get_by_category(category_id, user_id)
+    return await service.get_by_category(category_id, user_id, workspace_id)
 
 @router.get(
     "/current-month-count",
@@ -268,7 +271,8 @@ async def get_incomes_by_category(
 )
 async def get_current_month_count(
     service: IncomeService = Depends(get_income_service),
-    user_id: int = Depends(get_current_user_id)
+    user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id)
 ):
     """
     Get current month income count and limit for PDF parser frontend validation.
@@ -277,19 +281,4 @@ async def get_current_month_count(
         - count: Number of incomes created this month
         - limit: Monthly limit for this user's plan (None = unlimited)
     """
-    from datetime import datetime
-    from app.models.income import Income
-
-    # Count incomes in current month
-    current_month_start = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    count = service.db.query(Income).filter(
-        Income.user_id == user_id,
-        Income.created_at >= current_month_start
-    ).count()
-
-    # Get limit from subscription
-    features = service.subscription_client.get_user_features(user_id)
-    income_feature = features.get("incomes", {})
-    limit = income_feature.get("limit_value")
-
-    return {"count": count, "limit": limit}
+    return service.get_current_month_count(user_id, workspace_id)

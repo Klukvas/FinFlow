@@ -44,7 +44,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             user_id = request.state.user_id
         
         # Set request context
-        from logging_utils import set_request_context
+        from app.utils.logger import set_request_context
         set_request_context(request_id, user_id, "recurring_service")
         
         # Log request start
@@ -154,13 +154,9 @@ app.add_exception_handler(HTTPException, http_exception_handler)
 app.add_exception_handler(Exception, general_exception_handler)
 
 # Подключить роутеры
-# Add middleware
 app.add_middleware(RequestLoggingMiddleware)
 
 app.include_router(recurring_router)
-# Add middleware
-app.add_middleware(RequestLoggingMiddleware)
-
 app.include_router(internal_router)
 
 

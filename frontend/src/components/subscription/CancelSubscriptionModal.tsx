@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { logger } from "@/utils/logger";
 import { Modal } from "@/components/ui/shared/Modal";
 import { Button } from "@/components/ui/shared/Button";
 import { FaExclamationTriangle, FaSpinner } from "react-icons/fa";
@@ -83,7 +84,7 @@ export const CancelSubscriptionModal: React.FC<
       onCancelSuccess();
       onClose();
     } catch (error) {
-      console.error("Cancellation error:", error);
+      logger.error("Cancellation error:", error);
       toast.error(t("cancellation.error", "Failed to cancel subscription"));
     } finally {
       setIsSubmitting(false);

@@ -14,6 +14,7 @@ import {
   PaymentUIState,
 } from "@/types/payment";
 import { useAuth } from "./AuthContext";
+import { logger } from "@/utils/logger";
 
 interface PaymentContextType {
   state: PaymentUIState;
@@ -114,7 +115,7 @@ export const PaymentProvider: React.FC<{ children: ReactNode }> = ({
 
         return payment;
       } catch (error) {
-        console.error("Failed to create payment:", error);
+        logger.error("Failed to create payment:", error);
         setState((prev) => ({
           ...prev,
           isProcessing: false,
@@ -154,7 +155,7 @@ export const PaymentProvider: React.FC<{ children: ReactNode }> = ({
         setState((prev) => ({ ...prev, isProcessing: false }));
         return response;
       } catch (error) {
-        console.error("Failed to change plan:", error);
+        logger.error("Failed to change plan:", error);
         setState((prev) => ({
           ...prev,
           isProcessing: false,
@@ -191,7 +192,7 @@ export const PaymentProvider: React.FC<{ children: ReactNode }> = ({
 
         return response;
       } catch (error) {
-        console.error("Failed to get payment:", error);
+        logger.error("Failed to get payment:", error);
         setState((prev) => ({
           ...prev,
           isProcessing: false,
@@ -228,7 +229,7 @@ export const PaymentProvider: React.FC<{ children: ReactNode }> = ({
 
         return response;
       } catch (error) {
-        console.error("Failed to get payment by order ref:", error);
+        logger.error("Failed to get payment by order ref:", error);
         setState((prev) => ({
           ...prev,
           isProcessing: false,
@@ -265,7 +266,7 @@ export const PaymentProvider: React.FC<{ children: ReactNode }> = ({
 
         return response;
       } catch (error) {
-        console.error("Failed to poll payment status:", error);
+        logger.error("Failed to poll payment status:", error);
         setState((prev) => ({
           ...prev,
           isProcessing: false,

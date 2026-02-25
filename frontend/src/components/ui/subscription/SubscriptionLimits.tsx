@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { logger } from "@/utils/logger";
 import { useApiClients } from "@/hooks/useApiClients";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserFeature } from "@/types/subscription";
 import { Card } from "@/components/ui/shared/Card";
 import { Button } from "@/components/ui/shared/Button";
-import { LoadingSpinner } from "@/components/ui/shared/LoadingSpinner";
+import { Skeleton } from "@/components/ui/shared/Skeleton";
 import { UpgradePlanModal } from "@/components/payment/UpgradePlanModal";
 import { CancelSubscriptionModal } from "@/components/subscription/CancelSubscriptionModal";
 import {
@@ -96,7 +97,7 @@ export const SubscriptionLimits: React.FC<SubscriptionLimitsProps> = ({
       }
 
       if ("error" in countsResponse) {
-        console.warn("Failed to load current counts:", countsResponse.error);
+        logger.warn("Failed to load current counts:", countsResponse.error);
         // Don't fail the whole component if counts fail
       } else {
         setCurrentCounts(countsResponse);
@@ -110,7 +111,7 @@ export const SubscriptionLimits: React.FC<SubscriptionLimitsProps> = ({
       }
     } catch (err) {
       setError(t("subscription.errors.loadFailed"));
-      console.error("Failed to load subscription limits:", err);
+      logger.error("Failed to load subscription limits:", err);
     } finally {
       setLoading(false);
     }
@@ -135,8 +136,27 @@ export const SubscriptionLimits: React.FC<SubscriptionLimitsProps> = ({
   if (loading) {
     return (
       <Card className={`p-6 ${className}`}>
-        <div className="flex items-center justify-center py-8">
-          <LoadingSpinner size="md" />
+        <div className="flex items-center gap-3 mb-6">
+          <Skeleton className="w-10 h-10 rounded-lg" />
+          <div className="space-y-2 flex-1">
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-3 w-56" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="p-4 rounded-lg border theme-border space-y-3"
+            >
+              <div className="flex items-center gap-3">
+                <Skeleton className="w-8 h-8 rounded-lg" />
+                <Skeleton className="h-4 flex-1" />
+                <Skeleton className="h-5 w-14 rounded-full" />
+              </div>
+              <Skeleton className="h-2 w-full rounded-full" />
+            </div>
+          ))}
         </div>
       </Card>
     );

@@ -1,11 +1,13 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useAuth } from '@/contexts/AuthContext';
-import { useWorkspace } from '@/contexts/WorkspaceContext';
-import { WorkspaceApiClient } from '@/services/api/workspaceApiClient';
-import { MyInvite, MyInviteListResponse } from '@/types';
-import { MyInviteCard } from '@/components/ui/workspace';
-import { FaEnvelope, FaSpinner, FaInbox, FaCheckCircle } from 'react-icons/fa';
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { useAuth } from "@/contexts/AuthContext";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { WorkspaceApiClient } from "@/services/api/workspaceApiClient";
+import { MyInvite, MyInviteListResponse } from "@/types";
+import { MyInviteCard } from "@/components/ui/workspace";
+import { FaEnvelope, FaSpinner, FaInbox, FaCheckCircle } from "react-icons/fa";
+import { Skeleton } from "@/components/ui/shared/Skeleton";
+import { logger } from "@/utils/logger";
 
 export const MyInvites: React.FC = () => {
   const { t } = useTranslation();
@@ -16,7 +18,9 @@ export const MyInvites: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [loadingInviteId, setLoadingInviteId] = useState<string | null>(null);
-  const [loadingAction, setLoadingAction] = useState<'accept' | 'reject' | null>(null);
+  const [loadingAction, setLoadingAction] = useState<
+    "accept" | "reject" | null
+  >(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Create API client
@@ -33,16 +37,16 @@ export const MyInvites: React.FC = () => {
 
     try {
       const response = await workspaceApi.getMyInvites(false); // Only pending
-      
-      if ('error' in response) {
+
+      if ("error" in response) {
         setError(response.error);
         return;
       }
 
       setInvites((response as MyInviteListResponse).invites);
     } catch (err) {
-      console.error('Failed to fetch invites:', err);
-      setError(t('workspace.invite.fetchError', 'Failed to load invitations'));
+      logger.error("Failed to fetch invites:", err);
+      setError(t("workspace.invite.fetchError", "Failed to load invitations"));
     } finally {
       setIsLoading(false);
     }
@@ -55,32 +59,34 @@ export const MyInvites: React.FC = () => {
   // Handle accept
   const handleAccept = async (inviteId: string) => {
     setLoadingInviteId(inviteId);
-    setLoadingAction('accept');
+    setLoadingAction("accept");
     setError(null);
     setSuccessMessage(null);
 
     try {
       const response = await workspaceApi.acceptInvite(inviteId);
-      
-      if ('error' in response) {
+
+      if ("error" in response) {
         setError(response.error);
         return;
       }
 
       // Remove from list and show success
-      const acceptedInvite = invites.find(i => i.id === inviteId);
-      setInvites(prev => prev.filter(i => i.id !== inviteId));
+      const acceptedInvite = invites.find((i) => i.id === inviteId);
+      setInvites((prev) => prev.filter((i) => i.id !== inviteId));
       setSuccessMessage(
-        t('workspace.invite.acceptSuccess', 'You have joined "{{workspace}}"', { 
-          workspace: acceptedInvite?.workspace_name || 'the workspace' 
-        })
+        t("workspace.invite.acceptSuccess", 'You have joined "{{workspace}}"', {
+          workspace: acceptedInvite?.workspace_name || "the workspace",
+        }),
       );
-      
+
       // Refresh workspaces to show the new one
       await refreshWorkspaces();
     } catch (err) {
-      console.error('Failed to accept invite:', err);
-      setError(t('workspace.invite.acceptError', 'Failed to accept invitation'));
+      logger.error("Failed to accept invite:", err);
+      setError(
+        t("workspace.invite.acceptError", "Failed to accept invitation"),
+      );
     } finally {
       setLoadingInviteId(null);
       setLoadingAction(null);
@@ -90,24 +96,28 @@ export const MyInvites: React.FC = () => {
   // Handle reject
   const handleReject = async (inviteId: string) => {
     setLoadingInviteId(inviteId);
-    setLoadingAction('reject');
+    setLoadingAction("reject");
     setError(null);
     setSuccessMessage(null);
 
     try {
       const response = await workspaceApi.rejectInvite(inviteId);
-      
-      if (response && 'error' in response) {
+
+      if (response && "error" in response) {
         setError(response.error);
         return;
       }
 
       // Remove from list
-      setInvites(prev => prev.filter(i => i.id !== inviteId));
-      setSuccessMessage(t('workspace.invite.rejectSuccess', 'Invitation declined'));
+      setInvites((prev) => prev.filter((i) => i.id !== inviteId));
+      setSuccessMessage(
+        t("workspace.invite.rejectSuccess", "Invitation declined"),
+      );
     } catch (err) {
-      console.error('Failed to reject invite:', err);
-      setError(t('workspace.invite.rejectError', 'Failed to decline invitation'));
+      logger.error("Failed to reject invite:", err);
+      setError(
+        t("workspace.invite.rejectError", "Failed to decline invitation"),
+      );
     } finally {
       setLoadingInviteId(null);
       setLoadingAction(null);
@@ -122,7 +132,7 @@ export const MyInvites: React.FC = () => {
     }
   }, [successMessage]);
 
-  const pendingCount = invites.filter(i => i.is_actionable).length;
+  const pendingCount = invites.filter((i) => i.is_actionable).length;
 
   return (
     <div className="min-h-full">
@@ -134,13 +144,16 @@ export const MyInvites: React.FC = () => {
           </div>
           <div>
             <h1 className="text-2xl font-bold theme-text-primary">
-              {t('workspace.myInvites.title', 'My Invitations')}
+              {t("workspace.myInvites.title", "My Invitations")}
             </h1>
             <p className="mt-1 theme-text-secondary">
-              {pendingCount > 0 
-                ? t('workspace.myInvites.pending', 'You have {{count}} pending invitations', { count: pendingCount })
-                : t('workspace.myInvites.noPending', 'No pending invitations')
-              }
+              {pendingCount > 0
+                ? t(
+                    "workspace.myInvites.pending",
+                    "You have {{count}} pending invitations",
+                    { count: pendingCount },
+                  )
+                : t("workspace.myInvites.noPending", "No pending invitations")}
             </p>
           </div>
         </div>
@@ -175,10 +188,13 @@ export const MyInvites: React.FC = () => {
             <FaInbox className="w-10 h-10 theme-text-tertiary" />
           </div>
           <h3 className="text-lg font-medium theme-text-primary mb-2">
-            {t('workspace.myInvites.empty.title', 'No invitations')}
+            {t("workspace.myInvites.empty.title", "No invitations")}
           </h3>
           <p className="theme-text-secondary max-w-md mx-auto">
-            {t('workspace.myInvites.empty.description', 'When someone invites you to collaborate on a workspace, it will appear here.')}
+            {t(
+              "workspace.myInvites.empty.description",
+              "When someone invites you to collaborate on a workspace, it will appear here.",
+            )}
           </p>
         </div>
       )}
@@ -193,7 +209,9 @@ export const MyInvites: React.FC = () => {
               onAccept={handleAccept}
               onReject={handleReject}
               isLoading={loadingInviteId === invite.id}
-              loadingAction={loadingInviteId === invite.id ? loadingAction : null}
+              loadingAction={
+                loadingInviteId === invite.id ? loadingAction : null
+              }
             />
           ))}
         </div>

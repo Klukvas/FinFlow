@@ -5,6 +5,7 @@ import { usePayment } from "@/contexts/PaymentContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { FaSpinner, FaExchangeAlt } from "react-icons/fa";
 import { toast } from "sonner";
+import { logger } from "@/utils/logger";
 
 interface ConsentData {
   consent_given: boolean;
@@ -75,7 +76,7 @@ export const ChangePlanButton: React.FC<ChangePlanButtonProps> = ({
         );
       }
     } catch (error) {
-      console.error("Plan change failed:", error);
+      logger.error("Plan change failed:", error);
       toast.error(
         t("payment.errors.unexpected", {
           defaultValue: "An unexpected error occurred",

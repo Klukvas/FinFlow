@@ -1,5 +1,6 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import {
@@ -27,12 +28,14 @@ import { PaymentReturn } from "@/pages/payment/PaymentReturn";
 import { PaymentHistory } from "@/pages/payment/PaymentHistory";
 import { SubscriptionTermsPage } from "@/pages/legal/SubscriptionTermsPage";
 import { CancelHelpPage } from "@/pages/legal/CancelHelpPage";
+import { CategoryDetail } from "@/pages/CategoryDetail";
 
 import { Layout } from "./ui/layout/Layout";
 import { PublicLayout } from "./ui/layout/PublicLayout";
 import { ProtectedRoute } from "./ProtectedRoute";
 
 export const AppRoutes: React.FC = () => {
+  const { t } = useTranslation();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { currentWorkspaceId, isLoading: workspaceLoading } = useWorkspace();
 
@@ -40,7 +43,7 @@ export const AppRoutes: React.FC = () => {
   if (authLoading || (isAuthenticated && workspaceLoading)) {
     return (
       <div className="min-h-screen theme-bg flex items-center justify-center">
-        <div className="theme-text-primary">Загрузка...</div>
+        <div className="theme-text-primary">{t("common.loading")}</div>
       </div>
     );
   }
@@ -195,6 +198,16 @@ export const AppRoutes: React.FC = () => {
             <ProtectedRoute>
               <Layout>
                 <Category />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/category/:id"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <CategoryDetail />
               </Layout>
             </ProtectedRoute>
           }

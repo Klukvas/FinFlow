@@ -2,7 +2,7 @@ from datetime import datetime, date
 from typing import Optional, Dict, Any
 from uuid import UUID, uuid4
 
-from sqlalchemy import Column, String, DateTime, Date, Text, ForeignKey, Enum
+from sqlalchemy import Column, String, Integer, DateTime, Date, Text, ForeignKey, Enum
 from sqlalchemy.dialects.postgresql import UUID as PostgresUUID
 from sqlalchemy.orm import relationship
 
@@ -16,8 +16,8 @@ class PaymentSchedule(Base):
     recurring_payment_id = Column(PostgresUUID(as_uuid=True), ForeignKey("recurring_payments.id"), nullable=False)
     execution_date = Column(Date, nullable=False)
     status = Column(Enum("pending", "executed", "failed", name="schedule_status_enum"), nullable=False, default="pending")
-    created_expense_id = Column(PostgresUUID(as_uuid=True), nullable=True)
-    created_income_id = Column(PostgresUUID(as_uuid=True), nullable=True)
+    created_expense_id = Column(Integer, nullable=True)
+    created_income_id = Column(Integer, nullable=True)
     error_message = Column(Text, nullable=True)
     executed_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)

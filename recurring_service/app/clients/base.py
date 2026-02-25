@@ -52,9 +52,9 @@ class BaseServiceClient:
         """GET запрос"""
         return await self._make_request("GET", endpoint, params=params)
 
-    async def post(self, endpoint: str, data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def post(self, endpoint: str, data: Optional[Dict[str, Any]] = None, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """POST запрос"""
-        return await self._make_request("POST", endpoint, data=data)
+        return await self._make_request("POST", endpoint, data=data, params=params)
 
     async def put(self, endpoint: str, data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """PUT запрос"""

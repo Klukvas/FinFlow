@@ -52,7 +52,10 @@ class DebtService(WorkspaceAuthorizationMixin):
             # 1. Authorize workspace access (member role required)
             self.authorize_workspace_access(workspace_id, user_id, "member", "create_debt")
             # Check subscription limits before creating
-            current_count = self.db.query(Debt).filter(Debt.user_id == user_id).count()
+            current_count = self.db.query(Debt).filter(
+                Debt.user_id == user_id,
+                Debt.workspace_id == workspace_id
+            ).count()
             if not self.subscription_client.check_debt_limit(user_id, current_count):
                 features = self.subscription_client.get_user_features(user_id)
                 debt_feature = features.get("debts", {})
@@ -109,7 +112,7 @@ class DebtService(WorkspaceAuthorizationMixin):
         # 1. Authorize workspace access (viewer role required)
         self.authorize_workspace_access(workspace_id, user_id, "viewer", "list_debts")
         query = self.db.query(Debt).options(joinedload(Debt.contact)).filter(
-            Debt.user_id == user_id
+            and_(Debt.user_id == user_id, Debt.workspace_id == workspace_id)
         )
         
         if active_only:
@@ -137,7 +140,7 @@ class DebtService(WorkspaceAuthorizationMixin):
         self.authorize_workspace_access(workspace_id, user_id, "viewer", "get_debt")
         from app.models.debt import Contact
         debt = self.db.query(Debt).options(joinedload(Debt.contact)).filter(
-            and_(Debt.id == debt_id, Debt.user_id == user_id)
+            and_(Debt.id == debt_id, Debt.user_id == user_id, Debt.workspace_id == workspace_id)
         ).first()
         
         if not debt:

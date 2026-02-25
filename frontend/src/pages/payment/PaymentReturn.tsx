@@ -14,6 +14,7 @@ import {
   FaReceipt,
 } from "react-icons/fa";
 import { toast } from "sonner";
+import { logger } from "@/utils/logger";
 
 // Status configuration for cleaner code
 const STATUS_CONFIG = {
@@ -80,6 +81,14 @@ export const PaymentReturn: React.FC = () => {
   const hasCheckedRef = useRef(false);
   const paymentIdRef = useRef<string | null>(null);
   const orderRefRef = useRef<string | null>(null);
+  const cancelledRef = useRef(false);
+
+  // Cancel polling on unmount
+  useEffect(() => {
+    return () => {
+      cancelledRef.current = true;
+    };
+  }, []);
 
   // Capture payment identifiers on mount (before they might be cleared)
   useEffect(() => {
@@ -114,9 +123,9 @@ export const PaymentReturn: React.FC = () => {
       const orderRef =
         orderRefRef.current || searchParams.get("orderReference");
 
-      console.log("PaymentReturn: paymentId from URL:", paymentIdFromUrl);
-      console.log("PaymentReturn: paymentId (combined):", paymentId);
-      console.log("PaymentReturn: orderRef from URL:", orderRef);
+      logger.info("PaymentReturn: paymentId from URL:", paymentIdFromUrl);
+      logger.info("PaymentReturn: paymentId (combined):", paymentId);
+      logger.info("PaymentReturn: orderRef from URL:", orderRef);
 
       if (!paymentId && !orderRef) {
         setError(t("payment.errors.noPaymentId"));
@@ -159,7 +168,8 @@ export const PaymentReturn: React.FC = () => {
 
           // FAILED / CREATED / PENDING — keep polling (retry may resolve)
           if (attempt < MAX_ATTEMPTS - 1) {
-            console.log(
+            if (cancelledRef.current) break;
+            logger.info(
               `Payment status: ${result.status}, retrying in ${POLL_INTERVAL}ms... (${attempt + 1}/${MAX_ATTEMPTS})`,
             );
             await new Promise((r) => setTimeout(r, POLL_INTERVAL));
@@ -188,7 +198,7 @@ export const PaymentReturn: React.FC = () => {
           toast.info(t("payment.pending.message"));
         }
       } catch (err) {
-        console.error("Failed to check payment status:", err);
+        logger.error("Failed to check payment status:", err);
         setError(t("payment.errors.unexpected"));
       } finally {
         setLoading(false);

@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.models.recurring_payment import RecurringPayment
 from app.services.executor import PaymentExecutor
-from app.services.scheduler_service import SchedulerService
 from app.services.scheduler_service import scheduler_service
 from app.clients.expense_client import ExpenseServiceClient
 from app.clients.income_client import IncomeServiceClient
@@ -29,7 +29,6 @@ category_client = CategoryServiceClient()
 
 # Инициализация сервисов
 executor = PaymentExecutor(expense_client, income_client, category_client)
-scheduler = SchedulerService()
 
 
 @router.post("/execute-recurring-payments")
@@ -56,12 +55,17 @@ async def get_pending_payments(
     _: None = Depends(verify_internal_token)
 ):
     """Get list of payments that should be executed on the specified date"""
-    payments = scheduler.get_payments_to_execute_today(db, execution_date)
-    
+    target_date = execution_date or date.today()
+    payments = db.query(RecurringPayment).filter(
+        RecurringPayment.status == "active",
+        RecurringPayment.next_execution <= target_date,
+        RecurringPayment.end_date.is_(None) | (RecurringPayment.end_date >= target_date)
+    ).all()
+
     return {
         "payments": [payment.to_dict() for payment in payments],
         "count": len(payments),
-        "execution_date": execution_date or date.today()
+        "execution_date": target_date
     }
 
 

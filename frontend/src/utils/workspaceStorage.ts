@@ -1,4 +1,6 @@
-const WORKSPACE_ID_KEY = 'current_workspace_id';
+import { logger } from "@/utils/logger";
+
+const WORKSPACE_ID_KEY = "current_workspace_id";
 
 /**
  * Get workspace ID from localStorage
@@ -23,7 +25,7 @@ export const setStoredWorkspaceId = (workspaceId: string | null): void => {
       localStorage.removeItem(WORKSPACE_ID_KEY);
     }
   } catch {
-    console.error('Failed to store workspace ID');
+    logger.error("Failed to store workspace ID");
   }
 };
 
@@ -34,7 +36,6 @@ export const clearStoredWorkspaceId = (): void => {
   try {
     localStorage.removeItem(WORKSPACE_ID_KEY);
   } catch {
-    console.error('Failed to clear workspace ID');
+    logger.error("Failed to clear workspace ID");
   }
 };
-

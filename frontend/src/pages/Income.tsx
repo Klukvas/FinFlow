@@ -1,20 +1,21 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { CreateIncome } from '../components/ui/income/CreateIncome';
-import { IncomeList } from '../components/ui/income/IncomeList';
-import { IncomeDashboard } from '../components/ui/income/IncomeDashboard';
-import { IncomePageHeader } from '../components/ui/income/IncomePageHeader';
-import { IncomeSummaryStrip } from '../components/ui/income/IncomeSummaryStrip';
-import { IncomeFilterBar } from '../components/ui/income/IncomeFilterBar';
-import { Modal } from '../components/ui/shared/Modal';
-import { Card } from '../components/ui/shared/Card';
-import { Button } from '../components/ui/shared/Button';
-import { Tabs } from '../components/ui/shared/Tabs';
-import { FaTable, FaChartBar } from 'react-icons/fa';
-import { IncomeOut, IncomeFilters } from '@/types';
-import { useApiClients } from '@/hooks';
-import { useCategories } from '@/contexts/CategoriesContext';
-import { exportIncomeCsv } from '@/utils/exportCsv';
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { CreateIncome } from "../components/ui/income/CreateIncome";
+import { IncomeList } from "../components/ui/income/IncomeList";
+import { IncomeDashboard } from "../components/ui/income/IncomeDashboard";
+import { IncomePageHeader } from "../components/ui/income/IncomePageHeader";
+import { IncomeSummaryStrip } from "../components/ui/income/IncomeSummaryStrip";
+import { IncomeFilterBar } from "../components/ui/income/IncomeFilterBar";
+import { Modal } from "../components/ui/shared/Modal";
+import { Card } from "../components/ui/shared/Card";
+import { Button } from "../components/ui/shared/Button";
+import { Tabs } from "../components/ui/shared/Tabs";
+import { FaTable, FaChartBar } from "react-icons/fa";
+import { IncomeOut, IncomeFilters } from "@/types";
+import { useApiClients } from "@/hooks";
+import { useCategories } from "@/contexts/CategoriesContext";
+import { exportIncomeCsv } from "@/utils/exportCsv";
+import { logger } from "@/utils/logger";
 
 export const Income = () => {
   const { t } = useTranslation();
@@ -28,7 +29,7 @@ export const Income = () => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Tab & filter state
-  const [activeTab, setActiveTab] = useState('table');
+  const [activeTab, setActiveTab] = useState("table");
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [filters, setFilters] = useState<IncomeFilters>({ page: 1, size: 10 });
 
@@ -60,11 +61,11 @@ export const Income = () => {
     setAllLoading(true);
     try {
       const response = await incomeApi.getIncomes(0, 10000);
-      if (!('error' in response)) {
+      if (!("error" in response)) {
         setAllIncomes(response);
       }
     } catch (err) {
-      console.error('Error fetching all incomes:', err);
+      logger.error("Error fetching all incomes:", err);
     } finally {
       setAllLoading(false);
     }
@@ -79,13 +80,13 @@ export const Income = () => {
         page: filters.page ?? 1,
         size: filters.size ?? 10,
       });
-      if (!('error' in response)) {
+      if (!("error" in response)) {
         setPaginatedIncomes(response.items);
         setTotalItems(response.total);
         setTotalPages(response.pages);
       }
     } catch (err) {
-      console.error('Error fetching paginated incomes:', err);
+      logger.error("Error fetching paginated incomes:", err);
     } finally {
       setPaginatedLoading(false);
     }
@@ -112,7 +113,11 @@ export const Income = () => {
       result = result.filter((e) => e.date <= filters.date_to!);
     }
     if (filters.category_ids && filters.category_ids.length > 0) {
-      result = result.filter((e) => e.category_id != null && filters.category_ids!.includes(e.category_id));
+      result = result.filter(
+        (e) =>
+          e.category_id != null &&
+          filters.category_ids!.includes(e.category_id),
+      );
     }
     if (filters.account_id) {
       result = result.filter((e) => e.account_id === filters.account_id);
@@ -131,7 +136,9 @@ export const Income = () => {
     return filteredIncomes.slice(start, start + (filters.size || 10));
   }, [filteredIncomes, filters.page, filters.size, hasActiveFilters]);
 
-  const displayedTotalItems = hasActiveFilters ? filteredIncomes.length : totalItems;
+  const displayedTotalItems = hasActiveFilters
+    ? filteredIncomes.length
+    : totalItems;
   const displayedTotalPages = hasActiveFilters
     ? Math.ceil(filteredIncomes.length / (filters.size || 10))
     : totalPages;
@@ -139,20 +146,28 @@ export const Income = () => {
   // Keyboard shortcut: N to add income
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'n' || e.key === 'N') {
+      if (e.key === "n" || e.key === "N") {
         const tag = (e.target as HTMLElement)?.tagName;
-        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
         e.preventDefault();
         setIsCreateModalOpen(true);
       }
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
   }, []);
 
   const tabs = [
-    { id: 'table', label: t('incomePage.tabs.table'), icon: <FaTable className="w-4 h-4" /> },
-    { id: 'dashboard', label: t('incomePage.tabs.dashboard'), icon: <FaChartBar className="w-4 h-4" /> },
+    {
+      id: "table",
+      label: t("incomePage.tabs.table"),
+      icon: <FaTable className="w-4 h-4" />,
+    },
+    {
+      id: "dashboard",
+      label: t("incomePage.tabs.dashboard"),
+      icon: <FaChartBar className="w-4 h-4" />,
+    },
   ];
 
   const refreshData = () => {
@@ -177,7 +192,7 @@ export const Income = () => {
       await incomeApi.deleteIncome(deleteTarget.id);
       refreshData();
     } catch (err) {
-      console.error('Error deleting income:', err);
+      logger.error("Error deleting income:", err);
     } finally {
       setIsDeleting(false);
       setIsDeleteModalOpen(false);
@@ -234,11 +249,13 @@ export const Income = () => {
         </Card>
 
         {/* Tab Content */}
-        {activeTab === 'table' && (
+        {activeTab === "table" && (
           <Card>
             <IncomeList
               incomes={clientPaginatedIncomes}
-              loading={paginatedLoading || (hasActiveFilters ? allLoading : false)}
+              loading={
+                paginatedLoading || (hasActiveFilters ? allLoading : false)
+              }
               categories={categoryMap}
               currentPage={filters.page || 1}
               totalPages={displayedTotalPages}
@@ -247,12 +264,16 @@ export const Income = () => {
               onPageChange={handlePageChange}
               onPageSizeChange={handlePageSizeChange}
               onDeleteRequest={handleDeleteRequest}
-              emptyMessage={hasActiveFilters ? t('incomePage.filters.noMatchFilters') : undefined}
+              emptyMessage={
+                hasActiveFilters
+                  ? t("incomePage.filters.noMatchFilters")
+                  : undefined
+              }
             />
           </Card>
         )}
 
-        {activeTab === 'dashboard' && (
+        {activeTab === "dashboard" && (
           <IncomeDashboard incomes={allIncomes} loading={allLoading} />
         )}
 
@@ -260,7 +281,7 @@ export const Income = () => {
         <Modal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
-          title={t('incomePage.createModalTitle')}
+          title={t("incomePage.createModalTitle")}
           size="lg"
         >
           <CreateIncome onIncomeCreated={handleIncomeCreated} />
@@ -273,21 +294,24 @@ export const Income = () => {
             setIsDeleteModalOpen(false);
             setDeleteTarget(null);
           }}
-          title={t('incomePage.deleteConfirm.title')}
+          title={t("incomePage.deleteConfirm.title")}
           size="sm"
         >
           <div className="space-y-4">
             <p className="text-sm theme-text-secondary">
-              {t('incomePage.deleteConfirm.message')}
+              {t("incomePage.deleteConfirm.message")}
             </p>
             {deleteTarget && (
               <div className="theme-bg-secondary rounded-lg p-3 text-sm">
                 <span className="font-medium text-green-600/80 dark:text-green-400/70">
-                  +{deleteTarget.amount.toLocaleString('uk-UA', { minimumFractionDigits: 2 })}{' '}
+                  +
+                  {deleteTarget.amount.toLocaleString("uk-UA", {
+                    minimumFractionDigits: 2,
+                  })}{" "}
                   {deleteTarget.currency}
                 </span>
                 <span className="theme-text-secondary ml-2">
-                  {categoryMap[deleteTarget.category_id ?? 0] || ''}
+                  {categoryMap[deleteTarget.category_id ?? 0] || ""}
                 </span>
               </div>
             )}
@@ -300,7 +324,7 @@ export const Income = () => {
                   setDeleteTarget(null);
                 }}
               >
-                {t('incomePage.deleteConfirm.cancel')}
+                {t("incomePage.deleteConfirm.cancel")}
               </Button>
               <Button
                 variant="danger"
@@ -308,7 +332,7 @@ export const Income = () => {
                 loading={isDeleting}
                 onClick={handleDeleteConfirm}
               >
-                {t('incomePage.deleteConfirm.confirm')}
+                {t("incomePage.deleteConfirm.confirm")}
               </Button>
             </div>
           </div>

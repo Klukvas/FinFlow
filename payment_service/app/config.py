@@ -45,6 +45,17 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def _validate_secrets_when_enabled(self) -> "Settings":
         """Validate that critical secrets are configured when payments are enabled."""
+        _placeholders = {
+            "your-secret-key-here",
+            "my-secret-token",
+            "changeme-in-production",
+            "your-internal-secret-token-here",
+        }
+        if not self.internal_secret_token or self.internal_secret_token in _placeholders:
+            raise ValueError(
+                "internal_secret_token must be set to a strong, unique value"
+            )
+
         if not self.payments_enabled:
             return self
 

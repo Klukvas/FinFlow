@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import model_validator
 from typing import List
 import logging
 
@@ -42,6 +43,24 @@ class Settings(BaseSettings):
     # Logging
     LOG_LEVEL: str = "INFO"
     
+    @model_validator(mode="after")
+    def _validate_secrets(self) -> "Settings":
+        _placeholders = {
+            "your-secret-key-here",
+            "my-secret-token",
+            "changeme-in-production",
+            "your-internal-secret-token-here",
+        }
+        if not self.INTERNAL_SECRET_TOKEN or self.INTERNAL_SECRET_TOKEN in _placeholders:
+            raise ValueError(
+                "INTERNAL_SECRET_TOKEN must be set to a strong, unique value"
+            )
+        if not self.SECRET_KEY or self.SECRET_KEY in _placeholders:
+            raise ValueError(
+                "SECRET_KEY must be set to a strong, unique value"
+            )
+        return self
+
     @property
     def cors_origins_list(self) -> list[str]:
         """Convert CORS_ORIGINS string to list"""

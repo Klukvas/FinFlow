@@ -1,20 +1,34 @@
-import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { useTutorial } from '@/contexts/TutorialContext';
-import { useApiClients } from '@/hooks/useApiClients';
-import { UserUpdate } from '@/services/api/userApiClient';
-import { Modal } from '@/components/ui/shared/Modal';
-import { Button } from '@/components/ui/shared/Button';
-import { FormField } from '@/components/ui/forms/FormField';
-import { Input } from '@/components/ui/forms/Input';
-import { FaUser, FaEdit, FaSave, FaTimes, FaEnvelope, FaCalendarAlt, FaWallet, FaCrown, FaGraduationCap, FaReceipt, FaArrowRight } from 'react-icons/fa';
-import { config } from '@/config/env';
-import { CurrencySelect } from '@/components/ui/forms/CurrencySelect';
-import { ProfileSkeleton } from '@/components/ui/profile/ProfileSkeleton';
-import { SubscriptionLimits } from '@/components/ui/subscription/SubscriptionLimits';
-import { SubscriptionResponse } from '@/types/subscription';
+import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTutorial } from "@/contexts/TutorialContext";
+import { useApiClients } from "@/hooks/useApiClients";
+import { UserUpdate } from "@/services/api/userApiClient";
+import { Modal } from "@/components/ui/shared/Modal";
+import { Button } from "@/components/ui/shared/Button";
+import { FormField } from "@/components/ui/forms/FormField";
+import { Input } from "@/components/ui/forms/Input";
+import {
+  FaUser,
+  FaEdit,
+  FaSave,
+  FaTimes,
+  FaEnvelope,
+  FaCalendarAlt,
+  FaWallet,
+  FaCrown,
+  FaGraduationCap,
+  FaReceipt,
+  FaArrowRight,
+} from "react-icons/fa";
+import { Skeleton } from "@/components/ui/shared/Skeleton";
+import { config } from "@/config/env";
+import { logger } from "@/utils/logger";
+import { CurrencySelect } from "@/components/ui/forms/CurrencySelect";
+import { ProfileSkeleton } from "@/components/ui/profile/ProfileSkeleton";
+import { SubscriptionLimits } from "@/components/ui/subscription/SubscriptionLimits";
+import { SubscriptionResponse } from "@/types/subscription";
 
 export const Profile = () => {
   const { t } = useTranslation();
@@ -25,19 +39,21 @@ export const Profile = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    email: '',
-    currency: ''
+    email: "",
+    currency: "",
   });
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [subscription, setSubscription] = useState<SubscriptionResponse | null>(null);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [subscription, setSubscription] = useState<SubscriptionResponse | null>(
+    null,
+  );
   const [subscriptionLoading, setSubscriptionLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
       setFormData({
-        email: user.email || '',
-        currency: user.base_currency || ''
+        email: user.email || "",
+        currency: user.base_currency || "",
       });
     }
   }, [user]);
@@ -49,12 +65,12 @@ export const Profile = () => {
       try {
         setSubscriptionLoading(true);
         const response = await subscriptionApi.getUserSubscription(user.id);
-        
-        if (!('error' in response)) {
+
+        if (!("error" in response)) {
           setSubscription(response);
         }
       } catch (err) {
-        console.error('Failed to load subscription:', err);
+        logger.error("Failed to load subscription:", err);
       } finally {
         setSubscriptionLoading(false);
       }
@@ -65,20 +81,20 @@ export const Profile = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleEditProfile = async () => {
     setIsEditing(true);
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
 
     try {
       if (!user) {
-        setError(t('user.errors.notFound'));
+        setError(t("user.errors.notFound"));
         return;
       }
 
@@ -100,23 +116,23 @@ export const Profile = () => {
       }
 
       const response = await userApi.updateProfile(updateData);
-      
-      if ('error' in response) {
+
+      if ("error" in response) {
         setError(response.error);
         if (config.debug) {
-          console.error('Profile update error:', response.error);
+          logger.error("Profile update error:", response.error);
         }
       } else {
-        setSuccess(t('profile.profileUpdated'));
-        
+        setSuccess(t("profile.profileUpdated"));
+
         // Refresh user profile data
         await refreshUserProfile();
-        
+
         setIsEditModalOpen(false);
       }
     } catch (err) {
-      setError(t('profile.profileUpdateError'));
-      console.error('Profile update error:', err);
+      setError(t("profile.profileUpdateError"));
+      logger.error("Profile update error:", err);
     } finally {
       setIsEditing(false);
     }
@@ -125,12 +141,12 @@ export const Profile = () => {
   const handleCancelEdit = () => {
     if (user) {
       setFormData({
-        email: user.email || '',
-        currency: user.base_currency || ''
+        email: user.email || "",
+        currency: user.base_currency || "",
       });
     }
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
     setIsEditModalOpen(false);
   };
 
@@ -143,12 +159,12 @@ export const Profile = () => {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold theme-text-primary">{t('profile.title')}</h1>
-          <p className="theme-text-secondary mt-1">
-            {t('profile.subtitle')}
-          </p>
+          <h1 className="text-2xl font-bold theme-text-primary">
+            {t("profile.title")}
+          </h1>
+          <p className="theme-text-secondary mt-1">{t("profile.subtitle")}</p>
         </div>
-        
+
         <div className="flex gap-2">
           <Button
             variant="outline"
@@ -156,14 +172,14 @@ export const Profile = () => {
             className="flex items-center gap-2"
           >
             <FaGraduationCap className="w-4 h-4" />
-            {t('profile.restartTutorial')}
+            {t("profile.restartTutorial")}
           </Button>
           <Button
             onClick={() => setIsEditModalOpen(true)}
             className="flex items-center gap-2"
           >
             <FaEdit className="w-4 h-4" />
-            {t('profile.editButton')}
+            {t("profile.editButton")}
           </Button>
         </div>
       </div>
@@ -182,7 +198,7 @@ export const Profile = () => {
           <div className="flex-1 space-y-4">
             <div>
               <h2 className="text-xl font-semibold theme-text-primary">
-                {user?.email || t('profile.defaultUsername')}
+                {user?.email || t("profile.defaultUsername")}
               </h2>
             </div>
 
@@ -191,8 +207,12 @@ export const Profile = () => {
                 <div className="flex items-center space-x-3">
                   <FaWallet className="w-5 h-5 theme-text-tertiary" />
                   <div>
-                    <p className="text-sm font-medium theme-text-tertiary">{t('profile.baseCurrency')}</p>
-                    <p className="theme-text-primary">{user?.base_currency || t('profile.notSpecified')}</p>
+                    <p className="text-sm font-medium theme-text-tertiary">
+                      {t("profile.baseCurrency")}
+                    </p>
+                    <p className="theme-text-primary">
+                      {user?.base_currency || t("profile.notSpecified")}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -201,7 +221,9 @@ export const Profile = () => {
                 <div className="flex items-center space-x-3">
                   <FaEnvelope className="w-5 h-5 theme-text-tertiary" />
                   <div>
-                    <p className="text-sm font-medium theme-text-tertiary">{t('common.email')}</p>
+                    <p className="text-sm font-medium theme-text-tertiary">
+                      {t("common.email")}
+                    </p>
                     <p className="theme-text-primary">{user?.email}</p>
                   </div>
                 </div>
@@ -209,7 +231,9 @@ export const Profile = () => {
                 <div className="flex items-center space-x-3">
                   <FaCalendarAlt className="w-5 h-5 theme-text-tertiary" />
                   <div>
-                    <p className="text-sm font-medium theme-text-tertiary">{t('profile.userId')}</p>
+                    <p className="text-sm font-medium theme-text-tertiary">
+                      {t("profile.userId")}
+                    </p>
                     <p className="theme-text-primary">#{user?.id}</p>
                   </div>
                 </div>
@@ -218,49 +242,67 @@ export const Profile = () => {
                   <div className="flex items-center space-x-3">
                     <FaCrown className="w-5 h-5 theme-text-tertiary" />
                     <div>
-                      <p className="text-sm font-medium theme-text-tertiary">{t('profile.subscription')}</p>
+                      <p className="text-sm font-medium theme-text-tertiary">
+                        {t("profile.subscription")}
+                      </p>
                       {subscriptionLoading ? (
-                        <p className="theme-text-secondary">{t('common.loading')}</p>
+                        <div className="space-y-2">
+                          <Skeleton className="h-4 w-24" />
+                          <Skeleton className="h-3 w-36" />
+                        </div>
                       ) : subscription ? (
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <span className="theme-text-primary font-medium capitalize">{subscription.plan_code}</span>
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              subscription.status === 'active' 
-                                ? 'theme-success-light theme-success' 
-                                : 'theme-error-light theme-error'
-                            }`}>
+                            <span className="theme-text-primary font-medium capitalize">
+                              {subscription.plan_code}
+                            </span>
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                subscription.status === "active"
+                                  ? "theme-success-light theme-success"
+                                  : "theme-error-light theme-error"
+                              }`}
+                            >
                               {subscription.status}
                             </span>
                           </div>
                           <div className="text-xs theme-text-secondary space-y-0.5">
                             <p>
-                              {t('profile.subscriptionStarted')}: {new Date(subscription.started_at).toLocaleDateString()}
+                              {t("profile.subscriptionStarted")}:{" "}
+                              {new Date(
+                                subscription.started_at,
+                              ).toLocaleDateString()}
                             </p>
-                            {subscription.expires_at && subscription.plan_code !== 'basic' && !subscription.plan_code.startsWith('basic-') && (
-                              <p>
-                                {t('profile.nextBilling')}: {new Date(subscription.expires_at).toLocaleDateString()}
-                              </p>
-                            )}
+                            {subscription.expires_at &&
+                              subscription.plan_code !== "basic" &&
+                              !subscription.plan_code.startsWith("basic-") && (
+                                <p>
+                                  {t("profile.nextBilling")}:{" "}
+                                  {new Date(
+                                    subscription.expires_at,
+                                  ).toLocaleDateString()}
+                                </p>
+                              )}
                           </div>
                         </div>
                       ) : (
-                        <p className="theme-text-secondary">{t('profile.noSubscription')}</p>
+                        <p className="theme-text-secondary">
+                          {t("profile.noSubscription")}
+                        </p>
                       )}
                     </div>
                   </div>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => navigate('/payment/history')}
+                    onClick={() => navigate("/payment/history")}
                     className="ml-2"
                   >
                     <FaReceipt className="mr-1" />
-                    {t('payment.history')}
+                    {t("payment.history")}
                   </Button>
                 </div>
               </div>
-
             </div>
           </div>
         </div>
@@ -276,8 +318,12 @@ export const Profile = () => {
               </div>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium theme-text-tertiary">{t('profile.accountStatus')}</p>
-              <p className="text-lg font-semibold theme-text-primary">{t('profile.active')}</p>
+              <p className="text-sm font-medium theme-text-tertiary">
+                {t("profile.accountStatus")}
+              </p>
+              <p className="text-lg font-semibold theme-text-primary">
+                {t("profile.active")}
+              </p>
             </div>
           </div>
         </div>
@@ -290,9 +336,11 @@ export const Profile = () => {
               </div>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium theme-text-tertiary">{t('profile.registrationDate')}</p>
+              <p className="text-sm font-medium theme-text-tertiary">
+                {t("profile.registrationDate")}
+              </p>
               <p className="text-lg font-semibold theme-text-primary">
-                {user?.id ? t('profile.recently') : t('profile.notSpecified')}
+                {user?.id ? t("profile.recently") : t("profile.notSpecified")}
               </p>
             </div>
           </div>
@@ -306,8 +354,12 @@ export const Profile = () => {
               </div>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium theme-text-tertiary">{t('profile.emailVerified')}</p>
-              <p className="text-lg font-semibold theme-text-primary">{t('common.yes')}</p>
+              <p className="text-sm font-medium theme-text-tertiary">
+                {t("profile.emailVerified")}
+              </p>
+              <p className="text-lg font-semibold theme-text-primary">
+                {t("common.yes")}
+              </p>
             </div>
           </div>
         </div>
@@ -320,7 +372,7 @@ export const Profile = () => {
       <Modal
         isOpen={isEditModalOpen}
         onClose={handleCancelEdit}
-        title={t('profile.editModalTitle')}
+        title={t("profile.editModalTitle")}
         size="md"
       >
         <div className="space-y-4">
@@ -336,23 +388,27 @@ export const Profile = () => {
             </div>
           )}
 
-          <FormField label={t('common.email')} required>
+          <FormField label={t("common.email")} required>
             <Input
               type="email"
               name="email"
               value={formData.email}
               onChange={handleInputChange}
-              placeholder={t('auth.email')}
+              placeholder={t("auth.email")}
               disabled
             />
           </FormField>
 
-          <FormField label={t('profile.baseCurrency')} required>
+          <FormField label={t("profile.baseCurrency")} required>
             <CurrencySelect
               showFlags={true}
               value={formData.currency}
-              onChange={(value) => handleInputChange({ target: { name: 'currency', value } } as any)}
-              placeholder={t('profile.baseCurrency')}
+              onChange={(value) =>
+                handleInputChange({
+                  target: { name: "currency", value },
+                } as any)
+              }
+              placeholder={t("profile.baseCurrency")}
             />
           </FormField>
 
@@ -363,7 +419,7 @@ export const Profile = () => {
               disabled={isEditing}
             >
               <FaTimes className="w-4 h-4 mr-2" />
-              {t('common.cancel')}
+              {t("common.cancel")}
             </Button>
             <Button
               onClick={handleEditProfile}
@@ -371,7 +427,7 @@ export const Profile = () => {
               loading={isEditing}
             >
               <FaSave className="w-4 h-4 mr-2" />
-              {t('common.save')}
+              {t("common.save")}
             </Button>
           </div>
         </div>

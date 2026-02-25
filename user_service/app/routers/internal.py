@@ -1,3 +1,5 @@
+import secrets
+
 from fastapi import APIRouter, Depends, HTTPException, status, Header, Query
 from app.services.auth import AuthService
 from app.dependencies import get_auth_service
@@ -11,13 +13,7 @@ router = APIRouter(prefix="/internal", tags=["internal"])
 
 def verify_internal_token(internal_token: Optional[str] = Header(None, alias="X-Internal-Token")) -> None:
     """Verify internal service token for inter-service communication"""
-    if not internal_token:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="X-Internal-Token header required"
-        )
-    
-    if internal_token != settings.INTERNAL_SECRET_TOKEN:
+    if not internal_token or not secrets.compare_digest(internal_token, settings.INTERNAL_SECRET_TOKEN):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Unauthorized internal access"

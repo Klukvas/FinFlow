@@ -1,3 +1,5 @@
+import secrets
+
 from sqlalchemy.orm import Session
 from fastapi import Depends, Request, HTTPException, status, Header
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -21,15 +23,8 @@ def get_database_session() -> Session:
 def verify_internal_token(request: Request) -> None:
     """Verify internal service token for inter-service communication"""
     token = request.headers.get("X-Internal-Token")
-    if not token:
-        log_security_event(logger, "Missing internal token", details="X-Internal-Token header not provided")
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Internal token required"
-        )
-    
-    if token != settings.INTERNAL_SECRET_TOKEN:
-        log_security_event(logger, "Invalid internal token", details="Token mismatch")
+    if not token or not secrets.compare_digest(token, settings.INTERNAL_SECRET_TOKEN):
+        log_security_event(logger, "Invalid or missing internal token", details="Token verification failed")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Unauthorized internal access"

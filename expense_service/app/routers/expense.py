@@ -155,7 +155,7 @@ def read_expense(
 )
 def update_expense(
     expense_id: int = Path(description="Expense ID", gt=0),
-    data: ExpenseUpdate = None,
+    data: ExpenseUpdate,
     service: ExpenseService = Depends(get_expense_service),
     user_id: int = Depends(get_current_user_id),
     workspace_id: UUID = Depends(get_workspace_id)
@@ -267,7 +267,8 @@ def read_expenses_by_date_range(
 )
 def get_current_month_count(
     service: ExpenseService = Depends(get_expense_service),
-    user_id: int = Depends(get_current_user_id)
+    user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id)
 ):
     """
     Get current month expense count and limit for PDF parser frontend validation.
@@ -276,19 +277,4 @@ def get_current_month_count(
         - count: Number of expenses created this month
         - limit: Monthly limit for this user's plan (None = unlimited)
     """
-    from datetime import datetime
-    from app.models.expense import Expense
-
-    # Count expenses in current month
-    current_month_start = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    count = service.db.query(Expense).filter(
-        Expense.user_id == user_id,
-        Expense.created_at >= current_month_start
-    ).count()
-
-    # Get limit from subscription
-    features = service.subscription_client.get_user_features(user_id)
-    expense_feature = features.get("expenses", {})
-    limit = expense_feature.get("limit_value")
-
-    return {"count": count, "limit": limit}
+    return service.get_current_month_count(user_id, workspace_id)

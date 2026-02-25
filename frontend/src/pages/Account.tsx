@@ -1,20 +1,29 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { AccountResponse, AccountSummary, AccountStatisticsResponse, AccountTransactionSummary } from '@/types';
-import { useApiClients } from '@/hooks/useApiClients';
-import { AccountPageHeader } from '@/components/ui/account/AccountPageHeader';
-import { AccountSummaryStrip } from '@/components/ui/account/AccountSummaryStrip';
-import { AccountFilterBar } from '@/components/ui/account/AccountFilterBar';
-import { AccountTable } from '@/components/ui/account/AccountTable';
-import { AccountSidePanel } from '@/components/ui/account/AccountSidePanel';
-import { CreateAccountModal } from '@/components/ui/account/CreateAccountModal';
-import { EditAccountModal } from '@/components/ui/account/EditAccountModal';
-import { AccountsPageFilters, getUniqueCurrencies } from '@/components/ui/account/accountHelpers';
-import { Modal } from '@/components/ui/shared/Modal';
-import { Card } from '@/components/ui/shared/Card';
-import { Button } from '@/components/ui/shared/Button';
-import { exportAccountsCsv } from '@/utils/exportAccountsCsv';
-import { toast } from 'sonner';
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import {
+  AccountResponse,
+  AccountSummary,
+  AccountStatisticsResponse,
+  AccountTransactionSummary,
+} from "@/types";
+import { useApiClients } from "@/hooks/useApiClients";
+import { AccountPageHeader } from "@/components/ui/account/AccountPageHeader";
+import { AccountSummaryStrip } from "@/components/ui/account/AccountSummaryStrip";
+import { AccountFilterBar } from "@/components/ui/account/AccountFilterBar";
+import { AccountTable } from "@/components/ui/account/AccountTable";
+import { AccountSidePanel } from "@/components/ui/account/AccountSidePanel";
+import { CreateAccountModal } from "@/components/ui/account/CreateAccountModal";
+import { EditAccountModal } from "@/components/ui/account/EditAccountModal";
+import {
+  AccountsPageFilters,
+  getUniqueCurrencies,
+} from "@/components/ui/account/accountHelpers";
+import { Modal } from "@/components/ui/shared/Modal";
+import { Card } from "@/components/ui/shared/Card";
+import { Button } from "@/components/ui/shared/Button";
+import { exportAccountsCsv } from "@/utils/exportAccountsCsv";
+import { toast } from "sonner";
+import { logger } from "@/utils/logger";
 
 export const Account: React.FC = () => {
   const { t } = useTranslation();
@@ -27,18 +36,28 @@ export const Account: React.FC = () => {
   const [isArchiving, setIsArchiving] = useState(false);
 
   // Selected items
-  const [editingAccount, setEditingAccount] = useState<AccountResponse | null>(null);
-  const [archiveTarget, setArchiveTarget] = useState<AccountResponse | null>(null);
+  const [editingAccount, setEditingAccount] = useState<AccountResponse | null>(
+    null,
+  );
+  const [archiveTarget, setArchiveTarget] = useState<AccountResponse | null>(
+    null,
+  );
 
   // Side panel state
-  const [sidePanelAccount, setSidePanelAccount] = useState<AccountResponse | null>(null);
-  const [sidePanelTransactions, setSidePanelTransactions] = useState<AccountTransactionSummary | null>(null);
-  const [sidePanelTransactionsLoading, setSidePanelTransactionsLoading] = useState(false);
+  const [sidePanelAccount, setSidePanelAccount] =
+    useState<AccountResponse | null>(null);
+  const [sidePanelTransactions, setSidePanelTransactions] =
+    useState<AccountTransactionSummary | null>(null);
+  const [sidePanelTransactionsLoading, setSidePanelTransactionsLoading] =
+    useState(false);
   const [sidePanelOpen, setSidePanelOpen] = useState(false);
 
   // Filter state
   const [filtersVisible, setFiltersVisible] = useState(false);
-  const [filters, setFilters] = useState<AccountsPageFilters>({ page: 1, size: 10 });
+  const [filters, setFilters] = useState<AccountsPageFilters>({
+    page: 1,
+    size: 10,
+  });
 
   // Data state
   const [allAccounts, setAllAccounts] = useState<AccountResponse[]>([]);
@@ -56,11 +75,11 @@ export const Account: React.FC = () => {
         accountApi.getAccountStatistics(),
       ]);
 
-      if (!('error' in accountsResult)) setAllAccounts(accountsResult);
-      if (!('error' in summariesResult)) setSummaries(summariesResult);
-      if (!('error' in statsResult)) setStats(statsResult);
+      if (!("error" in accountsResult)) setAllAccounts(accountsResult);
+      if (!("error" in summariesResult)) setSummaries(summariesResult);
+      if (!("error" in statsResult)) setStats(statsResult);
     } catch (err) {
-      console.error('Error loading accounts data:', err);
+      logger.error("Error loading accounts data:", err);
     } finally {
       setAllLoading(false);
     }
@@ -73,23 +92,23 @@ export const Account: React.FC = () => {
   // Only show active accounts (filter out archived)
   const activeAccounts = useMemo(
     () => allAccounts.filter((a) => !a.is_archived),
-    [allAccounts]
+    [allAccounts],
   );
 
   // Available currencies for filter dropdown
   const availableCurrencies = useMemo(
     () => getUniqueCurrencies(activeAccounts),
-    [activeAccounts]
+    [activeAccounts],
   );
 
   // Client-side filtering
   const filteredAccounts = useMemo(() => {
     let result = [...activeAccounts];
 
-    if (filters.type && filters.type !== 'all') {
+    if (filters.type && filters.type !== "all") {
       result = result.filter((a) => a.type === filters.type);
     }
-    if (filters.currency && filters.currency !== 'all') {
+    if (filters.currency && filters.currency !== "all") {
       result = result.filter((a) => a.currency === filters.currency);
     }
     if (filters.search && filters.search.trim()) {
@@ -112,15 +131,15 @@ export const Account: React.FC = () => {
   // Keyboard shortcut: N to add
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'n' || e.key === 'N') {
+      if (e.key === "n" || e.key === "N") {
         const tag = (e.target as HTMLElement)?.tagName;
-        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
         e.preventDefault();
         setIsCreateModalOpen(true);
       }
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
   }, []);
 
   // Side panel
@@ -130,7 +149,7 @@ export const Account: React.FC = () => {
     setSidePanelTransactionsLoading(true);
     try {
       const result = await accountApi.getAccountTransactions(account.id);
-      if (!('error' in result)) {
+      if (!("error" in result)) {
         setSidePanelTransactions(result);
       } else {
         setSidePanelTransactions(null);
@@ -153,24 +172,24 @@ export const Account: React.FC = () => {
   // Create handler
   const handleCreateAccount = async (accountData: any) => {
     const result = await accountApi.createAccount(accountData);
-    if (result && 'error' in result) return;
+    if (result && "error" in result) return;
     setIsCreateModalOpen(false);
-    toast.success(t('accountPage.messages.accountCreated'));
+    toast.success(t("accountPage.messages.accountCreated"));
     fetchAllData();
   };
 
   // Edit handler
   const handleUpdateAccount = async (id: number, accountData: any) => {
     const result = await accountApi.updateAccount(id, accountData);
-    if (result && 'error' in result) return;
+    if (result && "error" in result) return;
     setIsEditModalOpen(false);
     setEditingAccount(null);
-    toast.success(t('accountPage.messages.accountUpdated'));
+    toast.success(t("accountPage.messages.accountUpdated"));
     fetchAllData();
     // Refresh side panel if open for the same account
     if (sidePanelAccount && sidePanelAccount.id === id) {
       const updated = await accountApi.getAccount(id);
-      if (!('error' in updated)) setSidePanelAccount(updated);
+      if (!("error" in updated)) setSidePanelAccount(updated);
     }
   };
 
@@ -180,20 +199,22 @@ export const Account: React.FC = () => {
     setIsArchiving(true);
     try {
       const result = await accountApi.archiveAccount(archiveTarget.id);
-      if (result && 'error' in result) {
-        toast.error(t('accountPage.messages.archiveFailed'));
+      if (result && "error" in result) {
+        toast.error(t("accountPage.messages.archiveFailed"));
         return;
       }
-      setAllAccounts((prev) => prev.map((a) =>
-        a.id === archiveTarget.id ? { ...a, is_archived: true } : a
-      ));
+      setAllAccounts((prev) =>
+        prev.map((a) =>
+          a.id === archiveTarget.id ? { ...a, is_archived: true } : a,
+        ),
+      );
       if (sidePanelAccount?.id === archiveTarget.id) closeSidePanel();
       const statsResult = await accountApi.getAccountStatistics();
-      if (!('error' in statsResult)) setStats(statsResult);
-      toast.success(t('accountPage.messages.accountArchived'));
+      if (!("error" in statsResult)) setStats(statsResult);
+      toast.success(t("accountPage.messages.accountArchived"));
     } catch (err) {
-      console.error('Error archiving account:', err);
-      toast.error(t('accountPage.messages.archiveFailed'));
+      logger.error("Error archiving account:", err);
+      toast.error(t("accountPage.messages.archiveFailed"));
     } finally {
       setIsArchiving(false);
       setIsArchiveModalOpen(false);
@@ -220,9 +241,9 @@ export const Account: React.FC = () => {
   };
 
   const hasActiveFilters =
-    (filters.type && filters.type !== 'all') ||
-    (filters.currency && filters.currency !== 'all') ||
-    (filters.search && filters.search.trim() !== '');
+    (filters.type && filters.type !== "all") ||
+    (filters.currency && filters.currency !== "all") ||
+    (filters.search && filters.search.trim() !== "");
 
   return (
     <div className="min-h-screen theme-bg p-2 sm:p-4 md:p-6 lg:p-8">
@@ -271,8 +292,12 @@ export const Account: React.FC = () => {
               setArchiveTarget(account);
               setIsArchiveModalOpen(true);
             }}
-            groupBy={filters.groupBy || 'none'}
-            emptyMessage={hasActiveFilters ? t('accountPage.filters.noMatchFilters') : undefined}
+            groupBy={filters.groupBy || "none"}
+            emptyMessage={
+              hasActiveFilters
+                ? t("accountPage.filters.noMatchFilters")
+                : undefined
+            }
           />
         </Card>
 
@@ -324,22 +349,28 @@ export const Account: React.FC = () => {
             setIsArchiveModalOpen(false);
             setArchiveTarget(null);
           }}
-          title={t('accountPage.archiveConfirmModal.title')}
+          title={t("accountPage.archiveConfirmModal.title")}
           size="sm"
         >
           <div className="space-y-4">
             <p className="text-sm theme-text-secondary">
-              {t('accountPage.archiveConfirmModal.message')}
+              {t("accountPage.archiveConfirmModal.message")}
             </p>
             {archiveTarget && (
               <div className="theme-bg-secondary rounded-lg p-3 text-sm">
-                <span className="font-medium theme-text-primary">{archiveTarget.name}</span>
-                <span className={`ml-2 font-semibold tabular-nums ${
-                  archiveTarget.balance >= 0
-                    ? 'text-green-600/80 dark:text-green-400/70'
-                    : 'text-red-500/80 dark:text-red-400/70'
-                }`}>
-                  {archiveTarget.balance.toLocaleString('uk-UA', { minimumFractionDigits: 2 })}{' '}
+                <span className="font-medium theme-text-primary">
+                  {archiveTarget.name}
+                </span>
+                <span
+                  className={`ml-2 font-semibold tabular-nums ${
+                    archiveTarget.balance >= 0
+                      ? "text-green-600/80 dark:text-green-400/70"
+                      : "text-red-500/80 dark:text-red-400/70"
+                  }`}
+                >
+                  {archiveTarget.balance.toLocaleString("uk-UA", {
+                    minimumFractionDigits: 2,
+                  })}{" "}
                   {archiveTarget.currency}
                 </span>
               </div>
@@ -353,7 +384,7 @@ export const Account: React.FC = () => {
                   setArchiveTarget(null);
                 }}
               >
-                {t('accountPage.archiveConfirmModal.cancel')}
+                {t("accountPage.archiveConfirmModal.cancel")}
               </Button>
               <Button
                 variant="danger"
@@ -361,7 +392,7 @@ export const Account: React.FC = () => {
                 loading={isArchiving}
                 onClick={handleArchiveConfirm}
               >
-                {t('accountPage.archiveConfirmModal.confirm')}
+                {t("accountPage.archiveConfirmModal.confirm")}
               </Button>
             </div>
           </div>

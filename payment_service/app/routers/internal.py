@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import secrets
 from typing import Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, Header, status
@@ -25,7 +26,7 @@ router = APIRouter()
 
 def verify_internal_token(x_internal_token: str = Header(alias="X-Internal-Token")) -> None:
     """Verify internal service token"""
-    if x_internal_token != settings.internal_secret_token:
+    if not x_internal_token or not secrets.compare_digest(x_internal_token, settings.internal_secret_token):
         raise AuthError(
             "Invalid internal token",
             error_code="@payment_service/INVALID_INTERNAL_TOKEN",

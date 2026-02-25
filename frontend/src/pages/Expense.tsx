@@ -1,21 +1,22 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { CreateExpense } from '../components/ui/expense/createExpense';
-import { EditExpense } from '../components/ui/expense/editExpense';
-import { ExpenseList } from '../components/ui/expense/expenseList';
-import { ExpenseDashboard } from '../components/ui/expense/ExpenseDashboard';
-import { ExpensePageHeader } from '../components/ui/expense/ExpensePageHeader';
-import { ExpenseSummaryStrip } from '../components/ui/expense/ExpenseSummaryStrip';
-import { ExpenseFilterBar } from '../components/ui/expense/ExpenseFilterBar';
-import { Modal } from '../components/ui/shared/Modal';
-import { Card } from '../components/ui/shared/Card';
-import { Button } from '../components/ui/shared/Button';
-import { Tabs } from '../components/ui/shared/Tabs';
-import { FaTable, FaChartBar } from 'react-icons/fa';
-import { ExpenseResponse, ExpenseFilters } from '@/types';
-import { useApiClients } from '@/hooks';
-import { useCategories } from '@/contexts/CategoriesContext';
-import { exportExpensesCsv } from '@/utils/exportCsv';
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { CreateExpense } from "../components/ui/expense/createExpense";
+import { EditExpense } from "../components/ui/expense/editExpense";
+import { ExpenseList } from "../components/ui/expense/expenseList";
+import { ExpenseDashboard } from "../components/ui/expense/ExpenseDashboard";
+import { ExpensePageHeader } from "../components/ui/expense/ExpensePageHeader";
+import { ExpenseSummaryStrip } from "../components/ui/expense/ExpenseSummaryStrip";
+import { ExpenseFilterBar } from "../components/ui/expense/ExpenseFilterBar";
+import { Modal } from "../components/ui/shared/Modal";
+import { Card } from "../components/ui/shared/Card";
+import { Button } from "../components/ui/shared/Button";
+import { Tabs } from "../components/ui/shared/Tabs";
+import { FaTable, FaChartBar } from "react-icons/fa";
+import { ExpenseResponse, ExpenseFilters } from "@/types";
+import { useApiClients } from "@/hooks";
+import { useCategories } from "@/contexts/CategoriesContext";
+import { exportExpensesCsv } from "@/utils/exportCsv";
+import { logger } from "@/utils/logger";
 
 export const Expense = () => {
   const { t } = useTranslation();
@@ -26,18 +27,23 @@ export const Expense = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedExpense, setSelectedExpense] = useState<ExpenseResponse | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<ExpenseResponse | null>(null);
+  const [selectedExpense, setSelectedExpense] =
+    useState<ExpenseResponse | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ExpenseResponse | null>(
+    null,
+  );
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Tab & filter state
-  const [activeTab, setActiveTab] = useState('table');
+  const [activeTab, setActiveTab] = useState("table");
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [filters, setFilters] = useState<ExpenseFilters>({ page: 1, size: 10 });
 
   // Data state
   const [allExpenses, setAllExpenses] = useState<ExpenseResponse[]>([]);
-  const [paginatedExpenses, setPaginatedExpenses] = useState<ExpenseResponse[]>([]);
+  const [paginatedExpenses, setPaginatedExpenses] = useState<ExpenseResponse[]>(
+    [],
+  );
   const [allLoading, setAllLoading] = useState(true);
   const [paginatedLoading, setPaginatedLoading] = useState(false);
   const [totalItems, setTotalItems] = useState(0);
@@ -63,11 +69,11 @@ export const Expense = () => {
     setAllLoading(true);
     try {
       const response = await expenseApi.getExpenses();
-      if (!('error' in response)) {
+      if (!("error" in response)) {
         setAllExpenses(response);
       }
     } catch (err) {
-      console.error('Error fetching all expenses:', err);
+      logger.error("Error fetching all expenses:", err);
     } finally {
       setAllLoading(false);
     }
@@ -82,13 +88,13 @@ export const Expense = () => {
         page: filters.page ?? 1,
         size: filters.size ?? 10,
       });
-      if (!('error' in response)) {
+      if (!("error" in response)) {
         setPaginatedExpenses(response.items);
         setTotalItems(response.total);
         setTotalPages(response.pages);
       }
     } catch (err) {
-      console.error('Error fetching paginated expenses:', err);
+      logger.error("Error fetching paginated expenses:", err);
     } finally {
       setPaginatedLoading(false);
     }
@@ -115,7 +121,9 @@ export const Expense = () => {
       result = result.filter((e) => e.date <= filters.date_to!);
     }
     if (filters.category_ids && filters.category_ids.length > 0) {
-      result = result.filter((e) => filters.category_ids!.includes(e.category_id));
+      result = result.filter((e) =>
+        filters.category_ids!.includes(e.category_id),
+      );
     }
     if (filters.account_id) {
       result = result.filter((e) => e.account_id === filters.account_id);
@@ -134,7 +142,9 @@ export const Expense = () => {
     return filteredExpenses.slice(start, start + (filters.size || 10));
   }, [filteredExpenses, filters.page, filters.size, hasActiveFilters]);
 
-  const displayedTotalItems = hasActiveFilters ? filteredExpenses.length : totalItems;
+  const displayedTotalItems = hasActiveFilters
+    ? filteredExpenses.length
+    : totalItems;
   const displayedTotalPages = hasActiveFilters
     ? Math.ceil(filteredExpenses.length / (filters.size || 10))
     : totalPages;
@@ -142,20 +152,28 @@ export const Expense = () => {
   // Keyboard shortcut: N to add expense
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'n' || e.key === 'N') {
+      if (e.key === "n" || e.key === "N") {
         const tag = (e.target as HTMLElement)?.tagName;
-        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
         e.preventDefault();
         setIsCreateModalOpen(true);
       }
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
   }, []);
 
   const tabs = [
-    { id: 'table', label: t('expensePage.tabs.table'), icon: <FaTable className="w-4 h-4" /> },
-    { id: 'dashboard', label: t('expensePage.tabs.dashboard'), icon: <FaChartBar className="w-4 h-4" /> },
+    {
+      id: "table",
+      label: t("expensePage.tabs.table"),
+      icon: <FaTable className="w-4 h-4" />,
+    },
+    {
+      id: "dashboard",
+      label: t("expensePage.tabs.dashboard"),
+      icon: <FaChartBar className="w-4 h-4" />,
+    },
   ];
 
   const refreshData = () => {
@@ -191,7 +209,7 @@ export const Expense = () => {
       await expenseApi.deleteExpense(deleteTarget.id);
       refreshData();
     } catch (err) {
-      console.error('Error deleting expense:', err);
+      logger.error("Error deleting expense:", err);
     } finally {
       setIsDeleting(false);
       setIsDeleteModalOpen(false);
@@ -248,7 +266,7 @@ export const Expense = () => {
         </Card>
 
         {/* Tab Content */}
-        {activeTab === 'table' && (
+        {activeTab === "table" && (
           <Card>
             <ExpenseList
               expenses={clientPaginatedExpenses}
@@ -262,12 +280,16 @@ export const Expense = () => {
               onPageSizeChange={handlePageSizeChange}
               onEditExpense={handleEditExpense}
               onDeleteRequest={handleDeleteRequest}
-              emptyMessage={hasActiveFilters ? t('expensePage.filters.noMatchFilters') : undefined}
+              emptyMessage={
+                hasActiveFilters
+                  ? t("expensePage.filters.noMatchFilters")
+                  : undefined
+              }
             />
           </Card>
         )}
 
-        {activeTab === 'dashboard' && (
+        {activeTab === "dashboard" && (
           <ExpenseDashboard expenses={allExpenses} loading={allLoading} />
         )}
 
@@ -275,7 +297,7 @@ export const Expense = () => {
         <Modal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
-          title={t('expensePage.createModalTitle')}
+          title={t("expensePage.createModalTitle")}
           size="lg"
         >
           <CreateExpense onExpenseCreated={handleExpenseCreated} />
@@ -289,10 +311,13 @@ export const Expense = () => {
               setIsEditModalOpen(false);
               setSelectedExpense(null);
             }}
-            title={t('expense.editTitle')}
+            title={t("expense.editTitle")}
             size="lg"
           >
-            <EditExpense expense={selectedExpense} onExpenseUpdated={handleExpenseUpdated} />
+            <EditExpense
+              expense={selectedExpense}
+              onExpenseUpdated={handleExpenseUpdated}
+            />
           </Modal>
         )}
 
@@ -303,21 +328,23 @@ export const Expense = () => {
             setIsDeleteModalOpen(false);
             setDeleteTarget(null);
           }}
-          title={t('expensePage.deleteConfirm.title')}
+          title={t("expensePage.deleteConfirm.title")}
           size="sm"
         >
           <div className="space-y-4">
             <p className="text-sm theme-text-secondary">
-              {t('expensePage.deleteConfirm.message')}
+              {t("expensePage.deleteConfirm.message")}
             </p>
             {deleteTarget && (
               <div className="theme-bg-secondary rounded-lg p-3 text-sm">
                 <span className="font-medium theme-text-primary">
-                  {deleteTarget.amount.toLocaleString('uk-UA', { minimumFractionDigits: 2 })}{' '}
+                  {deleteTarget.amount.toLocaleString("uk-UA", {
+                    minimumFractionDigits: 2,
+                  })}{" "}
                   {deleteTarget.currency}
                 </span>
                 <span className="theme-text-secondary ml-2">
-                  {categoryMap[deleteTarget.category_id] || ''}
+                  {categoryMap[deleteTarget.category_id] || ""}
                 </span>
               </div>
             )}
@@ -330,7 +357,7 @@ export const Expense = () => {
                   setDeleteTarget(null);
                 }}
               >
-                {t('expensePage.deleteConfirm.cancel')}
+                {t("expensePage.deleteConfirm.cancel")}
               </Button>
               <Button
                 variant="danger"
@@ -338,7 +365,7 @@ export const Expense = () => {
                 loading={isDeleting}
                 onClick={handleDeleteConfirm}
               >
-                {t('expensePage.deleteConfirm.confirm')}
+                {t("expensePage.deleteConfirm.confirm")}
               </Button>
             </div>
           </div>

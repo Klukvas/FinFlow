@@ -52,7 +52,7 @@ def upgrade() -> None:
         sa.Column('executed_at', sa.DateTime(), nullable=True),
         sa.Column('created_at', sa.DateTime(), nullable=False),
         sa.Column('updated_at', sa.DateTime(), nullable=False),
-        sa.ForeignKeyConstraint(['recurring_payment_id'], ['recurring_payments.id'], ),
+        sa.ForeignKeyConstraint(['recurring_payment_id'], ['recurring_payments.id'], ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('id')
     )
 

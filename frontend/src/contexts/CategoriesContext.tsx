@@ -1,8 +1,16 @@
-import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
-import { useApiClients } from '@/hooks/useApiClients';
-import { useAuth } from '@/contexts/AuthContext';
-import { useWorkspace } from '@/contexts/WorkspaceContext';
-import { Category, CategoryListResponse } from '@/types';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  ReactNode,
+} from "react";
+import { useApiClients } from "@/hooks/useApiClients";
+import { useAuth } from "@/contexts/AuthContext";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { Category, CategoryListResponse } from "@/types";
+import { logger } from "@/utils/logger";
 
 interface CategoriesContextType {
   categories: Category[];
@@ -14,17 +22,21 @@ interface CategoriesContextType {
   error: string | null;
   refreshCategories: () => Promise<void>;
   getCategoryById: (id: number) => Category | undefined;
-  getCategoriesByType: (type: 'EXPENSE' | 'INCOME') => Category[];
+  getCategoriesByType: (type: "EXPENSE" | "INCOME") => Category[];
   getChildCategories: (parentId: number) => Category[];
 }
 
-const CategoriesContext = createContext<CategoriesContextType | undefined>(undefined);
+const CategoriesContext = createContext<CategoriesContextType | undefined>(
+  undefined,
+);
 
 interface CategoriesProviderProps {
   children: ReactNode;
 }
 
-export const CategoriesProvider: React.FC<CategoriesProviderProps> = ({ children }) => {
+export const CategoriesProvider: React.FC<CategoriesProviderProps> = ({
+  children,
+}) => {
   const { category } = useApiClients();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { currentWorkspaceId, isLoading: workspaceLoading } = useWorkspace();
@@ -34,7 +46,12 @@ export const CategoriesProvider: React.FC<CategoriesProviderProps> = ({ children
 
   const fetchCategories = useCallback(async () => {
     // Don't fetch if not authenticated, auth is still loading, or workspace is not selected
-    if (!isAuthenticated || authLoading || workspaceLoading || !currentWorkspaceId) {
+    if (
+      !isAuthenticated ||
+      authLoading ||
+      workspaceLoading ||
+      !currentWorkspaceId
+    ) {
       return;
     }
 
@@ -45,11 +62,14 @@ export const CategoriesProvider: React.FC<CategoriesProviderProps> = ({ children
       const response = await category.getCategoriesPaginated({
         flat: true,
         page: 1,
-        size: 100 // Maximum page size
+        size: 100, // Maximum page size
       });
 
-      if ('error' in response) {
-        console.error('CategoriesContext: Failed to fetch categories:', response.error);
+      if ("error" in response) {
+        logger.error(
+          "CategoriesContext: Failed to fetch categories:",
+          response.error,
+        );
         setError(response.error);
         setCategories([]);
       } else {
@@ -57,37 +77,55 @@ export const CategoriesProvider: React.FC<CategoriesProviderProps> = ({ children
         setCategories(paginatedResponse.items || []);
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch categories';
-      console.error('CategoriesContext: Error fetching categories:', err);
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to fetch categories";
+      logger.error("CategoriesContext: Error fetching categories:", err);
       setError(errorMessage);
       setCategories([]);
     } finally {
       setIsLoading(false);
     }
-  }, [category, isAuthenticated, authLoading, workspaceLoading, currentWorkspaceId]);
+  }, [
+    category,
+    isAuthenticated,
+    authLoading,
+    workspaceLoading,
+    currentWorkspaceId,
+  ]);
 
   const refreshCategories = useCallback(async () => {
     await fetchCategories();
   }, [fetchCategories]);
 
   // Computed values
-  const expenseCategories = categories.filter(cat => cat.type === 'EXPENSE');
-  const incomeCategories = categories.filter(cat => cat.type === 'INCOME');
-  const parentCategories = categories.filter(cat => !cat.parent_id);
-  const childCategories = categories.filter(cat => cat.parent_id !== null && cat.parent_id !== undefined);
+  const expenseCategories = categories.filter((cat) => cat.type === "EXPENSE");
+  const incomeCategories = categories.filter((cat) => cat.type === "INCOME");
+  const parentCategories = categories.filter((cat) => !cat.parent_id);
+  const childCategories = categories.filter(
+    (cat) => cat.parent_id !== null && cat.parent_id !== undefined,
+  );
 
   // Helper methods
-  const getCategoryById = useCallback((id: number): Category | undefined => {
-    return categories.find(cat => cat.id === id);
-  }, [categories]);
+  const getCategoryById = useCallback(
+    (id: number): Category | undefined => {
+      return categories.find((cat) => cat.id === id);
+    },
+    [categories],
+  );
 
-  const getCategoriesByType = useCallback((type: 'EXPENSE' | 'INCOME'): Category[] => {
-    return categories.filter(cat => cat.type === type);
-  }, [categories]);
+  const getCategoriesByType = useCallback(
+    (type: "EXPENSE" | "INCOME"): Category[] => {
+      return categories.filter((cat) => cat.type === type);
+    },
+    [categories],
+  );
 
-  const getChildCategories = useCallback((parentId: number): Category[] => {
-    return categories.filter(cat => cat.parent_id === parentId);
-  }, [categories]);
+  const getChildCategories = useCallback(
+    (parentId: number): Category[] => {
+      return categories.filter((cat) => cat.parent_id === parentId);
+    },
+    [categories],
+  );
 
   // Fetch categories on mount and when user changes
   useEffect(() => {
@@ -118,8 +156,7 @@ export const CategoriesProvider: React.FC<CategoriesProviderProps> = ({ children
 export const useCategories = (): CategoriesContextType => {
   const context = useContext(CategoriesContext);
   if (context === undefined) {
-    throw new Error('useCategories must be used within a CategoriesProvider');
+    throw new Error("useCategories must be used within a CategoriesProvider");
   }
   return context;
 };
-

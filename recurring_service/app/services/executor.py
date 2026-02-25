@@ -32,8 +32,12 @@ class PaymentExecutor:
         self.income_client = income_client
         self.category_client = category_client
 
-    async def execute_pending_payments(self, db: Session, execution_date: Optional[date] = None) -> int:
-        """Выполнить все ожидающие платежи на указанную дату"""
+    async def execute_pending_payments(self, db: Session, execution_date: Optional[date] = None) -> dict:
+        """Выполнить все ожидающие платежи на указанную дату.
+
+        Returns a dict with 'succeeded' and 'failed' counts so callers
+        can observe partial-batch outcomes.
+        """
         if execution_date is None:
             execution_date = date.today()
 
@@ -45,18 +49,23 @@ class PaymentExecutor:
         ).all()
         logger.info(f"Found {len(recurring_payments)} recurring payments to execute")
 
-        executed_count = 0
+        succeeded = 0
+        failed = 0
         for recurring_payment in recurring_payments:
             try:
                 await self._execute_single_payment(db, recurring_payment, execution_date)
-                executed_count += 1
+                succeeded += 1
                 logger.info(f"Successfully executed recurring payment {recurring_payment.id}")
             except Exception as e:
+                failed += 1
                 logger.error(f"Failed to execute recurring payment {recurring_payment.id}: {str(e)}")
-                await self._create_failed_schedule(db, recurring_payment, execution_date, str(e))
-                raise PaymentExecutionError(f"Failed to execute payment {recurring_payment.id}: {str(e)}")
+                try:
+                    await self._create_failed_schedule(db, recurring_payment, execution_date, str(e))
+                except Exception as schedule_err:
+                    logger.error(f"Failed to create failed schedule for payment {recurring_payment.id}: {str(schedule_err)}")
 
-        return executed_count
+        logger.info(f"Batch execution complete: {succeeded} succeeded, {failed} failed")
+        return {"succeeded": succeeded, "failed": failed}
 
     async def _execute_single_payment(
         self, 
@@ -83,24 +92,32 @@ class PaymentExecutor:
             )
 
             # Создать expense или income
+            workspace_id_str = str(recurring_payment.workspace_id)
+
             if recurring_payment.payment_type == "EXPENSE":
                 expense_data = {
                     "amount": float(recurring_payment.amount),
+                    "currency": recurring_payment.currency,
                     "category_id": recurring_payment.category_id,
                     "description": f"Автоматический платеж: {recurring_payment.name}",
                     "date": execution_date.isoformat(),
                 }
-                expense_response = await self.expense_client.create_expense(expense_data, recurring_payment.user_id)
-                schedule.created_expense_id = UUID(expense_response["id"])
+                expense_response = await self.expense_client.create_expense(
+                    expense_data, recurring_payment.user_id, workspace_id_str
+                )
+                schedule.created_expense_id = int(expense_response["id"])
             else:  # income
                 income_data = {
                     "amount": float(recurring_payment.amount),
+                    "currency": recurring_payment.currency,
                     "category_id": recurring_payment.category_id,
                     "description": f"Автоматический доход: {recurring_payment.name}",
-                    "date": execution_date.isoformat()
+                    "date": execution_date.isoformat(),
                 }
-                income_response = await self.income_client.create_income(income_data, recurring_payment.user_id)
-                schedule.created_income_id = UUID(income_response["id"])
+                income_response = await self.income_client.create_income(
+                    income_data, recurring_payment.user_id, workspace_id_str
+                )
+                schedule.created_income_id = int(income_response["id"])
 
             # Обновить статус расписания
             schedule.status = "executed"

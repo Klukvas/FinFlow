@@ -5,7 +5,7 @@ from uuid import UUID
 
 class IncomeBase(BaseModel):
     amount: float = Field(..., gt=0, description="Income amount (must be greater than 0)")
-    category_id: Optional[int] = Field(None, description="Category ID for this income")
+    category_id: Optional[int] = Field(None, gt=0, description="Category ID for this income")
     account_id: Optional[int] = Field(None, gt=0, description="Optional account ID for this income")
     currency: Optional[str] = Field("USD", max_length=3, min_length=3, description="Currency code for this income (ISO 4217)")
     description: Optional[str] = Field(None, max_length=500, description="Optional description")

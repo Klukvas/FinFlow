@@ -1,5 +1,6 @@
 import { useRef, useCallback } from "react";
 import { config } from "@/config/env";
+import { logger } from "@/utils/logger";
 
 declare global {
   interface Window {
@@ -57,13 +58,13 @@ function ensurePaddleInitialized(
 ): boolean {
   if (paddleInitialized) return true;
   if (!window.Paddle) {
-    console.error("Paddle.js script not loaded");
+    logger.error("Paddle.js script not loaded");
     return false;
   }
 
   const { clientToken, environment } = config.paddle;
   if (!clientToken) {
-    console.error("VITE_PADDLE_CLIENT_TOKEN is not set");
+    logger.error("VITE_PADDLE_CLIENT_TOKEN is not set");
     return false;
   }
 
@@ -74,10 +75,10 @@ function ensurePaddleInitialized(
       eventCallback,
     });
     paddleInitialized = true;
-    console.log("Paddle.js initialized successfully", { environment });
+    logger.info("Paddle.js initialized successfully", { environment });
     return true;
   } catch (err) {
-    console.error("Failed to initialize Paddle.js:", err);
+    logger.error("Failed to initialize Paddle.js:", err);
     return false;
   }
 }
@@ -92,7 +93,7 @@ export const usePaddle = (options: UsePaddleOptions = {}) => {
     (transactionId: string, customer?: CheckoutCustomer) => {
       // Lazy init — initialize on first use, not on component mount
       const ready = ensurePaddleInitialized((event: PaddleEvent) => {
-        console.log("Paddle event:", event.name, event.data);
+        logger.info("Paddle event:", event.name, event.data);
         if (event.name === "checkout.completed") {
           callbacksRef.current.onCheckoutComplete?.(event);
         }
@@ -102,11 +103,11 @@ export const usePaddle = (options: UsePaddleOptions = {}) => {
       });
 
       if (!ready) {
-        console.error("Cannot open checkout — Paddle not ready");
+        logger.error("Cannot open checkout — Paddle not ready");
         return false;
       }
 
-      console.log(
+      logger.info(
         "Opening Paddle checkout for transaction:",
         transactionId,
         customer,

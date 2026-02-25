@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from pydantic import Field
+from pydantic import Field, model_validator
 
 
 class Settings(BaseSettings):
@@ -33,6 +33,20 @@ class Settings(BaseSettings):
     job_coalesce: bool = Field(default=True)  # Merge missed runs
     job_misfire_grace_time: int = Field(default=300)  # 5 minutes
     
+    @model_validator(mode="after")
+    def _validate_secrets(self) -> "Settings":
+        _placeholders = {
+            "your-secret-key-here",
+            "my-secret-token",
+            "changeme-in-production",
+            "your-internal-secret-token-here",
+        }
+        if not self.internal_secret_token or self.internal_secret_token in _placeholders:
+            raise ValueError(
+                "internal_secret_token must be set to a strong, unique value"
+            )
+        return self
+
     class Config:
         env_file = ".env"
 

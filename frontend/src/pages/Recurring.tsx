@@ -1,21 +1,26 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useAuth } from '@/contexts/AuthContext';
-import { useApiClients } from '@/hooks/useApiClients';
-import { RecurringPayment, PaymentSchedule, PaymentStatistics } from '@/services/api/recurringApi';
-import { CreateRecurringPayment } from '@/components/ui/recurring/CreateRecurringPayment';
-import { RecurringPageHeader } from '@/components/ui/recurring/RecurringPageHeader';
-import { RecurringSummaryStrip } from '@/components/ui/recurring/RecurringSummaryStrip';
-import { RecurringFilterBar } from '@/components/ui/recurring/RecurringFilterBar';
-import { UpcomingExecutions } from '@/components/ui/recurring/UpcomingExecutions';
-import { RecurringTable } from '@/components/ui/recurring/RecurringTable';
-import { RecurringSidePanel } from '@/components/ui/recurring/RecurringSidePanel';
-import { RecurringFilters } from '@/components/ui/recurring/recurringHelpers';
-import { Modal } from '@/components/ui/shared/Modal';
-import { Card } from '@/components/ui/shared/Card';
-import { Button } from '@/components/ui/shared/Button';
-import { exportRecurringCsv } from '@/utils/exportRecurringCsv';
-import { toast } from 'sonner';
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { useAuth } from "@/contexts/AuthContext";
+import { useApiClients } from "@/hooks/useApiClients";
+import {
+  RecurringPayment,
+  PaymentSchedule,
+  PaymentStatistics,
+} from "@/services/api/recurringApi";
+import { CreateRecurringPayment } from "@/components/ui/recurring/CreateRecurringPayment";
+import { RecurringPageHeader } from "@/components/ui/recurring/RecurringPageHeader";
+import { RecurringSummaryStrip } from "@/components/ui/recurring/RecurringSummaryStrip";
+import { RecurringFilterBar } from "@/components/ui/recurring/RecurringFilterBar";
+import { UpcomingExecutions } from "@/components/ui/recurring/UpcomingExecutions";
+import { RecurringTable } from "@/components/ui/recurring/RecurringTable";
+import { RecurringSidePanel } from "@/components/ui/recurring/RecurringSidePanel";
+import { RecurringFilters } from "@/components/ui/recurring/recurringHelpers";
+import { Modal } from "@/components/ui/shared/Modal";
+import { Card } from "@/components/ui/shared/Card";
+import { Button } from "@/components/ui/shared/Button";
+import { exportRecurringCsv } from "@/utils/exportRecurringCsv";
+import { toast } from "sonner";
+import { logger } from "@/utils/logger";
 
 export const Recurring = () => {
   const { t } = useTranslation();
@@ -29,18 +34,28 @@ export const Recurring = () => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Selected items
-  const [selectedPayment, setSelectedPayment] = useState<RecurringPayment | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<RecurringPayment | null>(null);
+  const [selectedPayment, setSelectedPayment] =
+    useState<RecurringPayment | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<RecurringPayment | null>(
+    null,
+  );
 
   // Side panel state
-  const [sidePanelPayment, setSidePanelPayment] = useState<RecurringPayment | null>(null);
-  const [sidePanelSchedules, setSidePanelSchedules] = useState<PaymentSchedule[]>([]);
-  const [sidePanelSchedulesLoading, setSidePanelSchedulesLoading] = useState(false);
+  const [sidePanelPayment, setSidePanelPayment] =
+    useState<RecurringPayment | null>(null);
+  const [sidePanelSchedules, setSidePanelSchedules] = useState<
+    PaymentSchedule[]
+  >([]);
+  const [sidePanelSchedulesLoading, setSidePanelSchedulesLoading] =
+    useState(false);
   const [sidePanelOpen, setSidePanelOpen] = useState(false);
 
   // Filter state
   const [filtersVisible, setFiltersVisible] = useState(false);
-  const [filters, setFilters] = useState<RecurringFilters>({ page: 1, size: 10 });
+  const [filters, setFilters] = useState<RecurringFilters>({
+    page: 1,
+    size: 10,
+  });
 
   // Data state
   const [allPayments, setAllPayments] = useState<RecurringPayment[]>([]);
@@ -57,24 +72,24 @@ export const Recurring = () => {
         recurring.getPaymentStatistics(),
       ]);
 
-      if (!('error' in firstPage)) {
+      if (!("error" in firstPage)) {
         let allItems = [...firstPage.items];
         // Fetch remaining pages if total exceeds first page
         if (firstPage.pages > 1) {
           const remaining = await Promise.all(
             Array.from({ length: firstPage.pages - 1 }, (_, i) =>
-              recurring.getRecurringPayments({ size: 100, page: i + 2 })
-            )
+              recurring.getRecurringPayments({ size: 100, page: i + 2 }),
+            ),
           );
           for (const page of remaining) {
-            if (!('error' in page)) allItems = [...allItems, ...page.items];
+            if (!("error" in page)) allItems = [...allItems, ...page.items];
           }
         }
         setAllPayments(allItems);
       }
-      if (!('error' in statsResult)) setStats(statsResult);
+      if (!("error" in statsResult)) setStats(statsResult);
     } catch (err) {
-      console.error('Error loading recurring data:', err);
+      logger.error("Error loading recurring data:", err);
     } finally {
       setAllLoading(false);
     }
@@ -88,15 +103,17 @@ export const Recurring = () => {
   const filteredPayments = useMemo(() => {
     let result = [...allPayments];
 
-    if (filters.status && filters.status !== 'all') {
+    if (filters.status && filters.status !== "all") {
       result = result.filter((p) => p.status === filters.status);
     }
-    if (filters.payment_type && filters.payment_type !== 'all') {
+    if (filters.payment_type && filters.payment_type !== "all") {
       result = result.filter(
-        (p) => p.payment_type === filters.payment_type || p.payment_type === filters.payment_type?.toUpperCase()
+        (p) =>
+          p.payment_type === filters.payment_type ||
+          p.payment_type === filters.payment_type?.toUpperCase(),
       );
     }
-    if (filters.schedule_type && filters.schedule_type !== 'all') {
+    if (filters.schedule_type && filters.schedule_type !== "all") {
       result = result.filter((p) => p.schedule_type === filters.schedule_type);
     }
 
@@ -115,15 +132,15 @@ export const Recurring = () => {
   // Keyboard shortcut: N to add
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'n' || e.key === 'N') {
+      if (e.key === "n" || e.key === "N") {
         const tag = (e.target as HTMLElement)?.tagName;
-        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
         e.preventDefault();
         setIsCreateModalOpen(true);
       }
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
   }, []);
 
   // Side panel
@@ -132,8 +149,10 @@ export const Recurring = () => {
     setSidePanelOpen(true);
     setSidePanelSchedulesLoading(true);
     try {
-      const result = await recurring.getPaymentSchedules(payment.id, { size: 100 });
-      if (!('error' in result)) {
+      const result = await recurring.getPaymentSchedules(payment.id, {
+        size: 100,
+      });
+      if (!("error" in result)) {
         setSidePanelSchedules(result.items);
       } else {
         setSidePanelSchedules([]);
@@ -165,9 +184,13 @@ export const Recurring = () => {
     setSelectedPayment(null);
     fetchAllData();
     // Refresh side panel if open for the same payment
-    if (sidePanelPayment && selectedPayment && sidePanelPayment.id === selectedPayment.id) {
+    if (
+      sidePanelPayment &&
+      selectedPayment &&
+      sidePanelPayment.id === selectedPayment.id
+    ) {
       recurring.getRecurringPayment(selectedPayment.id).then((result) => {
-        if (!('error' in result)) {
+        if (!("error" in result)) {
           setSidePanelPayment(result);
         }
       });
@@ -180,18 +203,18 @@ export const Recurring = () => {
     setIsDeleting(true);
     try {
       const result = await recurring.deleteRecurringPayment(deleteTarget.id);
-      if (result && 'error' in result) {
-        toast.error(t('recurringPage.messages.deleteFailed'));
+      if (result && "error" in result) {
+        toast.error(t("recurringPage.messages.deleteFailed"));
         return;
       }
       setAllPayments((prev) => prev.filter((p) => p.id !== deleteTarget.id));
       if (sidePanelPayment?.id === deleteTarget.id) closeSidePanel();
       const statsResult = await recurring.getPaymentStatistics();
-      if (!('error' in statsResult)) setStats(statsResult);
-      toast.success(t('recurringPage.messages.deleted'));
+      if (!("error" in statsResult)) setStats(statsResult);
+      toast.success(t("recurringPage.messages.deleted"));
     } catch (err) {
-      console.error('Error deleting recurring payment:', err);
-      toast.error(t('recurringPage.messages.deleteFailed'));
+      logger.error("Error deleting recurring payment:", err);
+      toast.error(t("recurringPage.messages.deleteFailed"));
     } finally {
       setIsDeleting(false);
       setIsDeleteModalOpen(false);
@@ -202,32 +225,40 @@ export const Recurring = () => {
   // Pause/Resume handler
   const handlePauseResume = async (payment: RecurringPayment) => {
     try {
-      const isPaused = payment.status === 'paused';
+      const isPaused = payment.status === "paused";
       const result = isPaused
         ? await recurring.resumeRecurringPayment(payment.id)
         : await recurring.pauseRecurringPayment(payment.id);
 
-      if (result && 'error' in result) {
-        toast.error(t('recurringPage.messages.pauseResumeFailed'));
+      if (result && "error" in result) {
+        toast.error(t("recurringPage.messages.pauseResumeFailed"));
         return;
       }
 
       // Refetch the updated payment
       const updatedPayment = await recurring.getRecurringPayment(payment.id);
-      if (!('error' in updatedPayment)) {
-        setAllPayments((prev) => prev.map((p) => (p.id === payment.id ? updatedPayment : p)));
+      if (!("error" in updatedPayment)) {
+        setAllPayments((prev) =>
+          prev.map((p) => (p.id === payment.id ? updatedPayment : p)),
+        );
         if (sidePanelPayment?.id === payment.id) {
           setSidePanelPayment(updatedPayment);
         }
       }
 
       const statsResult = await recurring.getPaymentStatistics();
-      if (!('error' in statsResult)) setStats(statsResult);
+      if (!("error" in statsResult)) setStats(statsResult);
 
-      toast.success(t(isPaused ? 'recurringPage.messages.resumed' : 'recurringPage.messages.paused'));
+      toast.success(
+        t(
+          isPaused
+            ? "recurringPage.messages.resumed"
+            : "recurringPage.messages.paused",
+        ),
+      );
     } catch (err) {
-      console.error('Error toggling payment status:', err);
-      toast.error(t('recurringPage.messages.pauseResumeFailed'));
+      logger.error("Error toggling payment status:", err);
+      toast.error(t("recurringPage.messages.pauseResumeFailed"));
     }
   };
 
@@ -250,9 +281,9 @@ export const Recurring = () => {
   };
 
   const hasActiveFilters =
-    (filters.status && filters.status !== 'all') ||
-    (filters.payment_type && filters.payment_type !== 'all') ||
-    (filters.schedule_type && filters.schedule_type !== 'all');
+    (filters.status && filters.status !== "all") ||
+    (filters.payment_type && filters.payment_type !== "all") ||
+    (filters.schedule_type && filters.schedule_type !== "all");
 
   return (
     <div className="min-h-screen theme-bg p-2 sm:p-4 md:p-6 lg:p-8">
@@ -303,7 +334,11 @@ export const Recurring = () => {
               setDeleteTarget(payment);
               setIsDeleteModalOpen(true);
             }}
-            emptyMessage={hasActiveFilters ? t('recurringPage.filters.noMatchFilters') : undefined}
+            emptyMessage={
+              hasActiveFilters
+                ? t("recurringPage.filters.noMatchFilters")
+                : undefined
+            }
           />
         </Card>
 
@@ -335,7 +370,7 @@ export const Recurring = () => {
         <Modal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
-          title={t('recurringPage.createModal.title')}
+          title={t("recurringPage.createModal.title")}
           size="xl"
         >
           <CreateRecurringPayment
@@ -353,7 +388,7 @@ export const Recurring = () => {
             setIsEditModalOpen(false);
             setSelectedPayment(null);
           }}
-          title={t('recurringPage.editModal.title')}
+          title={t("recurringPage.editModal.title")}
           size="xl"
         >
           {selectedPayment && (
@@ -377,22 +412,29 @@ export const Recurring = () => {
             setIsDeleteModalOpen(false);
             setDeleteTarget(null);
           }}
-          title={t('recurringPage.deleteConfirmModal.title')}
+          title={t("recurringPage.deleteConfirmModal.title")}
           size="sm"
         >
           <div className="space-y-4">
             <p className="text-sm theme-text-secondary">
-              {t('recurringPage.deleteConfirmModal.message')}
+              {t("recurringPage.deleteConfirmModal.message")}
             </p>
             {deleteTarget && (
               <div className="theme-bg-secondary rounded-lg p-3 text-sm">
-                <span className="font-medium theme-text-primary">{deleteTarget.name}</span>
-                <span className={`ml-2 font-semibold tabular-nums ${
-                  deleteTarget.payment_type === 'expense' || deleteTarget.payment_type === ('EXPENSE' as string)
-                    ? 'text-red-500/80 dark:text-red-400/70'
-                    : 'text-green-600/80 dark:text-green-400/70'
-                }`}>
-                  {deleteTarget.amount.toLocaleString('uk-UA', { minimumFractionDigits: 2 })}{' '}
+                <span className="font-medium theme-text-primary">
+                  {deleteTarget.name}
+                </span>
+                <span
+                  className={`ml-2 font-semibold tabular-nums ${
+                    deleteTarget.payment_type === "expense" ||
+                    deleteTarget.payment_type === ("EXPENSE" as string)
+                      ? "text-red-500/80 dark:text-red-400/70"
+                      : "text-green-600/80 dark:text-green-400/70"
+                  }`}
+                >
+                  {deleteTarget.amount.toLocaleString("uk-UA", {
+                    minimumFractionDigits: 2,
+                  })}{" "}
                   {deleteTarget.currency}
                 </span>
               </div>
@@ -406,7 +448,7 @@ export const Recurring = () => {
                   setDeleteTarget(null);
                 }}
               >
-                {t('recurringPage.deleteConfirmModal.cancel')}
+                {t("recurringPage.deleteConfirmModal.cancel")}
               </Button>
               <Button
                 variant="danger"
@@ -414,7 +456,7 @@ export const Recurring = () => {
                 loading={isDeleting}
                 onClick={handleDeleteConfirm}
               >
-                {t('recurringPage.deleteConfirmModal.confirm')}
+                {t("recurringPage.deleteConfirmModal.confirm")}
               </Button>
             </div>
           </div>

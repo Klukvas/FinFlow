@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useAuth } from '@/contexts/AuthContext';
-import { useApiClients } from '@/hooks/useApiClients';
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { useAuth } from "@/contexts/AuthContext";
+import { useApiClients } from "@/hooks/useApiClients";
 import {
   Goal,
   Milestone,
@@ -9,19 +9,20 @@ import {
   CreateGoalRequest,
   UpdateGoalRequest,
   GoalProgressUpdate,
-} from '@/types';
-import { GoalPageHeader } from '@/components/ui/goals/GoalPageHeader';
-import { GoalSummaryStrip } from '@/components/ui/goals/GoalSummaryStrip';
-import { GoalFilterBar } from '@/components/ui/goals/GoalFilterBar';
-import { GoalTable } from '@/components/ui/goals/GoalTable';
-import { GoalSidePanel } from '@/components/ui/goals/GoalSidePanel';
-import { GoalForm, GoalProgressModal } from '@/components/ui/goals';
-import { GoalsPageFilters } from '@/components/ui/goals/goalsHelpers';
-import { Modal } from '@/components/ui/shared/Modal';
-import { Card } from '@/components/ui/shared/Card';
-import { Button } from '@/components/ui/shared/Button';
-import { exportGoalsCsv } from '@/utils/exportGoalsCsv';
-import { toast } from 'sonner';
+} from "@/types";
+import { GoalPageHeader } from "@/components/ui/goals/GoalPageHeader";
+import { GoalSummaryStrip } from "@/components/ui/goals/GoalSummaryStrip";
+import { GoalFilterBar } from "@/components/ui/goals/GoalFilterBar";
+import { GoalTable } from "@/components/ui/goals/GoalTable";
+import { GoalSidePanel } from "@/components/ui/goals/GoalSidePanel";
+import { GoalForm, GoalProgressModal } from "@/components/ui/goals";
+import { GoalsPageFilters } from "@/components/ui/goals/goalsHelpers";
+import { Modal } from "@/components/ui/shared/Modal";
+import { Card } from "@/components/ui/shared/Card";
+import { Button } from "@/components/ui/shared/Button";
+import { exportGoalsCsv } from "@/utils/exportGoalsCsv";
+import { toast } from "sonner";
+import { logger } from "@/utils/logger";
 
 export const Goals = () => {
   const { t } = useTranslation();
@@ -42,13 +43,19 @@ export const Goals = () => {
 
   // Side panel state
   const [sidePanelGoal, setSidePanelGoal] = useState<Goal | null>(null);
-  const [sidePanelMilestones, setSidePanelMilestones] = useState<Milestone[]>([]);
-  const [sidePanelMilestonesLoading, setSidePanelMilestonesLoading] = useState(false);
+  const [sidePanelMilestones, setSidePanelMilestones] = useState<Milestone[]>(
+    [],
+  );
+  const [sidePanelMilestonesLoading, setSidePanelMilestonesLoading] =
+    useState(false);
   const [sidePanelOpen, setSidePanelOpen] = useState(false);
 
   // Filter state
   const [filtersVisible, setFiltersVisible] = useState(false);
-  const [filters, setFilters] = useState<GoalsPageFilters>({ page: 1, size: 10 });
+  const [filters, setFilters] = useState<GoalsPageFilters>({
+    page: 1,
+    size: 10,
+  });
 
   // Data state
   const [allGoals, setAllGoals] = useState<Goal[]>([]);
@@ -65,23 +72,23 @@ export const Goals = () => {
         goalsApi.getGoalStatistics(),
       ]);
 
-      if (!('error' in firstPage)) {
+      if (!("error" in firstPage)) {
         let allItems = [...firstPage.items];
         if (firstPage.pages > 1) {
           const remaining = await Promise.all(
             Array.from({ length: firstPage.pages - 1 }, (_, i) =>
-              goalsApi.getGoals({ size: 100, page: i + 2 })
-            )
+              goalsApi.getGoals({ size: 100, page: i + 2 }),
+            ),
           );
           for (const page of remaining) {
-            if (!('error' in page)) allItems = [...allItems, ...page.items];
+            if (!("error" in page)) allItems = [...allItems, ...page.items];
           }
         }
         setAllGoals(allItems);
       }
-      if (!('error' in statsResult)) setStats(statsResult);
+      if (!("error" in statsResult)) setStats(statsResult);
     } catch (err) {
-      console.error('Error loading goals data:', err);
+      logger.error("Error loading goals data:", err);
     } finally {
       setAllLoading(false);
     }
@@ -95,13 +102,13 @@ export const Goals = () => {
   const filteredGoals = useMemo(() => {
     let result = [...allGoals];
 
-    if (filters.status && filters.status !== 'all') {
+    if (filters.status && filters.status !== "all") {
       result = result.filter((g) => g.status === filters.status);
     }
-    if (filters.goal_type && filters.goal_type !== 'all') {
+    if (filters.goal_type && filters.goal_type !== "all") {
       result = result.filter((g) => g.goal_type === filters.goal_type);
     }
-    if (filters.priority && filters.priority !== 'all') {
+    if (filters.priority && filters.priority !== "all") {
       result = result.filter((g) => g.priority === filters.priority);
     }
     if (filters.search && filters.search.trim()) {
@@ -109,7 +116,7 @@ export const Goals = () => {
       result = result.filter(
         (g) =>
           g.title.toLowerCase().includes(q) ||
-          (g.description && g.description.toLowerCase().includes(q))
+          (g.description && g.description.toLowerCase().includes(q)),
       );
     }
 
@@ -128,15 +135,15 @@ export const Goals = () => {
   // Keyboard shortcut: N to add
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'n' || e.key === 'N') {
+      if (e.key === "n" || e.key === "N") {
         const tag = (e.target as HTMLElement)?.tagName;
-        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
         e.preventDefault();
         setIsCreateModalOpen(true);
       }
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
   }, []);
 
   // Side panel
@@ -147,7 +154,7 @@ export const Goals = () => {
       setSidePanelMilestonesLoading(true);
       try {
         const result = await goalsApi.getMilestones(goal.id);
-        if (!('error' in result)) {
+        if (!("error" in result)) {
           setSidePanelMilestones(result);
         } else {
           setSidePanelMilestones([]);
@@ -173,40 +180,46 @@ export const Goals = () => {
   // Create handler
   const handleCreate = async (data: CreateGoalRequest | UpdateGoalRequest) => {
     const result = await goalsApi.createGoal(data as CreateGoalRequest);
-    if (result && 'error' in result) return;
+    if (result && "error" in result) return;
     setIsCreateModalOpen(false);
-    toast.success(t('goalsPage.messages.goalCreated'));
+    toast.success(t("goalsPage.messages.goalCreated"));
     fetchAllData();
   };
 
   // Edit handler
   const handleEdit = async (data: CreateGoalRequest | UpdateGoalRequest) => {
     if (!selectedGoal) return;
-    const result = await goalsApi.updateGoal(selectedGoal.id, data as UpdateGoalRequest);
-    if (result && 'error' in result) return;
+    const result = await goalsApi.updateGoal(
+      selectedGoal.id,
+      data as UpdateGoalRequest,
+    );
+    if (result && "error" in result) return;
     setIsEditModalOpen(false);
     setSelectedGoal(null);
-    toast.success(t('goalsPage.messages.goalUpdated'));
+    toast.success(t("goalsPage.messages.goalUpdated"));
     fetchAllData();
     // Refresh side panel if open for the same goal
     if (sidePanelGoal && sidePanelGoal.id === selectedGoal.id) {
       const updated = await goalsApi.getGoal(selectedGoal.id);
-      if (!('error' in updated)) setSidePanelGoal(updated);
+      if (!("error" in updated)) setSidePanelGoal(updated);
     }
   };
 
   // Progress handler
-  const handleProgressUpdate = async (goalId: number, progressData: GoalProgressUpdate) => {
+  const handleProgressUpdate = async (
+    goalId: number,
+    progressData: GoalProgressUpdate,
+  ) => {
     const result = await goalsApi.updateGoalProgress(goalId, progressData);
-    if (result && 'error' in result) return;
+    if (result && "error" in result) return;
     setIsProgressModalOpen(false);
     setProgressTarget(null);
-    toast.success(t('goalsPage.messages.progressUpdated'));
+    toast.success(t("goalsPage.messages.progressUpdated"));
     fetchAllData();
     // Refresh side panel if open for the same goal
     if (sidePanelGoal && sidePanelGoal.id === goalId) {
       const updated = await goalsApi.getGoal(goalId);
-      if (!('error' in updated)) setSidePanelGoal(updated);
+      if (!("error" in updated)) setSidePanelGoal(updated);
     }
   };
 
@@ -216,18 +229,18 @@ export const Goals = () => {
     setIsDeleting(true);
     try {
       const result = await goalsApi.deleteGoal(deleteTarget.id);
-      if (result && 'error' in result) {
-        toast.error(t('goalsPage.messages.deleteFailed'));
+      if (result && "error" in result) {
+        toast.error(t("goalsPage.messages.deleteFailed"));
         return;
       }
       setAllGoals((prev) => prev.filter((g) => g.id !== deleteTarget.id));
       if (sidePanelGoal?.id === deleteTarget.id) closeSidePanel();
       const statsResult = await goalsApi.getGoalStatistics();
-      if (!('error' in statsResult)) setStats(statsResult);
-      toast.success(t('goalsPage.messages.goalDeleted'));
+      if (!("error" in statsResult)) setStats(statsResult);
+      toast.success(t("goalsPage.messages.goalDeleted"));
     } catch (err) {
-      console.error('Error deleting goal:', err);
-      toast.error(t('goalsPage.messages.deleteFailed'));
+      logger.error("Error deleting goal:", err);
+      toast.error(t("goalsPage.messages.deleteFailed"));
     } finally {
       setIsDeleting(false);
       setIsDeleteModalOpen(false);
@@ -238,29 +251,31 @@ export const Goals = () => {
   // Pause/Resume handler
   const handlePauseResume = async (goal: Goal) => {
     try {
-      const isPaused = goal.status === 'PAUSED';
-      const newStatus = isPaused ? 'ACTIVE' : 'PAUSED';
+      const isPaused = goal.status === "PAUSED";
+      const newStatus = isPaused ? "ACTIVE" : "PAUSED";
       const result = await goalsApi.updateGoal(goal.id, { status: newStatus });
 
-      if (result && 'error' in result) {
-        toast.error(t('goalsPage.messages.statusChangeFailed'));
+      if (result && "error" in result) {
+        toast.error(t("goalsPage.messages.statusChangeFailed"));
         return;
       }
 
       // Update local state
       const updatedGoal = await goalsApi.getGoal(goal.id);
-      if (!('error' in updatedGoal)) {
-        setAllGoals((prev) => prev.map((g) => (g.id === goal.id ? updatedGoal : g)));
+      if (!("error" in updatedGoal)) {
+        setAllGoals((prev) =>
+          prev.map((g) => (g.id === goal.id ? updatedGoal : g)),
+        );
         if (sidePanelGoal?.id === goal.id) setSidePanelGoal(updatedGoal);
       }
 
       const statsResult = await goalsApi.getGoalStatistics();
-      if (!('error' in statsResult)) setStats(statsResult);
+      if (!("error" in statsResult)) setStats(statsResult);
 
-      toast.success(t('goalsPage.messages.statusChanged'));
+      toast.success(t("goalsPage.messages.statusChanged"));
     } catch (err) {
-      console.error('Error toggling goal status:', err);
-      toast.error(t('goalsPage.messages.statusChangeFailed'));
+      logger.error("Error toggling goal status:", err);
+      toast.error(t("goalsPage.messages.statusChangeFailed"));
     }
   };
 
@@ -283,10 +298,10 @@ export const Goals = () => {
   };
 
   const hasActiveFilters =
-    (filters.status && filters.status !== 'all') ||
-    (filters.goal_type && filters.goal_type !== 'all') ||
-    (filters.priority && filters.priority !== 'all') ||
-    (filters.search && filters.search.trim() !== '');
+    (filters.status && filters.status !== "all") ||
+    (filters.goal_type && filters.goal_type !== "all") ||
+    (filters.priority && filters.priority !== "all") ||
+    (filters.search && filters.search.trim() !== "");
 
   return (
     <div className="min-h-screen theme-bg p-2 sm:p-4 md:p-6 lg:p-8">
@@ -333,7 +348,11 @@ export const Goals = () => {
               setDeleteTarget(goal);
               setIsDeleteModalOpen(true);
             }}
-            emptyMessage={hasActiveFilters ? t('goalsPage.filters.noMatchFilters') : undefined}
+            emptyMessage={
+              hasActiveFilters
+                ? t("goalsPage.filters.noMatchFilters")
+                : undefined
+            }
           />
         </Card>
 
@@ -371,7 +390,7 @@ export const Goals = () => {
         <Modal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
-          title={t('goalsPage.createModalTitle')}
+          title={t("goalsPage.createModalTitle")}
           size="lg"
         >
           <GoalForm
@@ -387,7 +406,7 @@ export const Goals = () => {
             setIsEditModalOpen(false);
             setSelectedGoal(null);
           }}
-          title={t('goalsPage.editModalTitle')}
+          title={t("goalsPage.editModalTitle")}
           size="lg"
         >
           {selectedGoal && (
@@ -422,18 +441,22 @@ export const Goals = () => {
             setIsDeleteModalOpen(false);
             setDeleteTarget(null);
           }}
-          title={t('goalsPage.deleteConfirmModal.title')}
+          title={t("goalsPage.deleteConfirmModal.title")}
           size="sm"
         >
           <div className="space-y-4">
             <p className="text-sm theme-text-secondary">
-              {t('goalsPage.deleteConfirmModal.message')}
+              {t("goalsPage.deleteConfirmModal.message")}
             </p>
             {deleteTarget && (
               <div className="theme-bg-secondary rounded-lg p-3 text-sm">
-                <span className="font-medium theme-text-primary">{deleteTarget.title}</span>
+                <span className="font-medium theme-text-primary">
+                  {deleteTarget.title}
+                </span>
                 <span className="ml-2 font-semibold tabular-nums theme-text-primary">
-                  {deleteTarget.target_amount.toLocaleString('uk-UA', { minimumFractionDigits: 2 })}{' '}
+                  {deleteTarget.target_amount.toLocaleString("uk-UA", {
+                    minimumFractionDigits: 2,
+                  })}{" "}
                   {deleteTarget.currency}
                 </span>
               </div>
@@ -447,7 +470,7 @@ export const Goals = () => {
                   setDeleteTarget(null);
                 }}
               >
-                {t('goalsPage.deleteConfirmModal.cancel')}
+                {t("goalsPage.deleteConfirmModal.cancel")}
               </Button>
               <Button
                 variant="danger"
@@ -455,7 +478,7 @@ export const Goals = () => {
                 loading={isDeleting}
                 onClick={handleDeleteConfirm}
               >
-                {t('goalsPage.deleteConfirmModal.confirm')}
+                {t("goalsPage.deleteConfirmModal.confirm")}
               </Button>
             </div>
           </div>

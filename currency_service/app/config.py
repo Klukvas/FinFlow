@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from pydantic import model_validator
 from typing import List
 import logging
 
@@ -28,7 +29,21 @@ class Settings(BaseSettings):
     
     # Security
     internal_secret_token: str = "your-internal-secret-token-here"
-    
+
+    @model_validator(mode="after")
+    def _validate_secrets(self) -> "Settings":
+        _placeholders = {
+            "your-secret-key-here",
+            "my-secret-token",
+            "changeme-in-production",
+            "your-internal-secret-token-here",
+        }
+        if not self.internal_secret_token or self.internal_secret_token in _placeholders:
+            raise ValueError(
+                "internal_secret_token must be set to a strong, unique value"
+            )
+        return self
+
     @property
     def cors_origins_list(self) -> list[str]:
         """Convert CORS_ORIGINS string to list"""

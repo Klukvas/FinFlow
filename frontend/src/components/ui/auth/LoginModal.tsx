@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Modal } from '../shared/Modal';
-import { EmailInput } from '../inputs/EmailInput';
-import { PasswordInput } from '../inputs/PasswordInput';
-import { useAuth } from '@/contexts/AuthContext';
-import { useAuthForm } from '@/hooks';
-import { useErrorHandler } from '@/hooks/useErrorHandler';
-import { LoginRequest } from '@/services/api/userApiClient';
-import { config } from '@/config/env';
-import { validateEmail } from '@/utils';
-import { FaShieldAlt } from 'react-icons/fa';
+import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { logger } from "@/utils/logger";
+import { Modal } from "../shared/Modal";
+import { EmailInput } from "../inputs/EmailInput";
+import { PasswordInput } from "../inputs/PasswordInput";
+import { useAuth } from "@/contexts/AuthContext";
+import { useAuthForm } from "@/hooks";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
+import { LoginRequest } from "@/services/api/userApiClient";
+import { config } from "@/config/env";
+import { validateEmail } from "@/utils";
+import { FaShieldAlt } from "react-icons/fa";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -20,76 +21,70 @@ interface LoginModalProps {
 export const LoginModal: React.FC<LoginModalProps> = ({
   isOpen,
   onClose,
-  onSwitchToRegister
+  onSwitchToRegister,
 }) => {
   const { t } = useTranslation();
   const { login } = useAuth();
   const { handleUserError } = useErrorHandler();
-  const [emailError, setEmailError] = useState<string>('');
+  const [emailError, setEmailError] = useState<string>("");
 
-  const {
-    formData,
-    error,
-    isLoading,
-    handleChange,
-    handleSubmit,
-    setError,
-  } = useAuthForm({
-    initialValues: {
-      email: "",
-      password: "",
-    } as LoginRequest,
-    validateEmail: false,
-    onSubmit: async (data: LoginRequest) => {
-      if (!validateEmail(data.email)) {
-        setEmailError(t('auth.invalidEmail'));
-        throw new Error('Invalid email');
-      }
+  const { formData, error, isLoading, handleChange, handleSubmit, setError } =
+    useAuthForm({
+      initialValues: {
+        email: "",
+        password: "",
+      } as LoginRequest,
+      validateEmail: false,
+      onSubmit: async (data: LoginRequest) => {
+        if (!validateEmail(data.email)) {
+          setEmailError(t("auth.invalidEmail"));
+          throw new Error("Invalid email");
+        }
 
-      if (config.debug) {
-      }
-
-      const result = await login(data.email, data.password);
-
-      if (config.debug) {
-      }
-
-      if (result.success) {
         if (config.debug) {
         }
-        onClose();
-      } else {
+
+        const result = await login(data.email, data.password);
+
         if (config.debug) {
-          console.error('Login error:', result.error);
         }
-        const mockErrorResponse = {
-          error: result.error || t('auth.loginError'),
-          errorCode: 'INVALID_CREDENTIALS'
-        };
-        handleUserError(mockErrorResponse);
-        setError(result.error || t('auth.loginError'));
-      }
-    },
-  });
+
+        if (result.success) {
+          if (config.debug) {
+          }
+          onClose();
+        } else {
+          if (config.debug) {
+            logger.error("Login error:", result.error);
+          }
+          const mockErrorResponse = {
+            error: result.error || t("auth.loginError"),
+            errorCode: "INVALID_CREDENTIALS",
+          };
+          handleUserError(mockErrorResponse);
+          setError(result.error || t("auth.loginError"));
+        }
+      },
+    });
 
   const handleClose = () => {
-    setError('');
-    setEmailError('');
+    setError("");
+    setEmailError("");
     onClose();
   };
 
   const handleEmailBlur = () => {
     if (formData.email && !validateEmail(formData.email)) {
-      setEmailError(t('auth.invalidEmail'));
+      setEmailError(t("auth.invalidEmail"));
     } else {
-      setEmailError('');
+      setEmailError("");
     }
   };
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     handleChange(e);
     if (emailError) {
-      setEmailError('');
+      setEmailError("");
     }
   };
 
@@ -99,7 +94,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title={t('auth.loginTitle')}
+      title={t("auth.loginTitle")}
       showHeader={false}
       size="md"
       data-testid="login-modal"
@@ -108,10 +103,10 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         {/* Title */}
         <div>
           <h2 className="text-2xl font-semibold theme-text-primary">
-            {t('auth.loginTitle')}
+            {t("auth.loginTitle")}
           </h2>
           <p className="text-sm theme-text-secondary mt-1.5">
-            {t('auth.loginSubtitle')}
+            {t("auth.loginSubtitle")}
           </p>
         </div>
 
@@ -125,10 +120,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             autoFocus
           />
 
-          <PasswordInput
-            value={formData.password}
-            onChange={handleChange}
-          />
+          <PasswordInput value={formData.password} onChange={handleChange} />
 
           {/* Error */}
           {error && (
@@ -149,14 +141,29 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           >
             {isLoading ? (
               <>
-                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                <svg
+                  className="animate-spin h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
                 </svg>
-                {t('common.loading')}
+                {t("common.loading")}
               </>
             ) : (
-              t('auth.loginButton')
+              t("auth.loginButton")
             )}
           </button>
         </form>
@@ -165,20 +172,20 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         <div className="flex items-center justify-center gap-1.5">
           <FaShieldAlt className="w-3 h-3 theme-text-tertiary" />
           <span className="text-xs theme-text-tertiary">
-            {t('auth.securityNote')}
+            {t("auth.securityNote")}
           </span>
         </div>
 
         {/* Switch to register */}
         <div className="text-center pt-2 border-t theme-border">
           <p className="text-sm theme-text-secondary pt-4">
-            {t('auth.noAccount')}{' '}
+            {t("auth.noAccount")}{" "}
             <button
               data-testid="switch-to-register"
               onClick={onSwitchToRegister}
               className="theme-accent hover:underline font-medium theme-transition"
             >
-              {t('auth.registerButton')}
+              {t("auth.registerButton")}
             </button>
           </p>
         </div>

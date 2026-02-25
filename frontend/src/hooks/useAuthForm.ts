@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { validateEmail } from "../utils";
+import { logger } from "@/utils/logger";
 
 interface UseAuthFormProps<T> {
   initialValues: T;
@@ -29,7 +30,7 @@ export function useAuthForm<T extends Record<string, any>>({
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   }, []);
 
   const reset = useCallback(() => {
@@ -38,35 +39,42 @@ export function useAuthForm<T extends Record<string, any>>({
     setIsLoading(false);
   }, [initialValues]);
 
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError("");
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      setIsLoading(true);
+      setError("");
 
-    if (shouldValidateEmail && formData.email && !validateEmail(formData.email)) {
-      setError("Введите корректный email.");
-      setIsLoading(false);
-      return;
-    }
+      if (
+        shouldValidateEmail &&
+        formData.email &&
+        !validateEmail(formData.email)
+      ) {
+        setError("Введите корректный email.");
+        setIsLoading(false);
+        return;
+      }
 
-    try {
-      await onSubmit(formData);
-    } catch (error) {
-      console.error('Form submission error:', error);
-      setError("Что-то пошло не так. Попробуйте еще раз.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [formData, onSubmit, shouldValidateEmail]);
+      try {
+        await onSubmit(formData);
+      } catch (error) {
+        logger.error("Form submission error:", error);
+        setError("Что-то пошло не так. Попробуйте еще раз.");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [formData, onSubmit, shouldValidateEmail],
+  );
 
-  return { 
-    formData, 
-    setFormData, 
-    error, 
-    isLoading, 
-    handleChange, 
-    handleSubmit, 
+  return {
+    formData,
+    setFormData,
+    error,
+    isLoading,
+    handleChange,
+    handleSubmit,
     setError,
-    reset
+    reset,
   };
 }

@@ -1,4 +1,6 @@
-from fastapi import Depends, HTTPException, status, Header
+import secrets
+
+from fastapi import Depends, Request, HTTPException, status, Header
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -6,9 +8,12 @@ from app.services.income import IncomeService
 from app.clients.user_service_client import UserServiceClient
 from app.clients.account_service_client import AccountServiceClient
 from app.config import settings
+from app.utils.logger import get_logger
 from typing import Optional
 from uuid import UUID
 import jwt as pyjwt
+
+logger = get_logger(__name__)
 
 # Security scheme for Swagger UI
 security = HTTPBearer()
@@ -68,3 +73,20 @@ def get_workspace_id(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid workspace ID format"
         )
+
+def verify_internal_token(request: Request) -> None:
+    """Verify internal service token for inter-service communication"""
+    token = request.headers.get("X-Internal-Token")
+    if not token or not secrets.compare_digest(token, settings.INTERNAL_SECRET_TOKEN):
+        logger.warning("Invalid or missing internal token")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Unauthorized internal access"
+        )
+
+def get_income_service_internal(
+    db: Session = Depends(get_db),
+    account_client: AccountServiceClient = Depends(get_account_service_client)
+) -> IncomeService:
+    """Get income service for internal use without user authentication"""
+    return IncomeService(db, account_client)

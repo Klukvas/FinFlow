@@ -1,27 +1,36 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Category as CategoryType, CategoryStatisticsResponse } from '@/types';
-import { useApiClients } from '@/hooks/useApiClients';
-import { useErrorHandler } from '@/hooks/useErrorHandler';
-import { useCategories } from '@/contexts/CategoriesContext';
-import { CategoryPageHeader } from '@/components/ui/category/CategoryPageHeader';
-import { CategorySummaryStrip } from '@/components/ui/category/CategorySummaryStrip';
-import { CategoryFilterBar } from '@/components/ui/category/CategoryFilterBar';
-import { CategoryTree } from '@/components/ui/category/CategoryTree';
-import { CategoryTable } from '@/components/ui/category/CategoryTable';
-import { CategorySidePanel } from '@/components/ui/category/CategorySidePanel';
-import { CreateCategory } from '@/components/ui/category/CreateCategory';
-import { EditCategory } from '@/components/ui/category/EditCategory';
-import { CategoryPageFilters, CategoryUsageData, buildCategoryTree } from '@/components/ui/category/categoryHelpers';
-import { Modal } from '@/components/ui/shared/Modal';
-import { Card } from '@/components/ui/shared/Card';
-import { Button } from '@/components/ui/shared/Button';
-import { Badge } from '@/components/ui/shared/Badge';
-import { toast } from 'sonner';
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { Category as CategoryType, CategoryStatisticsResponse } from "@/types";
+import { useApiClients } from "@/hooks/useApiClients";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
+import { useCategories } from "@/contexts/CategoriesContext";
+import { CategoryPageHeader } from "@/components/ui/category/CategoryPageHeader";
+import { CategorySummaryStrip } from "@/components/ui/category/CategorySummaryStrip";
+import { CategoryFilterBar } from "@/components/ui/category/CategoryFilterBar";
+import { CategoryTree } from "@/components/ui/category/CategoryTree";
+import { CategoryTable } from "@/components/ui/category/CategoryTable";
+import { CategorySidePanel } from "@/components/ui/category/CategorySidePanel";
+import { CreateCategory } from "@/components/ui/category/CreateCategory";
+import { EditCategory } from "@/components/ui/category/EditCategory";
+import {
+  CategoryPageFilters,
+  CategoryUsageData,
+  buildCategoryTree,
+} from "@/components/ui/category/categoryHelpers";
+import { Modal } from "@/components/ui/shared/Modal";
+import { Card } from "@/components/ui/shared/Card";
+import { Button } from "@/components/ui/shared/Button";
+import { Badge } from "@/components/ui/shared/Badge";
+import { toast } from "sonner";
+import { logger } from "@/utils/logger";
 
 export const Category: React.FC = () => {
   const { t } = useTranslation();
-  const { category: categoryApi, expense: expenseApi, income: incomeApi } = useApiClients();
+  const {
+    category: categoryApi,
+    expense: expenseApi,
+    income: incomeApi,
+  } = useApiClients();
   const { handleCategoryError } = useErrorHandler();
   const { refreshCategories } = useCategories();
 
@@ -32,12 +41,16 @@ export const Category: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Selected items
-  const [editingCategory, setEditingCategory] = useState<CategoryType | null>(null);
+  const [editingCategory, setEditingCategory] = useState<CategoryType | null>(
+    null,
+  );
   const [deleteTarget, setDeleteTarget] = useState<CategoryType | null>(null);
 
   // Side panel state
-  const [sidePanelCategory, setSidePanelCategory] = useState<CategoryType | null>(null);
-  const [sidePanelUsage, setSidePanelUsage] = useState<CategoryUsageData | null>(null);
+  const [sidePanelCategory, setSidePanelCategory] =
+    useState<CategoryType | null>(null);
+  const [sidePanelUsage, setSidePanelUsage] =
+    useState<CategoryUsageData | null>(null);
   const [sidePanelUsageLoading, setSidePanelUsageLoading] = useState(false);
   const [sidePanelOpen, setSidePanelOpen] = useState(false);
 
@@ -46,7 +59,7 @@ export const Category: React.FC = () => {
   const [filters, setFilters] = useState<CategoryPageFilters>({
     page: 1,
     size: 25,
-    viewMode: 'tree',
+    viewMode: "tree",
   });
 
   // Tree state
@@ -68,11 +81,11 @@ export const Category: React.FC = () => {
         categoryApi.getCategoryStatistics(),
       ]);
 
-      if (!('error' in flatResult)) setAllCategories(flatResult);
-      if (!('error' in treeResult)) setTreeCategories(treeResult);
-      if (!('error' in statsResult)) setStats(statsResult);
+      if (!("error" in flatResult)) setAllCategories(flatResult);
+      if (!("error" in treeResult)) setTreeCategories(treeResult);
+      if (!("error" in statsResult)) setStats(statsResult);
     } catch (err) {
-      console.error('Error loading categories data:', err);
+      logger.error("Error loading categories data:", err);
     } finally {
       setAllLoading(false);
     }
@@ -86,7 +99,7 @@ export const Category: React.FC = () => {
   const filteredCategories = useMemo(() => {
     let result = [...allCategories];
 
-    if (filters.type && filters.type !== 'all') {
+    if (filters.type && filters.type !== "all") {
       result = result.filter((c) => c.type === filters.type);
     }
     if (filters.search && filters.search.trim()) {
@@ -100,7 +113,7 @@ export const Category: React.FC = () => {
   // For tree view: rebuild tree from filtered results
   const filteredTree = useMemo(() => {
     const hasFilters =
-      (filters.type && filters.type !== 'all') ||
+      (filters.type && filters.type !== "all") ||
       (filters.search && filters.search.trim());
 
     if (!hasFilters) return treeCategories;
@@ -110,7 +123,9 @@ export const Category: React.FC = () => {
     const withParents = allCategories.filter(
       (c) =>
         matchIds.has(c.id) ||
-        allCategories.some((child) => child.parent_id === c.id && matchIds.has(child.id)),
+        allCategories.some(
+          (child) => child.parent_id === c.id && matchIds.has(child.id),
+        ),
     );
     return buildCategoryTree(withParents);
   }, [filteredCategories, treeCategories, allCategories, filters]);
@@ -127,15 +142,15 @@ export const Category: React.FC = () => {
   // Keyboard shortcut: N to add
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'n' || e.key === 'N') {
+      if (e.key === "n" || e.key === "N") {
         const tag = (e.target as HTMLElement)?.tagName;
-        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
         e.preventDefault();
         setIsCreateModalOpen(true);
       }
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
   }, []);
 
   // Side panel
@@ -154,18 +169,18 @@ export const Category: React.FC = () => {
         incomeCount: 0,
         totalAmount: 0,
         averageAmount: 0,
-        currency: '',
+        currency: "",
         recentExpenses: [],
         recentIncomes: [],
       };
 
-      if (!('error' in expResult)) {
+      if (!("error" in expResult)) {
         usage.expenseCount = expResult.statistics.count;
         usage.totalAmount += expResult.statistics.total_amount;
         usage.currency = expResult.statistics.currency;
         usage.recentExpenses = expResult.expenses.slice(0, 5);
       }
-      if (!('error' in incResult)) {
+      if (!("error" in incResult)) {
         usage.incomeCount = incResult.statistics.count;
         usage.totalAmount += incResult.statistics.total_amount;
         if (!usage.currency) usage.currency = incResult.statistics.currency;
@@ -201,7 +216,7 @@ export const Category: React.FC = () => {
     setIsCreateModalOpen(false);
     await refreshCategories();
     fetchAllData();
-    toast.success(t('categoryPage.messages.categoryCreated'));
+    toast.success(t("categoryPage.messages.categoryCreated"));
   };
 
   // Edit handler
@@ -211,11 +226,11 @@ export const Category: React.FC = () => {
     setEditingCategory(null);
     await refreshCategories();
     fetchAllData();
-    toast.success(t('categoryPage.messages.categoryUpdated'));
+    toast.success(t("categoryPage.messages.categoryUpdated"));
     // Refresh side panel if open for same category
     if (sidePanelCategory && editId && sidePanelCategory.id === editId) {
       const updated = await categoryApi.getCategory(editId);
-      if (!('error' in updated)) {
+      if (!("error" in updated)) {
         setSidePanelCategory(updated);
       }
     }
@@ -232,14 +247,14 @@ export const Category: React.FC = () => {
     setIsDeleting(true);
     try {
       const result = await categoryApi.deleteCategory(deleteTarget.id);
-      if (result && 'error' in result) {
+      if (result && "error" in result) {
         handleCategoryError(result, true);
         return;
       }
       await refreshCategories();
       fetchAllData();
       if (sidePanelCategory?.id === deleteTarget.id) closeSidePanel();
-      toast.success(t('categoryPage.messages.categoryDeleted'));
+      toast.success(t("categoryPage.messages.categoryDeleted"));
     } catch (err) {
       handleCategoryError(err as Error, true);
     } finally {
@@ -273,8 +288,8 @@ export const Category: React.FC = () => {
   };
 
   const hasActiveFilters =
-    (filters.type && filters.type !== 'all') ||
-    (filters.search && filters.search.trim() !== '');
+    (filters.type && filters.type !== "all") ||
+    (filters.search && filters.search.trim() !== "");
 
   return (
     <div className="min-h-screen theme-bg p-2 sm:p-4 md:p-6 lg:p-8">
@@ -298,7 +313,7 @@ export const Category: React.FC = () => {
 
         {/* Content */}
         <Card>
-          {filters.viewMode === 'tree' ? (
+          {filters.viewMode === "tree" ? (
             <CategoryTree
               categories={filteredTree}
               loading={allLoading}
@@ -313,7 +328,11 @@ export const Category: React.FC = () => {
               }}
               expandedNodes={expandedNodes}
               onToggleExpand={handleToggleExpand}
-              emptyMessage={hasActiveFilters ? t('categoryPage.filters.noMatchFilters') : undefined}
+              emptyMessage={
+                hasActiveFilters
+                  ? t("categoryPage.filters.noMatchFilters")
+                  : undefined
+              }
             />
           ) : (
             <CategoryTable
@@ -335,7 +354,11 @@ export const Category: React.FC = () => {
                 setDeleteTarget(cat);
                 setIsDeleteModalOpen(true);
               }}
-              emptyMessage={hasActiveFilters ? t('categoryPage.filters.noMatchFilters') : undefined}
+              emptyMessage={
+                hasActiveFilters
+                  ? t("categoryPage.filters.noMatchFilters")
+                  : undefined
+              }
             />
           )}
         </Card>
@@ -369,7 +392,7 @@ export const Category: React.FC = () => {
         <Modal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
-          title={t('categoryPage.createModalTitle')}
+          title={t("categoryPage.createModalTitle")}
           size="md"
         >
           <CreateCategory onCategoryCreated={handleCategoryCreated} />
@@ -380,7 +403,7 @@ export const Category: React.FC = () => {
           <Modal
             isOpen={isEditModalOpen}
             onClose={handleCancelEdit}
-            title={t('categoryPage.editModalTitle')}
+            title={t("categoryPage.editModalTitle")}
             size="md"
           >
             <EditCategory
@@ -398,22 +421,30 @@ export const Category: React.FC = () => {
             setIsDeleteModalOpen(false);
             setDeleteTarget(null);
           }}
-          title={t('categoryPage.deleteConfirmModal.title')}
+          title={t("categoryPage.deleteConfirmModal.title")}
           size="sm"
         >
           <div className="space-y-4">
             <p className="text-sm theme-text-secondary">
-              {t('categoryPage.deleteConfirmModal.message')}
+              {t("categoryPage.deleteConfirmModal.message")}
             </p>
             {deleteTarget && (
               <div className="theme-bg-secondary rounded-lg p-3 text-sm">
-                <span className="font-medium theme-text-primary">{deleteTarget.name}</span>
+                <span className="font-medium theme-text-primary">
+                  {deleteTarget.name}
+                </span>
                 <Badge
-                  variant={deleteTarget.type === 'INCOME' ? 'success' : 'destructive'}
+                  variant={
+                    deleteTarget.type === "INCOME" ? "success" : "destructive"
+                  }
                   size="sm"
                   className="ml-2"
                 >
-                  {t(deleteTarget.type === 'INCOME' ? 'category.income' : 'category.expense')}
+                  {t(
+                    deleteTarget.type === "INCOME"
+                      ? "category.income"
+                      : "category.expense",
+                  )}
                 </Badge>
               </div>
             )}
@@ -426,7 +457,7 @@ export const Category: React.FC = () => {
                   setDeleteTarget(null);
                 }}
               >
-                {t('categoryPage.deleteConfirmModal.cancel')}
+                {t("categoryPage.deleteConfirmModal.cancel")}
               </Button>
               <Button
                 variant="danger"
@@ -434,7 +465,7 @@ export const Category: React.FC = () => {
                 loading={isDeleting}
                 onClick={handleDeleteConfirm}
               >
-                {t('categoryPage.deleteConfirmModal.confirm')}
+                {t("categoryPage.deleteConfirmModal.confirm")}
               </Button>
             </div>
           </div>

@@ -58,7 +58,7 @@ class RecurringPaymentUpdate(BaseModel):
     description: Optional[str] = None
     amount: Optional[Decimal] = Field(None, gt=0)
     currency: Optional[str] = Field(None, min_length=3, max_length=3)
-    category_id: Optional[UUID] = None
+    category_id: Optional[int] = None
     payment_type: Optional[str] = Field(None, pattern="^(EXPENSE|INCOME)$")
     schedule_type: Optional[str] = Field(None, pattern="^(daily|weekly|monthly|yearly)$")
     schedule_config: Optional[Dict[str, Any]] = None

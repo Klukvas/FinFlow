@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, ConfigDict, field_validator
 from typing import List, Optional
-from datetime import date as datetime_date
+from datetime import date as datetime_date, datetime
 from decimal import Decimal
 from uuid import UUID
 import re
@@ -170,6 +170,8 @@ class ExpenseResponse(ExpenseBase):
     id: int = Field(description="Unique expense identifier", examples=[1, 2, 3])
     user_id: int = Field(description="ID of the user who owns this expense", examples=[1, 2, 3])
     workspace_id: UUID = Field(description="Workspace ID this expense belongs to")
+    created_at: datetime = Field(description="When the expense was created")
+    updated_at: datetime = Field(description="When the expense was last updated")
     
     model_config = ConfigDict(
         from_attributes=True,

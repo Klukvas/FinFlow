@@ -304,23 +304,8 @@ class RecurringPaymentService(WorkspaceAuthorizationMixin):
         # Применить пагинацию
         schedules = query.offset((page - 1) * size).limit(size).all()
         
-        # Преобразовать в Response объекты
-        schedule_responses = [
-            PaymentScheduleResponse(
-                id=str(schedule.id),
-                recurring_payment_id=str(schedule.recurring_payment_id),
-                execution_date=schedule.execution_date.isoformat(),
-                status=schedule.status,
-                amount=float(schedule.amount),
-                currency=schedule.currency,
-                created_at=schedule.created_at.isoformat(),
-                updated_at=schedule.updated_at.isoformat()
-            )
-            for schedule in schedules
-        ]
-
         return PaymentScheduleListResponse(
-            items=schedule_responses,
+            items=schedules,
             total=total,
             page=page,
             size=size,

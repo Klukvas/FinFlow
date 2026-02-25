@@ -43,7 +43,10 @@ class AccountService(WorkspaceAuthorizationMixin):
             self.authorize_workspace_access(workspace_id, user_id, "member", "create_account")
             
             # Check subscription limits before creating
-            current_count = self.db.query(Account).filter(Account.owner_id == user_id).count()
+            current_count = self.db.query(Account).filter(
+                Account.owner_id == user_id,
+                Account.workspace_id == workspace_id
+            ).count()
             if not self.subscription_client.check_account_limit(user_id, current_count):
                 features = self.subscription_client.get_user_features(user_id)
                 account_feature = features.get("accounts", {})
@@ -250,25 +253,37 @@ class AccountService(WorkspaceAuthorizationMixin):
             raise AccountBalanceError(f"Failed to update balance: {str(e)}", AccountErrorCode.UNKNOWN_ERROR)
 
     async def update_balance_with_conversion(
-        self, 
-        account_id: int, 
-        amount_change: float, 
-        transaction_currency: str, 
-        user_id: int
+        self,
+        account_id: int,
+        amount_change: float,
+        transaction_currency: str,
+        user_id: int,
+        workspace_id: UUID = None
     ) -> Account:
         """
         Update account balance with automatic currency conversion.
-        
+
         Args:
             account_id: ID of the account to update
             amount_change: Amount to add (positive) or subtract (negative)
             transaction_currency: Currency of the transaction
             user_id: ID of the user (for ownership validation)
-        
+            workspace_id: Workspace ID for isolation
+
         Returns:
             Updated account
         """
-        account = self.get_account(account_id, user_id)
+        if workspace_id is not None:
+            account = self.get_account(account_id, user_id, workspace_id)
+        else:
+            # Fallback: lookup account without workspace filter (for backwards compat)
+            account = self.db.query(Account).filter(
+                Account.id == account_id,
+                Account.owner_id == user_id
+            ).first()
+            if not account:
+                from app.exceptions import AccountNotFoundError
+                raise AccountNotFoundError(account_id)
         
         if account.is_archived:
             raise AccountArchivedError(account_id)
@@ -278,12 +293,13 @@ class AccountService(WorkspaceAuthorizationMixin):
         
         try:
             # If currencies are the same, no conversion needed
+            actual_workspace_id = workspace_id or account.workspace_id
             if transaction_currency.upper() == account.currency.upper():
                 new_balance = account.balance + amount_change
                 if new_balance < 0:
                     raise AccountBalanceError("Insufficient funds in account", AccountErrorCode.INSUFFICIENT_FUNDS)
-                
-                return self.update_balance(account_id, new_balance, user_id)
+
+                return self.update_balance(account_id, new_balance, user_id, actual_workspace_id)
             
             # Convert amount to account currency (always use positive amount for conversion)
             converted_amount = await self.currency_client.convert_amount(
@@ -307,8 +323,8 @@ class AccountService(WorkspaceAuthorizationMixin):
                 f"for account {account_id}"
             )
             
-            return self.update_balance(account_id, new_balance, user_id)
-            
+            return self.update_balance(account_id, new_balance, user_id, actual_workspace_id)
+
         except AccountBalanceError:
             raise
         except Exception as e:
@@ -480,14 +496,17 @@ class AccountService(WorkspaceAuthorizationMixin):
             self.logger.error(f"Failed to get user account summaries: {e}")
             raise AccountValidationError(f"Failed to fetch account summaries: {str(e)}", AccountErrorCode.EXTERNAL_SERVICE_ERROR)
 
-    def validate_account_ownership(self, account_id: int, user_id: int) -> bool:
+    def validate_account_ownership(self, account_id: int, user_id: int, workspace_id: UUID = None) -> bool:
         """Validate that an account exists and belongs to the user"""
         try:
-            account = self.db.query(Account).filter(
+            filters = [
                 Account.id == account_id,
                 Account.owner_id == user_id,
                 Account.is_archived == False
-            ).first()
+            ]
+            if workspace_id is not None:
+                filters.append(Account.workspace_id == workspace_id)
+            account = self.db.query(Account).filter(*filters).first()
             return account is not None
         except Exception as e:
             self.logger.error(f"Error validating account ownership: {e}")

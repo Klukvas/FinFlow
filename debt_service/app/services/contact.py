@@ -139,9 +139,13 @@ class ContactService(WorkspaceAuthorizationMixin):
             self.logger.error(f"Error deleting contact: {e}")
             raise ContactDeletionFailedError("Failed to delete contact")
 
-    def get_contact_summaries(self, user_id: int) -> List[ContactSummary]:
+    def get_contact_summaries(self, user_id: int, workspace_id: UUID) -> List[ContactSummary]:
         """Get contact summaries with debt information"""
-        contacts = self.db.query(Contact).filter(Contact.user_id == user_id).all()
+        self.authorize_workspace_access(workspace_id, user_id, "viewer", "get_contact_summaries")
+        contacts = self.db.query(Contact).filter(
+            Contact.user_id == user_id,
+            Contact.workspace_id == workspace_id
+        ).all()
         
         summaries = []
         for contact in contacts:

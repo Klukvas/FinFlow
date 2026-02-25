@@ -44,6 +44,9 @@ class ErrorCode(str, Enum):
     # Subscription errors
     EXPENSE_LIMIT_EXCEEDED = "EXPENSE_LIMIT_EXCEEDED"
 
+    # General validation
+    EXPENSE_VALIDATION_FAILED = "EXPENSE_VALIDATION_FAILED"
+
 class StandardizedError(HTTPException):
     """Base class for standardized error responses with error and errorCode keys"""
     def __init__(self, status_code: int, error: str, error_code: ErrorCode, details: Optional[Dict[str, Any]] = None):
