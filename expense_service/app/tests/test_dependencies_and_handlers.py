@@ -125,7 +125,7 @@ class TestVerifyInternalToken:
         with pytest.raises(HTTPException) as exc_info:
             verify_internal_token(request)
         assert exc_info.value.status_code == 403
-        assert "required" in exc_info.value.detail.lower()
+        assert "unauthorized" in exc_info.value.detail.lower()
 
     def test_wrong_token_raises_403(self):
         request = self._make_request("wrong-token")
