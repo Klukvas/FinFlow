@@ -817,12 +817,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Generate secrets
+        run: |
+          echo "E2E_SECRET_KEY=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "E2E_INTERNAL_TOKEN=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+
       - name: Generate .env.docker files
         run: |
-          # Shared values
-          SECRET="your-secret-key-here"
+          # Shared values — must not be placeholder strings (startup validation rejects them)
+          SECRET="$E2E_SECRET_KEY"
           ALGO="HS256"
-          INTERNAL_TOKEN="my-secret-token"
+          INTERNAL_TOKEN="$E2E_INTERNAL_TOKEN"
 
           # user_service
           cat > user_service/.env.docker << EOF
@@ -961,9 +966,9 @@ jobs:
 
       - name: Build and start services
         env:
-          SECRET_KEY: your-secret-key-here
-          JWT_SECRET_KEY: your-secret-key-here
-          INTERNAL_SECRET_TOKEN: my-secret-token
+          SECRET_KEY: ${{ env.E2E_SECRET_KEY }}
+          JWT_SECRET_KEY: ${{ env.E2E_SECRET_KEY }}
+          INTERNAL_SECRET_TOKEN: ${{ env.E2E_INTERNAL_TOKEN }}
         run: docker compose up --build -d
 
       - name: Set up Python
