@@ -933,6 +933,7 @@ jobs:
           REDIS_URL=redis://redis:6379
           CORS_ORIGINS=*
           LOG_LEVEL=INFO
+          INTERNAL_SECRET_TOKEN=$INTERNAL_TOKEN
           EOF
 
           # subscription_service
