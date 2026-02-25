@@ -1,1 +1,1 @@
-export * from './messages';
+// Constants barrel file

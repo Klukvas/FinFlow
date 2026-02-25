@@ -291,7 +291,7 @@ async def get_available_languages(bank_name: str, user_id: int = Depends(get_cur
     }
 
 @router.get("/health")
-async def health_check():
+def health_check():
     """
     Health check for PDF parser service
     """

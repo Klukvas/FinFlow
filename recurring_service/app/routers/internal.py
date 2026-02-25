@@ -111,7 +111,7 @@ async def execute_payments_now(
 
 
 @router.get("/health")
-async def health_check():
+def health_check():
     """Проверка здоровья сервиса"""
     return {
         "status": "healthy",

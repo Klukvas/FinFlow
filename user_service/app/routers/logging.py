@@ -60,7 +60,7 @@ class LogResponse(BaseModel):
         429: {"description": "Rate limit exceeded"}
     }
 )
-async def submit_frontend_logs(
+def submit_frontend_logs(
     log_batch: FrontendLogBatch,
     request: Request
 ):
@@ -172,7 +172,7 @@ async def submit_frontend_logs(
         400: {"description": "Invalid error data"}
     }
 )
-async def submit_frontend_error(
+def submit_frontend_error(
     error_log: FrontendLogEntry,
     request: Request
 ):
@@ -238,7 +238,7 @@ async def submit_frontend_error(
     summary="Logging service health check",
     description="Check if the logging service is healthy and accepting logs"
 )
-async def logging_health_check():
+def logging_health_check():
     """Health check endpoint for the logging service"""
     try:
         # Test logging functionality

@@ -2221,5 +2221,74 @@
       "failed": "Платёж не выполнен",
       "paymentsDisabled": "Платежи временно отключены. Пожалуйста, свяжитесь с поддержкой для получения дополнительной информации."
     }
+  },
+  "messages": {
+    "success": {
+      "categoryCreated": "Категория успешно создана",
+      "categoryUpdated": "Категория успешно обновлена",
+      "categoryDeleted": "Категория успешно удалена",
+      "goalCreated": "Цель успешно создана",
+      "goalUpdated": "Цель успешно обновлена",
+      "goalDeleted": "Цель успешно удалена",
+      "expenseCreated": "Расход успешно создан",
+      "expenseUpdated": "Расход успешно обновлен",
+      "expenseDeleted": "Расход успешно удален",
+      "incomeCreated": "Доход успешно создан",
+      "incomeUpdated": "Доход успешно обновлен",
+      "incomeDeleted": "Доход успешно удален",
+      "loginSuccess": "Вход выполнен успешно",
+      "registrationSuccess": "Регистрация выполнена успешно",
+      "logoutSuccess": "Выход выполнен успешно",
+      "profileUpdated": "Профиль успешно обновлен"
+    },
+    "error": {
+      "categoryCreateFailed": "Ошибка при создании категории",
+      "categoryUpdateFailed": "Ошибка при обновлении категории",
+      "categoryDeleteFailed": "Ошибка при удалении категории",
+      "categoryLoadFailed": "Ошибка при загрузке категорий",
+      "goalCreateFailed": "Ошибка при создании цели",
+      "goalUpdateFailed": "Ошибка при обновлении цели",
+      "goalDeleteFailed": "Ошибка при удалении цели",
+      "goalLoadFailed": "Ошибка при загрузке целей",
+      "expenseCreateFailed": "Ошибка при создании расхода",
+      "expenseUpdateFailed": "Ошибка при обновлении расхода",
+      "expenseDeleteFailed": "Ошибка при удалении расхода",
+      "expenseLoadFailed": "Ошибка при загрузке расходов",
+      "incomeCreateFailed": "Ошибка при создании дохода",
+      "incomeUpdateFailed": "Ошибка при обновлении дохода",
+      "incomeDeleteFailed": "Ошибка при удалении дохода",
+      "incomeLoadFailed": "Ошибка при загрузке доходов",
+      "loginFailed": "Ошибка при входе в систему",
+      "registrationFailed": "Ошибка при регистрации",
+      "logoutFailed": "Ошибка при выходе из системы",
+      "profileUpdateFailed": "Ошибка при обновлении профиля",
+      "networkError": "Ошибка сети. Проверьте подключение к интернету",
+      "unauthorized": "Недостаточно прав для выполнения операции",
+      "forbidden": "Доступ запрещен",
+      "notFound": "Ресурс не найден",
+      "serverError": "Внутренняя ошибка сервера",
+      "validationError": "Ошибка валидации данных",
+      "unknownError": "Произошла неизвестная ошибка"
+    },
+    "loading": {
+      "categories": "Загрузка категорий...",
+      "goals": "Загрузка целей...",
+      "expenses": "Загрузка расходов...",
+      "income": "Загрузка доходов...",
+      "profile": "Загрузка профиля...",
+      "general": "Загрузка..."
+    },
+    "empty": {
+      "noCategories": "Нет категорий",
+      "noGoals": "Нет целей",
+      "noExpenses": "Нет расходов",
+      "noIncome": "Нет доходов",
+      "noData": "Нет данных"
+    },
+    "placeholder": {
+      "search": "Поиск...",
+      "selectOption": "Выберите опцию",
+      "enterValue": "Введите значение"
+    }
   }
 }

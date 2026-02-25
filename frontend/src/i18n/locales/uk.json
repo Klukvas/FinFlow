@@ -2132,5 +2132,74 @@
       "failed": "Платіж не виконано",
       "paymentsDisabled": "Платежі тимчасово вимкнено. Будь ласка, зверніться до служби підтримки для отримання додаткової інформації."
     }
+  },
+  "messages": {
+    "success": {
+      "categoryCreated": "Категорію успішно створено",
+      "categoryUpdated": "Категорію успішно оновлено",
+      "categoryDeleted": "Категорію успішно видалено",
+      "goalCreated": "Ціль успішно створено",
+      "goalUpdated": "Ціль успішно оновлено",
+      "goalDeleted": "Ціль успішно видалено",
+      "expenseCreated": "Витрату успішно створено",
+      "expenseUpdated": "Витрату успішно оновлено",
+      "expenseDeleted": "Витрату успішно видалено",
+      "incomeCreated": "Дохід успішно створено",
+      "incomeUpdated": "Дохід успішно оновлено",
+      "incomeDeleted": "Дохід успішно видалено",
+      "loginSuccess": "Вхід виконано успішно",
+      "registrationSuccess": "Реєстрацію виконано успішно",
+      "logoutSuccess": "Вихід виконано успішно",
+      "profileUpdated": "Профіль успішно оновлено"
+    },
+    "error": {
+      "categoryCreateFailed": "Помилка при створенні категорії",
+      "categoryUpdateFailed": "Помилка при оновленні категорії",
+      "categoryDeleteFailed": "Помилка при видаленні категорії",
+      "categoryLoadFailed": "Помилка при завантаженні категорій",
+      "goalCreateFailed": "Помилка при створенні цілі",
+      "goalUpdateFailed": "Помилка при оновленні цілі",
+      "goalDeleteFailed": "Помилка при видаленні цілі",
+      "goalLoadFailed": "Помилка при завантаженні цілей",
+      "expenseCreateFailed": "Помилка при створенні витрати",
+      "expenseUpdateFailed": "Помилка при оновленні витрати",
+      "expenseDeleteFailed": "Помилка при видаленні витрати",
+      "expenseLoadFailed": "Помилка при завантаженні витрат",
+      "incomeCreateFailed": "Помилка при створенні доходу",
+      "incomeUpdateFailed": "Помилка при оновленні доходу",
+      "incomeDeleteFailed": "Помилка при видаленні доходу",
+      "incomeLoadFailed": "Помилка при завантаженні доходів",
+      "loginFailed": "Помилка при вході в систему",
+      "registrationFailed": "Помилка при реєстрації",
+      "logoutFailed": "Помилка при виході з системи",
+      "profileUpdateFailed": "Помилка при оновленні профілю",
+      "networkError": "Помилка мережі. Перевірте підключення до інтернету",
+      "unauthorized": "Недостатньо прав для виконання операції",
+      "forbidden": "Доступ заборонено",
+      "notFound": "Ресурс не знайдено",
+      "serverError": "Внутрішня помилка сервера",
+      "validationError": "Помилка валідації даних",
+      "unknownError": "Сталася невідома помилка"
+    },
+    "loading": {
+      "categories": "Завантаження категорій...",
+      "goals": "Завантаження цілей...",
+      "expenses": "Завантаження витрат...",
+      "income": "Завантаження доходів...",
+      "profile": "Завантаження профілю...",
+      "general": "Завантаження..."
+    },
+    "empty": {
+      "noCategories": "Немає категорій",
+      "noGoals": "Немає цілей",
+      "noExpenses": "Немає витрат",
+      "noIncome": "Немає доходів",
+      "noData": "Немає даних"
+    },
+    "placeholder": {
+      "search": "Пошук...",
+      "selectOption": "Виберіть опцію",
+      "enterValue": "Введіть значення"
+    }
   }
 }

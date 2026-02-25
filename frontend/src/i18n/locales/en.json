@@ -2234,5 +2234,74 @@
         "item1": "For any questions regarding this Privacy Policy, please contact us at: finflow@flux-lab.dev"
       }
     }
+  },
+  "messages": {
+    "success": {
+      "categoryCreated": "Category created successfully",
+      "categoryUpdated": "Category updated successfully",
+      "categoryDeleted": "Category deleted successfully",
+      "goalCreated": "Goal created successfully",
+      "goalUpdated": "Goal updated successfully",
+      "goalDeleted": "Goal deleted successfully",
+      "expenseCreated": "Expense created successfully",
+      "expenseUpdated": "Expense updated successfully",
+      "expenseDeleted": "Expense deleted successfully",
+      "incomeCreated": "Income created successfully",
+      "incomeUpdated": "Income updated successfully",
+      "incomeDeleted": "Income deleted successfully",
+      "loginSuccess": "Login successful",
+      "registrationSuccess": "Registration successful",
+      "logoutSuccess": "Logout successful",
+      "profileUpdated": "Profile updated successfully"
+    },
+    "error": {
+      "categoryCreateFailed": "Failed to create category",
+      "categoryUpdateFailed": "Failed to update category",
+      "categoryDeleteFailed": "Failed to delete category",
+      "categoryLoadFailed": "Failed to load categories",
+      "goalCreateFailed": "Failed to create goal",
+      "goalUpdateFailed": "Failed to update goal",
+      "goalDeleteFailed": "Failed to delete goal",
+      "goalLoadFailed": "Failed to load goals",
+      "expenseCreateFailed": "Failed to create expense",
+      "expenseUpdateFailed": "Failed to update expense",
+      "expenseDeleteFailed": "Failed to delete expense",
+      "expenseLoadFailed": "Failed to load expenses",
+      "incomeCreateFailed": "Failed to create income",
+      "incomeUpdateFailed": "Failed to update income",
+      "incomeDeleteFailed": "Failed to delete income",
+      "incomeLoadFailed": "Failed to load income",
+      "loginFailed": "Login failed",
+      "registrationFailed": "Registration failed",
+      "logoutFailed": "Logout failed",
+      "profileUpdateFailed": "Failed to update profile",
+      "networkError": "Network error. Check your internet connection",
+      "unauthorized": "Insufficient permissions to perform this operation",
+      "forbidden": "Access denied",
+      "notFound": "Resource not found",
+      "serverError": "Internal server error",
+      "validationError": "Data validation error",
+      "unknownError": "An unknown error occurred"
+    },
+    "loading": {
+      "categories": "Loading categories...",
+      "goals": "Loading goals...",
+      "expenses": "Loading expenses...",
+      "income": "Loading income...",
+      "profile": "Loading profile...",
+      "general": "Loading..."
+    },
+    "empty": {
+      "noCategories": "No categories",
+      "noGoals": "No goals",
+      "noExpenses": "No expenses",
+      "noIncome": "No income",
+      "noData": "No data"
+    },
+    "placeholder": {
+      "search": "Search...",
+      "selectOption": "Select an option",
+      "enterValue": "Enter a value"
+    }
   }
 }

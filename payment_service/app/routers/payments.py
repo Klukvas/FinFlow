@@ -32,7 +32,7 @@ router = APIRouter()
 
 
 @router.get("/config/status")
-async def get_payment_status():
+def get_payment_status():
     """Get payment service status and feature flags.
 
     Public endpoint -- no authentication required.
@@ -44,7 +44,7 @@ async def get_payment_status():
 
 
 @router.get("/config/check")
-async def check_paddle_config():
+def check_paddle_config():
     """Check Paddle Billing configuration status.
 
     Useful for verifying that all required environment variables

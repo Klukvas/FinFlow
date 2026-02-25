@@ -553,7 +553,8 @@ def _make_real_expense(
     expense_date=None,
 ):
     from app.models.expense import Expense
-    from datetime import date as _date
+    from datetime import date as _date, datetime as _datetime
+    now = _datetime.utcnow()
     e = Expense(
         id=expense_id,
         amount=amount,
@@ -564,6 +565,8 @@ def _make_real_expense(
         account_id=account_id,
         description=description,
         date=expense_date or _date.today(),
+        created_at=now,
+        updated_at=now,
     )
     # Manually set the PK since we are not using a real DB session
     e.id = expense_id
