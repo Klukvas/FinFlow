@@ -60,8 +60,8 @@ class SchedulerService:
         
         db = SessionLocal()
         try:
-            executed_count = await self.executor.execute_pending_payments(db)
-            logger.info(f"Scheduled execution completed: {executed_count} payments executed")
+            result = await self.executor.execute_pending_payments(db)
+            logger.info(f"Scheduled execution completed: {result['succeeded']} succeeded, {result['failed']} failed")
         except Exception as e:
             logger.error(f"Error during scheduled execution: {str(e)}")
         finally:

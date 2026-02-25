@@ -22,38 +22,43 @@ class SubscriptionClient:
             headers["X-Internal-Token"] = self.internal_token
         return headers
 
-    def get_user_features(self, user_id: int) -> Dict[str, Any]:
-        """Get user's feature entitlements"""
+    def get_user_features(self, user_id: int) -> Optional[Dict[str, Any]]:
+        """Get user's feature entitlements. Returns None on connection failure, {} on empty response."""
         try:
             url = f"{self.base_url}/v1/internal/features/{user_id}"
-            
+
             with httpx.Client(timeout=self.timeout) as client:
                 response = client.get(url, headers=self._get_headers())
-                
+
                 if response.status_code == 200:
                     features = response.json()
                     # Convert list to dict for easier lookup
                     return {f["feature_code"]: f for f in features}
-                    
+
             logger.warning(
                 f"Failed to get features for user {user_id}: status={response.status_code}"
             )
             return {}
-            
-        except httpx.TimeoutException:
-            logger.error(f"Timeout getting features for user {user_id}")
-            return {}
+
+        except (httpx.TimeoutException, httpx.ConnectError) as e:
+            logger.error(f"Subscription service unreachable for user {user_id}: {e}")
+            return None
         except Exception as e:
             logger.error(f"Error getting features for user {user_id}: {e}")
-            return {}
+            return None
 
     def check_workspace_limit(self, user_id: int, current_count: int) -> bool:
         """Check if user can create more workspaces"""
         features = self.get_user_features(user_id)
+
+        # Service unreachable — allow (fail-open) to avoid blocking during outages
+        if features is None:
+            logger.warning(f"Subscription service unreachable, allowing workspace creation for user {user_id}")
+            return True
+
         workspace_feature = features.get("workspaces", {})
-        
-        # If feature doesn't exist or is disabled, deny by default
-        # (fail-closed: do not allow when subscription service is unreachable)
+
+        # Feature not found in a valid response — deny (user has no subscription)
         if not workspace_feature:
             logger.warning(f"No workspace feature found for user {user_id}, denying by default")
             return False

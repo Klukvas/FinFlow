@@ -38,12 +38,13 @@ async def execute_recurring_payments(
     _: None = Depends(verify_internal_token)
 ):
     """Execute all recurring payments on the specified date (for cron job)"""
-    executed_count = await executor.execute_pending_payments(db, execution_date)
-    
-    logger.info(f"Executed {executed_count} recurring payments for date {execution_date or date.today()}")
+    result = await executor.execute_pending_payments(db, execution_date)
+
+    logger.info(f"Executed recurring payments for date {execution_date or date.today()}: {result['succeeded']} succeeded, {result['failed']} failed")
     return {
-        "message": f"Successfully executed {executed_count} recurring payments",
-        "executed_count": executed_count,
+        "message": f"Executed {result['succeeded']} recurring payments ({result['failed']} failed)",
+        "succeeded": result["succeeded"],
+        "failed": result["failed"],
         "execution_date": execution_date or date.today()
     }
 

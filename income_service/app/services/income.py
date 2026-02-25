@@ -106,11 +106,13 @@ class IncomeService(WorkspaceAuthorizationMixin):
                 await self._validate_category(income.category_id, user_id, workspace_id)
             
             # Validate account if provided and update balance
+            balance_updated = False
             if income.account_id is not None:
                 await self._validate_account(income.account_id, user_id)
                 # Add amount to account balance with currency conversion
                 await self.account_client.update_account_balance(income.account_id, user_id, income.amount, income.currency)
-            
+                balance_updated = True
+
             # Create income
             income_date = datetime.utcnow()
             if income.date:
@@ -141,8 +143,8 @@ class IncomeService(WorkspaceAuthorizationMixin):
             
         except Exception as e:
             self.db.rollback()
-            # Compensate balance if it was already updated
-            if income.account_id is not None and hasattr(income, 'amount'):
+            # Compensate balance only if it was actually updated
+            if balance_updated:
                 try:
                     await self.account_client.update_account_balance(income.account_id, user_id, -income.amount, income.currency)
                     logger.warning(f"Compensated balance after failed income creation for account {income.account_id}")
