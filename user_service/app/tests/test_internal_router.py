@@ -33,7 +33,7 @@ class TestInternalGetUserById:
         """Request without X-Internal-Token must be rejected."""
         response = client.get("/internal/users/1")
         assert response.status_code == status.HTTP_403_FORBIDDEN
-        assert "X-Internal-Token header required" in response.json()["error"]
+        assert "Unauthorized internal access" in response.json()["error"]
 
     def test_wrong_internal_token_returns_403(self):
         """Request with an incorrect token must be rejected."""
