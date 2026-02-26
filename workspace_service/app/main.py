@@ -67,7 +67,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
         from app.utils.logger import get_logger
         try:
-            from logging_utils import set_request_context
+            from app.utils.logger import set_request_context
             set_request_context(request_id, user_id, "workspace_service")
         except ImportError:
             pass

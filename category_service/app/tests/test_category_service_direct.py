@@ -123,7 +123,7 @@ class TestCategoryServiceGetAll:
     def test_get_all_raises_on_unauthorized(self, db):
         user_id = randint(75000, 80000)
         service = CategoryService(db)
-        with patch("app.clients.workspace.WorkspaceClient.authorize", return_value=(False, None)):
+        with patch("shared.clients.workspace.WorkspaceClient.authorize", return_value=(False, None)):
             with pytest.raises(Exception):
                 service.get_all(user_id, TEST_WORKSPACE_ID)
 
@@ -202,10 +202,10 @@ class TestCategoryServiceCreateErrors:
         data = CategoryCreate(name="LimitTest")
 
         with patch(
-            "app.clients.subscription.SubscriptionClient.check_category_limit",
+            "shared.clients.subscription.SubscriptionClient.check_limit",
             return_value=False,
         ), patch(
-            "app.clients.subscription.SubscriptionClient.get_user_features",
+            "shared.clients.subscription.SubscriptionClient.get_user_features",
             return_value={"categories": {"limit_value": 10}},
         ):
             with pytest.raises(Exception):
@@ -225,7 +225,7 @@ class TestCategoryServiceCreateErrors:
         data = CategoryCreate(name="SubErrTest")
 
         with patch(
-            "app.clients.subscription.SubscriptionClient.check_category_limit",
+            "shared.clients.subscription.SubscriptionClient.check_limit",
             side_effect=Exception("Service unavailable"),
         ):
             with pytest.raises(CategoryValidationError):
@@ -236,7 +236,7 @@ class TestCategoryServiceCreateErrors:
         service = CategoryService(db)
         data = CategoryCreate(name="UnauthorizedCreate")
 
-        with patch("app.clients.workspace.WorkspaceClient.authorize", return_value=(False, None)):
+        with patch("shared.clients.workspace.WorkspaceClient.authorize", return_value=(False, None)):
             with pytest.raises(Exception):
                 service.create(data, user_id, TEST_WORKSPACE_ID)
 
@@ -529,7 +529,7 @@ class TestCategoryServiceGetStatistics:
         db.commit()
 
         # Use a patched workspace authorize for the unique workspace
-        with patch("app.clients.workspace.WorkspaceClient.authorize", return_value=(True, "owner")):
+        with patch("shared.clients.workspace.WorkspaceClient.authorize", return_value=(True, "owner")):
             stats = service.get_statistics(user_id, unique_ws)
         assert stats["total_categories"] == 3
         assert stats["parent_categories"] == 2
@@ -540,7 +540,7 @@ class TestCategoryServiceGetStatistics:
         service = CategoryService(db)
         empty_workspace = UUID("770e8400-e29b-41d4-a716-446655440000")
 
-        with patch("app.clients.workspace.WorkspaceClient.authorize", return_value=(True, "owner")):
+        with patch("shared.clients.workspace.WorkspaceClient.authorize", return_value=(True, "owner")):
             stats = service.get_statistics(user_id, empty_workspace)
         assert stats["total_categories"] == 0
         assert stats["expense_categories"] == 0
@@ -552,7 +552,7 @@ class TestCategoryServiceGetStatistics:
         user_id = randint(280000, 285000)
         service = CategoryService(db)
 
-        with patch("app.clients.workspace.WorkspaceClient.authorize", return_value=(False, None)):
+        with patch("shared.clients.workspace.WorkspaceClient.authorize", return_value=(False, None)):
             with pytest.raises(Exception):
                 service.get_statistics(user_id, TEST_WORKSPACE_ID)
 
@@ -641,7 +641,7 @@ class TestCategoryServiceCreateFromMCC:
         _ensure_mcc(db, mcc_code, "Unauthorized MCC")
         data = CategoryCreateFromMCC(mcc_code=mcc_code)
 
-        with patch("app.clients.workspace.WorkspaceClient.authorize", return_value=(False, None)):
+        with patch("shared.clients.workspace.WorkspaceClient.authorize", return_value=(False, None)):
             with pytest.raises(Exception):
                 service.create_from_mcc(data, user_id, TEST_WORKSPACE_ID)
 

@@ -23,7 +23,7 @@ class BaseServiceClient:
     ) -> Dict[str, Any]:
         """Выполнить HTTP запрос к сервису"""
         url = f"{self.base_url}{endpoint}"
-        
+
         if headers is None:
             headers = {"Content-Type": "application/json", "X-Internal-Token": settings.INTERNAL_SECRET_TOKEN}
 

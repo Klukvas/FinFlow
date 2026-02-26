@@ -8,10 +8,10 @@ from app.schemas.goal import (
     GoalCreate, GoalUpdate, GoalProgressUpdate,
     MilestoneCreate, MilestoneUpdate, MilestoneProgressUpdate
 )
-from app.clients.subscription import SubscriptionClient
-from app.clients.user_service_client import UserServiceClient
-from app.clients.currency_service_client import CurrencyServiceClient
-from app.services.workspace_authorization import WorkspaceAuthorizationMixin
+from shared.clients import SubscriptionClient
+from shared.clients import UserServiceClient
+from shared.clients import CurrencyServiceClient
+from shared.auth import WorkspaceAuthorizationMixin
 from app.exceptions.goal_exceptions import (
     GoalNotFoundError, GoalValidationError, GoalCreationError, GoalUpdateError,
     GoalDeletionError, GoalRetrievalError, GoalStatisticsError, GoalProgressError,
@@ -26,7 +26,10 @@ logger = get_logger(__name__)
 
 class GoalService(WorkspaceAuthorizationMixin):
     def __init__(self, db: Session):
-        super().__init__()  # Initialize WorkspaceAuthorizationMixin
+        super().__init__(
+            access_denied_error=GoalValidationError,
+            workspace_mismatch_error=GoalValidationError,
+        )
         self.db = db
         self.subscription_client = SubscriptionClient()
         self.user_client = UserServiceClient()
@@ -43,7 +46,7 @@ class GoalService(WorkspaceAuthorizationMixin):
                 Goal.user_id == user_id,
                 Goal.workspace_id == workspace_id
             ).count()
-            if not self.subscription_client.check_goal_limit(user_id, current_count):
+            if not self.subscription_client.check_limit(user_id, current_count, "goals"):
                 features = self.subscription_client.get_user_features(user_id) or {}
                 goal_feature = features.get("goals", {})
                 limit = goal_feature.get("limit_value", 0)

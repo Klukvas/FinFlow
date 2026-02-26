@@ -12,6 +12,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY scheduler_service/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Install shared library
+COPY shared/ /tmp/shared
+RUN pip install --no-cache-dir /tmp/shared && rm -rf /tmp/shared
+
 # Copy application code
 COPY scheduler_service/app /app/app
 COPY scheduler_service/alembic /app/alembic

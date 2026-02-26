@@ -20,16 +20,19 @@ from app.utils.logger import get_logger, log_operation
 from app.utils.validation import validate_currency_code, validate_balance, validate_account_name, validate_account_description, sanitize_input
 from app.clients.expense_service_client import ExpenseServiceClient
 from app.clients.income_service_client import IncomeServiceClient
-from app.clients.currency_service_client import CurrencyServiceClient
-from app.clients.subscription import SubscriptionClient
-from app.clients.user_service_client import UserServiceClient
-from app.services.workspace_authorization import WorkspaceAuthorizationMixin
+from shared.clients import CurrencyServiceClient
+from shared.clients import SubscriptionClient
+from shared.clients import UserServiceClient
+from shared.auth import WorkspaceAuthorizationMixin
 from app.schemas.account import AccountStatisticsResponse
 from app.config import settings
 
 class AccountService(WorkspaceAuthorizationMixin):
     def __init__(self, db: Session, expense_client: ExpenseServiceClient = None, income_client: IncomeServiceClient = None, currency_client: CurrencyServiceClient = None):
-        super().__init__()  # Initialize WorkspaceAuthorizationMixin
+        super().__init__(
+            access_denied_error=lambda msg: AccountValidationError(msg, AccountErrorCode.ACCOUNT_NOT_OWNED),
+            workspace_mismatch_error=lambda msg: AccountValidationError(msg, AccountErrorCode.ACCOUNT_NOT_OWNED),
+        )
         self.db = db
         self.logger = get_logger(__name__)
         self.expense_client = expense_client or ExpenseServiceClient()
@@ -49,7 +52,7 @@ class AccountService(WorkspaceAuthorizationMixin):
                 Account.owner_id == user_id,
                 Account.workspace_id == workspace_id
             ).count()
-            if not self.subscription_client.check_account_limit(user_id, current_count):
+            if not self.subscription_client.check_limit(user_id, current_count, "accounts"):
                 features = self.subscription_client.get_user_features(user_id) or {}
                 account_feature = features.get("accounts", {})
                 limit = account_feature.get("limit_value", 0)

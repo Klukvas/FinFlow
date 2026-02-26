@@ -15,11 +15,13 @@ COPY recurring_service/requirements.txt .
 # Установить Python зависимости
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Install shared library
+COPY shared/ /tmp/shared
+RUN pip install --no-cache-dir /tmp/shared && rm -rf /tmp/shared
+
 # Копировать исходный код
 COPY recurring_service/ .
 
-# Copy logging directory
-COPY logging/ /app/logging
 
 # Создать пользователя для безопасности
 RUN useradd --create-home --shell /bin/bash app && chown -R app:app /app

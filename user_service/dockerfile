@@ -13,11 +13,13 @@ COPY user_service/pyproject.toml user_service/poetry.lock* ./
 RUN poetry config virtualenvs.create false \
  && poetry install --no-interaction --no-ansi
 
+# Install shared library
+COPY shared/ /tmp/shared
+RUN pip install --no-cache-dir /tmp/shared && rm -rf /tmp/shared
+
 # Копируем код приложения
 COPY user_service/ .
 
-# Копируем общую директорию логирования
-COPY logging/ /app/logging
 
 # Делаем startup script исполняемым
 RUN chmod +x startup.sh

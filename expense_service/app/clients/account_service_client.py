@@ -1,7 +1,7 @@
 from fastapi import HTTPException
-from app.clients.base import BaseHttpClient
+from shared.clients import BaseHttpClient
 from starlette import status
-from app.exceptions import ExternalServiceError
+from shared.clients.base import ExternalServiceError
 from app.config import settings
 from app.utils.logger import get_logger, log_security_event
 from typing import Dict, Any

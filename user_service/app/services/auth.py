@@ -4,9 +4,9 @@ from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from typing import Optional
-from app.clients.subscription import SubscriptionClient
+from shared.clients import SubscriptionClient
 from app.clients.currency import CurrencyClient
-from app.clients.workspace import WorkspaceClient
+from shared.clients import WorkspaceClient
 
 from app.models.user import User
 from app.schemas.user import UserCreate, UserLogin

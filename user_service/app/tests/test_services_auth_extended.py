@@ -110,8 +110,8 @@ class TestCreateUserWorkspaceSubscription:
         workspace_id = UUID("12345678-1234-5678-1234-567812345678")
 
         with patch("app.clients.currency.CurrencyClient.validate_currency", return_value=True), \
-             patch("app.clients.workspace.WorkspaceClient.create_personal_workspace", return_value=workspace_id), \
-             patch("app.clients.subscription.SubscriptionClient.set_basic_plan"):
+             patch("shared.clients.workspace.WorkspaceClient.create_personal_workspace", return_value=workspace_id), \
+             patch("shared.clients.subscription.SubscriptionClient.set_basic_plan"):
             from app.schemas.user import UserCreate
             service = AuthService(db)
             data = UserCreate(email="ws_linked@test.com", password="WsPass123!")
@@ -126,8 +126,8 @@ class TestCreateUserWorkspaceSubscription:
         db.query.return_value.filter.return_value.first.return_value = None
 
         with patch("app.clients.currency.CurrencyClient.validate_currency", return_value=True), \
-             patch("app.clients.workspace.WorkspaceClient.create_personal_workspace", return_value=None), \
-             patch("app.clients.subscription.SubscriptionClient.set_basic_plan"):
+             patch("shared.clients.workspace.WorkspaceClient.create_personal_workspace", return_value=None), \
+             patch("shared.clients.subscription.SubscriptionClient.set_basic_plan"):
             from app.schemas.user import UserCreate
             service = AuthService(db)
             data = UserCreate(email="ws_none@test.com", password="WsPass123!")
@@ -142,8 +142,8 @@ class TestCreateUserWorkspaceSubscription:
         db.query.return_value.filter.return_value.first.return_value = None
 
         with patch("app.clients.currency.CurrencyClient.validate_currency", return_value=True), \
-             patch("app.clients.workspace.WorkspaceClient.create_personal_workspace", side_effect=Exception("ws down")), \
-             patch("app.clients.subscription.SubscriptionClient.set_basic_plan"):
+             patch("shared.clients.workspace.WorkspaceClient.create_personal_workspace", side_effect=Exception("ws down")), \
+             patch("shared.clients.subscription.SubscriptionClient.set_basic_plan"):
             from app.schemas.user import UserCreate
             service = AuthService(db)
             data = UserCreate(email="ws_err@test.com", password="WsPass123!")
@@ -157,8 +157,8 @@ class TestCreateUserWorkspaceSubscription:
         db.query.return_value.filter.return_value.first.return_value = None
 
         with patch("app.clients.currency.CurrencyClient.validate_currency", return_value=True), \
-             patch("app.clients.workspace.WorkspaceClient.create_personal_workspace", return_value=None), \
-             patch("app.clients.subscription.SubscriptionClient.set_basic_plan", side_effect=Exception("sub down")):
+             patch("shared.clients.workspace.WorkspaceClient.create_personal_workspace", return_value=None), \
+             patch("shared.clients.subscription.SubscriptionClient.set_basic_plan", side_effect=Exception("sub down")):
             from app.schemas.user import UserCreate
             service = AuthService(db)
             data = UserCreate(email="sub_err@test.com", password="WsPass123!")
@@ -173,8 +173,8 @@ class TestCreateUserWorkspaceSubscription:
         db.commit.side_effect = IntegrityError("dup key", {}, None)
 
         with patch("app.clients.currency.CurrencyClient.validate_currency", return_value=True), \
-             patch("app.clients.workspace.WorkspaceClient.create_personal_workspace", return_value=None), \
-             patch("app.clients.subscription.SubscriptionClient.set_basic_plan"):
+             patch("shared.clients.workspace.WorkspaceClient.create_personal_workspace", return_value=None), \
+             patch("shared.clients.subscription.SubscriptionClient.set_basic_plan"):
             from app.schemas.user import UserCreate
             service = AuthService(db)
             data = UserCreate(email="dup_integrity@test.com", password="WsPass123!")

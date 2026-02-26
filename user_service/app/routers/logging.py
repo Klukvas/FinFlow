@@ -10,18 +10,13 @@ from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 import json
-import sys
-import os
 
-# Add logging utilities to path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'logging'))
-
-from logging_utils import get_structured_logger, set_request_context, generate_request_id
+from app.utils.logger import get_logger, set_request_context, generate_request_id
 
 router = APIRouter(prefix="/api/logging", tags=["Frontend Logging"])
 
 # Initialize logger
-logger = get_structured_logger(__name__, "user_service")
+logger = get_logger(__name__)
 
 class FrontendLogEntry(BaseModel):
     """Single frontend log entry"""

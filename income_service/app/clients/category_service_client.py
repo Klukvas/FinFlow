@@ -1,7 +1,8 @@
 from fastapi import HTTPException
 from app.clients.base import BaseHttpClient
 from starlette import status
-from app.exceptions import IncomeValidationError, ExternalServiceError, IncomeErrorCodes
+from app.exceptions import ExternalServiceError
+from app.exceptions import IncomeValidationError, IncomeErrorCodes
 from app.config import settings
 from app.utils.logger import get_logger, log_security_event
 from typing import Dict, Any, Optional

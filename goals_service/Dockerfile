@@ -12,11 +12,13 @@ RUN apt-get update && apt-get install -y \
 COPY goals_service/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Install shared library
+COPY shared/ /tmp/shared
+RUN pip install --no-cache-dir /tmp/shared && rm -rf /tmp/shared
+
 # Copy application code
 COPY goals_service/ .
 
-# Copy logging directory
-COPY logging/ /app/logging
 
 # Create non-root user
 RUN useradd --create-home --shell /bin/bash app \

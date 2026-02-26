@@ -1,5 +1,5 @@
 """
-Tests for app/clients/currency.py and app/clients/workspace.py
+Tests for app/clients/currency.py and shared/clients/workspace.py
 Covers:
   - currency.py: 52% -> target 80%+  (lines 30-38, 47-58)
   - workspace.py: 47% -> target 80%+  (lines 70-93, 108-121, 133-191)
@@ -11,7 +11,7 @@ from uuid import UUID
 import httpx
 
 from app.clients.currency import CurrencyClient
-from app.clients.workspace import WorkspaceClient
+from shared.clients.workspace import WorkspaceClient
 
 
 # ---------------------------------------------------------------------------
@@ -147,14 +147,10 @@ class TestWorkspaceClientCreatePersonalWorkspace:
         mock_resp.status_code = 201
         mock_resp.json.return_value = {"workspace_id": ws_id}
 
-        mock_http = MagicMock()
-        mock_http.__enter__ = MagicMock(return_value=mock_http)
-        mock_http.__exit__ = MagicMock(return_value=False)
-        mock_http.post.return_value = mock_resp
+        ws_client.client = MagicMock()
+        ws_client.client.post.return_value = mock_resp
 
-        with patch("httpx.Client", return_value=mock_http):
-            result = ws_client.create_personal_workspace(user_id=1, max_retries=1, retry_delay=0)
-
+        result = ws_client.create_personal_workspace(user_id=1, max_retries=1, retry_delay=0)
         assert result == UUID(ws_id)
 
     def test_returns_none_on_non_201(self):
@@ -164,27 +160,20 @@ class TestWorkspaceClientCreatePersonalWorkspace:
         mock_resp.status_code = 500
         mock_resp.text = "internal error"
 
-        mock_http = MagicMock()
-        mock_http.__enter__ = MagicMock(return_value=mock_http)
-        mock_http.__exit__ = MagicMock(return_value=False)
-        mock_http.post.return_value = mock_resp
+        ws_client.client = MagicMock()
+        ws_client.client.post.return_value = mock_resp
 
-        with patch("httpx.Client", return_value=mock_http):
-            result = ws_client.create_personal_workspace(user_id=1, max_retries=1, retry_delay=0)
-
+        result = ws_client.create_personal_workspace(user_id=1, max_retries=1, retry_delay=0)
         assert result is None
 
     def test_retries_on_connect_error_then_returns_none(self):
         """Lines 95-107: ConnectError triggers retry and eventually returns None."""
         ws_client = self._make_client()
 
-        mock_http = MagicMock()
-        mock_http.__enter__ = MagicMock(return_value=mock_http)
-        mock_http.__exit__ = MagicMock(return_value=False)
-        mock_http.post.side_effect = httpx.ConnectError("refused")
+        ws_client.client = MagicMock()
+        ws_client.client.post.side_effect = httpx.ConnectError("refused")
 
-        with patch("httpx.Client", return_value=mock_http), \
-             patch("time.sleep"):  # Speed up test
+        with patch("time.sleep"):  # Speed up test
             result = ws_client.create_personal_workspace(user_id=1, max_retries=2, retry_delay=0)
 
         assert result is None
@@ -193,29 +182,21 @@ class TestWorkspaceClientCreatePersonalWorkspace:
         """Lines 108-113: RequestError (not ConnectError) returns None immediately."""
         ws_client = self._make_client()
 
-        mock_http = MagicMock()
-        mock_http.__enter__ = MagicMock(return_value=mock_http)
-        mock_http.__exit__ = MagicMock(return_value=False)
+        ws_client.client = MagicMock()
         # httpx.RequestError is a base class; use a concrete subclass
-        mock_http.post.side_effect = httpx.ReadError("read error")
+        ws_client.client.post.side_effect = httpx.ReadError("read error")
 
-        with patch("httpx.Client", return_value=mock_http):
-            result = ws_client.create_personal_workspace(user_id=1, max_retries=1, retry_delay=0)
-
+        result = ws_client.create_personal_workspace(user_id=1, max_retries=1, retry_delay=0)
         assert result is None
 
     def test_unexpected_exception_returns_none(self):
         """Lines 114-119: unexpected exception returns None."""
         ws_client = self._make_client()
 
-        mock_http = MagicMock()
-        mock_http.__enter__ = MagicMock(return_value=mock_http)
-        mock_http.__exit__ = MagicMock(return_value=False)
-        mock_http.post.side_effect = RuntimeError("unexpected")
+        ws_client.client = MagicMock()
+        ws_client.client.post.side_effect = RuntimeError("unexpected")
 
-        with patch("httpx.Client", return_value=mock_http):
-            result = ws_client.create_personal_workspace(user_id=1, max_retries=1, retry_delay=0)
-
+        result = ws_client.create_personal_workspace(user_id=1, max_retries=1, retry_delay=0)
         assert result is None
 
 
@@ -238,14 +219,10 @@ class TestWorkspaceClientGetDefaultWorkspace:
         mock_resp.status_code = 200
         mock_resp.json.return_value = {"workspace_id": ws_id}
 
-        mock_http = MagicMock()
-        mock_http.__enter__ = MagicMock(return_value=mock_http)
-        mock_http.__exit__ = MagicMock(return_value=False)
-        mock_http.get.return_value = mock_resp
+        ws_client.client = MagicMock()
+        ws_client.client.get.return_value = mock_resp
 
-        with patch("httpx.Client", return_value=mock_http):
-            result = ws_client.get_user_default_workspace(user_id=1)
-
+        result = ws_client.get_user_default_workspace(user_id=1)
         assert result == UUID(ws_id)
 
     def test_returns_none_on_404(self):
@@ -254,14 +231,10 @@ class TestWorkspaceClientGetDefaultWorkspace:
         mock_resp = MagicMock()
         mock_resp.status_code = 404
 
-        mock_http = MagicMock()
-        mock_http.__enter__ = MagicMock(return_value=mock_http)
-        mock_http.__exit__ = MagicMock(return_value=False)
-        mock_http.get.return_value = mock_resp
+        ws_client.client = MagicMock()
+        ws_client.client.get.return_value = mock_resp
 
-        with patch("httpx.Client", return_value=mock_http):
-            result = ws_client.get_user_default_workspace(user_id=1)
-
+        result = ws_client.get_user_default_workspace(user_id=1)
         assert result is None
 
     def test_returns_none_on_other_status(self):
@@ -271,54 +244,38 @@ class TestWorkspaceClientGetDefaultWorkspace:
         mock_resp.status_code = 500
         mock_resp.text = "error"
 
-        mock_http = MagicMock()
-        mock_http.__enter__ = MagicMock(return_value=mock_http)
-        mock_http.__exit__ = MagicMock(return_value=False)
-        mock_http.get.return_value = mock_resp
+        ws_client.client = MagicMock()
+        ws_client.client.get.return_value = mock_resp
 
-        with patch("httpx.Client", return_value=mock_http):
-            result = ws_client.get_user_default_workspace(user_id=1)
-
+        result = ws_client.get_user_default_workspace(user_id=1)
         assert result is None
 
     def test_returns_none_on_timeout(self):
         """Lines 174-178: TimeoutException returns None."""
         ws_client = self._make_client()
 
-        mock_http = MagicMock()
-        mock_http.__enter__ = MagicMock(return_value=mock_http)
-        mock_http.__exit__ = MagicMock(return_value=False)
-        mock_http.get.side_effect = httpx.TimeoutException("timed out")
+        ws_client.client = MagicMock()
+        ws_client.client.get.side_effect = httpx.TimeoutException("timed out")
 
-        with patch("httpx.Client", return_value=mock_http):
-            result = ws_client.get_user_default_workspace(user_id=1)
-
+        result = ws_client.get_user_default_workspace(user_id=1)
         assert result is None
 
     def test_returns_none_on_request_error(self):
         """Lines 180-185: RequestError returns None."""
         ws_client = self._make_client()
 
-        mock_http = MagicMock()
-        mock_http.__enter__ = MagicMock(return_value=mock_http)
-        mock_http.__exit__ = MagicMock(return_value=False)
-        mock_http.get.side_effect = httpx.ReadError("read error")
+        ws_client.client = MagicMock()
+        ws_client.client.get.side_effect = httpx.ReadError("read error")
 
-        with patch("httpx.Client", return_value=mock_http):
-            result = ws_client.get_user_default_workspace(user_id=1)
-
+        result = ws_client.get_user_default_workspace(user_id=1)
         assert result is None
 
     def test_returns_none_on_unexpected_exception(self):
         """Lines 186-191: unexpected exception returns None."""
         ws_client = self._make_client()
 
-        mock_http = MagicMock()
-        mock_http.__enter__ = MagicMock(return_value=mock_http)
-        mock_http.__exit__ = MagicMock(return_value=False)
-        mock_http.get.side_effect = RuntimeError("something weird")
+        ws_client.client = MagicMock()
+        ws_client.client.get.side_effect = RuntimeError("something weird")
 
-        with patch("httpx.Client", return_value=mock_http):
-            result = ws_client.get_user_default_workspace(user_id=1)
-
+        result = ws_client.get_user_default_workspace(user_id=1)
         assert result is None

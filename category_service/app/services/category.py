@@ -18,12 +18,15 @@ from app.exceptions import (
 from app.utils.logger import get_logger, log_operation, log_security_event
 from app.config import settings
 from app.serializers import CategorySerializer
-from app.clients.subscription import SubscriptionClient
-from app.services.workspace_authorization import WorkspaceAuthorizationMixin
+from shared.clients import SubscriptionClient
+from shared.auth import WorkspaceAuthorizationMixin
 
 class CategoryService(WorkspaceAuthorizationMixin):
     def __init__(self, db: Session):
-        super().__init__()  # Initialize WorkspaceAuthorizationMixin
+        super().__init__(
+            access_denied_error=CategoryOwnershipError,
+            workspace_mismatch_error=CategoryOwnershipError,
+        )
         self.db = db
         self.logger = get_logger(__name__)
         self.serializer = CategorySerializer()
@@ -72,7 +75,7 @@ class CategoryService(WorkspaceAuthorizationMixin):
             ).count()
 
             try:
-                if not self.subscription_client.check_category_limit(user_id, current_count):
+                if not self.subscription_client.check_limit(user_id, current_count, "categories"):
                     features = self.subscription_client.get_user_features(user_id) or {}
                     category_feature = features.get("categories", {})
                     limit = category_feature.get("limit_value", 0)
@@ -245,7 +248,7 @@ class CategoryService(WorkspaceAuthorizationMixin):
             current_count = self.db.query(Category).filter(
                 Category.workspace_id == workspace_id
             ).count()
-            if not self.subscription_client.check_category_limit(user_id, current_count):
+            if not self.subscription_client.check_limit(user_id, current_count, "categories"):
                 features = self.subscription_client.get_user_features(user_id) or {}
                 category_feature = features.get("categories", {})
                 limit = category_feature.get("limit_value", 0)

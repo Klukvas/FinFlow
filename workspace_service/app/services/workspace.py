@@ -20,7 +20,7 @@ from app.exceptions import (
     OwnerCannotLeaveError,
     PersonalWorkspaceProtectedError,
 )
-from app.clients.subscription import SubscriptionClient
+from shared.clients import SubscriptionClient
 from app.clients.user import UserClient
 from app.utils.logger import get_logger, log_operation
 
@@ -60,8 +60,8 @@ class WorkspaceService:
         try:
             # Check workspace limit
             current_count = self._get_user_workspace_count(user_id)
-            if not self.subscription_client.check_workspace_limit(user_id, current_count):
-                limit = self.subscription_client.get_workspace_limit(user_id)
+            if not self.subscription_client.check_limit(user_id, current_count, "workspaces"):
+                limit = self.subscription_client.get_feature_limit(user_id, "workspaces")
                 raise WorkspaceLimitExceededError(current_count, limit or 1)
 
             workspace = Workspace(

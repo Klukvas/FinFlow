@@ -1,5 +1,4 @@
 import os
-import sys
 
 # SET ENVIRONMENT VARIABLES BEFORE ANY APP IMPORTS
 os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
@@ -8,10 +7,6 @@ os.environ.setdefault("ALGORITHM", "HS256")
 os.environ.setdefault("INTERNAL_SECRET_TOKEN", "test-internal-token")
 os.environ.setdefault("CATEGORY_SERVICE_URL", "http://localhost:8002")
 os.environ.setdefault("ACCOUNT_SERVICE_URL", "http://localhost:8009")
-
-# Add logging directory to path (resolves logging_utils import)
-_logging_dir = os.path.join(os.path.dirname(__file__), "..", "..", "..", "logging")
-sys.path.insert(0, os.path.abspath(_logging_dir))
 
 import pytest
 from fastapi.testclient import TestClient
@@ -58,7 +53,7 @@ app.dependency_overrides[get_workspace_id] = override_get_workspace_id
 def mock_workspace_authorize():
     """Auto-mock workspace authorization so all tests pass workspace checks."""
     with patch(
-        "app.services.workspace_authorization.WorkspaceClient.authorize",
+        "shared.clients.workspace.WorkspaceClient.authorize",
         return_value=(True, "owner")
     ):
         yield
@@ -68,7 +63,7 @@ def mock_workspace_authorize():
 def mock_subscription_check():
     """Auto-mock subscription check so expense creation is not blocked."""
     with patch(
-        "app.clients.subscription.SubscriptionClient.check_expense_limit",
+        "shared.clients.subscription.SubscriptionClient.check_limit",
         return_value=True
     ):
         yield

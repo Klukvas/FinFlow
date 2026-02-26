@@ -9,10 +9,10 @@ from app.models.expense import Expense
 from app.schemas.expense import ExpenseCreate, ExpenseUpdate, CategoryExpenseStatistics, ExpensesByCategoryResponse
 from app.clients.category_service_client import CategoryServiceClient
 from app.clients.account_service_client import AccountServiceClient
-from app.clients.currency_service_client import CurrencyServiceClient
-from app.clients.user_service_client import UserServiceClient
-from app.clients.subscription import SubscriptionClient
-from app.services.workspace_authorization import WorkspaceAuthorizationMixin
+from shared.clients import CurrencyServiceClient
+from shared.clients import UserServiceClient
+from shared.clients import SubscriptionClient
+from shared.auth import WorkspaceAuthorizationMixin
 from app.exceptions import (
     ErrorCode,
     ExpenseNotFoundError,
@@ -28,7 +28,10 @@ from app.config import settings
 
 class ExpenseService(WorkspaceAuthorizationMixin):
     def __init__(self, db: Session, category_client: CategoryServiceClient, account_client: AccountServiceClient):
-        super().__init__()  # Initialize WorkspaceAuthorizationMixin
+        super().__init__(
+            access_denied_error=lambda msg: ExpenseValidationError(msg, ErrorCode.EXPENSE_VALIDATION_FAILED),
+            workspace_mismatch_error=lambda msg: ExpenseValidationError(msg, ErrorCode.EXPENSE_VALIDATION_FAILED),
+        )
         self.db = db
         self.category_client = category_client
         self.account_client = account_client
@@ -173,7 +176,7 @@ class ExpenseService(WorkspaceAuthorizationMixin):
                 Expense.workspace_id == workspace_id,
                 Expense.created_at >= current_month_start
             ).count()
-            if not self.subscription_client.check_expense_limit(user_id, current_count):
+            if not self.subscription_client.check_limit(user_id, current_count, "expenses"):
                 features = self.subscription_client.get_user_features(user_id) or {}
                 expense_feature = features.get("expenses", {})
                 limit = expense_feature.get("limit_value", 0)

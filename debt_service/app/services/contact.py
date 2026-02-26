@@ -6,7 +6,7 @@ from uuid import UUID
 
 from app.models.debt import Contact
 from app.schemas.contact import ContactCreate, ContactUpdate, ContactResponse, ContactSummary
-from app.services.workspace_authorization import WorkspaceAuthorizationMixin
+from shared.auth import WorkspaceAuthorizationMixin
 from app.exceptions import (
     ContactNotFoundError,
     ContactValidationError,
@@ -24,7 +24,11 @@ class ContactService(WorkspaceAuthorizationMixin):
     """Service for managing contacts"""
     
     def __init__(self, db: Session):
-        super().__init__()  # Initialize WorkspaceAuthorizationMixin
+        from fastapi import HTTPException, status
+        super().__init__(
+            access_denied_error=lambda msg: HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=msg),
+            workspace_mismatch_error=lambda msg: HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=msg),
+        )
         self.db = db
         self.logger = get_logger(__name__)
 

@@ -58,7 +58,7 @@ app.dependency_overrides[get_workspace_id] = override_get_workspace_id
 def mock_workspace_authorize():
     """Automatically mock workspace authorization for all tests."""
     with patch(
-        "app.clients.workspace.WorkspaceClient.authorize",
+        "shared.clients.workspace.WorkspaceClient.authorize",
         return_value=(True, "owner"),
     ):
         yield
@@ -68,10 +68,10 @@ def mock_workspace_authorize():
 def mock_subscription_client():
     """Automatically mock subscription client for all tests."""
     with patch(
-        "app.clients.subscription.SubscriptionClient.check_category_limit",
+        "shared.clients.subscription.SubscriptionClient.check_limit",
         return_value=True,
     ), patch(
-        "app.clients.subscription.SubscriptionClient.get_user_features",
+        "shared.clients.subscription.SubscriptionClient.get_user_features",
         return_value={"categories": {"limit_value": 100}},
     ):
         yield

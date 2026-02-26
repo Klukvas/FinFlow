@@ -12,10 +12,10 @@ from app.schemas.debt import (
     DebtPaymentCreate, DebtPaymentResponse
 )
 from app.services.contact import ContactService
-from app.services.workspace_authorization import WorkspaceAuthorizationMixin
-from app.clients.subscription import SubscriptionClient
-from app.clients.user_service_client import UserServiceClient
-from app.clients.currency_service_client import CurrencyServiceClient
+from shared.auth import WorkspaceAuthorizationMixin
+from shared.clients import SubscriptionClient
+from shared.clients import UserServiceClient
+from shared.clients import CurrencyServiceClient
 from app.exceptions import (
     DebtNotFoundError,
     DebtValidationError,
@@ -37,7 +37,11 @@ class DebtService(WorkspaceAuthorizationMixin):
     """Service for managing debts and debt payments"""
     
     def __init__(self, db: Session):
-        super().__init__()  # Initialize WorkspaceAuthorizationMixin
+        from fastapi import HTTPException, status
+        super().__init__(
+            access_denied_error=lambda msg: HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=msg),
+            workspace_mismatch_error=lambda msg: HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=msg),
+        )
         self.db = db
         self.logger = get_logger(__name__)
         self.contact_service = ContactService(db)
@@ -56,7 +60,7 @@ class DebtService(WorkspaceAuthorizationMixin):
                 Debt.user_id == user_id,
                 Debt.workspace_id == workspace_id
             ).count()
-            if not self.subscription_client.check_debt_limit(user_id, current_count):
+            if not self.subscription_client.check_limit(user_id, current_count, "debts"):
                 features = self.subscription_client.get_user_features(user_id) or {}
                 debt_feature = features.get("debts", {})
                 limit = debt_feature.get("limit_value", 0)

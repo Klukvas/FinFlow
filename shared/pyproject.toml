@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "shared"
+version = "0.1.0"
+description = "Shared library for accounting app microservices"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx>=0.25.0",
+    "python-jose[cryptography]>=3.3.0",
+    "pydantic>=2.5.0",
+    "sqlalchemy>=2.0.0",
+    "fastapi>=0.104.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["shared*"]

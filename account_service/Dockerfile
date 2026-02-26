@@ -16,11 +16,13 @@ COPY account_service/requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Install shared library
+COPY shared/ /tmp/shared
+RUN pip install --no-cache-dir /tmp/shared && rm -rf /tmp/shared
+
 # Copy application code
 COPY account_service/ .
 
-# Copy logging directory
-COPY logging/ /app/logging
 
 # Make startup script executable
 RUN chmod +x startup.sh

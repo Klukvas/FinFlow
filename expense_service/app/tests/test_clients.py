@@ -10,14 +10,14 @@ from fastapi import HTTPException
 
 from app.clients.account_service_client import AccountServiceClient
 from app.clients.category_service_client import CategoryServiceClient
-from app.clients.currency_service_client import CurrencyServiceClient
-from app.clients.subscription import SubscriptionClient
-from app.clients.workspace import WorkspaceClient
+from shared.clients.currency_service import CurrencyServiceClient
+from shared.clients import SubscriptionClient
+from shared.clients import WorkspaceClient
 from app.exceptions import ExternalServiceError
 
 # Capture the REAL (unpatched) method references before any autouse conftest
 # mock has a chance to replace them at the class level.
-_REAL_CHECK_EXPENSE_LIMIT = SubscriptionClient.check_expense_limit
+_REAL_CHECK_LIMIT = SubscriptionClient.check_limit
 _REAL_WORKSPACE_AUTHORIZE = WorkspaceClient.authorize
 
 WORKSPACE_ID = UUID("550e8400-e29b-41d4-a716-446655440000")
@@ -45,7 +45,7 @@ class TestAccountServiceClient:
     @pytest.fixture
     def client(self):
         """Return AccountServiceClient with the underlying httpx client mocked."""
-        with patch("app.clients.base.httpx.Client") as mock_httpx:
+        with patch("shared.clients.base.httpx.Client") as mock_httpx:
             c = AccountServiceClient()
             c.client = MagicMock()
             yield c
@@ -119,7 +119,7 @@ class TestAccountServiceClient:
 class TestCategoryServiceClient:
     @pytest.fixture
     def client(self):
-        with patch("app.clients.base.httpx.Client"):
+        with patch("shared.clients.base.httpx.Client"):
             c = CategoryServiceClient()
             c.client = MagicMock()
             yield c
@@ -170,7 +170,7 @@ class TestCategoryServiceClient:
 class TestCurrencyServiceClient:
     @pytest.fixture
     def client(self):
-        with patch("app.clients.currency_service_client.httpx.Client") as mock_cls:
+        with patch("shared.clients.currency_service.httpx.Client") as mock_cls:
             mock_http = MagicMock()
             mock_cls.return_value = mock_http
             c = CurrencyServiceClient(base_url="http://currency-svc")
@@ -215,27 +215,24 @@ class TestCurrencyServiceClient:
 # ---------------------------------------------------------------------------
 # SubscriptionClient tests
 # NOTE: conftest.py has an autouse mock that patches
-# `app.clients.subscription.SubscriptionClient.check_expense_limit` at the class
+# `shared.clients.subscription.SubscriptionClient.check_limit` at the class
 # level, returning True for ALL tests. To test the real logic we must call the
 # original unpatched function directly using the class __dict__ descriptor.
 # ---------------------------------------------------------------------------
 
-def _call_real_check_expense_limit(instance, user_id, current_count):
-    """Call the original check_expense_limit bypassing the autouse class-level mock."""
-    from app.clients import subscription as sub_module
-    # Retrieve the original function from the class __dict__ before any patch
-    original_fn = SubscriptionClient.__dict__.get("check_expense_limit")
+def _call_real_check_limit(instance, user_id, current_count, feature_code="expenses"):
+    """Call the original check_limit bypassing the autouse class-level mock."""
+    original_fn = SubscriptionClient.__dict__.get("check_limit")
     if original_fn is None:
-        # The method is likely a mock - access via __wrapped__ or bypass
-        raise RuntimeError("Could not find original check_expense_limit in __dict__")
-    return original_fn(instance, user_id, current_count)
+        raise RuntimeError("Could not find original check_limit in __dict__")
+    return original_fn(instance, user_id, current_count, feature_code)
 
 
 class TestSubscriptionClient:
     @pytest.fixture
     def sub_client(self):
         """Return a SubscriptionClient with HTTP layer mocked."""
-        with patch("app.clients.subscription.httpx.Client") as mock_cls:
+        with patch("shared.clients.subscription.httpx.Client") as mock_cls:
             mock_http = MagicMock()
             mock_cls.return_value = mock_http
             c = SubscriptionClient(base_url="http://subscription-svc")
@@ -260,42 +257,38 @@ class TestSubscriptionClient:
         result = sub_client.get_user_features(USER_ID)
         assert result == {}
 
-    # For check_expense_limit tests: the autouse mock patches the class-level
-    # method. We bypass it by stopping the patch via the conftest fixture's
-    # internal patcher – instead we directly call the logic via get_user_features
-    # mocked on the instance and verify SubscriptionClient.check_expense_limit
-    # logic using a stop-patch approach.
-    def test_check_expense_limit_feature_disabled_returns_false(self, sub_client):
+    # Tests for check_limit (formerly check_expense_limit)
+    def test_check_limit_feature_disabled_returns_false(self, sub_client):
         sub_client.get_user_features = MagicMock(return_value={
             "expenses": {"enabled": False, "limit_value": 100}
         })
-        result = _REAL_CHECK_EXPENSE_LIMIT(sub_client, USER_ID, 5)
+        result = _REAL_CHECK_LIMIT(sub_client, USER_ID, 5, "expenses")
         assert result is False
 
-    def test_check_expense_limit_unlimited_returns_true(self, sub_client):
+    def test_check_limit_unlimited_returns_true(self, sub_client):
         sub_client.get_user_features = MagicMock(return_value={
             "expenses": {"enabled": True, "limit_value": None}
         })
-        result = _REAL_CHECK_EXPENSE_LIMIT(sub_client, USER_ID, 999)
+        result = _REAL_CHECK_LIMIT(sub_client, USER_ID, 999, "expenses")
         assert result is True
 
-    def test_check_expense_limit_under_limit_returns_true(self, sub_client):
+    def test_check_limit_under_limit_returns_true(self, sub_client):
         sub_client.get_user_features = MagicMock(return_value={
             "expenses": {"enabled": True, "limit_value": 50}
         })
-        result = _REAL_CHECK_EXPENSE_LIMIT(sub_client, USER_ID, 49)
+        result = _REAL_CHECK_LIMIT(sub_client, USER_ID, 49, "expenses")
         assert result is True
 
-    def test_check_expense_limit_at_limit_returns_false(self, sub_client):
+    def test_check_limit_at_limit_returns_false(self, sub_client):
         sub_client.get_user_features = MagicMock(return_value={
             "expenses": {"enabled": True, "limit_value": 50}
         })
-        result = _REAL_CHECK_EXPENSE_LIMIT(sub_client, USER_ID, 50)
+        result = _REAL_CHECK_LIMIT(sub_client, USER_ID, 50, "expenses")
         assert result is False
 
-    def test_check_expense_limit_no_expense_feature_returns_false(self, sub_client):
+    def test_check_limit_no_expense_feature_returns_false(self, sub_client):
         sub_client.get_user_features = MagicMock(return_value={})
-        result = _REAL_CHECK_EXPENSE_LIMIT(sub_client, USER_ID, 0)
+        result = _REAL_CHECK_LIMIT(sub_client, USER_ID, 0, "expenses")
         assert result is False
 
 
@@ -305,9 +298,9 @@ class TestSubscriptionClient:
 # the class level (via patch). To test the real authorize() implementation,
 # we use a fresh WorkspaceClient and call the UNPATCHED method by accessing
 # it via the class (bypassing the instance-level mock).
-# Since the autouse patch uses `patch("app.services.workspace_authorization.WorkspaceClient.authorize")`
+# Since the autouse patch uses `patch("shared.clients.workspace.WorkspaceClient.authorize")`
 # (not the workspace module itself), our direct calls to WorkspaceClient().authorize()
-# from app.clients.workspace are affected. We need to call the underlying
+# from shared.clients.workspace are affected. We need to call the underlying
 # implementation directly via `WorkspaceClient.authorize.__wrapped__` or
 # test through the real module path before the mock is applied.
 #
@@ -319,9 +312,9 @@ class TestWorkspaceClient:
     @pytest.fixture
     def real_client(self):
         """WorkspaceClient with the autouse mock temporarily removed."""
-        # The autouse mock is on app.services.workspace_authorization.WorkspaceClient.authorize
-        # We need to access the original (unpatched) WorkspaceClient from app.clients.workspace
-        from app.clients.workspace import WorkspaceClient as _WC
+        # The autouse mock is on shared.clients.workspace.WorkspaceClient.authorize
+        # We need to access the original (unpatched) WorkspaceClient from shared.clients.workspace
+        from shared.clients.workspace import WorkspaceClient as _WC
         return _WC()
 
     def test_get_headers_includes_token(self, real_client):
@@ -330,7 +323,7 @@ class TestWorkspaceClient:
         assert "Content-Type" in headers
 
     def test_get_headers_without_token(self):
-        from app.clients.workspace import WorkspaceClient as _WC
+        from shared.clients.workspace import WorkspaceClient as _WC
         c = _WC()
         c.internal_token = None
         headers = c._get_headers()
@@ -340,18 +333,14 @@ class TestWorkspaceClient:
     def _authorize_real(self, client, status_code, json_body=None, side_effect=None):
         """Call the REAL (unpatched) authorize() with a mocked HTTP response."""
         mock_resp = _make_response(status_code, json_body)
-        with patch("app.clients.workspace.httpx.Client") as mock_cls:
-            ctx_manager = MagicMock()
-            mock_cls.return_value = ctx_manager
-            mock_http = MagicMock()
-            ctx_manager.__enter__ = MagicMock(return_value=mock_http)
-            ctx_manager.__exit__ = MagicMock(return_value=False)
-            if side_effect:
-                mock_http.post.side_effect = side_effect
-            else:
-                mock_http.post.return_value = mock_resp
-            # Use the captured real function to bypass the autouse class-level mock
-            return _REAL_WORKSPACE_AUTHORIZE(client, WORKSPACE_ID, USER_ID, "member")
+        mock_post = MagicMock()
+        if side_effect:
+            mock_post.side_effect = side_effect
+        else:
+            mock_post.return_value = mock_resp
+        client.client = MagicMock()
+        client.client.post = mock_post
+        return _REAL_WORKSPACE_AUTHORIZE(client, WORKSPACE_ID, USER_ID, "member")
 
     def test_authorize_success_200(self, real_client):
         authorized, role = self._authorize_real(
@@ -401,17 +390,14 @@ class TestWorkspaceClient:
 
     def _get_role_with_mock_response(self, client, status_code, json_body=None, side_effect=None):
         mock_resp = _make_response(status_code, json_body)
-        with patch("app.clients.workspace.httpx.Client") as mock_cls:
-            ctx = MagicMock()
-            mock_cls.return_value = ctx
-            mock_http = MagicMock()
-            ctx.__enter__ = MagicMock(return_value=mock_http)
-            ctx.__exit__ = MagicMock(return_value=False)
-            if side_effect:
-                mock_http.get.side_effect = side_effect
-            else:
-                mock_http.get.return_value = mock_resp
-            return client.get_user_role(WORKSPACE_ID, USER_ID)
+        mock_get = MagicMock()
+        if side_effect:
+            mock_get.side_effect = side_effect
+        else:
+            mock_get.return_value = mock_resp
+        client.client = MagicMock()
+        client.client.get = mock_get
+        return client.get_user_role(WORKSPACE_ID, USER_ID)
 
     def test_get_user_role_success(self, real_client):
         role = self._get_role_with_mock_response(real_client, 200, {"role": "admin"})

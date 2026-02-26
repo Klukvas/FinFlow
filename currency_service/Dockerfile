@@ -11,11 +11,13 @@ RUN apt-get update && apt-get install -y \
 COPY currency_service/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Install shared library
+COPY shared/ /tmp/shared
+RUN pip install --no-cache-dir /tmp/shared && rm -rf /tmp/shared
+
 # Copy application code
 COPY currency_service/ .
 
-# Copy logging directory
-COPY logging/ /app/logging
 
 # Expose port
 EXPOSE 8000

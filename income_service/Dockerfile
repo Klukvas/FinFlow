@@ -13,11 +13,13 @@ WORKDIR /app
 COPY income_service/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Install shared library
+COPY shared/ /tmp/shared
+RUN pip install --no-cache-dir /tmp/shared && rm -rf /tmp/shared
+
 # Copy application code
 COPY income_service/ .
 
-# Copy logging directory
-COPY logging/ /app/logging
 
 # Copy and set executable permission for startup script
 COPY income_service/startup.sh .

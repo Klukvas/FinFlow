@@ -13,11 +13,13 @@ COPY workspace_service/pyproject.toml workspace_service/poetry.lock* ./
 RUN poetry config virtualenvs.create false \
  && poetry install --no-interaction --no-ansi
 
+# Install shared library
+COPY shared/ /tmp/shared
+RUN pip install --no-cache-dir /tmp/shared && rm -rf /tmp/shared
+
 # Copy application code
 COPY workspace_service/ .
 
-# Copy shared logging directory
-COPY logging/ /app/logging
 
 # Make startup script executable
 RUN chmod +x startup.sh

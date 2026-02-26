@@ -18,11 +18,11 @@ from app.schemas.payment_schedule import (
     PaymentScheduleListResponse
 )
 from app.services.payment_calculator import PaymentCalculator
-from app.services.workspace_authorization import WorkspaceAuthorizationMixin
+from shared.auth import WorkspaceAuthorizationMixin
 from app.clients.expense_client import ExpenseServiceClient
 from app.clients.income_client import IncomeServiceClient
 from app.clients.category_client import CategoryServiceClient
-from app.clients.subscription import SubscriptionClient
+from shared.clients import SubscriptionClient
 from app.exceptions import (
     RecurringPaymentNotFoundError,
     CategoryNotFoundError,
@@ -41,7 +41,11 @@ class RecurringPaymentService(WorkspaceAuthorizationMixin):
     """Сервис для управления повторяющимися платежами"""
     
     def __init__(self):
-        super().__init__()  # Initialize WorkspaceAuthorizationMixin
+        from fastapi import HTTPException, status
+        super().__init__(
+            access_denied_error=lambda msg: HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=msg),
+            workspace_mismatch_error=lambda msg: HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=msg),
+        )
         self.expense_client = ExpenseServiceClient()
         self.income_client = IncomeServiceClient()
         self.category_client = CategoryServiceClient()
@@ -57,7 +61,7 @@ class RecurringPaymentService(WorkspaceAuthorizationMixin):
         """Создать новый повторяющийся платеж"""
         # Check subscription limits before creating
         current_count = db.query(RecurringPayment).filter(RecurringPayment.workspace_id == workspace_id).count()
-        if not self.subscription_client.check_recurring_limit(user_id, current_count):
+        if not self.subscription_client.check_limit(user_id, current_count, "recurring"):
             features = self.subscription_client.get_user_features(user_id) or {}
             recurring_feature = features.get("recurring", {})
             limit = recurring_feature.get("limit_value", 0)

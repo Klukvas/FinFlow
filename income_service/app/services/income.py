@@ -18,8 +18,8 @@ from app.exceptions import (
 from app.clients.category_service_client import CategoryServiceClient
 from app.clients.account_service_client import AccountServiceClient
 from app.clients.currency_service_client import CurrencyServiceClient
-from app.clients.subscription import SubscriptionClient
-from app.services.workspace_authorization import WorkspaceAuthorizationMixin
+from shared.clients import SubscriptionClient
+from shared.auth import WorkspaceAuthorizationMixin
 from app.utils.logger import get_logger
 from app.config import settings
 
@@ -29,7 +29,10 @@ class IncomeService(WorkspaceAuthorizationMixin):
     """Service for managing incomes"""
     
     def __init__(self, db: Session, account_client: AccountServiceClient = None):
-        super().__init__()  # Initialize WorkspaceAuthorizationMixin
+        super().__init__(
+            access_denied_error=IncomeValidationError,
+            workspace_mismatch_error=IncomeValidationError,
+        )
         self.db = db
         self.category_client = CategoryServiceClient()
         self.account_client = account_client or AccountServiceClient()
@@ -85,7 +88,7 @@ class IncomeService(WorkspaceAuthorizationMixin):
                 Income.user_id == user_id,
                 Income.created_at >= current_month_start
             ).count()
-            if not self.subscription_client.check_income_limit(user_id, current_count):
+            if not self.subscription_client.check_limit(user_id, current_count, "incomes"):
                 features = self.subscription_client.get_user_features(user_id) or {}
                 income_feature = features.get("incomes", {})
                 limit = income_feature.get("limit_value", 0)

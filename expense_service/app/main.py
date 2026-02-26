@@ -44,7 +44,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             user_id = request.state.user_id
         
         # Set request context
-        from logging_utils import set_request_context
+        from app.utils.logger import set_request_context
         set_request_context(request_id, user_id, "expense_service")
         
         # Log request start
