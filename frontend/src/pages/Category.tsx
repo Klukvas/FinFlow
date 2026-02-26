@@ -394,6 +394,7 @@ export const Category: React.FC = () => {
           onClose={() => setIsCreateModalOpen(false)}
           title={t("categoryPage.createModalTitle")}
           size="md"
+          data-testid="category-modal"
         >
           <CreateCategory onCategoryCreated={handleCategoryCreated} />
         </Modal>
@@ -405,6 +406,7 @@ export const Category: React.FC = () => {
             onClose={handleCancelEdit}
             title={t("categoryPage.editModalTitle")}
             size="md"
+            data-testid="category-modal"
           >
             <EditCategory
               category={editingCategory}
@@ -464,6 +466,7 @@ export const Category: React.FC = () => {
                 size="sm"
                 loading={isDeleting}
                 onClick={handleDeleteConfirm}
+                data-testid="confirm-delete-button"
               >
                 {t("categoryPage.deleteConfirmModal.confirm")}
               </Button>

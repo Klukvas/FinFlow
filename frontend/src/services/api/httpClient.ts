@@ -137,10 +137,15 @@ export class HttpClient {
 
   private async parseSuccessResponse<T>(response: Response): Promise<T> {
     try {
+      // Handle 204 No Content and other empty responses (e.g., DELETE)
+      if (response.status === 204) {
+        return undefined as T;
+      }
+
       const text = await response.text();
 
       if (!text) {
-        throw new Error("Empty response from server");
+        return undefined as T;
       }
 
       if (config.debug) {

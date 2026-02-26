@@ -438,7 +438,7 @@ class TestDelete:
         account_client.update_account_balance.return_value = {}
         with patch.object(service, "authorize_workspace_access", return_value="owner"):
             service.delete(1, USER_ID, WORKSPACE_ID)
-        account_client.update_account_balance.assert_called_once_with(5, USER_ID, expense.amount, expense.currency)
+        account_client.update_account_balance.assert_called_once_with(5, USER_ID, expense.amount, expense.currency, WORKSPACE_ID)
 
     def test_delete_not_found_raises(self, service, db_session):
         db_session.query.return_value.filter.return_value.first.return_value = None

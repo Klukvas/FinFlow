@@ -47,28 +47,28 @@ class IncomeService(WorkspaceAuthorizationMixin):
             logger.error(f"Category validation failed: {e}")
             raise ExternalServiceError(f"Category validation failed: {e}", "category_service", IncomeErrorCodes.CATEGORY_VALIDATION_FAILED)
 
-    async def _validate_account(self, account_id: int, user_id: int) -> dict:
+    async def _validate_account(self, account_id: int, user_id: int, workspace_id: UUID = None) -> dict:
         """Validate account exists and belongs to user"""
         try:
-            return await self.account_client.validate_account(account_id, user_id)
+            return await self.account_client.validate_account(account_id, user_id, workspace_id)
         except Exception as e:
             logger.error(f"Account validation failed: {e}")
             raise ExternalServiceError(f"Account validation failed: {e}", "account_service", IncomeErrorCodes.ACCOUNT_VALIDATION_FAILED)
 
-    async def _handle_balance_updates(self, income: Income, old_amount: float, old_account_id: int, user_id: int) -> None:
+    async def _handle_balance_updates(self, income: Income, old_amount: float, old_account_id: int, user_id: int, workspace_id: UUID = None) -> None:
         """Handle account balance updates when income amount or account changes"""
         try:
             # If account changed or amount changed, we need to update balances
             if income.account_id != old_account_id or income.amount != old_amount:
-                
+
                 # Restore balance to old account if it had one (subtract old amount)
                 if old_account_id is not None:
-                    await self.account_client.update_account_balance(old_account_id, user_id, -old_amount, income.currency)
+                    await self.account_client.update_account_balance(old_account_id, user_id, -old_amount, income.currency, workspace_id)
                     logger.info(f"Restored {old_amount} {income.currency} from account {old_account_id}")
-                
+
                 # Add to new account if it has one (add new amount)
                 if income.account_id is not None:
-                    await self.account_client.update_account_balance(income.account_id, user_id, income.amount, income.currency)
+                    await self.account_client.update_account_balance(income.account_id, user_id, income.amount, income.currency, workspace_id)
                     logger.info(f"Added {income.amount} {income.currency} to account {income.account_id}")
                     
         except Exception as e:
@@ -77,15 +77,17 @@ class IncomeService(WorkspaceAuthorizationMixin):
     
     async def create(self, income: IncomeCreate, user_id: int, workspace_id: UUID) -> IncomeOut:
         """Create a new income"""
+        balance_updated = False
         try:
             # 1. Authorize workspace access (member role required for create)
             self.authorize_workspace_access(workspace_id, user_id, "member", "create_income")
-            
+
             # Check subscription limits before creating (monthly limit)
             # Count only incomes created in the current calendar month
             current_month_start = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             current_count = self.db.query(Income).filter(
                 Income.user_id == user_id,
+                Income.workspace_id == workspace_id,
                 Income.created_at >= current_month_start
             ).count()
             if not self.subscription_client.check_limit(user_id, current_count, "incomes"):
@@ -93,28 +95,27 @@ class IncomeService(WorkspaceAuthorizationMixin):
                 income_feature = features.get("incomes", {})
                 limit = income_feature.get("limit_value", 0)
                 raise IncomeLimitExceededError(current_count, limit)
-            
+
             # Validate amount
             if income.amount <= 0:
                 raise IncomeAmountError("Income amount must be greater than 0", IncomeErrorCodes.INCOME_AMOUNT_NEGATIVE)
-            
+
             if income.amount > 999999.99:
                 raise IncomeAmountError("Income amount cannot exceed 999,999.99", IncomeErrorCodes.INCOME_AMOUNT_TOO_LARGE)
-            
+
             # Validate description
             if income.description and len(income.description) > 500:
                 raise IncomeDescriptionError("Description cannot exceed 500 characters", IncomeErrorCodes.INCOME_DESCRIPTION_TOO_LONG)
-            
+
             # Validate category if provided
             if income.category_id:
                 await self._validate_category(income.category_id, user_id, workspace_id)
-            
+
             # Validate account if provided and update balance
-            balance_updated = False
             if income.account_id is not None:
-                await self._validate_account(income.account_id, user_id)
+                await self._validate_account(income.account_id, user_id, workspace_id)
                 # Add amount to account balance with currency conversion
-                await self.account_client.update_account_balance(income.account_id, user_id, income.amount, income.currency)
+                await self.account_client.update_account_balance(income.account_id, user_id, income.amount, income.currency, workspace_id)
                 balance_updated = True
 
             # Create income
@@ -150,7 +151,7 @@ class IncomeService(WorkspaceAuthorizationMixin):
             # Compensate balance only if it was actually updated
             if balance_updated:
                 try:
-                    await self.account_client.update_account_balance(income.account_id, user_id, -income.amount, income.currency)
+                    await self.account_client.update_account_balance(income.account_id, user_id, -income.amount, income.currency, workspace_id)
                     logger.warning(f"Compensated balance after failed income creation for account {income.account_id}")
                 except Exception as comp_err:
                     logger.error(f"CRITICAL: Failed to compensate balance after failed create: {comp_err}")
@@ -298,11 +299,11 @@ class IncomeService(WorkspaceAuthorizationMixin):
             if income_update.account_id is not None:
                 # Validate account if provided
                 if income_update.account_id > 0:
-                    await self._validate_account(income_update.account_id, user_id)
+                    await self._validate_account(income_update.account_id, user_id, workspace_id)
                 db_income.account_id = income_update.account_id
-            
+
             # Handle account balance updates (before currency change, so old currency is used for restoration)
-            await self._handle_balance_updates(db_income, old_amount, old_account_id, user_id)
+            await self._handle_balance_updates(db_income, old_amount, old_account_id, user_id, workspace_id)
 
             if income_update.currency is not None:
                 db_income.currency = income_update.currency
@@ -335,7 +336,7 @@ class IncomeService(WorkspaceAuthorizationMixin):
         
         # Restore balance to account if income had one (subtract the amount)
         if db_income.account_id is not None:
-            await self.account_client.update_account_balance(db_income.account_id, user_id, -db_income.amount, db_income.currency)
+            await self.account_client.update_account_balance(db_income.account_id, user_id, -db_income.amount, db_income.currency, workspace_id)
             logger.info(f"Restored {db_income.amount} {db_income.currency} from account {db_income.account_id} after income deletion")
 
         try:
@@ -346,7 +347,7 @@ class IncomeService(WorkspaceAuthorizationMixin):
             # Compensate: reverse the balance change
             if db_income.account_id is not None:
                 try:
-                    await self.account_client.update_account_balance(db_income.account_id, user_id, db_income.amount, db_income.currency)
+                    await self.account_client.update_account_balance(db_income.account_id, user_id, db_income.amount, db_income.currency, workspace_id)
                     logger.warning(f"Compensated balance after failed delete for income {income_id}")
                 except Exception as comp_err:
                     logger.error(f"CRITICAL: Failed to compensate balance after failed delete: {comp_err}")

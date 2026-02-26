@@ -6,29 +6,34 @@ from app.exceptions import IncomeErrorCodes
 from app.config import settings
 from app.utils.logger import get_logger, log_security_event
 from typing import Dict, Any
+from uuid import UUID
 
 class AccountServiceClient(BaseHttpClient):
     def __init__(self):
         super().__init__(base_url=settings.ACCOUNT_SERVICE_URL)
         self.logger = get_logger(__name__)
 
-    async def validate_account(self, account_id: int, user_id: int) -> Dict[str, Any]:
+    async def validate_account(self, account_id: int, user_id: int, workspace_id: UUID = None) -> Dict[str, Any]:
         """
         Validate that an account exists and belongs to the user.
-        
+
         Args:
             account_id: The ID of the account to validate
             user_id: The ID of the user who should own the account
-            
+            workspace_id: The workspace ID for isolation
+
         Returns:
             Dict containing account information if valid
-            
+
         Raises:
             HTTPException: If account validation fails
         """
         try:
+            params = f"user_id={user_id}"
+            if workspace_id is not None:
+                params += f"&workspace_id={workspace_id}"
             response = await self.get(
-                f"/internal/accounts/{account_id}/validate?user_id={user_id}",
+                f"/internal/accounts/{account_id}/validate?{params}",
                 headers={"X-Internal-Token": settings.INTERNAL_SECRET_TOKEN}
             )
             
@@ -79,31 +84,35 @@ class AccountServiceClient(BaseHttpClient):
                 error_code=IncomeErrorCodes.EXTERNAL_SERVICE_UNAVAILABLE
             )
 
-    async def update_account_balance(self, account_id: int, user_id: int, amount_change: float, transaction_currency: str = "USD") -> Dict[str, Any]:
+    async def update_account_balance(self, account_id: int, user_id: int, amount_change: float, transaction_currency: str = "USD", workspace_id: UUID = None) -> Dict[str, Any]:
         """
         Update account balance by adding/subtracting an amount with automatic currency conversion.
-        
+
         Args:
             account_id: The ID of the account to update
             user_id: The ID of the user who owns the account
             amount_change: The amount to add (positive) or subtract (negative)
             transaction_currency: The currency of the transaction (default: USD)
-            
+            workspace_id: The workspace ID for isolation
+
         Returns:
             Dict containing updated account information
-            
+
         Raises:
             HTTPException: If account update fails
         """
         try:
+            params = {
+                "user_id": user_id,
+                "amount_change": amount_change,
+                "transaction_currency": transaction_currency
+            }
+            if workspace_id is not None:
+                params["workspace_id"] = str(workspace_id)
             response = await self.put(
                 f"/internal/accounts/{account_id}/balance",
                 headers={"X-Internal-Token": settings.INTERNAL_SECRET_TOKEN},
-                params={
-                    "user_id": user_id, 
-                    "amount_change": amount_change,
-                    "transaction_currency": transaction_currency
-                }
+                params=params
             )
             
             if response.status_code == status.HTTP_404_NOT_FOUND:

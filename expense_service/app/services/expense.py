@@ -100,26 +100,26 @@ class ExpenseService(WorkspaceAuthorizationMixin):
             self.logger.error(f"Category validation failed: {e}")
             raise ExternalServiceError("category_service", str(e), ErrorCode.CATEGORY_VALIDATION_FAILED)
 
-    def _validate_account(self, account_id: int, user_id: int) -> dict:
+    def _validate_account(self, account_id: int, user_id: int, workspace_id: UUID = None) -> dict:
         """Validate account exists and belongs to user"""
         try:
-            return self.account_client.validate_account(account_id, user_id)
+            return self.account_client.validate_account(account_id, user_id, workspace_id)
         except Exception as e:
             self.logger.error(f"Account validation failed: {e}")
             raise ExternalServiceError("account_service", str(e), ErrorCode.ACCOUNT_VALIDATION_FAILED)
 
-    def _handle_balance_updates(self, expense: Expense, old_amount: float, old_account_id: int, user_id: int) -> None:
+    def _handle_balance_updates(self, expense: Expense, old_amount: float, old_account_id: int, user_id: int, workspace_id: UUID = None) -> None:
         """Handle account balance updates when expense amount or account changes"""
         try:
             # If account changed or amount changed, we need to update balances
             if expense.account_id != old_account_id or expense.amount != old_amount:
-                
+
                 # Restore balance to old account if it had one
                 if old_account_id is not None:
                     # Get old account currency and convert if needed
-                    old_account_data = self.account_client.validate_account(old_account_id, user_id)
+                    old_account_data = self.account_client.validate_account(old_account_id, user_id, workspace_id)
                     old_account_currency = old_account_data.get("account", {}).get("currency", settings.DEFAULT_CURRENCY)
-                    
+
                     # Convert expense amount to account currency if needed
                     amount_to_restore = float(old_amount)
                     if expense.currency != old_account_currency:
@@ -128,16 +128,16 @@ class ExpenseService(WorkspaceAuthorizationMixin):
                         )
                         if converted_amount is not None:
                             amount_to_restore = converted_amount
-                    
+
                     self.account_client.update_account_balance(
-                        old_account_id, user_id, amount_to_restore, old_account_currency
+                        old_account_id, user_id, amount_to_restore, old_account_currency, workspace_id
                     )
                     self.logger.info(f"Restored {amount_to_restore} {old_account_currency} to account {old_account_id}")
-                
+
                 # Deduct from new account if it has one
                 if expense.account_id is not None:
                     # Get account currency and convert expense amount if needed
-                    account_data = self.account_client.validate_account(expense.account_id, user_id)
+                    account_data = self.account_client.validate_account(expense.account_id, user_id, workspace_id)
                     account_currency = account_data.get("account", {}).get("currency", settings.DEFAULT_CURRENCY)
 
                     # Convert expense amount to account currency if needed
@@ -148,9 +148,9 @@ class ExpenseService(WorkspaceAuthorizationMixin):
                         )
                         if converted_amount is not None:
                             amount_to_deduct = converted_amount
-                    
+
                     self.account_client.update_account_balance(
-                        expense.account_id, user_id, -amount_to_deduct, account_currency
+                        expense.account_id, user_id, -amount_to_deduct, account_currency, workspace_id
                     )
                     self.logger.info(f"Deducted {amount_to_deduct} {account_currency} from account {expense.account_id}")
                     
@@ -201,7 +201,7 @@ class ExpenseService(WorkspaceAuthorizationMixin):
             
             # Validate account if provided and update balance with currency conversion
             if data.account_id is not None:
-                account_data = self._validate_account(data.account_id, user_id)
+                account_data = self._validate_account(data.account_id, user_id, workspace_id)
                 account_currency = account_data.get("account", {}).get("currency", settings.DEFAULT_CURRENCY)
                 expense_currency = data.currency or settings.DEFAULT_CURRENCY
                 
@@ -222,10 +222,11 @@ class ExpenseService(WorkspaceAuthorizationMixin):
                 
                 # Deduct amount from account balance with currency conversion
                 self.account_client.update_account_balance(
-                    data.account_id, 
-                    user_id, 
-                    -float(amount_to_deduct), 
-                    account_currency
+                    data.account_id,
+                    user_id,
+                    -float(amount_to_deduct),
+                    account_currency,
+                    workspace_id
                 )
             
             # Log currency value for debugging
@@ -379,18 +380,18 @@ class ExpenseService(WorkspaceAuthorizationMixin):
             # Validate and update account if provided
             if data.account_id is not None:
                 old_account = expense.account_id
-                self._validate_account(data.account_id, user_id)
+                self._validate_account(data.account_id, user_id, workspace_id)
                 expense.account_id = data.account_id
                 changes.append(f"Account: {old_account} -> {data.account_id}")
             
-            # Validate and update currency if provided
+            # Handle account balance updates BEFORE currency mutation (uses old currency for restoration)
+            self._handle_balance_updates(expense, old_amount, old_account_id, user_id, workspace_id)
+
+            # Validate and update currency if provided (AFTER balance updates)
             if data.currency is not None:
                 old_currency = expense.currency
                 expense.currency = data.currency
                 changes.append(f"Currency: {old_currency} -> {data.currency}")
-            
-            # Handle account balance updates
-            self._handle_balance_updates(expense, old_amount, old_account_id, user_id)
             
             self.db.commit()
             self.db.refresh(expense)
@@ -441,7 +442,7 @@ class ExpenseService(WorkspaceAuthorizationMixin):
             
             # Restore balance to account if expense had one
             if account_id is not None:
-                self.account_client.update_account_balance(account_id, user_id, amount, expense.currency)
+                self.account_client.update_account_balance(account_id, user_id, amount, expense.currency, workspace_id)
                 self.logger.info(f"Restored {amount} {expense.currency} to account {account_id} after expense deletion")
             
             self.db.delete(expense)

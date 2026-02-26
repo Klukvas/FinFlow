@@ -539,7 +539,7 @@ class AccountService(WorkspaceAuthorizationMixin):
             unconvertible_count = 0
             
             for account in accounts:
-                account_balance = abs(account.balance)
+                account_balance = float(abs(account.balance))
                 account_currency = account.currency or settings.DEFAULT_CURRENCY
                 
                 if account_currency != user_currency:

@@ -35,7 +35,7 @@ export const config = {
       (import.meta.env.PROD ? "/api/currencies" : "http://localhost:8010"),
     subscriptionServiceUrl:
       import.meta.env.VITE_SUBSCRIPTION_SERVICE_URL ||
-      (import.meta.env.PROD ? "/api/subscription" : "http://localhost:8011"),
+      (import.meta.env.PROD ? "/api/subscriptions" : "http://localhost:8011"),
     workspaceServiceUrl:
       import.meta.env.VITE_WORKSPACE_SERVICE_URL ||
       (import.meta.env.PROD

@@ -72,8 +72,7 @@ async def get_category_internal(
             logger,
             "Internal category validation",
             user_id,
-            category_id,
-            f"Category '{category.name}' validated successfully"
+            f"ID: {category_id}, Category '{category.name}' validated successfully"
         )
         
         return category
@@ -130,8 +129,7 @@ async def get_mcc_codes_internal(
         log_operation(
             logger,
             "Internal MCC codes retrieval",
-            0,  # Internal service call
-            None,
+            0,
             f"Retrieved {len(mcc_codes)} MCC codes for language {language.value}"
         )
         
@@ -187,8 +185,7 @@ async def get_default_categories_internal(
         log_operation(
             logger,
             "Internal default categories retrieval",
-            0,  # Internal service call
-            None,
+            0,
             f"Retrieved {len(categories)} default categories for language {language.value}"
         )
         
@@ -258,8 +255,7 @@ async def check_category_exists_by_mcc(
             logger,
             "Internal category existence check",
             user_id,
-            mcc_code,
-            f"Category with MCC {mcc_code} {'exists' if exists else 'does not exist'}"
+            f"MCC: {mcc_code}, {'exists' if exists else 'does not exist'}"
         )
         
         return {"exists": exists}
@@ -325,7 +321,6 @@ async def check_categories_exist_by_mcc_batch(
             logger,
             "Internal batch MCC category existence check",
             user_id,
-            len(mcc_codes),
             f"Checked {len(mcc_codes)} MCC codes"
         )
         
@@ -391,8 +386,7 @@ async def get_category_by_mcc(
             logger,
             "Internal category retrieval by MCC",
             user_id,
-            mcc_code,
-            f"Category with MCC {mcc_code} {'found' if category_info['exists'] else 'not found'}"
+            f"MCC: {mcc_code}, {'found' if category_info['exists'] else 'not found'}"
         )
         
         return category_info

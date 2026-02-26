@@ -76,7 +76,7 @@ class EntitlementsService:
             return sub.plan_code, version, data
 
         # compute and store
-        ttl = max(min(settings.ents_ttl_max, settings.ents_ttl_min), settings.ents_ttl_min)
+        ttl = settings.ents_ttl_max
         self.redis.setex(key, ttl, json.dumps(ents))
         return sub.plan_code, version, ents
 

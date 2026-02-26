@@ -193,7 +193,7 @@ class WorkspaceClient:
         """
         import time
 
-        url = f"{self.base_url}/internal/workspaces/create-personal"
+        url = f"{self.base_url}/internal/workspaces/personal"
         payload = {"user_id": user_id}
 
         for attempt in range(max_retries):
@@ -242,7 +242,7 @@ class WorkspaceClient:
     def get_user_default_workspace(self, user_id: int) -> Optional[UUID]:
         """Get user's default workspace UUID."""
         try:
-            url = f"{self.base_url}/internal/workspaces/default/{user_id}"
+            url = f"{self.base_url}/internal/users/{user_id}/default-workspace"
             response = self.client.get(url, headers=self._get_headers())
 
             if response.status_code == 200:

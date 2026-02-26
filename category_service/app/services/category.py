@@ -691,11 +691,10 @@ class CategoryService(WorkspaceAuthorizationMixin):
             self.db.refresh(category)
             
             log_operation(
-                self.logger, 
-                "Category updated", 
-                user_id, 
-                category_id,
-                f"Name: {old_name} -> {data.name}, Parent: {old_parent} -> {data.parent_id}"
+                self.logger,
+                "Category updated",
+                user_id,
+                f"ID: {category_id}, Name: {old_name} -> {data.name}, Parent: {old_parent} -> {data.parent_id}"
             )
             
             return category
@@ -751,11 +750,10 @@ class CategoryService(WorkspaceAuthorizationMixin):
             self.db.commit()
             
             log_operation(
-                self.logger, 
-                "Category deleted", 
-                user_id, 
-                category_id,
-                f"Name: {category_name}"
+                self.logger,
+                "Category deleted",
+                user_id,
+                f"ID: {category_id}, Name: {category_name}"
             )
             
             return {"detail": "Category deleted successfully"}
@@ -803,8 +801,7 @@ class CategoryService(WorkspaceAuthorizationMixin):
                 self.logger,
                 "MCC category existence check",
                 user_id,
-                mcc_code,
-                f"Category with MCC {mcc_code} {'exists' if exists else 'does not exist'}"
+                f"MCC: {mcc_code}, {'exists' if exists else 'does not exist'}"
             )
             
             return exists
@@ -832,8 +829,7 @@ class CategoryService(WorkspaceAuthorizationMixin):
                     self.logger,
                     "MCC category retrieval",
                     user_id,
-                    mcc_code,
-                    f"Category with MCC {mcc_code} found with ID {category.id}"
+                    f"MCC: {mcc_code}, found with ID {category.id}"
                 )
                 
                 return result
@@ -847,8 +843,7 @@ class CategoryService(WorkspaceAuthorizationMixin):
                     self.logger,
                     "MCC category retrieval",
                     user_id,
-                    mcc_code,
-                    f"Category with MCC {mcc_code} not found"
+                    f"MCC: {mcc_code}, not found"
                 )
                 
                 return result
@@ -947,9 +942,11 @@ class CategoryService(WorkspaceAuthorizationMixin):
             ).all()
             
             # Calculate statistics
+            # Compare by .value because cat.type is models.CategoryType (enum.Enum)
+            # while the imported CategoryType is schemas.CategoryType (str, Enum)
             total_categories = len(categories)
-            expense_categories = sum(1 for cat in categories if cat.type == CategoryType.EXPENSE)
-            income_categories = sum(1 for cat in categories if cat.type == CategoryType.INCOME)
+            expense_categories = sum(1 for cat in categories if cat.type.value == "EXPENSE")
+            income_categories = sum(1 for cat in categories if cat.type.value == "INCOME")
             parent_categories = sum(1 for cat in categories if cat.parent_id is None)
             child_categories = sum(1 for cat in categories if cat.parent_id is not None)
             
