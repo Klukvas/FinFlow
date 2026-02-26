@@ -1,8 +1,14 @@
-export type GoalType = 'SAVINGS' | 'DEBT_PAYOFF' | 'INVESTMENT' | 'EXPENSE_REDUCTION' | 'INCOME_INCREASE' | 'EMERGENCY_FUND';
+export type GoalType =
+  | "SAVINGS"
+  | "DEBT_PAYOFF"
+  | "INVESTMENT"
+  | "EXPENSE_REDUCTION"
+  | "INCOME_INCREASE"
+  | "EMERGENCY_FUND";
 
-export type GoalStatus = 'ACTIVE' | 'COMPLETED' | 'PAUSED' | 'CANCELLED';
+export type GoalStatus = "ACTIVE" | "COMPLETED" | "PAUSED" | "CANCELLED";
 
-export type GoalPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+export type GoalPriority = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 
 export interface Goal {
   id: number;
@@ -21,6 +27,7 @@ export interface Goal {
   is_milestone_based: boolean;
   created_at: string;
   updated_at?: string;
+  is_read_only?: boolean;
   milestones?: Milestone[];
 }
 
@@ -140,15 +147,15 @@ export interface MilestoneFormData {
 // Example: t('goalsPage.filters.savings') instead of hardcoded strings
 
 export const GOAL_PRIORITY_COLORS: Record<GoalPriority, string> = {
-  LOW: 'text-gray-500',
-  MEDIUM: 'text-blue-500',
-  HIGH: 'text-orange-500',
-  CRITICAL: 'text-red-500'
+  LOW: "text-gray-500",
+  MEDIUM: "text-blue-500",
+  HIGH: "text-orange-500",
+  CRITICAL: "text-red-500",
 };
 
 export const GOAL_STATUS_COLORS: Record<GoalStatus, string> = {
-  ACTIVE: 'text-green-500',
-  COMPLETED: 'text-blue-500',
-  PAUSED: 'text-yellow-500',
-  CANCELLED: 'text-gray-500'
+  ACTIVE: "text-green-500",
+  COMPLETED: "text-blue-500",
+  PAUSED: "text-yellow-500",
+  CANCELLED: "text-gray-500",
 };

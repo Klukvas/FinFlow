@@ -26,7 +26,8 @@ from app.exceptions import (
     DebtUpdateFailedError,
     DebtDeletionFailedError,
     PaymentCreationFailedError,
-    DebtLimitExceededError
+    DebtLimitExceededError,
+    DebtReadOnlyExcessError
 )
 from app.utils.logger import get_logger, log_operation
 from app.config import settings
@@ -171,6 +172,19 @@ class DebtService(WorkspaceAuthorizationMixin):
         
         return DebtResponse.model_validate(debt_dict)
 
+    def _get_ordered_ids(self, workspace_id: UUID) -> list:
+        rows = self.db.query(Debt.id).filter(
+            Debt.workspace_id == workspace_id
+        ).order_by(Debt.created_at.asc(), Debt.id.asc()).all()
+        return [row[0] for row in rows]
+
+    def _check_modify_allowed(self, record_id: int, user_id: int, workspace_id: UUID):
+        ordered_ids = self._get_ordered_ids(workspace_id)
+        if not self.subscription_client.check_modify_allowed(user_id, record_id, "debts", ordered_ids):
+            features = self.subscription_client.get_user_features(user_id) or {}
+            limit = features.get("debts", {}).get("limit_value", 0)
+            raise DebtReadOnlyExcessError(record_id, len(ordered_ids), limit)
+
     def update_debt(self, debt_id: int, debt_update: DebtUpdate, user_id: int, workspace_id: UUID) -> DebtResponse:
         """Update a debt"""
         # 1. Authorize workspace access (member role required)
@@ -183,7 +197,9 @@ class DebtService(WorkspaceAuthorizationMixin):
         
         if not debt:
             raise DebtNotFoundError(debt_id)
-        
+
+        self._check_modify_allowed(debt_id, user_id, workspace_id)
+
         # Check if currency is being changed
         update_data = debt_update.model_dump(exclude_unset=True)
         if "currency" in update_data and update_data["currency"] != debt.currency:

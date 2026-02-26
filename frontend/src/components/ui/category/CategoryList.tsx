@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Lock } from "lucide-react";
 import { Category } from "@types";
 import { useApiClients } from "@hooks";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
@@ -164,8 +165,11 @@ export const CategoryList: React.FC<CategoryListProps> = ({
             >
               <div className="flex items-start justify-between gap-2 sm:gap-3 mb-2 sm:mb-3">
                 <div className="flex-1 min-w-0 overflow-hidden">
-                  <h3 className="font-semibold theme-text-primary text-sm sm:text-base mb-1 break-all">
+                  <h3 className="font-semibold theme-text-primary text-sm sm:text-base mb-1 break-all flex items-center gap-1.5">
                     {category.name}
+                    {category.is_read_only && (
+                      <Lock className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                    )}
                   </h3>
                   <div className="flex items-center gap-1 sm:gap-2 mb-2">
                     <span
@@ -197,6 +201,10 @@ export const CategoryList: React.FC<CategoryListProps> = ({
                 >
                   <EditButton
                     onEdit={() => handleEdit(category)}
+                    disabled={category.is_read_only === true}
+                    {...(category.is_read_only
+                      ? { title: "Read-only: upgrade or delete excess records" }
+                      : {})}
                     variant="icon"
                     size="sm"
                   />
@@ -255,9 +263,12 @@ export const CategoryList: React.FC<CategoryListProps> = ({
                         ></div>
                         <div
                           data-testid="category-name"
-                          className="font-medium theme-text-primary"
+                          className="font-medium theme-text-primary flex items-center gap-1.5"
                         >
                           {category.name}
+                          {category.is_read_only && (
+                            <Lock className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                          )}
                         </div>
                       </div>
                     </td>
@@ -303,6 +314,13 @@ export const CategoryList: React.FC<CategoryListProps> = ({
                         <EditButton
                           dataTestId="category-edit-button"
                           onEdit={() => handleEdit(category)}
+                          disabled={category.is_read_only === true}
+                          {...(category.is_read_only
+                            ? {
+                                title:
+                                  "Read-only: upgrade or delete excess records",
+                              }
+                            : {})}
                           variant="icon"
                           size="sm"
                         />

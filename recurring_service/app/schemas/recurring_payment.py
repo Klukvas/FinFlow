@@ -76,6 +76,7 @@ class RecurringPaymentResponse(RecurringPaymentBase):
     next_execution: date
     created_at: datetime
     updated_at: datetime
+    is_read_only: bool = False
 
     class Config:
         from_attributes = True

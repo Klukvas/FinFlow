@@ -36,7 +36,14 @@ def list_accounts(
 ) -> List[AccountResponse]:
     """List all accounts in the workspace. Requires 'viewer' role."""
     accounts = service.get_user_accounts(user_id, workspace_id, include_archived)
-    return [AccountResponse.model_validate(account) for account in accounts]
+    items = [AccountResponse.model_validate(account) for account in accounts]
+
+    ordered_ids = service._get_ordered_ids(workspace_id)
+    read_only_ids = service.subscription_client.get_read_only_ids(user_id, "accounts", ordered_ids)
+    for item in items:
+        item.is_read_only = item.id in read_only_ids
+
+    return items
 
 @router.get("/summaries", response_model=List[AccountSummary])
 def get_account_summaries(

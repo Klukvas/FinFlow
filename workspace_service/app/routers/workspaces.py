@@ -59,8 +59,16 @@ def list_workspaces(
 ) -> WorkspaceListResponse:
     """Get all workspaces for the current user."""
     workspaces = service.get_user_workspaces(user_id, include_archived)
+
+    items = [service.get_workspace_response(w, user_id) for w in workspaces]
+
+    ordered_ids = service._get_ordered_ids(user_id)
+    read_only_ids = service.subscription_client.get_read_only_ids(user_id, "workspaces", ordered_ids)
+    for item in items:
+        item.is_read_only = item.id in read_only_ids
+
     return WorkspaceListResponse(
-        workspaces=[service.get_workspace_response(w, user_id) for w in workspaces],
+        workspaces=items,
         total=len(workspaces),
     )
 
@@ -220,8 +228,16 @@ def get_my_workspaces(
 ) -> WorkspaceListResponse:
     """Get all workspaces for the current user (convenience endpoint)."""
     workspaces = service.get_user_workspaces(user_id, include_archived)
+
+    items = [service.get_workspace_response(w, user_id) for w in workspaces]
+
+    ordered_ids = service._get_ordered_ids(user_id)
+    read_only_ids = service.subscription_client.get_read_only_ids(user_id, "workspaces", ordered_ids)
+    for item in items:
+        item.is_read_only = item.id in read_only_ids
+
     return WorkspaceListResponse(
-        workspaces=[service.get_workspace_response(w, user_id) for w in workspaces],
+        workspaces=items,
         total=len(workspaces),
     )
 

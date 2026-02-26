@@ -110,6 +110,7 @@ class GoalResponse(GoalBase):
     start_date: datetime
     created_at: datetime
     updated_at: Optional[datetime] = None
+    is_read_only: bool = False
 
     class Config:
         from_attributes = True

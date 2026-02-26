@@ -13,13 +13,14 @@ from .recurring_exceptions import (
     DatabaseError,
     ValidationError,
     InternalServerError,
-    RecurringLimitExceededError
+    RecurringLimitExceededError,
+    RecurringReadOnlyExcessError
 )
 
 __all__ = [
     "BaseRecurringError",
     "RecurringPaymentNotFoundError",
-    "InvalidScheduleConfigError", 
+    "InvalidScheduleConfigError",
     "PaymentExecutionError",
     "CategoryNotFoundError",
     "InvalidPaymentStatusError",
@@ -31,5 +32,6 @@ __all__ = [
     "DatabaseError",
     "ValidationError",
     "InternalServerError",
-    "RecurringLimitExceededError"
+    "RecurringLimitExceededError",
+    "RecurringReadOnlyExcessError"
 ]

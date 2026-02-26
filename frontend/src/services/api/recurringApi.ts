@@ -1,5 +1,5 @@
-import { AuthHttpClient, ApiError } from './AuthHttpClient';
-import { config } from '@/config/env';
+import { AuthHttpClient, ApiError } from "./AuthHttpClient";
+import { config } from "@/config/env";
 
 export interface RecurringPayment {
   id: string;
@@ -9,23 +9,24 @@ export interface RecurringPayment {
   amount: number;
   currency: string;
   category_id: string;
-  payment_type: 'expense' | 'income';
-  schedule_type: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  payment_type: "expense" | "income";
+  schedule_type: "daily" | "weekly" | "monthly" | "yearly";
   schedule_config: Record<string, any>;
   start_date: string;
   end_date?: string;
-  status: 'active' | 'paused' | 'completed' | 'cancelled';
+  status: "active" | "paused" | "completed" | "cancelled";
   last_executed?: string;
   next_execution: string;
   created_at: string;
   updated_at: string;
+  is_read_only?: boolean;
 }
 
 export interface PaymentSchedule {
   id: string;
   recurring_payment_id: string;
   execution_date: string;
-  status: 'pending' | 'executed' | 'failed';
+  status: "pending" | "executed" | "failed";
   created_expense_id?: string;
   created_income_id?: string;
   error_message?: string;
@@ -40,8 +41,8 @@ export interface CreateRecurringPaymentRequest {
   amount: number;
   currency: string;
   category_id: number;
-  payment_type: 'EXPENSE' | 'INCOME';
-  schedule_type: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  payment_type: "EXPENSE" | "INCOME";
+  schedule_type: "daily" | "weekly" | "monthly" | "yearly";
   schedule_config: Record<string, any>;
   start_date: string;
   end_date?: string;
@@ -53,12 +54,12 @@ export interface UpdateRecurringPaymentRequest {
   amount?: number;
   currency?: string;
   category_id?: number;
-  payment_type?: 'EXPENSE' | 'INCOME';
-  schedule_type?: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  payment_type?: "EXPENSE" | "INCOME";
+  schedule_type?: "daily" | "weekly" | "monthly" | "yearly";
   schedule_config?: Record<string, any>;
   start_date?: string;
   end_date?: string;
-  status?: 'active' | 'paused' | 'completed' | 'cancelled';
+  status?: "active" | "paused" | "completed" | "cancelled";
 }
 
 export interface RecurringPaymentListResponse {
@@ -87,57 +88,65 @@ export interface PaymentStatistics {
 
 export class RecurringApiClient {
   private httpClient: AuthHttpClient;
-  private baseUrl = '/recurring-payments';
+  private baseUrl = "/recurring-payments";
 
   constructor(
     getToken: () => string | null,
-    refreshToken: () => Promise<boolean>
+    refreshToken: () => Promise<boolean>,
   ) {
     this.httpClient = new AuthHttpClient(
       config.api.recurringServiceUrl,
       getToken,
-      refreshToken
+      refreshToken,
     );
   }
 
   // Создать повторяющийся платеж
   async createRecurringPayment(
-    data: CreateRecurringPaymentRequest
+    data: CreateRecurringPaymentRequest,
   ): Promise<RecurringPayment | ApiError> {
     return this.httpClient.post<RecurringPayment>(`${this.baseUrl}/`, data);
   }
 
   // Получить список повторяющихся платежей
-  async getRecurringPayments(
-    params?: {
-      status?: string;
-      payment_type?: string;
-      page?: number;
-      size?: number;
-    }
-  ): Promise<RecurringPaymentListResponse | ApiError> {
+  async getRecurringPayments(params?: {
+    status?: string;
+    payment_type?: string;
+    page?: number;
+    size?: number;
+  }): Promise<RecurringPaymentListResponse | ApiError> {
     const queryParams = new URLSearchParams();
-    
-    if (params?.status) queryParams.append('status', params.status);
-    if (params?.payment_type) queryParams.append('payment_type', params.payment_type);
-    if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.size) queryParams.append('size', params.size.toString());
+
+    if (params?.status) queryParams.append("status", params.status);
+    if (params?.payment_type)
+      queryParams.append("payment_type", params.payment_type);
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.size) queryParams.append("size", params.size.toString());
 
     const query = queryParams.toString();
-    return this.httpClient.get<RecurringPaymentListResponse>(`${this.baseUrl}/${query ? `?${query}` : ''}`);
+    return this.httpClient.get<RecurringPaymentListResponse>(
+      `${this.baseUrl}/${query ? `?${query}` : ""}`,
+    );
   }
 
   // Получить повторяющийся платеж по ID
-  async getRecurringPayment(paymentId: string): Promise<RecurringPayment | ApiError> {
-    return this.httpClient.get<RecurringPayment>(`${this.baseUrl}/${paymentId}`);
+  async getRecurringPayment(
+    paymentId: string,
+  ): Promise<RecurringPayment | ApiError> {
+    return this.httpClient.get<RecurringPayment>(
+      `${this.baseUrl}/${paymentId}`,
+    );
   }
 
   // Обновить повторяющийся платеж
   async updateRecurringPayment(
     paymentId: string,
-    data: UpdateRecurringPaymentRequest
+    data: UpdateRecurringPaymentRequest,
   ): Promise<RecurringPayment | ApiError> {
-    return this.httpClient.put<RecurringPayment>(`${this.baseUrl}/${paymentId}`, data);
+    return this.httpClient.put<RecurringPayment>(
+      `${this.baseUrl}/${paymentId}`,
+      data,
+    );
   }
 
   // Удалить повторяющийся платеж
@@ -164,22 +173,28 @@ export class RecurringApiClient {
       execution_date_to?: string;
       page?: number;
       size?: number;
-    }
+    },
   ): Promise<PaymentScheduleListResponse | ApiError> {
     const queryParams = new URLSearchParams();
-    
-    if (params?.status) queryParams.append('status', params.status);
-    if (params?.execution_date_from) queryParams.append('execution_date_from', params.execution_date_from);
-    if (params?.execution_date_to) queryParams.append('execution_date_to', params.execution_date_to);
-    if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.size) queryParams.append('size', params.size.toString());
+
+    if (params?.status) queryParams.append("status", params.status);
+    if (params?.execution_date_from)
+      queryParams.append("execution_date_from", params.execution_date_from);
+    if (params?.execution_date_to)
+      queryParams.append("execution_date_to", params.execution_date_to);
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.size) queryParams.append("size", params.size.toString());
 
     const query = queryParams.toString();
-    return this.httpClient.get<PaymentScheduleListResponse>(`${this.baseUrl}/${paymentId}/schedules${query ? `?${query}` : ''}`);
+    return this.httpClient.get<PaymentScheduleListResponse>(
+      `${this.baseUrl}/${paymentId}/schedules${query ? `?${query}` : ""}`,
+    );
   }
 
   // Получить статистику платежей
   async getPaymentStatistics(): Promise<PaymentStatistics | ApiError> {
-    return this.httpClient.get<PaymentStatistics>(`${this.baseUrl}/statistics/summary`);
+    return this.httpClient.get<PaymentStatistics>(
+      `${this.baseUrl}/statistics/summary`,
+    );
   }
 }

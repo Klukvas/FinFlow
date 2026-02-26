@@ -14,6 +14,7 @@ from app.exceptions import (
     AccountArchivedError,
     AccountBalanceError,
     AccountLimitExceededError,
+    AccountReadOnlyExcessError,
     AccountErrorCode
 )
 from app.utils.logger import get_logger, log_operation
@@ -133,6 +134,19 @@ class AccountService(WorkspaceAuthorizationMixin):
         
         return query.order_by(Account.created_at.desc()).all()
 
+    def _get_ordered_ids(self, workspace_id: UUID) -> list:
+        rows = self.db.query(Account.id).filter(
+            Account.workspace_id == workspace_id
+        ).order_by(Account.created_at.asc(), Account.id.asc()).all()
+        return [row[0] for row in rows]
+
+    def _check_modify_allowed(self, record_id: int, user_id: int, workspace_id: UUID):
+        ordered_ids = self._get_ordered_ids(workspace_id)
+        if not self.subscription_client.check_modify_allowed(user_id, record_id, "accounts", ordered_ids):
+            features = self.subscription_client.get_user_features(user_id) or {}
+            limit = features.get("accounts", {}).get("limit_value", 0)
+            raise AccountReadOnlyExcessError(record_id, len(ordered_ids), limit)
+
     def update_account(self, account_id: int, account_data: AccountUpdate, user_id: int, workspace_id: UUID) -> Account:
         """Update an existing account"""
         # 1. Authorize workspace access (member role required for update)
@@ -142,7 +156,9 @@ class AccountService(WorkspaceAuthorizationMixin):
         
         if account.is_archived:
             raise AccountArchivedError(account_id)
-        
+
+        self._check_modify_allowed(account_id, user_id, workspace_id)
+
         # Validate updates
         if account_data.name is not None and not validate_account_name(account_data.name):
             raise AccountValidationError("Invalid account name", AccountErrorCode.INVALID_ACCOUNT_NAME)

@@ -22,6 +22,7 @@ export interface AccountResponse {
   created_at: string;
   updated_at: string;
   is_archived: boolean;
+  is_read_only?: boolean;
 }
 
 export interface AccountSummary {
@@ -42,7 +43,7 @@ export interface AccountTransactionSummary {
   transaction_count: number;
   recent_transactions: Array<{
     id: number;
-    type: 'income' | 'expense';
+    type: "income" | "expense";
     amount: number;
     description: string;
     date: string;
@@ -63,4 +64,3 @@ export interface AccountStatisticsResponse {
   currency: string;
   unconvertible_accounts_count: number;
 }
-

@@ -133,6 +133,7 @@ class DebtResponse(DebtBase):
     
     # Include contact info if available
     contact: Optional[ContactResponse] = None
+    is_read_only: bool = Field(default=False, description="True if record exceeds plan limit and cannot be edited")
     
     model_config = ConfigDict(
         from_attributes=True,

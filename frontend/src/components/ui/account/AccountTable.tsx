@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Lock } from "lucide-react";
 import { AccountResponse, AccountSummary } from "../../../types/account";
 import { Badge } from "../shared/Badge";
 import { Button } from "../shared/Button";
@@ -202,8 +203,11 @@ export const AccountTable: React.FC<AccountTableProps> = ({
         onClick={() => onRowClick(account)}
       >
         <td className="px-4 py-3">
-          <span className="text-sm font-medium theme-text-primary">
+          <span className="text-sm font-medium theme-text-primary inline-flex items-center gap-1.5">
             {account.name}
+            {account.is_read_only && (
+              <Lock className="w-4 h-4 text-amber-500 flex-shrink-0" />
+            )}
           </span>
         </td>
         <td className="px-4 py-3">
@@ -248,12 +252,17 @@ export const AccountTable: React.FC<AccountTableProps> = ({
             <Button
               variant="ghost"
               size="sm"
+              disabled={account.is_read_only}
               onClick={(e) => {
                 e.stopPropagation();
                 onEdit(account);
               }}
               className="theme-text-secondary hover:theme-text-primary !p-1.5 !min-h-0"
-              title={t("accountPage.sidePanel.edit")}
+              title={
+                account.is_read_only
+                  ? "Read-only: upgrade or delete excess records"
+                  : t("accountPage.sidePanel.edit")
+              }
             >
               <svg
                 className="w-4 h-4"
@@ -317,8 +326,11 @@ export const AccountTable: React.FC<AccountTableProps> = ({
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-sm font-medium theme-text-primary truncate">
+              <span className="text-sm font-medium theme-text-primary truncate inline-flex items-center gap-1.5">
                 {account.name}
+                {account.is_read_only && (
+                  <Lock className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                )}
               </span>
               <Badge
                 variant={getTypeBadgeVariant(account.type) as any}
@@ -350,11 +362,17 @@ export const AccountTable: React.FC<AccountTableProps> = ({
             <Button
               variant="ghost"
               size="sm"
+              disabled={account.is_read_only}
               onClick={(e) => {
                 e.stopPropagation();
                 onEdit(account);
               }}
               className="theme-text-secondary !p-1.5 !min-h-0"
+              title={
+                account.is_read_only
+                  ? "Read-only: upgrade or delete excess records"
+                  : undefined
+              }
             >
               <svg
                 className="w-4 h-4"

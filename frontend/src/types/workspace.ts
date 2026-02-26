@@ -1,10 +1,10 @@
-export type WorkspaceType = 'personal' | 'shared';
+export type WorkspaceType = "personal" | "shared";
 
 // Simplified roles: owner (manage), full (edit), read (view only)
-export type WorkspaceRole = 'owner' | 'full' | 'read';
+export type WorkspaceRole = "owner" | "full" | "read";
 
 // Role that can be assigned to invites/members (not owner)
-export type AssignableRole = 'full' | 'read';
+export type AssignableRole = "full" | "read";
 
 export interface Workspace {
   id: string;
@@ -17,6 +17,7 @@ export interface Workspace {
   is_archived: boolean;
   member_count: number | null;
   current_user_role: WorkspaceRole | null;
+  is_read_only?: boolean;
 }
 
 export interface WorkspaceCreate {
@@ -38,7 +39,7 @@ export interface WorkspaceMember {
   workspace_id: string;
   user_id: number;
   role: WorkspaceRole;
-  status: 'active' | 'left' | 'removed';
+  status: "active" | "left" | "removed";
   joined_at: string;
   created_at: string;
   updated_at: string | null;
@@ -56,7 +57,12 @@ export interface WorkspaceMemberListResponse {
 }
 
 // Invite statuses
-export type InviteStatus = 'pending' | 'accepted' | 'rejected' | 'expired' | 'canceled';
+export type InviteStatus =
+  | "pending"
+  | "accepted"
+  | "rejected"
+  | "expired"
+  | "canceled";
 
 // Invite as seen by workspace owner
 export interface WorkspaceInvite {

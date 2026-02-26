@@ -80,3 +80,14 @@ class AccountLimitExceededError(AccountValidationError):
             f"Account limit exceeded. You have {current_count} accounts but your plan allows only {limit} accounts.",
             AccountErrorCode.ACCOUNT_LIMIT_EXCEEDED
         )
+
+class AccountReadOnlyExcessError(AccountServiceError):
+    """Raised when account exceeds plan limit and is read-only"""
+    def __init__(self, account_id: int, current_count: int, limit: int):
+        super().__init__(
+            f"This account is read-only. You have {current_count} accounts but your plan allows {limit}. Upgrade or delete excess accounts.",
+            "RECORD_READ_ONLY_EXCESS"
+        )
+        self.account_id = account_id
+        self.current_count = current_count
+        self.limit = limit

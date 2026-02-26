@@ -12,7 +12,7 @@ are also included.
 from __future__ import annotations
 
 import os
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List, Set
 
 import httpx
 
@@ -131,6 +131,55 @@ class SubscriptionClient:
             logger.error(f"Subscription service unreachable when setting plan for user {user_id}: {e}")
         except Exception as e:
             logger.error(f"Error setting plan for user {user_id}: {e}")
+
+    def check_modify_allowed(
+        self, user_id: int, record_id: Any, feature_code: str, ordered_record_ids: List
+    ) -> bool:
+        """
+        Check if a record can be modified based on subscription limits.
+
+        Oldest N records (by created_at) are editable; the rest are read-only.
+        Fail-open: returns True when subscription service is unreachable.
+        """
+        features = self.get_user_features(user_id)
+        if features is None:
+            return True
+
+        feature = features.get(feature_code, {})
+        if not feature or not feature.get("enabled", False):
+            return True
+
+        limit = feature.get("limit_value")
+        if limit is None:
+            return True
+
+        if len(ordered_record_ids) <= limit:
+            return True
+
+        allowed_ids = set(ordered_record_ids[:limit])
+        return record_id in allowed_ids
+
+    def get_read_only_ids(
+        self, user_id: int, feature_code: str, ordered_record_ids: List
+    ) -> Set:
+        """
+        Get IDs of records that are read-only due to plan limits.
+
+        Returns empty set on error (fail-open).
+        """
+        features = self.get_user_features(user_id)
+        if features is None:
+            return set()
+
+        feature = features.get(feature_code, {})
+        if not feature or not feature.get("enabled", False):
+            return set()
+
+        limit = feature.get("limit_value")
+        if limit is None or len(ordered_record_ids) <= limit:
+            return set()
+
+        return set(ordered_record_ids[limit:])
 
     def close(self):
         self.client.close()

@@ -17,6 +17,7 @@ from .workspace_errors import (
     InviteeNotFoundError,
     SelfInviteNotAllowedError,
     PersonalWorkspaceProtectedError,
+    WorkspaceReadOnlyExcessError,
 )
 
 __all__ = [
@@ -38,5 +39,6 @@ __all__ = [
     "InviteeNotFoundError",
     "SelfInviteNotAllowedError",
     "PersonalWorkspaceProtectedError",
+    "WorkspaceReadOnlyExcessError",
 ]
 

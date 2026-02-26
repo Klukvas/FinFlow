@@ -21,7 +21,8 @@ from .debt_exceptions import (
     PaymentCreationFailedError,
     InvalidDebtTypeError,
     InvalidPaymentMethodError,
-    DebtLimitExceededError
+    DebtLimitExceededError,
+    DebtReadOnlyExcessError
 )
 
 __all__ = [
@@ -47,5 +48,6 @@ __all__ = [
     "PaymentCreationFailedError",
     "InvalidDebtTypeError",
     "InvalidPaymentMethodError",
-    "DebtLimitExceededError"
+    "DebtLimitExceededError",
+    "DebtReadOnlyExcessError"
 ]

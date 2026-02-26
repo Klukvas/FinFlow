@@ -201,3 +201,19 @@ class SelfInviteNotAllowedError(HTTPException):
         )
         self.error_code = WorkspaceErrorCode.SELF_INVITE_NOT_ALLOWED
 
+
+class WorkspaceReadOnlyExcessError(HTTPException):
+    """Raised when workspace exceeds plan limit and is read-only"""
+    def __init__(self, workspace_id, current_count: int, limit: int):
+        super().__init__(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "error": f"This workspace is read-only. You have {current_count} workspaces but your plan allows {limit}. Upgrade or delete excess workspaces.",
+                "errorCode": "RECORD_READ_ONLY_EXCESS",
+                "feature": "workspaces",
+                "current_count": current_count,
+                "limit": limit,
+            }
+        )
+        self.error_code = WorkspaceErrorCode.WORKSPACE_LIMIT_EXCEEDED
+

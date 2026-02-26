@@ -40,9 +40,10 @@ class AccountResponse(AccountBase):
     workspace_id: UUID
     is_active: bool
     is_archived: bool
+    is_read_only: bool = Field(default=False, description="True if record exceeds plan limit and cannot be edited")
     created_at: datetime
     updated_at: datetime
-    
+
     class Config:
         from_attributes = True
 

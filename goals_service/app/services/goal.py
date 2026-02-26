@@ -16,7 +16,8 @@ from app.exceptions.goal_exceptions import (
     GoalNotFoundError, GoalValidationError, GoalCreationError, GoalUpdateError,
     GoalDeletionError, GoalRetrievalError, GoalStatisticsError, GoalProgressError,
     MilestoneNotFoundError, MilestoneValidationError, MilestoneCreationError,
-    MilestoneRetrievalError, MilestoneProgressUpdateError, GoalLimitExceededError
+    MilestoneRetrievalError, MilestoneProgressUpdateError, GoalLimitExceededError,
+    GoalReadOnlyExcessError
 )
 from app.utils.logger import get_logger
 from app.config import settings
@@ -128,14 +129,29 @@ class GoalService(WorkspaceAuthorizationMixin):
         
         return goal
 
+    def _get_ordered_ids(self, workspace_id: UUID) -> list:
+        rows = self.db.query(Goal.id).filter(
+            Goal.workspace_id == workspace_id
+        ).order_by(Goal.created_at.asc(), Goal.id.asc()).all()
+        return [row[0] for row in rows]
+
+    def _check_modify_allowed(self, record_id: int, user_id: int, workspace_id: UUID):
+        ordered_ids = self._get_ordered_ids(workspace_id)
+        if not self.subscription_client.check_modify_allowed(user_id, record_id, "goals", ordered_ids):
+            features = self.subscription_client.get_user_features(user_id) or {}
+            limit = features.get("goals", {}).get("limit_value", 0)
+            raise GoalReadOnlyExcessError(record_id, len(ordered_ids), limit)
+
     def update_goal(self, user_id: int, workspace_id: UUID, goal_id: int, goal_data: GoalUpdate) -> Goal:
         """Update an existing goal"""
         try:
             # Authorize workspace access (member role required for updating)
             self.authorize_workspace_access(workspace_id, user_id, "member", "update_goal")
-            
+
             goal = self._get_goal_internal(user_id, workspace_id, goal_id)
-            
+
+            self._check_modify_allowed(goal_id, user_id, workspace_id)
+
             update_data = goal_data.dict(exclude_unset=True)
             for field, value in update_data.items():
                 setattr(goal, field, value)
@@ -150,6 +166,8 @@ class GoalService(WorkspaceAuthorizationMixin):
         except GoalNotFoundError:
             raise
         except GoalValidationError:
+            raise
+        except GoalReadOnlyExcessError:
             raise
         except Exception as e:
             self.db.rollback()
@@ -178,7 +196,9 @@ class GoalService(WorkspaceAuthorizationMixin):
             self.authorize_workspace_access(workspace_id, user_id, "member", "update_goal_progress")
             
             goal = self._get_goal_internal(user_id, workspace_id, goal_id)
-            
+
+            self._check_modify_allowed(goal_id, user_id, workspace_id)
+
             goal.current_amount = progress_data.current_amount
             goal.update_progress()
             
@@ -191,6 +211,8 @@ class GoalService(WorkspaceAuthorizationMixin):
         except GoalNotFoundError:
             raise
         except GoalValidationError:
+            raise
+        except GoalReadOnlyExcessError:
             raise
         except Exception as e:
             self.db.rollback()

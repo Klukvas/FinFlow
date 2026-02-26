@@ -49,13 +49,20 @@ async def get_goals(
     """Get user's financial goals with optional filtering"""
     service = GoalService(db)
     goals = service.get_goals(user_id, workspace_id, skip, limit, status, goal_type, priority)
-    
+
     # Get total count for pagination
     total = len(goals)
     pages = (total + limit - 1) // limit
-    
+
+    items = [GoalResponse.model_validate(g) for g in goals]
+
+    ordered_ids = service._get_ordered_ids(workspace_id)
+    read_only_ids = service.subscription_client.get_read_only_ids(user_id, "goals", ordered_ids)
+    for item in items:
+        item.is_read_only = item.id in read_only_ids
+
     return GoalListResponse(
-        items=goals,
+        items=items,
         total=total,
         page=(skip // limit) + 1,
         size=limit,

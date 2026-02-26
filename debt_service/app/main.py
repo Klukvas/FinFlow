@@ -34,7 +34,8 @@ from app.exceptions import (
     ContactDeletionFailedError,
     PaymentCreationFailedError,
     InvalidDebtTypeError,
-    InvalidPaymentMethodError
+    InvalidPaymentMethodError,
+    DebtReadOnlyExcessError
 )
 from app.schemas.error import ErrorResponse
 import time
@@ -175,6 +176,8 @@ async def debt_service_exception_handler(request: Request, exc: DebtServiceExcep
                          ContactCreationFailedError, ContactUpdateFailedError, ContactDeletionFailedError,
                          PaymentCreationFailedError)):
         status_code = 422
+    elif isinstance(exc, DebtReadOnlyExcessError):
+        status_code = 403
     elif isinstance(exc, (ExternalServiceError, DatabaseError)):
         status_code = 500
     

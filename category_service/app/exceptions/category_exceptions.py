@@ -61,3 +61,16 @@ class CategoryLimitExceededError(CategoryValidationError):
             error_code="CATEGORY_LIMIT_EXCEEDED"
         )
 
+class CategoryReadOnlyExcessError(HTTPException):
+    def __init__(self, category_id: int, current_count: int, limit: int):
+        super().__init__(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "error": f"This category is read-only. You have {current_count} categories but your plan allows {limit}. Upgrade or delete excess categories.",
+                "errorCode": "RECORD_READ_ONLY_EXCESS",
+                "feature": "categories",
+                "current_count": current_count,
+                "limit": limit,
+            }
+        )
+

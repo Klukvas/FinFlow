@@ -19,6 +19,7 @@ from app.exceptions import (
     InvalidRoleChangeError,
     OwnerCannotLeaveError,
     PersonalWorkspaceProtectedError,
+    WorkspaceReadOnlyExcessError,
 )
 from shared.clients import SubscriptionClient
 from app.clients.user import UserClient
@@ -165,6 +166,20 @@ class WorkspaceService:
             .first()
         )
 
+    def _get_ordered_ids(self, owner_user_id: int) -> list:
+        rows = self.db.query(Workspace.id).filter(
+            Workspace.owner_user_id == owner_user_id,
+            Workspace.archived_at.is_(None),
+        ).order_by(Workspace.created_at.asc(), Workspace.id.asc()).all()
+        return [row[0] for row in rows]
+
+    def _check_modify_allowed(self, workspace_id, user_id: int):
+        ordered_ids = self._get_ordered_ids(user_id)
+        if not self.subscription_client.check_modify_allowed(user_id, workspace_id, "workspaces", ordered_ids):
+            features = self.subscription_client.get_user_features(user_id) or {}
+            limit = features.get("workspaces", {}).get("limit_value", 0)
+            raise WorkspaceReadOnlyExcessError(workspace_id, len(ordered_ids), limit)
+
     def update_workspace(self, workspace_id: UUID, user_id: int, data: WorkspaceUpdate) -> Workspace:
         """Update workspace details"""
         workspace = self.get_workspace(workspace_id, user_id)
@@ -175,6 +190,8 @@ class WorkspaceService:
 
         if workspace.is_archived:
             raise WorkspaceArchivedError(workspace_id)
+
+        self._check_modify_allowed(workspace_id, user_id)
 
         # Protect personal workspace - only allow name change, not type change
         if workspace.type == WorkspaceType.PERSONAL:

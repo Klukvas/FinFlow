@@ -131,3 +131,14 @@ class DebtLimitExceededError(DebtValidationError):
     """Raised when user exceeds debt limit"""
     def __init__(self, current_count: int, limit: int):
         super().__init__(f"Debt limit exceeded. You have {current_count} debts but your plan allows only {limit} debts.")
+
+class DebtReadOnlyExcessError(DebtServiceException):
+    """Raised when debt exceeds plan limit and is read-only"""
+    def __init__(self, debt_id: int, current_count: int, limit: int):
+        super().__init__(
+            f"This debt is read-only. You have {current_count} debts but your plan allows {limit}. Upgrade or delete excess debts.",
+            "RECORD_READ_ONLY_EXCESS"
+        )
+        self.debt_id = debt_id
+        self.current_count = current_count
+        self.limit = limit

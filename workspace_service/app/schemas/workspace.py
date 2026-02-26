@@ -59,6 +59,7 @@ class WorkspaceResponse(BaseModel):
     is_archived: bool = Field(description="Whether workspace is archived")
     member_count: Optional[int] = Field(None, description="Number of active members")
     current_user_role: Optional[str] = Field(None, description="Current user's role in this workspace")
+    is_read_only: bool = Field(default=False, description="True if workspace exceeds plan limit and cannot be edited")
 
     model_config = ConfigDict(
         from_attributes=True,

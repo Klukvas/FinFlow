@@ -208,11 +208,18 @@ def read_categories(
         categories, total = service.get_all_flat(user_id, workspace_id, page, size)
     else:
         categories, total = service.get_all(user_id, workspace_id, page, size)
-    
+
     pages = (total + size - 1) // size  # Calculate total pages
-    
+
+    items = [CategoryOut.model_validate(c) for c in categories]
+
+    ordered_ids = service._get_ordered_ids(workspace_id)
+    read_only_ids = service.subscription_client.get_read_only_ids(user_id, "categories", ordered_ids)
+    for item in items:
+        item.is_read_only = item.id in read_only_ids
+
     return CategoryListResponse(
-        items=categories,
+        items=items,
         total=total,
         page=page,
         size=size,

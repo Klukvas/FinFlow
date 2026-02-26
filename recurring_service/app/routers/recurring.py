@@ -45,9 +45,16 @@ async def get_recurring_payments(
     db: Session = Depends(get_db)
 ):
     """Get list of recurring payments in workspace. Requires 'viewer' role."""
-    return recurring_payment_service.get_recurring_payments(
+    result = recurring_payment_service.get_recurring_payments(
         user_id, workspace_id, db, status, payment_type, page, size
     )
+
+    ordered_ids = recurring_payment_service._get_ordered_ids(workspace_id, db)
+    read_only_ids = recurring_payment_service.subscription_client.get_read_only_ids(user_id, "recurring", ordered_ids)
+    for item in result.items:
+        item.is_read_only = item.id in read_only_ids
+
+    return result
 
 
 @router.get("/{payment_id}", response_model=RecurringPaymentResponse)

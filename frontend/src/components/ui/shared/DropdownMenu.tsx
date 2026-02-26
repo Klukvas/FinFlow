@@ -1,47 +1,46 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from "react";
 
 interface DropdownMenuProps {
   trigger: React.ReactNode;
   children: React.ReactNode;
-  align?: 'left' | 'right';
+  align?: "left" | "right";
 }
 
 export const DropdownMenu: React.FC<DropdownMenuProps> = ({
   trigger,
   children,
-  align = 'right'
+  align = "right",
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <div onClick={() => setIsOpen(!isOpen)}>
-        {trigger}
-      </div>
+      <div onClick={() => setIsOpen(!isOpen)}>{trigger}</div>
 
       {isOpen && (
         <div
           className={`absolute z-50 mt-2 w-48 rounded-lg theme-surface border theme-border theme-shadow-hover ${
-            align === 'right' ? 'right-0' : 'left-0'
+            align === "right" ? "right-0" : "left-0"
           }`}
         >
-          <div className="py-1">
-            {children}
-          </div>
+          <div className="py-1">{children}</div>
         </div>
       )}
     </div>
@@ -53,23 +52,26 @@ interface DropdownMenuItemProps {
   onClick?: () => void;
   className?: string;
   disabled?: boolean;
+  title?: string;
 }
 
 export const DropdownMenuItem: React.FC<DropdownMenuItemProps> = ({
   children,
   onClick,
-  className = '',
-  disabled = false
+  className = "",
+  disabled = false,
+  title,
 }) => {
   return (
     <button
       className={`w-full text-left px-4 py-2 text-sm theme-transition ${
         disabled
-          ? 'theme-text-tertiary cursor-not-allowed'
-          : 'theme-text-secondary hover:theme-surface-hover hover:theme-text-primary'
+          ? "theme-text-tertiary cursor-not-allowed"
+          : "theme-text-secondary hover:theme-surface-hover hover:theme-text-primary"
       } ${className}`}
       onClick={onClick}
       disabled={disabled}
+      title={title}
     >
       {children}
     </button>

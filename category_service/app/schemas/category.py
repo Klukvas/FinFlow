@@ -236,6 +236,7 @@ class CategoryOut(CategoryBase):
         default_factory=list,
         description="List of child categories"
     )
+    is_read_only: bool = Field(default=False, description="True if record exceeds plan limit and cannot be edited")
 
     model_config = ConfigDict(
         from_attributes=True,

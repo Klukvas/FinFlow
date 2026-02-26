@@ -5,16 +5,18 @@ from .category_exceptions import (
     CategoryDepthExceededError,
     CategoryNameConflictError,
     CategoryOwnershipError,
-    CategoryLimitExceededError
+    CategoryLimitExceededError,
+    CategoryReadOnlyExcessError
 )
 
 __all__ = [
     "CategoryNotFoundError",
-    "CategoryValidationError", 
+    "CategoryValidationError",
     "CircularRelationshipError",
     "CategoryDepthExceededError",
     "CategoryNameConflictError",
     "CategoryOwnershipError",
-    "CategoryLimitExceededError"
+    "CategoryLimitExceededError",
+    "CategoryReadOnlyExcessError"
 ]
 

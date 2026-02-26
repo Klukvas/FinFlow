@@ -36,7 +36,14 @@ def get_debts(
     service: DebtService = Depends(get_debt_service)
 ):
     """Get all debts in the workspace. Requires 'viewer' role."""
-    return service.get_debts(user_id, workspace_id, skip, limit, active_only, paid_off_only)
+    debts = service.get_debts(user_id, workspace_id, skip, limit, active_only, paid_off_only)
+
+    ordered_ids = service._get_ordered_ids(workspace_id)
+    read_only_ids = service.subscription_client.get_read_only_ids(user_id, "debts", ordered_ids)
+    for debt in debts:
+        debt.is_read_only = debt.id in read_only_ids
+
+    return debts
 
 @router.get("/{debt_id}", response_model=DebtResponse)
 def get_debt(

@@ -30,7 +30,8 @@ from app.exceptions import (
     PaymentAlreadyPausedError,
     PaymentNotPausedError,
     ValidationError,
-    RecurringLimitExceededError
+    RecurringLimitExceededError,
+    RecurringReadOnlyExcessError
 )
 from app.utils.logger import get_logger
 
@@ -155,7 +156,20 @@ class RecurringPaymentService(WorkspaceAuthorizationMixin):
             raise RecurringPaymentNotFoundError("Recurring payment not found")
 
         return payment
-    
+
+    def _get_ordered_ids(self, workspace_id: UUID, db: Session) -> list:
+        rows = db.query(RecurringPayment.id).filter(
+            RecurringPayment.workspace_id == workspace_id
+        ).order_by(RecurringPayment.created_at.asc(), RecurringPayment.id.asc()).all()
+        return [row[0] for row in rows]
+
+    def _check_modify_allowed(self, record_id, user_id: int, workspace_id: UUID, db: Session):
+        ordered_ids = self._get_ordered_ids(workspace_id, db)
+        if not self.subscription_client.check_modify_allowed(user_id, record_id, "recurring", ordered_ids):
+            features = self.subscription_client.get_user_features(user_id) or {}
+            limit = features.get("recurring", {}).get("limit_value", 0)
+            raise RecurringReadOnlyExcessError(record_id, len(ordered_ids), limit)
+
     async def update_recurring_payment(
         self,
         payment_id: UUID,
@@ -173,6 +187,8 @@ class RecurringPaymentService(WorkspaceAuthorizationMixin):
 
         if not payment:
             raise RecurringPaymentNotFoundError("Recurring payment not found")
+
+        self._check_modify_allowed(payment_id, user_id, workspace_id, db)
 
         # Валидировать категорию если она изменилась
         if payment_data.category_id and payment_data.category_id != payment.category_id:
@@ -262,7 +278,9 @@ class RecurringPaymentService(WorkspaceAuthorizationMixin):
         
         if not payment:
             raise RecurringPaymentNotFoundError("Recurring payment not found")
-        
+
+        self._check_modify_allowed(payment_id, user_id, workspace_id, db)
+
         if payment.status != 'paused':
             raise InvalidPaymentStatusError("Only paused payments can be resumed")
         

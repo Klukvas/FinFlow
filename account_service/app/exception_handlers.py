@@ -9,6 +9,7 @@ from app.exceptions import (
     AccountArchivedError,
     AccountBalanceError,
     ExternalServiceError,
+    AccountReadOnlyExcessError,
     AccountErrorCode
 )
 from app.utils.logger import get_logger
@@ -78,6 +79,20 @@ def account_balance_handler(request: Request, exc: AccountBalanceError):
         content={
             "error": exc.message,
             "errorCode": exc.error_code
+        }
+    )
+
+def account_read_only_excess_handler(request: Request, exc: AccountReadOnlyExcessError):
+    """Handle read-only excess account errors"""
+    logger.warning(f"Read-only excess error: Account {exc.account_id}, count={exc.current_count}, limit={exc.limit}")
+    return JSONResponse(
+        status_code=status.HTTP_403_FORBIDDEN,
+        content={
+            "error": exc.message,
+            "errorCode": exc.error_code,
+            "feature": "accounts",
+            "current_count": exc.current_count,
+            "limit": exc.limit,
         }
     )
 

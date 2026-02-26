@@ -98,3 +98,16 @@ class GoalLimitExceededError(GoalValidationError):
         super().__init__(
             detail=f"Goal limit exceeded. You have {current_count} goals but your plan allows only {limit} goals."
         )
+
+
+class GoalReadOnlyExcessError(GoalServiceError):
+    """Raised when goal exceeds plan limit and is read-only"""
+    def __init__(self, goal_id: int, current_count: int, limit: int):
+        super().__init__(
+            detail=f"This goal is read-only. You have {current_count} goals but your plan allows {limit}. Upgrade or delete excess goals.",
+            status_code=403,
+            error_code="RECORD_READ_ONLY_EXCESS"
+        )
+        self.goal_id = goal_id
+        self.current_count = current_count
+        self.limit = limit

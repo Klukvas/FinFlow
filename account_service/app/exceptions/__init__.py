@@ -7,17 +7,19 @@ from .account_errors import (
     AccountBalanceError,
     ExternalServiceError,
     AccountLimitExceededError,
+    AccountReadOnlyExcessError,
     AccountErrorCode
 )
 
 __all__ = [
     "AccountServiceError",
-    "AccountNotFoundError", 
+    "AccountNotFoundError",
     "AccountValidationError",
     "AccountOwnershipError",
     "AccountArchivedError",
     "AccountBalanceError",
     "ExternalServiceError",
     "AccountLimitExceededError",
+    "AccountReadOnlyExcessError",
     "AccountErrorCode"
 ]

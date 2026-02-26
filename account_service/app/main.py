@@ -11,6 +11,7 @@ from app.exception_handlers import (
     account_ownership_handler,
     account_archived_handler,
     account_balance_handler,
+    account_read_only_excess_handler,
     external_service_handler,
     http_exception_handler
 )
@@ -20,6 +21,7 @@ from app.exceptions import (
     AccountOwnershipError,
     AccountArchivedError,
     AccountBalanceError,
+    AccountReadOnlyExcessError,
     ExternalServiceError,
     AccountErrorCode
 )
@@ -123,6 +125,7 @@ app.add_exception_handler(AccountValidationError, account_validation_handler)
 app.add_exception_handler(AccountOwnershipError, account_ownership_handler)
 app.add_exception_handler(AccountArchivedError, account_archived_handler)
 app.add_exception_handler(AccountBalanceError, account_balance_handler)
+app.add_exception_handler(AccountReadOnlyExcessError, account_read_only_excess_handler)
 app.add_exception_handler(ExternalServiceError, external_service_handler)
 app.add_exception_handler(HTTPException, http_exception_handler)
 

@@ -1,22 +1,22 @@
 // Import contact types
-import { ContactResponse } from './contact';
+import { ContactResponse } from "./contact";
 
-export type DebtType = 
-  | 'CREDIT_CARD'
-  | 'LOAN'
-  | 'MORTGAGE'
-  | 'PERSONAL_LOAN'
-  | 'AUTO_LOAN'
-  | 'STUDENT_LOAN'
-  | 'OTHER';
+export type DebtType =
+  | "CREDIT_CARD"
+  | "LOAN"
+  | "MORTGAGE"
+  | "PERSONAL_LOAN"
+  | "AUTO_LOAN"
+  | "STUDENT_LOAN"
+  | "OTHER";
 
-export type PaymentMethod = 
-  | 'CASH'
-  | 'CARD'
-  | 'TRANSFER'
-  | 'CHECK'
-  | 'AUTOMATIC'
-  | 'OTHER';
+export type PaymentMethod =
+  | "CASH"
+  | "CARD"
+  | "TRANSFER"
+  | "CHECK"
+  | "AUTOMATIC"
+  | "OTHER";
 
 // Debt Interfaces
 export interface DebtCreate {
@@ -69,6 +69,7 @@ export interface DebtResponse {
   updated_at: string;
   contact?: ContactResponse | null;
   payment_count?: number; // Number of payments for this debt
+  is_read_only?: boolean;
 }
 
 // Debt Payment Interfaces

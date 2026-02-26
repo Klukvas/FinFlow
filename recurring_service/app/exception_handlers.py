@@ -16,7 +16,8 @@ from app.exceptions import (
     ServiceClientError,
     DatabaseError,
     ValidationError,
-    InternalServerError
+    InternalServerError,
+    RecurringReadOnlyExcessError
 )
 from app.utils.logger import get_logger
 
@@ -42,6 +43,8 @@ async def base_recurring_error_handler(request: Request, exc: BaseRecurringError
         ValidationError
     )):
         status_code = 400
+    elif isinstance(exc, RecurringReadOnlyExcessError):
+        status_code = 403
     elif isinstance(exc, (PaymentExecutionError, ServiceClientError, DatabaseError)):
         status_code = 500
     elif isinstance(exc, InternalServerError):

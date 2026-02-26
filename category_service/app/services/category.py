@@ -13,7 +13,8 @@ from app.exceptions import (
     CategoryDepthExceededError,
     CategoryNameConflictError,
     CategoryOwnershipError,
-    CategoryLimitExceededError
+    CategoryLimitExceededError,
+    CategoryReadOnlyExcessError
 )
 from app.utils.logger import get_logger, log_operation, log_security_event
 from app.config import settings
@@ -644,6 +645,19 @@ class CategoryService(WorkspaceAuthorizationMixin):
             self.logger.error(f"Error retrieving category children: {e}")
             raise CategoryValidationError("Failed to retrieve category children")
 
+    def _get_ordered_ids(self, workspace_id: UUID) -> list:
+        rows = self.db.query(Category.id).filter(
+            Category.workspace_id == workspace_id
+        ).order_by(Category.created_at.asc(), Category.id.asc()).all()
+        return [row[0] for row in rows]
+
+    def _check_modify_allowed(self, record_id: int, user_id: int, workspace_id: UUID):
+        ordered_ids = self._get_ordered_ids(workspace_id)
+        if not self.subscription_client.check_modify_allowed(user_id, record_id, "categories", ordered_ids):
+            features = self.subscription_client.get_user_features(user_id) or {}
+            limit = features.get("categories", {}).get("limit_value", 0)
+            raise CategoryReadOnlyExcessError(record_id, len(ordered_ids), limit)
+
     def update(self, category_id: int, data: CategoryCreate, user_id: int, workspace_id: UUID) -> Category:
         """Update a category with proper validation and transaction management"""
         try:
@@ -664,7 +678,9 @@ class CategoryService(WorkspaceAuthorizationMixin):
             
             if category.user_id != user_id:
                 raise CategoryOwnershipError("Category belongs to another user")
-            
+
+            self._check_modify_allowed(category_id, user_id, workspace_id)
+
             # If changing parent, validate new parent is in same workspace
             if data.parent_id and data.parent_id != category.parent_id:
                 new_parent = self.db.query(Category).filter(Category.id == data.parent_id).first()
@@ -699,8 +715,9 @@ class CategoryService(WorkspaceAuthorizationMixin):
             
             return category
             
-        except (CategoryNotFoundError, CategoryValidationError, CategoryNameConflictError, 
-                CircularRelationshipError, CategoryOwnershipError, CategoryDepthExceededError):
+        except (CategoryNotFoundError, CategoryValidationError, CategoryNameConflictError,
+                CircularRelationshipError, CategoryOwnershipError, CategoryDepthExceededError,
+                CategoryReadOnlyExcessError):
             self.db.rollback()
             raise
         except IntegrityError as e:

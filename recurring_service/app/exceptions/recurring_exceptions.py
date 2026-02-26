@@ -90,3 +90,15 @@ class RecurringLimitExceededError(BaseRecurringError):
             f"Recurring payment limit exceeded. You have {current_count} recurring payments but your plan allows only {limit} recurring payments.",
             "RECURRING_LIMIT_EXCEEDED"
         )
+
+
+class RecurringReadOnlyExcessError(BaseRecurringError):
+    """Raised when recurring payment exceeds plan limit and is read-only"""
+    def __init__(self, payment_id, current_count: int, limit: int):
+        super().__init__(
+            f"This recurring payment is read-only. You have {current_count} recurring payments but your plan allows {limit}. Upgrade or delete excess recurring payments.",
+            "RECORD_READ_ONLY_EXCESS"
+        )
+        self.payment_id = payment_id
+        self.current_count = current_count
+        self.limit = limit
