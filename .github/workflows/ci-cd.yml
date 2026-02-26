@@ -6,6 +6,7 @@ on:
     paths:
       - 'frontend/**'
       - '*/app/**'
+      - '**/alembic/**'
       - '**/Dockerfile'
       - '**/startup.sh'
       - '**/requirements.txt'
