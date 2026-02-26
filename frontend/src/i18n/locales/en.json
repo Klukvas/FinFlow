@@ -1622,6 +1622,7 @@
       "cancel": "Cancel",
       "parseButton": "Parse PDF",
       "parsing": "Parsing...",
+      "bankRequestBanner": "Don't see your bank? Send us a sample statement and we'll add support for it:",
       "errors": {
         "selectPdf": "Please select a PDF file",
         "fileSizeLimit": "File size must be less than 10MB",

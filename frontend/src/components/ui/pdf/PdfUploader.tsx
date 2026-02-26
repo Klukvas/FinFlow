@@ -190,6 +190,19 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({
             </select>
           </div>
 
+          {/* Bank Request Banner */}
+          <div className="p-3 rounded-lg border theme-border bg-blue-50 dark:bg-blue-950/30">
+            <p className="text-sm theme-text-secondary">
+              {t("pdfParserPage.uploadModal.bankRequestBanner")}{" "}
+              <a
+                href="mailto:support@financeapp.com"
+                className="text-blue-600 dark:text-blue-400 underline font-medium"
+              >
+                support@financeapp.com
+              </a>
+            </p>
+          </div>
+
           {/* File Upload Area */}
           <div>
             <label className="block text-sm font-medium theme-text-primary mb-2">
