@@ -742,3 +742,5 @@ export const Debts = () => {
     </div>
   );
 };
+
+export default Debts;

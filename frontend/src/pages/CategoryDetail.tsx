@@ -389,3 +389,5 @@ export const CategoryDetail: React.FC = () => {
     </div>
   );
 };
+
+export default CategoryDetail;

@@ -486,3 +486,5 @@ export const PaymentReturn: React.FC = () => {
     </div>
   );
 };
+
+export default PaymentReturn;

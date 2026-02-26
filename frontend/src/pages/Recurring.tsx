@@ -465,3 +465,5 @@ export const Recurring = () => {
     </div>
   );
 };
+
+export default Recurring;

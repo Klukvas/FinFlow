@@ -1,0 +1,41 @@
+# FinFlow - Smart Personal Finance Management
+
+> FinFlow is a web application for personal and business finance management with AI-powered bank statement parsing, automatic transaction categorization, budgeting, and financial analytics.
+
+## Key Features
+
+- **Bank Statement Parsing**: Upload PDF bank statements and automatically extract transactions. Supports Monobank, PrivatBank, and other banks.
+- **Automatic Categorization**: AI-powered transaction categorization using MCC codes and custom rules.
+- **Income & Expense Tracking**: Track all income and expenses with detailed category breakdowns.
+- **Recurring Payments**: Monitor and manage subscriptions and recurring financial obligations.
+- **Debt Management**: Track loans, credits, and payment schedules with progress visualization.
+- **Financial Goals**: Set savings goals with progress tracking and projected completion dates.
+- **Multi-Workspace**: Personal and shared workspaces for individual or team finance management.
+- **Multi-Currency Support**: Handle transactions in multiple currencies with automatic conversion.
+- **Financial Analytics**: Charts, trends, and insights to understand spending patterns.
+
+## Pricing
+
+- **Free Plan**: Basic features with limited records
+- **Basic Plan**: Extended limits for individual users
+- **Professional Plan**: Full features for power users and small businesses
+
+## Technology
+
+- React frontend with multilingual support (English, Ukrainian, Russian)
+- Python microservices backend
+- RESTful API architecture
+- Banking-level data encryption
+
+## Links
+
+- Website: https://finflow.ltd
+- Features: https://finflow.ltd/features
+- Pricing: https://finflow.ltd/pricing
+- Contact: https://finflow.ltd/contact
+- About: https://finflow.ltd/about
+
+## Contact
+
+- Email: finflow@flux-lab.dev
+- Company: FluxLab

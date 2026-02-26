@@ -374,3 +374,5 @@ export const Expense = () => {
     </div>
   );
 };
+
+export default Expense;

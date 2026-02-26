@@ -13,6 +13,7 @@
     
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="manifest" href="/manifest.json" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#2563eb" />
     
@@ -33,7 +34,7 @@
     <meta property="og:url" content="https://finflow.ltd/" />
     <meta property="og:title" content="FinFlow - Умный учет финансов и бюджетирование" />
     <meta property="og:description" content="Автоматизируйте учет финансов с помощью ИИ. Парсинг банковских выписок, категоризация трат, планирование бюджета и аналитика расходов." />
-    <meta property="og:image" content="https://finflow.ltd/og-image.jpg" />
+    <meta property="og:image" content="https://finflow.ltd/og-image.png" />
     <meta property="og:site_name" content="FinFlow" />
     <meta property="og:locale" content="ru_RU" />
     
@@ -42,7 +43,7 @@
     <meta property="twitter:url" content="https://finflow.ltd/" />
     <meta property="twitter:title" content="FinFlow - Умный учет финансов и бюджетирование" />
     <meta property="twitter:description" content="Автоматизируйте учет финансов с помощью ИИ. Парсинг банковских выписок, категоризация трат, планирование бюджета и аналитика расходов." />
-    <meta property="twitter:image" content="https://finflow.ltd/og-image.jpg" />
+    <meta property="twitter:image" content="https://finflow.ltd/og-image.png" />
     
     <!-- Additional SEO -->
     <meta name="application-name" content="FinFlow" />
@@ -50,30 +51,72 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     
-    <!-- Structured Data -->
+    <!-- Structured Data: Organization -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "WebApplication",
+      "@type": "Organization",
+      "name": "FluxLab",
+      "url": "https://finflow.ltd",
+      "logo": "https://finflow.ltd/favicon.png",
+      "email": "finflow@flux-lab.dev"
+    }
+    </script>
+
+    <!-- Structured Data: SoftwareApplication -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
       "name": "FinFlow",
-      "description": "Умное приложение для учета финансов с автоматической категоризацией трат",
+      "description": "Умное приложение для учета финансов с автоматической категоризацией трат, парсингом банковских выписок и финансовой аналитикой",
       "url": "https://finflow.ltd",
       "applicationCategory": "FinanceApplication",
       "operatingSystem": "Web",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "USD"
-      },
+      "availableOnDevice": "Desktop, Mobile",
+      "inLanguage": ["ru", "uk", "en"],
+      "offers": [
+        {
+          "@type": "Offer",
+          "name": "Free",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        {
+          "@type": "Offer",
+          "name": "Basic",
+          "price": "4.99",
+          "priceCurrency": "USD",
+          "priceSpecification": {
+            "@type": "UnitPriceSpecification",
+            "price": "4.99",
+            "priceCurrency": "USD",
+            "billingDuration": "P1M"
+          }
+        },
+        {
+          "@type": "Offer",
+          "name": "Professional",
+          "price": "9.99",
+          "priceCurrency": "USD",
+          "priceSpecification": {
+            "@type": "UnitPriceSpecification",
+            "price": "9.99",
+            "priceCurrency": "USD",
+            "billingDuration": "P1M"
+          }
+        }
+      ],
       "creator": {
         "@type": "Organization",
         "name": "FluxLab"
-      }
+      },
+      "featureList": "Bank statement PDF parsing, Automatic transaction categorization, Income and expense tracking, Recurring payment management, Debt tracking, Financial goals, Multi-workspace, Multi-currency support, Financial analytics"
     }
     </script>
     
     <!-- Paddle.js for checkout overlay -->
-    <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+    <script defer src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
 
     <!-- Preconnect to external domains -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -81,6 +124,12 @@
     
     <!-- Canonical URL -->
     <link rel="canonical" href="https://finflow.ltd/" />
+
+    <!-- Alternate languages -->
+    <link rel="alternate" hreflang="ru" href="https://finflow.ltd/" />
+    <link rel="alternate" hreflang="uk" href="https://finflow.ltd/" />
+    <link rel="alternate" hreflang="en" href="https://finflow.ltd/" />
+    <link rel="alternate" hreflang="x-default" href="https://finflow.ltd/" />
   </head>
   <body>
     <div id="root"></div>

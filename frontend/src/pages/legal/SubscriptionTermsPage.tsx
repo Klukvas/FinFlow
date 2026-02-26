@@ -281,3 +281,5 @@ export const SubscriptionTermsPage: React.FC = () => {
     </div>
   );
 };
+
+export default SubscriptionTermsPage;

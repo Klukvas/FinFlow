@@ -315,3 +315,5 @@ export const CancelHelpPage: React.FC = () => {
     </div>
   );
 };
+
+export default CancelHelpPage;

@@ -4,6 +4,9 @@ Allow: /
 # Sitemap
 Sitemap: https://finflow.ltd/sitemap.xml
 
+# LLMs.txt for AI crawlers
+# See: https://finflow.ltd/llms.txt
+
 # Disallow API routes and authenticated pages
 Disallow: /api/
 Disallow: /login
@@ -17,6 +20,9 @@ Disallow: /debts
 Disallow: /account
 Disallow: /profile
 Disallow: /pdf-parser
+Disallow: /workspaces
+Disallow: /invites
+Disallow: /payment
 
 # Allow public pages
 Allow: /
@@ -24,6 +30,9 @@ Allow: /about
 Allow: /features
 Allow: /pricing
 Allow: /contact
+Allow: /terms
+Allow: /privacy
+Allow: /refund
 
 # Crawl delay
 Crawl-delay: 1

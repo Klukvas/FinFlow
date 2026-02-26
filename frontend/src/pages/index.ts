@@ -19,6 +19,7 @@ import { Contact } from "./Contact";
 import { Terms } from "./Terms";
 import { Refund } from "./Refund";
 import { PrivacyPolicy } from "./PrivacyPolicy";
+import { NotFound } from "./NotFound";
 
 export {
   Account,
@@ -42,4 +43,5 @@ export {
   Terms,
   Refund,
   PrivacyPolicy,
+  NotFound,
 };

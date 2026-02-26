@@ -477,3 +477,5 @@ export const Category: React.FC = () => {
     </div>
   );
 };
+
+export default Category;

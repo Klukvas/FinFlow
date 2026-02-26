@@ -843,3 +843,5 @@ export const PdfParser: React.FC = () => {
     </div>
   );
 };
+
+export default PdfParser;

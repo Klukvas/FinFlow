@@ -401,3 +401,5 @@ export const Account: React.FC = () => {
     </div>
   );
 };
+
+export default Account;

@@ -31,3 +31,5 @@ export const PaymentHistory: React.FC = () => {
     </>
   );
 };
+
+export default PaymentHistory;
