@@ -351,13 +351,13 @@ class AccountService(WorkspaceAuthorizationMixin):
             # Get the most recent transaction date
             all_transactions = []
             if expenses:
-                all_transactions.extend([(exp.get('date'), 'expense') for exp in expenses])
+                all_transactions.extend([(exp.get('date'), 'expense') for exp in expenses if exp.get('date')])
             if incomes:
-                all_transactions.extend([(inc.get('date'), 'income') for inc in incomes])
+                all_transactions.extend([(inc.get('date'), 'income') for inc in incomes if inc.get('date')])
             
             if all_transactions:
                 # Sort by date and get the most recent
-                all_transactions.sort(key=lambda x: x[0], reverse=True)
+                all_transactions.sort(key=lambda x: x[0] or '', reverse=True)
                 last_transaction_date = all_transactions[0][0]
             
         except Exception as e:
@@ -391,28 +391,40 @@ class AccountService(WorkspaceAuthorizationMixin):
             total_expenses = 0.0
             
             for expense in expenses_data:
+                expense_id = expense.get('id')
+                expense_amount = expense.get('amount')
+                expense_date = expense.get('date')
+                if expense_id is None or expense_amount is None or expense_date is None:
+                    self.logger.warning(f"Skipping incomplete expense record: {expense}")
+                    continue
                 transactions.append(AccountTransaction(
-                    id=expense['id'],
-                    amount=-expense['amount'],  # Expenses are negative
+                    id=expense_id,
+                    amount=-expense_amount,  # Expenses are negative
                     description=expense.get('description'),
-                    date=expense['date'],
+                    date=expense_date,
                     type='expense',
                     category_id=expense.get('category_id'),
                     category_name=expense.get('category_name')
                 ))
-                total_expenses += expense['amount']
-            
+                total_expenses += expense_amount
+
             for income in incomes_data:
+                income_id = income.get('id')
+                income_amount = income.get('amount')
+                income_date = income.get('date')
+                if income_id is None or income_amount is None or income_date is None:
+                    self.logger.warning(f"Skipping incomplete income record: {income}")
+                    continue
                 transactions.append(AccountTransaction(
-                    id=income['id'],
-                    amount=income['amount'],
+                    id=income_id,
+                    amount=income_amount,
                     description=income.get('description'),
-                    date=income['date'],
+                    date=income_date,
                     type='income',
                     category_id=income.get('category_id'),
                     category_name=income.get('category_name')
                 ))
-                total_income += income['amount']
+                total_income += income_amount
             
             # Sort transactions by date (most recent first)
             transactions.sort(key=lambda x: x.date, reverse=True)

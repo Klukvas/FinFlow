@@ -87,7 +87,7 @@ async def get_incomes_by_account(
 
         logger.info(f"Retrieved {len(incomes)} incomes for account {account_id} and user {user_id}")
 
-        return [IncomeOut.from_orm(income) for income in incomes]
+        return [IncomeOut.model_validate(income) for income in incomes]
 
     except Exception as e:
         logger.error(f"Unexpected error retrieving incomes by account: {e}")

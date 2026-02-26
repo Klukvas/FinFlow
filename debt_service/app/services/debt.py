@@ -364,8 +364,11 @@ class DebtService(WorkspaceAuthorizationMixin):
         all_debts = self.db.query(Debt).filter(Debt.workspace_id == workspace_id).all()
         debt_currency_map = {debt.id: debt.currency or settings.DEFAULT_CURRENCY for debt in all_debts}
         
-        all_payments = self.db.query(DebtPayment).filter(
-            DebtPayment.user_id == user_id
+        all_payments = self.db.query(DebtPayment).join(
+            Debt, DebtPayment.debt_id == Debt.id
+        ).filter(
+            DebtPayment.user_id == user_id,
+            Debt.workspace_id == workspace_id
         ).all()
         
         total_payments = 0.0

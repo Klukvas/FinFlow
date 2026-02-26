@@ -172,7 +172,7 @@ class IncomeService(WorkspaceAuthorizationMixin):
         if not income:
             raise IncomeNotFoundError(f"Income {income_id} not found")
         
-        return IncomeOut.from_orm(income)
+        return IncomeOut.model_validate(income)
     
     def get_all(self, user_id: int, workspace_id: UUID, skip: int = 0, limit: int = 100) -> List[IncomeOut]:
         """Get all incomes in the workspace"""
@@ -184,7 +184,7 @@ class IncomeService(WorkspaceAuthorizationMixin):
             Income.workspace_id == workspace_id
         ).order_by(desc(Income.date)).offset(skip).limit(limit).all()
         
-        return [IncomeOut.from_orm(income) for income in incomes]
+        return [IncomeOut.model_validate(income) for income in incomes]
     
     def get_all_paginated(self, user_id: int, workspace_id: UUID, page: int = 1, size: int = 50) -> tuple[List[Income], int]:
         """Get paginated incomes for the user in the workspace"""
@@ -248,7 +248,7 @@ class IncomeService(WorkspaceAuthorizationMixin):
         )
         
         # Convert incomes to response format
-        income_responses = [IncomeOut.from_orm(income) for income in incomes]
+        income_responses = [IncomeOut.model_validate(income) for income in incomes]
         
         return IncomesByCategoryResponse(
             incomes=income_responses,
@@ -281,9 +281,13 @@ class IncomeService(WorkspaceAuthorizationMixin):
                 db_income.amount = round(income_update.amount, 2)
             
             if income_update.date is not None:
-                if income_update.date > datetime.utcnow():
+                try:
+                    parsed_date = datetime.fromisoformat(income_update.date)
+                except ValueError:
+                    raise IncomeDateError("Invalid date format. Use YYYY-MM-DD format", IncomeErrorCodes.INCOME_DATE_INVALID_FORMAT)
+                if parsed_date.date() > datetime.utcnow().date():
                     raise IncomeDateError("Income date cannot be in the future", IncomeErrorCodes.INCOME_DATE_FUTURE)
-                db_income.date = income_update.date
+                db_income.date = parsed_date
             
             if income_update.description is not None:
                 if len(income_update.description) > 500:
@@ -313,7 +317,7 @@ class IncomeService(WorkspaceAuthorizationMixin):
             self.db.refresh(db_income)
             
             logger.info(f"Updated income {income_id} for user {user_id}")
-            return IncomeOut.from_orm(db_income)
+            return IncomeOut.model_validate(db_income)
             
         except Exception as e:
             self.db.rollback()

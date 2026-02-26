@@ -59,6 +59,9 @@ class RecurringPaymentService(WorkspaceAuthorizationMixin):
         db: Session
     ) -> RecurringPayment:
         """Создать новый повторяющийся платеж"""
+        # Authorize workspace access first
+        self.authorize_workspace_access(workspace_id, user_id, "member", "create_recurring_payment")
+
         # Check subscription limits before creating
         current_count = db.query(RecurringPayment).filter(RecurringPayment.workspace_id == workspace_id).count()
         if not self.subscription_client.check_limit(user_id, current_count, "recurring"):
@@ -66,9 +69,6 @@ class RecurringPaymentService(WorkspaceAuthorizationMixin):
             recurring_feature = features.get("recurring", {})
             limit = recurring_feature.get("limit_value", 0)
             raise RecurringLimitExceededError(current_count, limit)
-        
-        # Authorize workspace access first
-        self.authorize_workspace_access(workspace_id, user_id, "member", "create_recurring_payment")
         
         # Валидировать существование категории
         if not await self.category_client.validate_category_exists(payment_data.category_id, user_id, workspace_id):
@@ -138,13 +138,14 @@ class RecurringPaymentService(WorkspaceAuthorizationMixin):
         )
     
     def get_recurring_payment(
-        self, 
-        payment_id: UUID, 
+        self,
+        payment_id: UUID,
         user_id: int,
-        workspace_id: UUID, 
+        workspace_id: UUID,
         db: Session
     ) -> RecurringPayment:
         """Получить повторяющийся платеж по ID"""
+        self.authorize_workspace_access(workspace_id, user_id, "viewer", "get_recurring_payment")
         payment = db.query(RecurringPayment).filter(
             RecurringPayment.id == payment_id,
             RecurringPayment.workspace_id == workspace_id
@@ -164,6 +165,7 @@ class RecurringPaymentService(WorkspaceAuthorizationMixin):
         db: Session
     ) -> RecurringPayment:
         """Обновить повторяющийся платеж"""
+        self.authorize_workspace_access(workspace_id, user_id, "member", "update_recurring_payment")
         payment = db.query(RecurringPayment).filter(
             RecurringPayment.id == payment_id,
             RecurringPayment.workspace_id == workspace_id
@@ -197,13 +199,14 @@ class RecurringPaymentService(WorkspaceAuthorizationMixin):
         return payment
     
     def delete_recurring_payment(
-        self, 
-        payment_id: UUID, 
+        self,
+        payment_id: UUID,
         user_id: int,
-        workspace_id: UUID, 
+        workspace_id: UUID,
         db: Session
     ) -> None:
         """Удалить повторяющийся платеж"""
+        self.authorize_workspace_access(workspace_id, user_id, "member", "delete_recurring_payment")
         payment = db.query(RecurringPayment).filter(
             RecurringPayment.id == payment_id,
             RecurringPayment.workspace_id == workspace_id
@@ -218,13 +221,14 @@ class RecurringPaymentService(WorkspaceAuthorizationMixin):
         logger.info(f"Deleted recurring payment {payment_id} for user {user_id}")
     
     def pause_recurring_payment(
-        self, 
-        payment_id: UUID, 
-        user_id: int, 
+        self,
+        payment_id: UUID,
+        user_id: int,
         workspace_id: UUID,
         db: Session
     ) -> None:
         """Приостановить повторяющийся платеж"""
+        self.authorize_workspace_access(workspace_id, user_id, "member", "pause_recurring_payment")
         payment = db.query(RecurringPayment).filter(
             RecurringPayment.id == payment_id,
             RecurringPayment.workspace_id == workspace_id
@@ -243,13 +247,14 @@ class RecurringPaymentService(WorkspaceAuthorizationMixin):
         logger.info(f"Paused recurring payment {payment_id} for user {user_id}")
     
     def resume_recurring_payment(
-        self, 
-        payment_id: UUID, 
-        user_id: int, 
+        self,
+        payment_id: UUID,
+        user_id: int,
         workspace_id: UUID,
         db: Session
     ) -> None:
         """Возобновить повторяющийся платеж"""
+        self.authorize_workspace_access(workspace_id, user_id, "member", "resume_recurring_payment")
         payment = db.query(RecurringPayment).filter(
             RecurringPayment.id == payment_id,
             RecurringPayment.workspace_id == workspace_id
@@ -280,6 +285,7 @@ class RecurringPaymentService(WorkspaceAuthorizationMixin):
         size: int = 50
     ) -> PaymentScheduleListResponse:
         """Получить расписание выполнения для повторяющегося платежа"""
+        self.authorize_workspace_access(workspace_id, user_id, "viewer", "get_payment_schedules")
         # Проверить что платеж принадлежит пользователю
         payment = db.query(RecurringPayment).filter(
             RecurringPayment.id == payment_id,
@@ -317,12 +323,13 @@ class RecurringPaymentService(WorkspaceAuthorizationMixin):
         )
     
     def get_payment_statistics(
-        self, 
-        user_id: int, 
+        self,
+        user_id: int,
         workspace_id: UUID,
         db: Session
     ) -> dict:
         """Получить статистику по повторяющимся платежам"""
+        self.authorize_workspace_access(workspace_id, user_id, "viewer", "get_payment_statistics")
         # Общая статистика
         total_payments = db.query(RecurringPayment).filter(
             RecurringPayment.workspace_id == workspace_id
