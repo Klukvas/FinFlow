@@ -54,6 +54,7 @@ class Settings(BaseSettings):
     # Income specific settings
     MAX_AMOUNT: float = 999999.99
     MAX_DESCRIPTION_LENGTH: int = 500
+    DEFAULT_CURRENCY: str = "USD"
     
     # HTTP settings
     HTTP_TIMEOUT: float = 5.0

@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from app.routers import auth, logging, internal, admin
@@ -31,8 +32,6 @@ import uuid
 
 logger = get_logger(__name__)
 
-# Create database tables
-Base.metadata.create_all(bind=engine)
 
 # Request logging middleware
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
@@ -102,12 +101,35 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             
             raise
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan event handler"""
+    logger.info(
+        "User Service starting up",
+        category="application",
+        operation="service_startup",
+        service_name="user_service",
+        version="2.0.0",
+        workspace_service_url=settings.WORKSPACE_SERVICE_URL,
+        has_internal_token=bool(settings.INTERNAL_SECRET_TOKEN),
+        token_length=len(settings.INTERNAL_SECRET_TOKEN) if settings.INTERNAL_SECRET_TOKEN else 0
+    )
+    yield
+    logger.info(
+        "User Service shutting down",
+        category="application",
+        operation="service_shutdown",
+        service_name="user_service"
+    )
+
 app = FastAPI(
     title="User Service",
     description="Microservice for user authentication and management",
-    version="1.0.0",
+    version="2.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    lifespan=lifespan
 )
 
 # Register exception handlers
@@ -134,7 +156,7 @@ app.add_middleware(RequestLoggingMiddleware)
 # 2. CORS (added last, runs first - handles preflight OPTIONS)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all for now
+    allow_origins=settings.cors_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -145,26 +167,3 @@ async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "service": "user-service"}
 
-@app.on_event("startup")
-async def startup_event():
-    """Application startup event"""
-    logger.info(
-        "User Service starting up",
-        category="application",
-        operation="service_startup",
-        service_name="user_service",
-        version="1.0.0",
-        workspace_service_url=settings.WORKSPACE_SERVICE_URL,
-        has_internal_token=bool(settings.INTERNAL_SECRET_TOKEN),
-        token_length=len(settings.INTERNAL_SECRET_TOKEN) if settings.INTERNAL_SECRET_TOKEN else 0
-    )
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Application shutdown event"""
-    logger.info(
-        "User Service shutting down",
-        category="application",
-        operation="service_shutdown",
-        service_name="user_service"
-    )

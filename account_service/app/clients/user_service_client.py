@@ -36,14 +36,14 @@ class UserServiceClient:
             
             if response.status_code == 200:
                 data = response.json()
-                return data.get("base_currency", "USD")
+                return data.get("base_currency", settings.DEFAULT_CURRENCY)
             else:
                 self.logger.warning(f"Failed to fetch user currency: {response.status_code}")
-                return "USD"  # Default to USD
-                
+                return settings.DEFAULT_CURRENCY  # Default to configured currency
+
         except Exception as e:
             self.logger.error(f"Error calling user service: {e}")
-            return "USD"  # Default to USD
+            return settings.DEFAULT_CURRENCY  # Default to configured currency
 
     def close(self):
         """Close HTTP client"""

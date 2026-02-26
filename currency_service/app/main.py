@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.middleware.cors import CORSMiddleware
@@ -82,10 +83,30 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             
             raise
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan event handler"""
+    logger.info(
+        "Currency Service starting up",
+        category="application",
+        operation="service_startup",
+        service_name="currency_service",
+        version=settings.api_version
+    )
+    yield
+    logger.info(
+        "Currency Service shutting down",
+        category="application",
+        operation="service_shutdown",
+        service_name="currency_service"
+    )
+
 app = FastAPI(
     title=settings.api_title,
     version=settings.api_version,
-    debug=settings.debug
+    debug=settings.debug,
+    lifespan=lifespan
 )
 
 # CORS middleware
@@ -121,23 +142,3 @@ async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "service": "currency-service"}
 
-@app.on_event("startup")
-async def startup_event():
-    """Application startup event"""
-    logger.info(
-        "Currency Service starting up",
-        category="application",
-        operation="service_startup",
-        service_name="currency_service",
-        version=settings.api_version
-    )
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Application shutdown event"""
-    logger.info(
-        "Currency Service shutting down",
-        category="application",
-        operation="service_shutdown",
-        service_name="currency_service"
-    )

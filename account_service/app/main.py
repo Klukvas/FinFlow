@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.openapi.utils import get_openapi
 from app.routers import account, internal
@@ -23,7 +24,6 @@ from app.exceptions import (
     AccountErrorCode
 )
 from fastapi.middleware.cors import CORSMiddleware
-from app.database import Base, engine
 from app.config import settings
 from app.utils.logger import get_logger
 import time
@@ -99,9 +99,12 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             raise
 
 
-
-# Create database tables
-Base.metadata.create_all(bind=engine)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan context manager"""
+    logger.info("Account Service starting up...")
+    yield
+    logger.info("Account Service shutting down...")
 
 app = FastAPI(
     title="Account Service",
@@ -109,7 +112,8 @@ app = FastAPI(
     version="2.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
-    swagger_ui_parameters={"persistAuthorization": True}
+    swagger_ui_parameters={"persistAuthorization": True},
+    lifespan=lifespan
 )
 
 # Register exception handlers
@@ -146,17 +150,7 @@ async def health_check():
 @app.get("/")
 async def root():
     """Root endpoint"""
-    return {"message": "Account Service API", "version": "1.0.0"}
-
-@app.on_event("startup")
-async def startup_event():
-    """Application startup event"""
-    logger.info("Account Service starting up...")
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Application shutdown event"""
-    logger.info("Account Service shutting down...")
+    return {"message": "Account Service API", "version": app.version}
 
 def custom_openapi():
     """Custom OpenAPI schema with workspace and bearer auth"""

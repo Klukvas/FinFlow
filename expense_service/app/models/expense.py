@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Date, DateTime, ForeignKey, Index
+from sqlalchemy import Column, Integer, String, Numeric, Date, DateTime, ForeignKey, Index
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from app.database import Base
@@ -7,7 +7,7 @@ class Expense(Base):
     __tablename__ = "expenses"
 
     id = Column(Integer, primary_key=True, index=True)
-    amount = Column(Float, nullable=False)
+    amount = Column(Numeric(12, 2), nullable=False)
     date = Column(Date, server_default=func.now())
     description = Column(String, nullable=True)
 

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, Enum, Index
+from sqlalchemy import Column, Integer, String, Numeric, DateTime, Boolean, Enum, Index
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from app.database import Base
@@ -20,7 +20,7 @@ class Account(Base):
     name = Column(String(100), nullable=False)
     type = Column(Enum(AccountType), nullable=False)
     currency = Column(String(3), nullable=False, default="USD")
-    balance = Column(Float, nullable=False, default=0.0)
+    balance = Column(Numeric(12, 2), nullable=False, default=0.0)
     description = Column(String(500), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     is_archived = Column(Boolean, default=False, nullable=False)

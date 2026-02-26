@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from app.routers import category, internal, mcc
@@ -17,16 +18,12 @@ from app.exceptions import (
     CategoryNameConflictError
 )
 from fastapi.middleware.cors import CORSMiddleware
-from app.database import Base, engine
 from app.config import settings
 from app.utils.logger import get_logger
 import time
 import uuid
 
 logger = get_logger(__name__)
-
-# Create database tables
-Base.metadata.create_all(bind=engine)
 
 # Request logging middleware
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
@@ -96,15 +93,34 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             
             raise
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan context manager"""
+    logger.info(
+        "Category Service starting up",
+        category="application",
+        operation="service_startup",
+        service_name="category_service",
+        version="2.0.0"
+    )
+    yield
+    logger.info(
+        "Category Service shutting down",
+        category="application",
+        operation="service_shutdown",
+        service_name="category_service"
+    )
+
 app = FastAPI(
     title="Category Service",
     description="Microservice for managing hierarchical categories",
-    version="1.0.0",
+    version="2.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
     swagger_ui_parameters={
         "persistAuthorization": True
-    }
+    },
+    lifespan=lifespan
 )
 
 # Configure JWT Bearer authentication for Swagger UI
@@ -197,23 +213,3 @@ async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "service": "category-service"}
 
-@app.on_event("startup")
-async def startup_event():
-    """Application startup event"""
-    logger.info(
-        "Category Service starting up",
-        category="application",
-        operation="service_startup",
-        service_name="category_service",
-        version="1.0.0"
-    )
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Application shutdown event"""
-    logger.info(
-        "Category Service shutting down",
-        category="application",
-        operation="service_shutdown",
-        service_name="category_service"
-    )

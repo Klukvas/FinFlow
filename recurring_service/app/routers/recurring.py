@@ -75,7 +75,7 @@ async def update_recurring_payment(
     )
 
 
-@router.delete("/{payment_id}")
+@router.delete("/{payment_id}", status_code=204)
 async def delete_recurring_payment(
     payment_id: UUID,
     user_id: int = Depends(get_current_user_id),
@@ -84,7 +84,6 @@ async def delete_recurring_payment(
 ):
     """Delete recurring payment. Requires 'member' role."""
     recurring_payment_service.delete_recurring_payment(payment_id, user_id, workspace_id, db)
-    return {"message": "Recurring payment deleted successfully"}
 
 
 @router.post("/{payment_id}/pause")

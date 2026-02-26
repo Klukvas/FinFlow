@@ -1,4 +1,5 @@
 """Workspace Service Client for authorization"""
+import traceback
 import httpx
 from typing import Optional
 from uuid import UUID
@@ -14,6 +15,7 @@ class WorkspaceClient:
         self.base_url = settings.WORKSPACE_SERVICE_URL
         self.internal_token = settings.INTERNAL_SECRET_TOKEN
         self.timeout = 5.0
+        self.client = httpx.Client(timeout=self.timeout)
 
     def _get_headers(self) -> dict:
         """Get headers for internal API calls"""
@@ -23,19 +25,14 @@ class WorkspaceClient:
         return headers
 
     def authorize(
-        self, 
-        workspace_id: UUID, 
-        user_id: int, 
+        self,
+        workspace_id: UUID,
+        user_id: int,
         required_role: str = "viewer"
     ) -> tuple[bool, Optional[str]]:
         """
         Check if user has required role in workspace.
-        
-        Args:
-            workspace_id: The workspace ID to check
-            user_id: The user ID to authorize
-            required_role: Required role (viewer, member, admin, owner)
-            
+
         Returns:
             Tuple of (authorized: bool, user_role: Optional[str])
         """
@@ -45,7 +42,7 @@ class WorkspaceClient:
                 "user_id": user_id,
                 "required_role": required_role
             }
-            
+
             logger.info(
                 "Authorizing user in workspace",
                 extra={
@@ -55,72 +52,69 @@ class WorkspaceClient:
                     "required_role": required_role
                 }
             )
-            
-            with httpx.Client(timeout=self.timeout) as client:
-                response = client.post(
-                    url,
-                    json=payload,
-                    headers=self._get_headers()
+
+            response = self.client.post(
+                url,
+                json=payload,
+                headers=self._get_headers()
+            )
+
+            if response.status_code == 200:
+                data = response.json()
+                authorized = data.get("authorized", False)
+                role = data.get("role")
+
+                logger.info(
+                    "Authorization check completed",
+                    extra={
+                        "operation": "workspace_authorize",
+                        "user_id": user_id,
+                        "workspace_id": str(workspace_id),
+                        "authorized": authorized,
+                        "role": role
+                    }
                 )
-                
-                if response.status_code == 200:
-                    data = response.json()
-                    authorized = data.get("authorized", False)
-                    role = data.get("role")
-                    
-                    logger.info(
-                        "Authorization check completed",
-                        extra={
-                            "operation": "workspace_authorize",
-                            "user_id": user_id,
-                            "workspace_id": str(workspace_id),
-                            "authorized": authorized,
-                            "role": role
-                        }
-                    )
-                    return authorized, role
-                elif response.status_code == 403:
-                    logger.warning(
-                        "User not authorized in workspace",
-                        extra={
-                            "operation": "workspace_authorize",
-                            "user_id": user_id,
-                            "workspace_id": str(workspace_id),
-                            "required_role": required_role
-                        }
-                    )
-                    return False, None
-                elif response.status_code == 404:
-                    logger.warning(
-                        "Workspace not found",
-                        extra={
-                            "operation": "workspace_authorize",
-                            "workspace_id": str(workspace_id)
-                        }
-                    )
-                    return False, None
-                else:
-                    # Try to get response body
-                    try:
-                        response_body = response.text
-                    except:
-                        response_body = "unable to read"
-                    
-                    logger.error(
-                        f"Unexpected response from workspace_service: {response.status_code}",
-                        extra={
-                            "operation": "workspace_authorize",
-                            "user_id": user_id,
-                            "workspace_id": str(workspace_id),
-                            "status_code": response.status_code,
-                            "response_body": response_body[:500],
-                            "headers": dict(response.headers)
-                        }
-                    )
-                    return False, None
-                    
+                return authorized, role
+            elif response.status_code == 403:
+                logger.warning(
+                    "User not authorized in workspace",
+                    extra={
+                        "operation": "workspace_authorize",
+                        "user_id": user_id,
+                        "workspace_id": str(workspace_id),
+                        "required_role": required_role
+                    }
+                )
+                return False, None
+            elif response.status_code == 404:
+                logger.warning(
+                    "Workspace not found",
+                    extra={
+                        "operation": "workspace_authorize",
+                        "workspace_id": str(workspace_id)
+                    }
+                )
+                return False, None
+            else:
+                try:
+                    response_body = response.text
+                except Exception:
+                    response_body = "unable to read"
+
+                logger.error(
+                    f"Unexpected response from workspace_service: {response.status_code}",
+                    extra={
+                        "operation": "workspace_authorize",
+                        "user_id": user_id,
+                        "workspace_id": str(workspace_id),
+                        "status_code": response.status_code,
+                        "response_body": response_body[:500],
+                        "headers": dict(response.headers)
+                    }
+                )
+                return False, None
+
         except httpx.TimeoutException as e:
-            import traceback
             logger.error(
                 f"Timeout while authorizing user in workspace: {e}",
                 extra={
@@ -133,7 +127,6 @@ class WorkspaceClient:
             )
             return False, None
         except httpx.RequestError as e:
-            import traceback
             logger.error(
                 f"Request error while authorizing user: {e}",
                 extra={
@@ -147,7 +140,6 @@ class WorkspaceClient:
             )
             return False, None
         except Exception as e:
-            import traceback
             logger.error(
                 f"Unexpected error while authorizing user: {e.__class__.__name__} - {e}",
                 extra={
@@ -162,31 +154,21 @@ class WorkspaceClient:
             return False, None
 
     def get_user_role(self, workspace_id: UUID, user_id: int) -> Optional[str]:
-        """
-        Get user's role in workspace.
-        
-        Args:
-            workspace_id: The workspace ID
-            user_id: The user ID
-            
-        Returns:
-            User's role or None if not a member
-        """
+        """Get user's role in workspace."""
         try:
             url = f"{self.base_url}/internal/workspaces/{workspace_id}/role/{user_id}"
-            
-            with httpx.Client(timeout=self.timeout) as client:
-                response = client.get(
-                    url,
-                    headers=self._get_headers()
-                )
-                
-                if response.status_code == 200:
-                    data = response.json()
-                    return data.get("role")
-                else:
-                    return None
-                    
+
+            response = self.client.get(
+                url,
+                headers=self._get_headers()
+            )
+
+            if response.status_code == 200:
+                data = response.json()
+                return data.get("role")
+            else:
+                return None
+
         except Exception as e:
             logger.error(
                 f"Error getting user role: {e}",
@@ -197,5 +179,3 @@ class WorkspaceClient:
                 }
             )
             return None
-
-

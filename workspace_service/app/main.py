@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.exceptions import RequestValidationError
@@ -54,10 +55,6 @@ import uuid
 
 logger = get_logger(__name__)
 
-# Create database tables (skip in test environment where engine is None)
-if engine is not None:
-    Base.metadata.create_all(bind=engine)
-
 
 # Request logging middleware
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
@@ -103,12 +100,26 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             raise
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan event handler"""
+    logger.info(
+        "Workspace Service starting up",
+        extra={
+            "has_internal_token": bool(settings.INTERNAL_SECRET_TOKEN),
+            "token_length": len(settings.INTERNAL_SECRET_TOKEN) if settings.INTERNAL_SECRET_TOKEN else 0
+        }
+    )
+    yield
+    logger.info("Workspace Service shutting down")
+
 app = FastAPI(
     title="Workspace Service",
     description="Microservice for workspace and group management",
-    version="1.0.0",
+    version="2.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    lifespan=lifespan
 )
 
 # Register exception handlers
@@ -162,20 +173,4 @@ async def health_check():
     return {"status": "healthy", "service": "workspace-service"}
 
 
-@app.on_event("startup")
-async def startup_event():
-    """Application startup event"""
-    logger.info(
-        "Workspace Service starting up",
-        extra={
-            "has_internal_token": bool(settings.INTERNAL_SECRET_TOKEN),
-            "token_length": len(settings.INTERNAL_SECRET_TOKEN) if settings.INTERNAL_SECRET_TOKEN else 0
-        }
-    )
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Application shutdown event"""
-    logger.info("Workspace Service shutting down")
 

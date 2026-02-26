@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Date, DateTime, ForeignKey, Text, Boolean, Index
+from sqlalchemy import Column, Integer, String, Float, Numeric, Date, DateTime, ForeignKey, Text, Boolean, Index
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
@@ -45,10 +45,10 @@ class Debt(Base):
     
     # Financial details
     currency = Column(String(3), nullable=False, default='USD')  # ISO currency code
-    initial_amount = Column(Float, nullable=False)
-    current_balance = Column(Float, nullable=False)
-    interest_rate = Column(Float, nullable=True)  # Annual percentage rate
-    minimum_payment = Column(Float, nullable=True)
+    initial_amount = Column(Numeric(12, 2), nullable=False)
+    current_balance = Column(Numeric(12, 2), nullable=False)
+    interest_rate = Column(Numeric(8, 4), nullable=True)  # Annual percentage rate
+    minimum_payment = Column(Numeric(12, 2), nullable=True)
     
     # Dates
     start_date = Column(Date, nullable=False)
@@ -81,9 +81,9 @@ class DebtPayment(Base):
     user_id = Column(Integer, nullable=False, index=True)
     
     # Payment details
-    amount = Column(Float, nullable=False)
-    principal_amount = Column(Float, nullable=True)  # Amount that reduces principal
-    interest_amount = Column(Float, nullable=True)   # Interest portion
+    amount = Column(Numeric(12, 2), nullable=False)
+    principal_amount = Column(Numeric(12, 2), nullable=True)  # Amount that reduces principal
+    interest_amount = Column(Numeric(12, 2), nullable=True)   # Interest portion
     payment_date = Column(Date, nullable=False)
     description = Column(String(500), nullable=True)
     

@@ -29,7 +29,7 @@ async def custom_validation_exception_handler(request: Request, exc: RequestVali
     try:
         body = await request.body()
         body_str = body.decode() if body else "empty"
-    except:
+    except Exception:
         body_str = "unable to read"
     
     if not errors:
@@ -96,7 +96,7 @@ async def category_exception_handler(request: Request, exc: HTTPException):
     try:
         body = await request.body()
         body_str = body.decode() if body else "empty"
-    except:
+    except Exception:
         body_str = "unable to read"
     
     # Extract error details
@@ -149,7 +149,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     try:
         body = await request.body()
         body_str = body.decode() if body else "empty"
-    except:
+    except Exception:
         body_str = "unable to read"
     
     logger.warning(
@@ -187,7 +187,7 @@ async def general_exception_handler(request: Request, exc: Exception):
     try:
         body = await request.body()
         body_str = body.decode() if body else "empty"
-    except:
+    except Exception:
         body_str = "unable to read"
     
     # Get full traceback

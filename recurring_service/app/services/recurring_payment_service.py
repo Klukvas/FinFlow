@@ -58,7 +58,7 @@ class RecurringPaymentService(WorkspaceAuthorizationMixin):
         # Check subscription limits before creating
         current_count = db.query(RecurringPayment).filter(RecurringPayment.workspace_id == workspace_id).count()
         if not self.subscription_client.check_recurring_limit(user_id, current_count):
-            features = self.subscription_client.get_user_features(user_id)
+            features = self.subscription_client.get_user_features(user_id) or {}
             recurring_feature = features.get("recurring", {})
             limit = recurring_feature.get("limit_value", 0)
             raise RecurringLimitExceededError(current_count, limit)

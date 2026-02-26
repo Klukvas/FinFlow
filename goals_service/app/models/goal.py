@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Float, Boolean, Text, Enum, Index
+from sqlalchemy import Column, Integer, String, DateTime, Float, Numeric, Boolean, Text, Enum, Index
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
@@ -49,8 +49,8 @@ class Goal(Base):
     status = Column(Enum(GoalStatus), default=GoalStatus.ACTIVE)
     
     # Financial targets
-    target_amount = Column(Float, nullable=False)
-    current_amount = Column(Float, default=0.0)
+    target_amount = Column(Numeric(12, 2), nullable=False)
+    current_amount = Column(Numeric(12, 2), default=0.0)
     currency = Column(String(3), default="USD")
     
     # Timeline
@@ -58,7 +58,7 @@ class Goal(Base):
     target_date = Column(DateTime(timezone=True), nullable=True)
     
     # Progress tracking
-    progress_percentage = Column(Float, default=0.0)
+    progress_percentage = Column(Numeric(8, 4), default=0.0)
     is_milestone_based = Column(Boolean, default=False)
     
     # Metadata

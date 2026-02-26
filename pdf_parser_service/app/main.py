@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, File, UploadFile, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -92,13 +93,27 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             raise
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan event handler"""
+    logger.info("PDF Parser Service starting up...")
+    yield
+    logger.info("PDF Parser Service shutting down...")
+    # Cleanup resources
+    from app.routers.pdf_parser import pdf_parser_service
+    try:
+        await pdf_parser_service.cleanup()
+        logger.info("Successfully cleaned up service resources")
+    except Exception as e:
+        logger.error(f"Error during service cleanup: {e}")
 
 app = FastAPI(
     title="PDF Parser Service",
     description="Microservice for parsing bank PDFs and extracting transaction data",
-    version="1.0.0",
+    version="2.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    lifespan=lifespan
 )
 
 # Register exception handlers
@@ -132,21 +147,5 @@ async def health_check():
 @app.get("/")
 async def root():
     """Root endpoint"""
-    return {"message": "PDF Parser Service API", "version": "1.0.0"}
+    return {"message": "PDF Parser Service API", "version": app.version}
 
-@app.on_event("startup")
-async def startup_event():
-    """Application startup event"""
-    logger.info("PDF Parser Service starting up...")
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Application shutdown event"""
-    logger.info("PDF Parser Service shutting down...")
-    # Cleanup resources
-    from app.routers.pdf_parser import pdf_parser_service
-    try:
-        await pdf_parser_service.cleanup()
-        logger.info("Successfully cleaned up service resources")
-    except Exception as e:
-        logger.error(f"Error during service cleanup: {e}")

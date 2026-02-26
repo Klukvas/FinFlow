@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Float, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Float, Numeric, Boolean, ForeignKey
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.database import Base
@@ -13,8 +13,8 @@ class Milestone(Base):
     # Milestone information
     title = Column(String(255), nullable=False)
     description = Column(String(500), nullable=True)
-    target_amount = Column(Float, nullable=False)
-    current_amount = Column(Float, default=0.0)
+    target_amount = Column(Numeric(12, 2), nullable=False)
+    current_amount = Column(Numeric(12, 2), default=0.0)
     
     # Status
     is_completed = Column(Boolean, default=False)

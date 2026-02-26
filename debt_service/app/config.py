@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     INTERNAL_SECRET_TOKEN: str
     
+    # Currency
+    DEFAULT_CURRENCY: str = "USD"
+
     # Validation limits
     MAX_AMOUNT: float = 999999.99
     MAX_NAME_LENGTH: int = 255

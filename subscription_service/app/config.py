@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     redis_url: str = Field(default="redis://localhost:6379/0")
 
     log_level: str = Field(default="INFO")
+    CORS_ORIGINS: str = Field(default="http://localhost:3000,http://localhost:3002,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:3002,http://127.0.0.1:5173")
 
     # Entitlements cache TTL seconds (min,max)
     ents_ttl_min: int = Field(default=60)
@@ -26,6 +27,12 @@ class Settings(BaseSettings):
     # JWT configuration (shared with user_service for token verification)
     jwt_secret_key: str = Field(default="")
     jwt_algorithm: str = Field(default="HS256")
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        if self.CORS_ORIGINS == "*":
+            return ["*"]
+        return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
 
     class Config:
         env_file = ".env"

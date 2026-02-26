@@ -331,10 +331,11 @@ def update_category(
 
 @router.delete(
     "/{category_id}",
+    status_code=204,
     summary="Delete category",
     description="Delete a category (only if it has no children)",
     responses={
-        200: {"description": "Category deleted successfully"},
+        204: {"description": "Category deleted successfully"},
         400: {"description": "Cannot delete category with children"},
         401: {"description": "Unauthorized - invalid or missing token"},
         404: {"description": "Category not found"},
@@ -345,11 +346,11 @@ def delete_category(
     service: CategoryService = Depends(get_category_service),
     user_id: int = Depends(get_current_user_id),
     workspace_id: UUID = Depends(get_workspace_id)
-) -> dict:
+):
     """
     Delete a category.
-    
+
     Requires X-Workspace-Id header with workspace UUID.
     The category must not have any children. Delete child categories first.
     """
-    return service.delete(category_id, user_id, workspace_id)
+    service.delete(category_id, user_id, workspace_id)

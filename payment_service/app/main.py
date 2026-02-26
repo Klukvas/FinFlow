@@ -41,11 +41,12 @@ async def lifespan(app: FastAPI):
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="payment_service", version="1.0.0", lifespan=lifespan)
+    app = FastAPI(title="payment_service", version="2.0.0", lifespan=lifespan)
 
+    from .config import settings
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=settings.cors_origins_list,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -94,7 +95,7 @@ def create_app() -> FastAPI:
         """Root endpoint"""
         return {
             "service": "payment_service",
-            "version": "1.0.0",
+            "version": app.version,
             "status": "running",
         }
 

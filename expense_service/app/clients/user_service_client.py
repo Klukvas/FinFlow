@@ -28,12 +28,12 @@ class UserServiceClient:
             
             if resp.status_code == 200:
                 user_data = resp.json()
-                return user_data.get("base_currency", "USD")
-            
+                return user_data.get("base_currency", settings.DEFAULT_CURRENCY)
+
             # If user not found or any other error, return default
-            return "USD"
-            
+            return settings.DEFAULT_CURRENCY
+
         except (httpx.HTTPError, httpx.TimeoutException, Exception):
             # Return default currency on any error
-            return "USD"
+            return settings.DEFAULT_CURRENCY
 

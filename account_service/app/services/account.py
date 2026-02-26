@@ -3,6 +3,7 @@ from sqlalchemy.exc import IntegrityError
 from typing import List, Optional
 from datetime import datetime
 from uuid import UUID
+from concurrent.futures import ThreadPoolExecutor
 
 from app.models.account import Account
 from app.schemas.account import AccountCreate, AccountUpdate, AccountSummary, AccountTransaction, AccountTransactionSummary
@@ -24,6 +25,7 @@ from app.clients.subscription import SubscriptionClient
 from app.clients.user_service_client import UserServiceClient
 from app.services.workspace_authorization import WorkspaceAuthorizationMixin
 from app.schemas.account import AccountStatisticsResponse
+from app.config import settings
 
 class AccountService(WorkspaceAuthorizationMixin):
     def __init__(self, db: Session, expense_client: ExpenseServiceClient = None, income_client: IncomeServiceClient = None, currency_client: CurrencyServiceClient = None):
@@ -48,7 +50,7 @@ class AccountService(WorkspaceAuthorizationMixin):
                 Account.workspace_id == workspace_id
             ).count()
             if not self.subscription_client.check_account_limit(user_id, current_count):
-                features = self.subscription_client.get_user_features(user_id)
+                features = self.subscription_client.get_user_features(user_id) or {}
                 account_feature = features.get("accounts", {})
                 limit = account_feature.get("limit_value", 0)
                 raise AccountLimitExceededError(current_count, limit)
@@ -448,37 +450,35 @@ class AccountService(WorkspaceAuthorizationMixin):
                 Account.is_archived == False
             ).all()
             
-            summaries = []
-            for account in accounts:
-                # Get transaction counts from expense and income services
+            def _fetch_account_summary(account):
+                """Fetch transaction data for a single account."""
                 try:
                     expense_response = self.expense_client.get_expenses_by_account(account.id)
                     income_response = self.income_client.get_incomes_by_account(account.id)
-                    
+
                     expense_count = len(expense_response) if not isinstance(expense_response, dict) else 0
                     income_count = len(income_response) if not isinstance(income_response, dict) else 0
                     total_transactions = expense_count + income_count
-                    
-                    # Get last transaction date
+
                     last_transaction_date = None
                     if expense_response and not isinstance(expense_response, dict):
                         expense_dates = [exp.get('date') for exp in expense_response if exp.get('date')]
                         if expense_dates:
                             last_transaction_date = max(expense_dates)
-                    
+
                     if income_response and not isinstance(income_response, dict):
                         income_dates = [inc.get('date') for inc in income_response if inc.get('date')]
                         if income_dates:
                             max_income_date = max(income_dates)
                             if not last_transaction_date or max_income_date > last_transaction_date:
                                 last_transaction_date = max_income_date
-                    
+
                 except Exception as e:
                     self.logger.warning(f"Failed to fetch transaction data for account {account.id}: {e}")
                     total_transactions = 0
                     last_transaction_date = None
-                
-                summary = AccountSummary(
+
+                return AccountSummary(
                     id=account.id,
                     name=account.name,
                     type=account.type,
@@ -488,7 +488,9 @@ class AccountService(WorkspaceAuthorizationMixin):
                     transaction_count=total_transactions,
                     last_transaction_date=last_transaction_date
                 )
-                summaries.append(summary)
+
+            with ThreadPoolExecutor(max_workers=5) as executor:
+                summaries = list(executor.map(_fetch_account_summary, accounts))
             
             return summaries
             
@@ -535,7 +537,7 @@ class AccountService(WorkspaceAuthorizationMixin):
             
             for account in accounts:
                 account_balance = abs(account.balance)
-                account_currency = account.currency or "USD"
+                account_currency = account.currency or settings.DEFAULT_CURRENCY
                 
                 if account_currency != user_currency:
                     # Convert to user's currency
@@ -562,13 +564,5 @@ class AccountService(WorkspaceAuthorizationMixin):
                 unconvertible_accounts_count=unconvertible_count
             )
             
-        except Exception as e:
-            self.logger.error(f"Failed to get account statistics: {e}")
-            # Return default values
-            return AccountStatisticsResponse(
-                total_accounts=0,
-                active_accounts=0,
-                total_balance=0.0,
-                currency="USD",
-                unconvertible_accounts_count=0
-            )
+        except (AccountNotFoundError, AccountValidationError, AccountOwnershipError):
+            raise

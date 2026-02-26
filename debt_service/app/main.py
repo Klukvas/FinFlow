@@ -114,14 +114,6 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
 
 
-# Create database tables
-try:
-    Base.metadata.create_all(bind=engine)
-    logger.info("Database tables created successfully")
-except Exception as e:
-    logger.error(f"Error creating database tables: {e}")
-    raise
-
 app = FastAPI(
     title="Debt Service",
     description="Microservice for managing user debts, contacts, and debt payments with workspace support",
@@ -152,8 +144,8 @@ async def health_check():
     """Health check endpoint"""
     return {
         "status": "healthy",
-        "service": "debt_service",
-        "version": "1.0.0"
+        "service": "debt-service",
+        "version": app.version
     }
 
 @app.get("/")
@@ -161,7 +153,7 @@ async def root():
     """Root endpoint"""
     return {
         "message": "Debt Service API",
-        "version": "1.0.0",
+        "version": app.version,
         "docs": "/docs"
     }
 

@@ -164,10 +164,11 @@ async def update_income(
 
 @router.delete(
     "/{income_id}",
+    status_code=204,
     summary="Delete income",
     description="Delete an existing income",
     responses={
-        200: {"description": "Income deleted successfully"},
+        204: {"description": "Income deleted successfully"},
         404: {"description": "Income not found"},
         401: {"description": "Unauthorized - invalid or missing token"},
     }
@@ -177,14 +178,13 @@ async def delete_income(
     user_id: int = Depends(get_current_user_id),
     workspace_id: UUID = Depends(get_workspace_id),
     service: IncomeService = Depends(get_income_service)
-) -> dict:
+):
     """
     Delete an existing income.
-    
-    Requires 'member' role. Returns success message if deletion was successful.
+
+    Requires 'member' role.
     """
     await service.delete(income_id, user_id, workspace_id)
-    return {"message": "Income deleted successfully"}
 
 @router.get(
     "/stats/summary",

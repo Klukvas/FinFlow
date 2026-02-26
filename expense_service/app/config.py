@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     MAX_AMOUNT: float = 999999.99
     MAX_DESCRIPTION_LENGTH: int = 500
+    DEFAULT_CURRENCY: str = "USD"
     HTTP_TIMEOUT: float = 5.0
     HTTP_RETRY_ATTEMPTS: int = 3
     CORS_ORIGINS: str = "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://65.21.159.67,https://65.21.159.67"

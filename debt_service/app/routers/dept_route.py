@@ -16,14 +16,14 @@ router = APIRouter()
 
 # Debt Endpoints
 @router.post("/", response_model=DebtResponse, status_code=status.HTTP_201_CREATED)
-async def create_debt(
+def create_debt(
     debt: DebtCreate,
     user_id: int = Depends(get_current_user_id),
     workspace_id: UUID = Depends(get_workspace_id),
     service: DebtService = Depends(get_debt_service)
 ):
     """Create a new debt. Requires 'member' role."""
-    return await service.create_debt(debt, user_id, workspace_id)
+    return service.create_debt(debt, user_id, workspace_id)
 
 @router.get("/", response_model=List[DebtResponse])
 def get_debts(
@@ -49,7 +49,7 @@ def get_debt(
     return service.get_debt(debt_id, user_id, workspace_id)
 
 @router.put("/{debt_id}", response_model=DebtResponse)
-async def update_debt(
+def update_debt(
     debt_id: int,
     debt_update: DebtUpdate,
     user_id: int = Depends(get_current_user_id),
@@ -57,7 +57,7 @@ async def update_debt(
     service: DebtService = Depends(get_debt_service)
 ):
     """Update a debt. Requires 'member' role."""
-    return await service.update_debt(debt_id, debt_update, user_id, workspace_id)
+    return service.update_debt(debt_id, debt_update, user_id, workspace_id)
 
 @router.delete("/{debt_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_debt(
@@ -71,7 +71,7 @@ def delete_debt(
 
 # Payment Endpoints
 @router.post("/{debt_id}/payments/", response_model=DebtPaymentResponse, status_code=status.HTTP_201_CREATED)
-async def create_payment(
+def create_payment(
     debt_id: int,
     payment: DebtPaymentCreate,
     user_id: int = Depends(get_current_user_id),
@@ -79,7 +79,7 @@ async def create_payment(
     service: DebtService = Depends(get_debt_service)
 ):
     """Create a debt payment. Requires 'member' role."""
-    return await service.create_payment(debt_id, payment, user_id, workspace_id)
+    return service.create_payment(debt_id, payment, user_id, workspace_id)
 
 @router.get("/{debt_id}/payments/", response_model=List[DebtPaymentResponse])
 def get_payments(

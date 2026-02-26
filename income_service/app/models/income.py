@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Float, String, DateTime, ForeignKey, Text, Index
+from sqlalchemy import Column, Integer, Numeric, String, DateTime, ForeignKey, Text, Index
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -11,7 +11,7 @@ class Income(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, nullable=False, index=True)
     workspace_id = Column(UUID(as_uuid=True), nullable=False, index=True)
-    amount = Column(Float, nullable=False)
+    amount = Column(Numeric(12, 2), nullable=False)
     category_id = Column(Integer, nullable=True)  # Optional category for income
     account_id = Column(Integer, nullable=True, index=True)  # Optional account reference
     currency = Column(String(3), nullable=False, default="USD")  # Currency code

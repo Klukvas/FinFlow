@@ -115,7 +115,7 @@ class ExpenseService(WorkspaceAuthorizationMixin):
                 if old_account_id is not None:
                     # Get old account currency and convert if needed
                     old_account_data = self.account_client.validate_account(old_account_id, user_id)
-                    old_account_currency = old_account_data.get("account", {}).get("currency", "USD")
+                    old_account_currency = old_account_data.get("account", {}).get("currency", settings.DEFAULT_CURRENCY)
                     
                     # Convert expense amount to account currency if needed
                     amount_to_restore = float(old_amount)
@@ -135,8 +135,8 @@ class ExpenseService(WorkspaceAuthorizationMixin):
                 if expense.account_id is not None:
                     # Get account currency and convert expense amount if needed
                     account_data = self.account_client.validate_account(expense.account_id, user_id)
-                    account_currency = account_data.get("account", {}).get("currency", "USD")
-                    
+                    account_currency = account_data.get("account", {}).get("currency", settings.DEFAULT_CURRENCY)
+
                     # Convert expense amount to account currency if needed
                     amount_to_deduct = float(expense.amount)
                     if expense.currency != account_currency:
@@ -174,7 +174,7 @@ class ExpenseService(WorkspaceAuthorizationMixin):
                 Expense.created_at >= current_month_start
             ).count()
             if not self.subscription_client.check_expense_limit(user_id, current_count):
-                features = self.subscription_client.get_user_features(user_id)
+                features = self.subscription_client.get_user_features(user_id) or {}
                 expense_feature = features.get("expenses", {})
                 limit = expense_feature.get("limit_value", 0)
                 raise ExpenseLimitExceededError(current_count, limit)
@@ -199,8 +199,8 @@ class ExpenseService(WorkspaceAuthorizationMixin):
             # Validate account if provided and update balance with currency conversion
             if data.account_id is not None:
                 account_data = self._validate_account(data.account_id, user_id)
-                account_currency = account_data.get("account", {}).get("currency", "USD")
-                expense_currency = data.currency or "USD"
+                account_currency = account_data.get("account", {}).get("currency", settings.DEFAULT_CURRENCY)
+                expense_currency = data.currency or settings.DEFAULT_CURRENCY
                 
                 # Convert amount if currencies differ
                 amount_to_deduct = validated_amount
@@ -233,7 +233,7 @@ class ExpenseService(WorkspaceAuthorizationMixin):
                 description=validated_description,
                 category_id=data.category_id if data.category_id and data.category_id > 0 else None,
                 account_id=data.account_id,
-                currency=data.currency or "USD",  # Default to USD if None
+                currency=data.currency or settings.DEFAULT_CURRENCY,  # Default to configured currency if None
                 date=validated_date,
                 user_id=user_id,
                 workspace_id=workspace_id
@@ -485,15 +485,15 @@ class ExpenseService(WorkspaceAuthorizationMixin):
                 user_currency = self.user_client.get_user_base_currency(user_id)
             except Exception as e:
                 self.logger.warning(f"Could not fetch user currency for user {user_id}: {str(e)}, defaulting to USD")
-                user_currency = "USD"
-            
+                user_currency = settings.DEFAULT_CURRENCY
+
             # Calculate statistics with currency conversion
             total_amount = 0.0
             count = 0
-            
+
             for expense in expenses:
                 expense_amount = float(expense.amount)
-                expense_currency = expense.currency or "USD"
+                expense_currency = expense.currency or settings.DEFAULT_CURRENCY
                 
                 # Convert to user's currency if needed
                 if expense_currency != user_currency:
@@ -570,7 +570,7 @@ class ExpenseService(WorkspaceAuthorizationMixin):
             Expense.created_at >= current_month_start
         ).count()
 
-        features = self.subscription_client.get_user_features(user_id)
+        features = self.subscription_client.get_user_features(user_id) or {}
         expense_feature = features.get("expenses", {})
         limit = expense_feature.get("limit_value")
 

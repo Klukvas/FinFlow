@@ -165,7 +165,7 @@ async def root():
     """Корневой endpoint"""
     return {
         "message": "Recurring Payments Service",
-        "version": "1.0.0",
+        "version": app.version,
         "status": "running"
     }
 
@@ -176,7 +176,7 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "recurring-payments",
-        "version": "1.0.0"
+        "version": app.version
     }
 
 

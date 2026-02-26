@@ -21,6 +21,7 @@ from app.clients.currency_service_client import CurrencyServiceClient
 from app.clients.subscription import SubscriptionClient
 from app.services.workspace_authorization import WorkspaceAuthorizationMixin
 from app.utils.logger import get_logger
+from app.config import settings
 
 logger = get_logger(__name__)
 
@@ -85,7 +86,7 @@ class IncomeService(WorkspaceAuthorizationMixin):
                 Income.created_at >= current_month_start
             ).count()
             if not self.subscription_client.check_income_limit(user_id, current_count):
-                features = self.subscription_client.get_user_features(user_id)
+                features = self.subscription_client.get_user_features(user_id) or {}
                 income_feature = features.get("incomes", {})
                 limit = income_feature.get("limit_value", 0)
                 raise IncomeLimitExceededError(current_count, limit)
@@ -210,15 +211,15 @@ class IncomeService(WorkspaceAuthorizationMixin):
             user_currency = self.currency_client.get_user_base_currency(user_id)
         except Exception as e:
             logger.warning(f"Could not fetch user currency for user {user_id}: {str(e)}, defaulting to USD")
-            user_currency = "USD"
-        
+            user_currency = settings.DEFAULT_CURRENCY
+
         # Calculate statistics with currency conversion
         total_amount = 0.0
         count = 0
-        
+
         for income in incomes:
             income_amount = float(income.amount)
-            income_currency = income.currency or "USD"
+            income_currency = income.currency or settings.DEFAULT_CURRENCY
             
             # Convert to user's currency if needed
             if income_currency != user_currency:
@@ -426,7 +427,7 @@ class IncomeService(WorkspaceAuthorizationMixin):
             )
         ).count()
 
-        features = self.subscription_client.get_user_features(user_id)
+        features = self.subscription_client.get_user_features(user_id) or {}
         income_feature = features.get("incomes", {})
         limit = income_feature.get("limit_value")
 

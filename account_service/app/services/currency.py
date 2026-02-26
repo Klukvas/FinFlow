@@ -120,12 +120,12 @@ class CurrencyService:
             if from_currency == to_currency:
                 return 1.0
                 
-            # If converting from base currency (USD)
-            if from_currency == "USD":
+            # If converting from base currency
+            if from_currency == settings.DEFAULT_CURRENCY:
                 return rates.get(to_currency)
-            
-            # If converting to base currency (USD)
-            if to_currency == "USD":
+
+            # If converting to base currency
+            if to_currency == settings.DEFAULT_CURRENCY:
                 from_rate = rates.get(from_currency)
                 if from_rate and from_rate > 0:
                     return 1.0 / from_rate

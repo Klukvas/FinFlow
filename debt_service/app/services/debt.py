@@ -46,7 +46,7 @@ class DebtService(WorkspaceAuthorizationMixin):
         self.currency_client = CurrencyServiceClient()
 
     # Debt Management
-    async def create_debt(self, debt: DebtCreate, user_id: int, workspace_id: UUID) -> DebtResponse:
+    def create_debt(self, debt: DebtCreate, user_id: int, workspace_id: UUID) -> DebtResponse:
         """Create a new debt"""
         try:
             # 1. Authorize workspace access (member role required)
@@ -57,7 +57,7 @@ class DebtService(WorkspaceAuthorizationMixin):
                 Debt.workspace_id == workspace_id
             ).count()
             if not self.subscription_client.check_debt_limit(user_id, current_count):
-                features = self.subscription_client.get_user_features(user_id)
+                features = self.subscription_client.get_user_features(user_id) or {}
                 debt_feature = features.get("debts", {})
                 limit = debt_feature.get("limit_value", 0)
                 raise DebtLimitExceededError(current_count, limit)
@@ -101,37 +101,50 @@ class DebtService(WorkspaceAuthorizationMixin):
             debt_dict['payment_count'] = 0
             return DebtResponse.model_validate(debt_dict)
             
+        except (DebtLimitExceededError, DebtNotFoundError, DebtValidationError, ContactNotFoundError):
+            self.db.rollback()
+            raise
         except Exception as e:
             self.db.rollback()
             self.logger.error(f"Error creating debt: {e}")
             raise DebtCreationFailedError("Failed to create debt")
 
-    def get_debts(self, user_id: int, workspace_id: UUID, skip: int = 0, limit: int = 100, 
+    def get_debts(self, user_id: int, workspace_id: UUID, skip: int = 0, limit: int = 100,
                   active_only: bool = False, paid_off_only: bool = False) -> List[DebtResponse]:
         """Get all debts in the workspace"""
         # 1. Authorize workspace access (viewer role required)
         self.authorize_workspace_access(workspace_id, user_id, "viewer", "list_debts")
-        query = self.db.query(Debt).options(joinedload(Debt.contact)).filter(
-            and_(Debt.user_id == user_id, Debt.workspace_id == workspace_id)
+
+        # Subquery for payment counts to avoid N+1
+        payment_count_sq = (
+            self.db.query(
+                DebtPayment.debt_id,
+                func.count(DebtPayment.id).label("payment_count")
+            )
+            .group_by(DebtPayment.debt_id)
+            .subquery()
         )
-        
+
+        query = (
+            self.db.query(Debt, payment_count_sq.c.payment_count)
+            .outerjoin(payment_count_sq, Debt.id == payment_count_sq.c.debt_id)
+            .options(joinedload(Debt.contact))
+            .filter(and_(Debt.user_id == user_id, Debt.workspace_id == workspace_id))
+        )
+
         if active_only:
             query = query.filter(Debt.is_active == True)
         elif paid_off_only:
             query = query.filter(Debt.is_paid_off == True)
-        
-        debts = query.offset(skip).limit(limit).all()
-        
-        # Add payment count for each debt
+
+        rows = query.offset(skip).limit(limit).all()
+
         result = []
-        for debt in debts:
+        for debt, payment_count in rows:
             debt_dict = DebtResponse.model_validate(debt).model_dump()
-            payment_count = self.db.query(DebtPayment).filter(
-                DebtPayment.debt_id == debt.id
-            ).count()
-            debt_dict['payment_count'] = payment_count
+            debt_dict['payment_count'] = payment_count or 0
             result.append(DebtResponse.model_validate(debt_dict))
-        
+
         return result
 
     def get_debt(self, debt_id: int, user_id: int, workspace_id: UUID) -> DebtResponse:
@@ -154,7 +167,7 @@ class DebtService(WorkspaceAuthorizationMixin):
         
         return DebtResponse.model_validate(debt_dict)
 
-    async def update_debt(self, debt_id: int, debt_update: DebtUpdate, user_id: int, workspace_id: UUID) -> DebtResponse:
+    def update_debt(self, debt_id: int, debt_update: DebtUpdate, user_id: int, workspace_id: UUID) -> DebtResponse:
         """Update a debt"""
         # 1. Authorize workspace access (member role required)
         self.authorize_workspace_access(workspace_id, user_id, "member", "update_debt")
@@ -249,7 +262,7 @@ class DebtService(WorkspaceAuthorizationMixin):
             raise DebtDeletionFailedError("Failed to delete debt")
 
     # Payment Management
-    async def create_payment(self, debt_id: int, payment: DebtPaymentCreate, user_id: int, workspace_id: UUID) -> DebtPaymentResponse:
+    def create_payment(self, debt_id: int, payment: DebtPaymentCreate, user_id: int, workspace_id: UUID) -> DebtPaymentResponse:
         """Create a debt payment"""
         # 1. Authorize workspace access (member role required)
         self.authorize_workspace_access(workspace_id, user_id, "member", "create_payment")
@@ -315,8 +328,8 @@ class DebtService(WorkspaceAuthorizationMixin):
             user_currency = self.user_client.get_user_base_currency(user_id)
         except Exception as e:
             self.logger.warning(f"Could not fetch user currency for user {user_id}: {str(e)}, defaulting to USD")
-            user_currency = "USD"
-        
+            user_currency = settings.DEFAULT_CURRENCY
+
         active_debts = self.db.query(Debt).filter(
             and_(Debt.workspace_id == workspace_id, Debt.is_active == True)
         ).all()
@@ -329,7 +342,7 @@ class DebtService(WorkspaceAuthorizationMixin):
         total_debt = 0.0
         for debt in active_debts:
             debt_amount = abs(debt.current_balance)  # Use absolute value
-            debt_currency = debt.currency or "USD"
+            debt_currency = debt.currency or settings.DEFAULT_CURRENCY
             
             if debt_currency != user_currency:
                 # Convert to user's currency
@@ -345,7 +358,7 @@ class DebtService(WorkspaceAuthorizationMixin):
         # Get all debts (not just active ones) to get payment currencies
         # 2. Get all debts in workspace
         all_debts = self.db.query(Debt).filter(Debt.workspace_id == workspace_id).all()
-        debt_currency_map = {debt.id: debt.currency or "USD" for debt in all_debts}
+        debt_currency_map = {debt.id: debt.currency or settings.DEFAULT_CURRENCY for debt in all_debts}
         
         all_payments = self.db.query(DebtPayment).filter(
             DebtPayment.user_id == user_id
@@ -354,7 +367,7 @@ class DebtService(WorkspaceAuthorizationMixin):
         total_payments = 0.0
         for payment in all_payments:
             # Get the debt currency from the map
-            payment_currency = debt_currency_map.get(payment.debt_id, "USD")
+            payment_currency = debt_currency_map.get(payment.debt_id, settings.DEFAULT_CURRENCY)
             payment_amount = payment.amount
             
             if payment_currency != user_currency:

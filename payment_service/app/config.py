@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     REDIS_URL: str = Field(default="redis://localhost:6379/0")
 
     log_level: str = Field(default="INFO")
+    CORS_ORIGINS: str = Field(default="http://localhost:3000,http://localhost:3002,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:3002,http://127.0.0.1:5173")
 
     # Internal service authentication (no default — must be set explicitly)
     internal_secret_token: str
@@ -72,6 +73,12 @@ class Settings(BaseSettings):
                 "paddle_api_key must be set when payments_enabled=True"
             )
         return self
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        if self.CORS_ORIGINS == "*":
+            return ["*"]
+        return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
 
     class Config:
         env_file = ".env"

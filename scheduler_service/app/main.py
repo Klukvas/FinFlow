@@ -65,7 +65,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Scheduler Service",
     description="Background job scheduler for subscription renewals and other tasks",
-    version="1.0.0",
+    version="2.0.0",
     lifespan=lifespan,
 )
 

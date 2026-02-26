@@ -19,6 +19,7 @@ from app.exceptions.goal_exceptions import (
     MilestoneRetrievalError, MilestoneProgressUpdateError, GoalLimitExceededError
 )
 from app.utils.logger import get_logger
+from app.config import settings
 
 logger = get_logger(__name__)
 
@@ -43,7 +44,7 @@ class GoalService(WorkspaceAuthorizationMixin):
                 Goal.workspace_id == workspace_id
             ).count()
             if not self.subscription_client.check_goal_limit(user_id, current_count):
-                features = self.subscription_client.get_user_features(user_id)
+                features = self.subscription_client.get_user_features(user_id) or {}
                 goal_feature = features.get("goals", {})
                 limit = goal_feature.get("limit_value", 0)
                 raise GoalLimitExceededError(current_count, limit)
@@ -232,7 +233,7 @@ class GoalService(WorkspaceAuthorizationMixin):
                 user_currency = self.user_client.get_user_base_currency(user_id)
             except Exception as e:
                 logger.warning(f"Could not fetch user currency for user {user_id}: {str(e)}, defaulting to USD")
-                user_currency = "USD"
+                user_currency = settings.DEFAULT_CURRENCY
             
             if not goals:
                 return {
@@ -259,7 +260,7 @@ class GoalService(WorkspaceAuthorizationMixin):
                 # Convert target amount if needed
                 goal_target = goal.target_amount
                 goal_current = goal.current_amount
-                goal_currency = goal.currency or "USD"
+                goal_currency = goal.currency or settings.DEFAULT_CURRENCY
                 
                 if goal_currency != user_currency:
                     # Convert target amount

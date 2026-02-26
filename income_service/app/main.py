@@ -23,7 +23,6 @@ from app.exceptions import (
     IncomeErrorCodes
 )
 from fastapi.middleware.cors import CORSMiddleware
-from app.database import Base, engine
 from app.config import settings
 from app.utils.logger import get_logger
 import time
@@ -99,12 +98,6 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             raise
 
 
-
-# Import models to ensure they are registered with Base
-from app.models.income import Income
-
-# Create database tables
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Income Service",

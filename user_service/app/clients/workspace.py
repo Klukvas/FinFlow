@@ -15,8 +15,8 @@ class WorkspaceClient:
         self.base_url = settings.WORKSPACE_SERVICE_URL
         self.internal_token = settings.INTERNAL_SECRET_TOKEN
         self.timeout = 10.0
-        
-        # Log initialization (but not the actual token for security)
+        self.client = httpx.Client(timeout=self.timeout)
+
         logger.info(
             "WorkspaceClient initialized",
             extra={
@@ -132,44 +132,43 @@ class WorkspaceClient:
         """
         try:
             url = f"{self.base_url}/internal/users/{user_id}/default-workspace"
-            
-            with httpx.Client(timeout=self.timeout) as client:
-                response = client.get(
-                    url,
-                    headers=self._get_headers()
+
+            response = self.client.get(
+                url,
+                headers=self._get_headers()
+            )
+
+            if response.status_code == 200:
+                data = response.json()
+                workspace_id = UUID(data["workspace_id"])
+                logger.info(
+                    "Retrieved default workspace",
+                    extra={
+                        "operation": "workspace_get_default",
+                        "user_id": user_id,
+                        "workspace_id": str(workspace_id)
+                    }
                 )
-                
-                if response.status_code == 200:
-                    data = response.json()
-                    workspace_id = UUID(data["workspace_id"])
-                    logger.info(
-                        "Retrieved default workspace",
-                        extra={
-                            "operation": "workspace_get_default",
-                            "user_id": user_id,
-                            "workspace_id": str(workspace_id)
-                        }
-                    )
-                    return workspace_id
-                elif response.status_code == 404:
-                    logger.info(
-                        "No default workspace found for user",
-                        extra={
-                            "operation": "workspace_get_default",
-                            "user_id": user_id
-                        }
-                    )
-                    return None
-                else:
-                    logger.warning(
-                        f"Failed to get default workspace: {response.status_code} - {response.text}",
-                        extra={
-                            "operation": "workspace_get_default",
-                            "user_id": user_id,
-                            "status_code": response.status_code
-                        }
-                    )
-                    return None
+                return workspace_id
+            elif response.status_code == 404:
+                logger.info(
+                    "No default workspace found for user",
+                    extra={
+                        "operation": "workspace_get_default",
+                        "user_id": user_id
+                    }
+                )
+                return None
+            else:
+                logger.warning(
+                    f"Failed to get default workspace: {response.status_code} - {response.text}",
+                    extra={
+                        "operation": "workspace_get_default",
+                        "user_id": user_id,
+                        "status_code": response.status_code
+                    }
+                )
+                return None
                     
         except httpx.TimeoutException:
             logger.warning(

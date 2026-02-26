@@ -16,7 +16,7 @@ Base = declarative_base()
 # Engine and SessionLocal - only initialize if DATABASE_URL is set and NOT in test mode
 # Tests will override get_db dependency with their own session and test_engine
 if DATABASE_URL and not TESTING:
-    engine = create_engine(DATABASE_URL)
+    engine = create_engine(DATABASE_URL, pool_pre_ping=True, pool_recycle=300)
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 else:
     # Placeholder for testing - tests override get_db anyway

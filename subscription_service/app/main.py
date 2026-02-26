@@ -13,11 +13,12 @@ logger = logging.getLogger("subscription_service")
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="subscription_service")
+    app = FastAPI(title="subscription_service", version="2.0.0")
 
+    from .config import settings
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=settings.cors_origins_list,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -47,7 +48,7 @@ def create_app() -> FastAPI:
 
     @app.get("/health")
     async def health():
-        return {"status": "ok"}
+        return {"status": "healthy", "service": "subscription-service"}
 
     return app
 

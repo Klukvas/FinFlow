@@ -35,88 +35,50 @@ class CategoryService(WorkspaceAuthorizationMixin):
     def create(self, data: CategoryCreate, user_id: int, workspace_id: UUID) -> Category:
         """Create a new category with proper validation and transaction management"""
         start_time = time.time()
-        
-        # Log incoming request with full data
+
         self.logger.info(
-            f"[CREATE CATEGORY] Received request",
+            f"Creating category '{data.name}'",
             category="business",
-            operation="category_create_request",
+            operation="category_create",
             user_id=user_id,
             workspace_id=str(workspace_id),
             category_name=data.name,
-            parent_id=data.parent_id,
-            category_type=data.type.value if hasattr(data.type, 'value') else str(data.type),
-            icon=getattr(data, 'icon', None),
-            color=getattr(data, 'color', None),
-            data_dict=data.dict() if hasattr(data, 'dict') else str(data)
+            parent_id=data.parent_id
         )
-        
+
         try:
-            # Authorize user in workspace (requires 'member' role for POST)
-            self.logger.info(
-                f"[CREATE CATEGORY] Step 1: Authorizing user in workspace",
-                category="business",
-                operation="category_create_auth_start",
-                user_id=user_id,
-                workspace_id=str(workspace_id)
-            )
-            
             self.authorize_workspace_access(
-                workspace_id, 
-                user_id, 
+                workspace_id,
+                user_id,
                 required_role="member",
                 operation="create_category"
             )
-            
-            self.logger.info(
-                f"[CREATE CATEGORY] Step 1: Authorization successful",
-                category="business",
-                operation="category_create_auth_success",
-                user_id=user_id,
-                workspace_id=str(workspace_id)
-            )
-            
-            self.logger.info(
-                f"[CREATE CATEGORY] Step 2: Starting category creation",
-                category="business",
-                operation="category_create_start",
-                user_id=user_id,
-                workspace_id=str(workspace_id),
-                category_name=data.name,
-                parent_id=data.parent_id,
-                category_type=data.type
-            )
-            
+
             # Validate parent belongs to same workspace (if parent_id provided)
             if data.parent_id:
                 parent = self.db.query(Category).filter(Category.id == data.parent_id).first()
                 if not parent:
                     raise CategoryNotFoundError(data.parent_id)
-                
+
                 self.validate_workspace_match(
                     parent.workspace_id,
                     workspace_id,
                     parent.id
                 )
-            
+
             # Check subscription limits before creating (filtered by workspace)
             current_count = self.db.query(Category).filter(
                 Category.workspace_id == workspace_id
             ).count()
-            self.logger.info(
-                f"Checking subscription limits for user {user_id}, current count: {current_count}",
-                category="business",
-                operation="subscription_limit_check",
-                user_id=user_id,
-                current_count=current_count
-            )
-            
+
             try:
                 if not self.subscription_client.check_category_limit(user_id, current_count):
-                    features = self.subscription_client.get_user_features(user_id)
+                    features = self.subscription_client.get_user_features(user_id) or {}
                     category_feature = features.get("categories", {})
                     limit = category_feature.get("limit_value", 0)
                     raise CategoryLimitExceededError(current_count, limit)
+            except (CategoryLimitExceededError, CategoryValidationError):
+                raise
             except Exception as e:
                 self.logger.error(
                     f"Subscription client error: {str(e)}",
@@ -126,37 +88,9 @@ class CategoryService(WorkspaceAuthorizationMixin):
                     error=str(e)
                 )
                 raise CategoryValidationError(f"Subscription validation failed: {str(e)}")
-            
+
             # Comprehensive validation using serializer
-            self.logger.info(
-                f"Starting serializer validation for category: {data.name}",
-                category="business",
-                operation="serializer_validation_start",
-                user_id=user_id,
-                category_name=data.name,
-                parent_id=data.parent_id,
-                category_type=data.type
-            )
-            
-            try:
-                self.serializer.validate_category_data(self.db, data, user_id, workspace_id=workspace_id)
-                self.logger.info(
-                    f"Serializer validation passed for category: {data.name}",
-                    category="business",
-                    operation="serializer_validation_success",
-                    user_id=user_id,
-                    category_name=data.name
-                )
-            except Exception as e:
-                self.logger.error(
-                    f"Serializer validation failed for category: {data.name}, error: {str(e)}",
-                    category="business",
-                    operation="serializer_validation_failed",
-                    user_id=user_id,
-                    category_name=data.name,
-                    error=str(e)
-                )
-                raise
+            self.serializer.validate_category_data(self.db, data, user_id, workspace_id=workspace_id)
             
             # Serialize data for creation
             category_data = self.serializer.serialize_category_for_create(data, user_id)
@@ -269,7 +203,7 @@ class CategoryService(WorkspaceAuthorizationMixin):
             )
             
             self.logger.info(
-                f"Starting MCC-based category creation for user {user_id} in workspace {workspace_id}",
+                f"Creating category from MCC {data.mcc_code}",
                 category="business",
                 operation="mcc_category_create_start",
                 user_id=user_id,
@@ -277,29 +211,14 @@ class CategoryService(WorkspaceAuthorizationMixin):
                 parent_id=data.parent_id,
                 category_type=data.type,
                 custom_name=data.custom_name,
-                language=language,
-                full_data={
-                    "mcc_code": data.mcc_code,
-                    "parent_id": data.parent_id,
-                    "type": str(data.type) if data.type else None,
-                    "custom_name": data.custom_name
-                }
+                language=language
             )
             
             # Check if MCC code exists
             mcc_code_obj = self.db.query(MCCCode).filter(MCCCode.mcc_code == data.mcc_code).first()
             if not mcc_code_obj:
                 raise CategoryValidationError(f"MCC code {data.mcc_code} not found")
-            
-            self.logger.info(
-                f"MCC code {data.mcc_code} found: {mcc_code_obj.name}",
-                category="business",
-                operation="mcc_code_lookup",
-                user_id=user_id,
-                mcc_code=data.mcc_code,
-                mcc_name=mcc_code_obj.name
-            )
-            
+
             # Validate parent belongs to same workspace (if parent_id provided)
             if data.parent_id:
                 parent = self.db.query(Category).filter(Category.id == data.parent_id).first()
@@ -327,7 +246,7 @@ class CategoryService(WorkspaceAuthorizationMixin):
                 Category.workspace_id == workspace_id
             ).count()
             if not self.subscription_client.check_category_limit(user_id, current_count):
-                features = self.subscription_client.get_user_features(user_id)
+                features = self.subscription_client.get_user_features(user_id) or {}
                 category_feature = features.get("categories", {})
                 limit = category_feature.get("limit_value", 0)
                 raise CategoryLimitExceededError(current_count, limit)
@@ -351,47 +270,17 @@ class CategoryService(WorkspaceAuthorizationMixin):
                 # Ensure we have a valid name
                 if not category_name or not category_name.strip():
                     raise CategoryValidationError(f"No valid name found for MCC code {data.mcc_code}")
-            
-            self.logger.info(
-                f"Resolved category name for MCC {data.mcc_code}: '{category_name}'",
-                category="business",
-                operation="category_name_resolution",
-                user_id=user_id,
-                mcc_code=data.mcc_code,
-                resolved_name=category_name,
-                custom_name=data.custom_name,
-                language=language
-            )
-            
+
             # Create CategoryCreate object for validation
             category_data = CategoryCreate(
                 name=category_name,
                 parent_id=data.parent_id,
                 type=data.type
             )
-            
-            self.logger.info(
-                f"About to validate category data for MCC {data.mcc_code}",
-                category="business",
-                operation="category_validation_start",
-                user_id=user_id,
-                mcc_code=data.mcc_code,
-                category_name=category_name,
-                parent_id=data.parent_id,
-                category_type=str(data.type) if data.type else None
-            )
-            
+
             # Validate using existing serializer
             self.serializer.validate_category_data(self.db, category_data, user_id, workspace_id=workspace_id)
-            
-            self.logger.info(
-                f"Category validation passed for MCC {data.mcc_code}",
-                category="business",
-                operation="category_validation_success",
-                user_id=user_id,
-                mcc_code=data.mcc_code
-            )
-            
+
             # Serialize data for creation
             serialized_data = self.serializer.serialize_category_for_create(category_data, user_id)
             
@@ -522,17 +411,7 @@ class CategoryService(WorkspaceAuthorizationMixin):
                         error=None
                     )
                     successful += 1
-                    
-                    self.logger.info(
-                        f"Successfully created category from MCC {category_data.mcc_code}",
-                        category="business",
-                        operation="mcc_category_batch_item_success",
-                        user_id=user_id,
-                        mcc_code=category_data.mcc_code,
-                        category_id=created_category.id,
-                        category_name=created_category.name
-                    )
-                    
+
                 except Exception as e:
                     # Extract more detailed error information
                     error_detail = str(e)
@@ -637,17 +516,7 @@ class CategoryService(WorkspaceAuthorizationMixin):
                 required_role="viewer",
                 operation="list_categories"
             )
-            
-            self.logger.info(
-                f"Retrieving categories for user {user_id} in workspace {workspace_id}",
-                category="business",
-                operation="category_list_start",
-                user_id=user_id,
-                workspace_id=str(workspace_id),
-                page=page,
-                size=size
-            )
-            
+
             # Query categories filtered by workspace_id
             query = self.db.query(Category).options(joinedload(Category.children)).filter(
                 Category.workspace_id == workspace_id,
@@ -666,10 +535,8 @@ class CategoryService(WorkspaceAuthorizationMixin):
                 category="business",
                 operation="category_list_success",
                 user_id=user_id,
-                page=page,
-                size=size,
-                count=len(result[0]) if result[0] else 0,
-                total=result[1] if len(result) > 1 else 0,
+                count=len(categories),
+                total=total,
                 duration_ms=duration_ms
             )
             

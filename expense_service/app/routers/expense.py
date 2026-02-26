@@ -175,10 +175,11 @@ def update_expense(
 
 @router.delete(
     "/{expense_id}",
+    status_code=204,
     summary="Delete expense",
     description="Delete an expense by its ID",
     responses={
-        200: {"description": "Expense deleted successfully"},
+        204: {"description": "Expense deleted successfully"},
         401: {"description": "Unauthorized - invalid or missing token"},
         403: {"description": "Forbidden - insufficient workspace permissions"},
         404: {"description": "Expense not found"},
@@ -189,14 +190,14 @@ def delete_expense(
     service: ExpenseService = Depends(get_expense_service),
     user_id: int = Depends(get_current_user_id),
     workspace_id: UUID = Depends(get_workspace_id)
-) -> dict:
+):
     """
     Delete an expense.
-    
+
     Requires 'member' role in the workspace.
     The expense must belong to the workspace.
     """
-    return service.delete(expense_id, user_id, workspace_id)
+    service.delete(expense_id, user_id, workspace_id)
 
 @router.get(
     "/category/{category_id}",

@@ -55,6 +55,9 @@ class Settings(BaseSettings):
     # Internal communication
     INTERNAL_SECRET_TOKEN: str
     
+    # Currency
+    DEFAULT_CURRENCY: str = "USD"
+
     # Logging
     LOG_LEVEL: str = "INFO"
     
