@@ -1,5 +1,5 @@
-import { Page } from '@playwright/test';
-import { SidebarComponent } from '../infra/components/SidebarComponent';
+import { Page } from "@playwright/test";
+import { SidebarComponent } from "../infra/components/SidebarComponent";
 
 export class SidebarInterface {
   private page: Page;
@@ -11,15 +11,17 @@ export class SidebarInterface {
   }
 
   // Direct access to sidebar component
-  get component() { return this.sidebarComponent; }
+  get component() {
+    return this.sidebarComponent;
+  }
 
   /**
    * Business workflow: Navigate to category page
    */
   async navigateToCategory(): Promise<void> {
     await this.sidebarComponent.categoryLink.click();
-    await this.page.waitForLoadState('networkidle');
-    await this.page.waitForURL('category');
+    await this.page.waitForLoadState("networkidle");
+    await this.page.waitForURL("**/category**");
   }
 
   /**
@@ -27,7 +29,7 @@ export class SidebarInterface {
    */
   async navigateToExpense(): Promise<void> {
     await this.sidebarComponent.expenseLink.click();
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState("networkidle");
   }
 
   /**
@@ -35,7 +37,7 @@ export class SidebarInterface {
    */
   async navigateToIncome(): Promise<void> {
     await this.sidebarComponent.incomeLink.click();
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState("networkidle");
   }
 
   /**
@@ -43,7 +45,7 @@ export class SidebarInterface {
    */
   async navigateToAccount(): Promise<void> {
     await this.sidebarComponent.accountLink.click();
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState("networkidle");
   }
 
   /**
@@ -51,7 +53,7 @@ export class SidebarInterface {
    */
   async navigateToGoals(): Promise<void> {
     await this.sidebarComponent.goalsLink.click();
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState("networkidle");
   }
 
   /**
@@ -59,30 +61,32 @@ export class SidebarInterface {
    */
   async navigateToProfile(): Promise<void> {
     await this.sidebarComponent.profileLink.click();
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState("networkidle");
   }
 
   /**
    * Business workflow: Navigate to specific page
    */
-  async navigateTo(page: 'category' | 'expense' | 'income' | 'account' | 'goals' | 'profile'): Promise<void> {
+  async navigateTo(
+    page: "category" | "expense" | "income" | "account" | "goals" | "profile",
+  ): Promise<void> {
     switch (page) {
-      case 'category':
+      case "category":
         await this.navigateToCategory();
         break;
-      case 'expense':
+      case "expense":
         await this.navigateToExpense();
         break;
-      case 'income':
+      case "income":
         await this.navigateToIncome();
         break;
-      case 'account':
+      case "account":
         await this.navigateToAccount();
         break;
-      case 'goals':
+      case "goals":
         await this.navigateToGoals();
         break;
-      case 'profile':
+      case "profile":
         await this.navigateToProfile();
         break;
     }
@@ -108,7 +112,7 @@ export class SidebarInterface {
   async performLogout(): Promise<void> {
     await this.sidebarComponent.logoutButton.click();
     await this.sidebarComponent.logoutConfirmButton.click();
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState("networkidle");
   }
 
   /**

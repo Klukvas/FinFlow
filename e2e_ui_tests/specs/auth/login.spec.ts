@@ -1,7 +1,7 @@
-import { test, expect } from '@playwright/test';
-import { AuthActions } from '../../interface/AuthActions';
-import { NavigationActions } from '../../interface/NavigationActions';
-import { SidebarInterface } from '../../interface/SidebarInterface';
+import { test, expect } from "@playwright/test";
+import { AuthActions } from "../../interface/AuthActions";
+import { NavigationActions } from "../../interface/NavigationActions";
+import { SidebarInterface } from "../../interface/SidebarInterface";
 
 // Define UserCredentials interface locally to avoid import issues
 interface UserCredentials {
@@ -11,54 +11,54 @@ interface UserCredentials {
 
 // Test data
 const validUser: UserCredentials = {
-  email: 'root@root.root',
-  password: 'Sololane56457!'
+  email: "testuser1@test.com",
+  password: "Sololane56457!",
 };
 
 const invalidUser: UserCredentials = {
-  email: 'invalid@example.com',
-  password: 'wrongpassword'
+  email: "invalid@example.com",
+  password: "wrongpassword",
 };
 
 const newUser = {
-  username: 'newuser123',
-  email: 'newuser@example.com',
-  password: 'SupaPupaStrongBibasPassword83218034!'
+  username: "newuser123",
+  email: "newuser@example.com",
+  password: "SupaPupaStrongBibasPassword83218034!",
 };
 
-test.describe('Authentication', () => {
+test.describe("Authentication", () => {
   let auth: AuthActions;
   let navigation: NavigationActions;
   let sidebar: SidebarInterface;
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('')
-    auth = new AuthActions(page)
+    await page.goto("");
+    auth = new AuthActions(page);
     navigation = new NavigationActions(page);
     sidebar = new SidebarInterface(page);
   });
 
-  test('should login with valid credentials', async ({ page }) => {
+  test("should login with valid credentials", async ({ page }) => {
     await auth.login(validUser.email, validUser.password);
     await auth.expectUserAuthorized();
   });
 
-  test('should show error with invalid credentials', async ({ page }) => {
+  test("should show error with invalid credentials", async ({ page }) => {
     await auth.loginAndExpectFailure(
-      invalidUser.email, 
-      invalidUser.password, 
-      'Invalid email or password'
-    )
+      invalidUser.email,
+      invalidUser.password,
+      "Invalid email or password",
+    );
   });
 
-  test('should close login modal', async ({ page }) => {
-    await auth.openLoginModal()
-    await auth.closeLoginModal()
+  test("should close login modal", async ({ page }) => {
+    await auth.openLoginModal();
+    await auth.closeLoginModal();
   });
 
-  test('should switch between login and register modals', async ({ page }) => {
-    await auth.openLoginModal()
-    await auth.swithFromLoginToRegisterModal()
+  test("should switch between login and register modals", async ({ page }) => {
+    await auth.openLoginModal();
+    await auth.swithFromLoginToRegisterModal();
   });
 
   // test('should validate registration form', async ({ page }) => {
@@ -91,10 +91,10 @@ test.describe('Authentication', () => {
   //   for (const password of weakPasswords) {
   //     await auth.clearPasswordInput();
   //     await auth.fillRegisterForm('username', 'email@test.com', password);
-      
+
   //     // Trigger validation
   //     await auth.submitRegister();
-      
+
   //     // Verify error message
   //     await auth.expectPasswordInputError();
   //   }
@@ -113,7 +113,7 @@ test.describe('Authentication', () => {
 
   //   // Should be redirected to homepage
   //   expect(page.url()).toContain('/');
-    
+
   //   // Verify user is logged out
   //   await sidebar.expectUserLoggedOut();
   // });
@@ -131,7 +131,7 @@ test.describe('Authentication', () => {
 
   //   // Should be redirected to homepage
   //   expect(page.url()).toContain('/');
-    
+
   //   // Verify login modal can be opened
   //   await auth.openLoginModal(); await auth.expectLoginModalVisible(); await auth.expectLoginFormElementsVisible();
   // });
@@ -176,9 +176,8 @@ test.describe('Authentication', () => {
 
   //   // Click login and check for loading state
   //   await auth.submitLogin();
-    
+
   //   // Verify loading spinner appears
   //   await auth.expectLoginButtonLoading();
   // });
 });
-

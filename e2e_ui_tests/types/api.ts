@@ -26,7 +26,7 @@ export interface User {
 
 export interface CreateUserRequest {
   email: string;
-  username: string;
+  username?: string;
   password: string;
 }
 
@@ -47,7 +47,7 @@ export interface Category {
   name: string;
   user_id: number;
   parent_id?: number;
-  type: 'EXPENSE' | 'INCOME';
+  type: "EXPENSE" | "INCOME";
   children?: Category[];
   created_at?: string;
   updated_at?: string;
@@ -56,13 +56,13 @@ export interface Category {
 export interface CreateCategoryRequest {
   name: string;
   parent_id?: number;
-  type: 'EXPENSE' | 'INCOME';
+  type: "EXPENSE" | "INCOME";
 }
 
 export interface UpdateCategoryRequest {
   name?: string;
   parent_id?: number;
-  type?: 'EXPENSE' | 'INCOME';
+  type?: "EXPENSE" | "INCOME";
 }
 
 // Expense types
@@ -235,7 +235,7 @@ export interface RecurringTransaction {
   category_id?: number;
   account_id?: number;
   currency: string;
-  transaction_type: 'INCOME' | 'EXPENSE';
+  transaction_type: "INCOME" | "EXPENSE";
   user_id: number;
   created_at?: string;
   updated_at?: string;
@@ -251,7 +251,7 @@ export interface CreateRecurringTransactionRequest {
   category_id?: number;
   account_id?: number;
   currency?: string;
-  transaction_type: 'INCOME' | 'EXPENSE';
+  transaction_type: "INCOME" | "EXPENSE";
 }
 
 export interface UpdateRecurringTransactionRequest {
@@ -264,5 +264,5 @@ export interface UpdateRecurringTransactionRequest {
   category_id?: number;
   account_id?: number;
   currency?: string;
-  transaction_type?: 'INCOME' | 'EXPENSE';
+  transaction_type?: "INCOME" | "EXPENSE";
 }

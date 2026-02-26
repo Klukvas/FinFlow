@@ -3,47 +3,43 @@ import { BasePage } from "../BasePage";
 
 export class RegistrationModal extends BasePage {
     modal: Locator
-    usernameInput: Locator
     emailInput: Locator
     passwordInput: Locator
-    closeButton: Locator
-    switchToLogin: Locator
     submitButton: Locator
     formFieldError: Locator
+    switchToLogin: Locator
     constructor(page: Page) {
         super(page);
         this.modal = this.getByTestId('register-modal')
-        this.usernameInput = this.page.getByTestId('username-input')
-        this.emailInput = this.page.getByTestId('email-input')
-        this.passwordInput = this.page.getByTestId('password-input')
-        this.submitButton = this.page.getByTestId('submit-register-button')
-        this.formFieldError = this.page.getByTestId('form-field-error')
+        this.emailInput = this.modal.getByTestId('email-input')
+        this.passwordInput = this.modal.getByTestId('password-input')
+        this.submitButton = this.modal.getByTestId('submit-register-button')
+        this.formFieldError = this.modal.getByTestId('form-field-error')
+        this.switchToLogin = this.modal.locator('button', { hasText: /login|sign in/i })
     }
 
     async expectModal(){
         await expect(this.modal).toBeVisible()
-        await expect(this.usernameInput).toBeVisible()
         await expect(this.emailInput).toBeVisible()
         await expect(this.passwordInput).toBeVisible()
         await expect(this.submitButton).toBeVisible()
     }
 
-    async fillForm(username: string, email: string, password: string): Promise<void> {
-        await this.usernameInput.fill(username)
+    async fillForm(email: string, password: string): Promise<void> {
         await this.emailInput.fill(email)
         await this.passwordInput.fill(password)
     }
 
     async expectEmailInputError(error?: string): Promise<void> {
-        await expect(this.formFieldError).toBeVisible()
+        await expect(this.formFieldError.first()).toBeVisible()
         if (error) {
-            await expect(this.formFieldError).toHaveText(error)
+            await expect(this.formFieldError.first()).toHaveText(error)
         }
     }
     async expectPasswordInputError(error?: string): Promise<void> {
-        await expect(this.formFieldError).toBeVisible()
+        await expect(this.formFieldError.first()).toBeVisible()
         if (error) {
-            await expect(this.formFieldError).toHaveText(error)
+            await expect(this.formFieldError.first()).toHaveText(error)
         }
     }
 

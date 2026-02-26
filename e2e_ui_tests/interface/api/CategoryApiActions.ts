@@ -9,9 +9,12 @@ export class CategoryApiActions {
     this.categoryApiClient = categoryApiClient;
   }
 
-  async createMultipleCategories(token: string, categories: CategoryData[]): Promise<{ created: number; errors: string[] }> {
+  async createMultipleCategories(token: string, categories: CategoryData[], workspaceId?: string): Promise<{ created: number; errors: string[] }> {
     let created = 0;
     this.categoryApiClient.setToken(token);
+    if (workspaceId) {
+      this.categoryApiClient.setWorkspaceId(workspaceId);
+    }
     const errors: string[] = [];
 
     for (const category of categories) {
@@ -33,19 +36,22 @@ export class CategoryApiActions {
 
   async deleteCategory(id: number): Promise<void> {
     const response = await this.categoryApiClient.deleteCategory(id);
-    
+
     if (response.error) {
       throw new Error(`Failed to delete category: ${response.error}`);
     }
-    
+
   }
 
-  async deleteAllCategories(token: string): Promise<number> {
+  async deleteAllCategories(token: string, workspaceId?: string): Promise<number> {
     this.categoryApiClient.setToken(token);
+    if (workspaceId) {
+      this.categoryApiClient.setWorkspaceId(workspaceId);
+    }
 
     // Get all categories (flat list to avoid hierarchy issues)
     const categoriesResponse = await this.categoryApiClient.getAllCategoriesFlat();
-    
+
     if (categoriesResponse.error) {
       throw new Error(`Failed to fetch categories: ${categoriesResponse.error}`);
     }
@@ -54,7 +60,7 @@ export class CategoryApiActions {
     }
 
     const categories = categoriesResponse.data;
-    
+
     let deletedCount = 0;
     const errors: string[] = [];
 
@@ -77,8 +83,6 @@ export class CategoryApiActions {
       // If no categories were deleted and there were errors, throw an error
       const errorMsg = `Failed to delete any categories. Errors: ${errors.join('; ')}`;
       throw new Error(errorMsg);
-    } else if (errors.length > 0) {
-      // If some categories were deleted but there were errors, log warnings
     }
 
     return deletedCount;

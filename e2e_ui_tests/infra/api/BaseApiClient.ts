@@ -1,5 +1,5 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
-import { ApiResponse } from '../../types/api';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
+import { ApiResponse } from "../../types/api";
 
 export interface ApiClientConfig {
   baseURL: string;
@@ -16,7 +16,7 @@ export class BaseApiClient {
       baseURL: config.baseURL,
       timeout: config.timeout || 30000,
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         ...config.headers,
       },
     });
@@ -35,7 +35,7 @@ export class BaseApiClient {
       },
       (error) => {
         return Promise.reject(error);
-      }
+      },
     );
 
     // Response interceptor to handle errors
@@ -49,12 +49,16 @@ export class BaseApiClient {
           this.clearToken();
         }
         return Promise.reject(error);
-      }
+      },
     );
   }
 
   public setToken(token: string): void {
     this.token = token;
+  }
+
+  public setWorkspaceId(workspaceId: string): void {
+    this.axiosInstance.defaults.headers.common["X-Workspace-Id"] = workspaceId;
   }
 
   public clearToken(): void {
@@ -70,22 +74,37 @@ export class BaseApiClient {
     return response.data;
   }
 
-  protected async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  protected async post<T>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig,
+  ): Promise<T> {
     const response = await this.axiosInstance.post<T>(url, data, config);
     return response.data;
   }
 
-  protected async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  protected async put<T>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig,
+  ): Promise<T> {
     const response = await this.axiosInstance.put<T>(url, data, config);
     return response.data;
   }
 
-  protected async patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  protected async patch<T>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig,
+  ): Promise<T> {
     const response = await this.axiosInstance.patch<T>(url, data, config);
     return response.data;
   }
 
-  protected async delete<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+  protected async delete<T>(
+    url: string,
+    config?: AxiosRequestConfig,
+  ): Promise<T> {
     const response = await this.axiosInstance.delete<T>(url, config);
     return response.data;
   }
@@ -98,18 +117,24 @@ export class BaseApiClient {
   }
 
   protected async makeRequest<T>(
-    requestFn: () => Promise<T>
+    requestFn: () => Promise<T>,
   ): Promise<ApiResponse<T>> {
     try {
       const data = await requestFn();
       return { data };
     } catch (error: any) {
-      console.log()
-      const errorMessage = error.response?.data?.error ||  error.response?.error || error.response?.data?.detail || 
-                          error.response?.data?.message || 
-                          error.message || 
-                          'Unknown error occurred';
-      return { error: errorMessage, errorCode: error.response?.data?.errorCode };
+      console.log();
+      const errorMessage =
+        error.response?.data?.error ||
+        error.response?.error ||
+        error.response?.data?.detail ||
+        error.response?.data?.message ||
+        error.message ||
+        "Unknown error occurred";
+      return {
+        error: errorMessage,
+        errorCode: error.response?.data?.errorCode,
+      };
     }
   }
 }

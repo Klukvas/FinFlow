@@ -15,14 +15,25 @@ export class UserApiActions {
     return response.data.access_token;
   }
 
-  async register({ email, username, password }: { email: string, username: string, password: string }): Promise<void> {
+  /**
+   * Extract default_workspace_id from JWT token payload
+   */
+  getWorkspaceIdFromToken(token: string): string {
+    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+    if (!payload.default_workspace_id) {
+      throw new Error('No default_workspace_id in token');
+    }
+    return payload.default_workspace_id;
+  }
+
+  async register({ email, username, password }: { email: string, username?: string, password: string }): Promise<void> {
     const response = await this.userApiClient.register({ email, username, password });
     if (response.error && response.errorCode !== 'EMAIL_ALREADY_TAKEN') {
       throw new Error(`Failed to register: ${response.error}`);
     }
   }
 
-  async registerMultipleUsers(users: { email: string, username: string, password: string }[]): Promise<void> {
+  async registerMultipleUsers(users: { email: string, username?: string, password: string }[]): Promise<void> {
     for (const user of users) {
       await this.register(user);
     }
