@@ -1,7 +1,7 @@
 """Convert float columns to numeric for monetary precision
 
 Revision ID: d001_float_to_numeric
-Revises: c8ce19e9fd1b
+Revises: 010
 Create Date: 2026-02-26 12:00:00.000000
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = 'd001_float_to_numeric'
-down_revision: Union[str, None] = 'c8ce19e9fd1b'
+down_revision: Union[str, None] = '010'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

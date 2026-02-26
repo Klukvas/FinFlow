@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '001_add_account_id_to_incomes'
-down_revision = None
+down_revision = '000_create_incomes_table'
 branch_labels = None
 depends_on = None
 

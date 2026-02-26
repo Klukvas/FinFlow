@@ -1,7 +1,7 @@
 """backfill workspace_id from user personal workspaces
 
 Revision ID: 003
-Revises: 002
+Revises: 002b
 Create Date: 2025-12-23 22:25:00.000000
 
 """
@@ -13,7 +13,7 @@ import os
 
 # revision identifiers, used by Alembic.
 revision: str = '003'
-down_revision: Union[str, None] = '002'
+down_revision: Union[str, None] = '002b'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
