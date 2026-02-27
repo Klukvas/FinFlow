@@ -15,7 +15,7 @@ class TestUpdateCategory:
         original_name = fake.word() + fake.word()  # ensure >= 3 chars
         new_name = fake.word() + fake.word()  # ensure >= 3 chars
 
-        with patch("app.dependencies.decode_token") as mock_decode:
+        with patch("shared.auth.dependencies.decode_token") as mock_decode:
             mock_decode.return_value = user_id
             create_resp = client.post(
                 "/categories/",
@@ -43,7 +43,7 @@ class TestUpdateCategory:
 
     def test_update_category_not_found(self, client: TestClient):
         user_id = randint(1000, 2000)
-        with patch("app.dependencies.decode_token") as mock_decode:
+        with patch("shared.auth.dependencies.decode_token") as mock_decode:
             mock_decode.return_value = user_id
             response = client.put(
                 "/categories/99999",
@@ -62,7 +62,7 @@ class TestUpdateCategory:
         user2_id = randint(2000, 3000)
         original_name = fake.word() + fake.word()  # ensure >= 3 chars
 
-        with patch("app.dependencies.decode_token") as mock_decode:
+        with patch("shared.auth.dependencies.decode_token") as mock_decode:
             mock_decode.return_value = user1_id
             create_resp = client.post(
                 "/categories/",

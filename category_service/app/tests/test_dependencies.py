@@ -6,6 +6,7 @@ Covers: verify_internal_token, decode_token, get_current_user_id,
 import pytest
 from fastapi import HTTPException, status
 from fastapi.testclient import TestClient
+from fastapi.security import HTTPAuthorizationCredentials
 from unittest.mock import patch, MagicMock
 from jose import jwt
 
@@ -96,47 +97,30 @@ class TestVerifyInternalToken:
 # ---------------------------------------------------------------------------
 
 class TestGetCurrentUserId:
-    def _make_request(self, headers=None):
-        mock_request = MagicMock()
-        mock_request.url.path = "/test"
-        mock_request.method = "GET"
-        mock_request.headers = headers or {}
-        return mock_request
+    """Tests for get_current_user_id using HTTPAuthorizationCredentials (shared auth)."""
 
-    def test_missing_authorization_header_raises_401(self):
-        request = self._make_request({})
-        with pytest.raises(HTTPException) as exc_info:
-            get_current_user_id(request)
-        assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
-        assert "Authorization header required" in exc_info.value.detail
-
-    def test_non_bearer_format_raises_401(self):
-        request = self._make_request({"Authorization": "Basic sometoken"})
-        with pytest.raises(HTTPException) as exc_info:
-            get_current_user_id(request)
-        assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
-        assert "Invalid token format" in exc_info.value.detail
-
-    def test_empty_token_raises_401(self):
-        request = self._make_request({"Authorization": "Bearer "})
-        with pytest.raises(HTTPException) as exc_info:
-            get_current_user_id(request)
-        assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
-        assert "Token cannot be empty" in exc_info.value.detail
+    def _make_credentials(self, token: str) -> HTTPAuthorizationCredentials:
+        return HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
 
     def test_valid_bearer_token_returns_user_id(self):
         user_id = 99
         token = jwt.encode(
             {"sub": str(user_id)}, settings.SECRET_KEY, algorithm=settings.ALGORITHM
         )
-        request = self._make_request({"Authorization": f"Bearer {token}"})
-        result = get_current_user_id(request)
+        credentials = self._make_credentials(token)
+        result = get_current_user_id(credentials)
         assert result == user_id
 
     def test_invalid_bearer_token_raises_401(self):
-        request = self._make_request({"Authorization": "Bearer bad.token.here"})
+        credentials = self._make_credentials("bad.token.here")
         with pytest.raises(HTTPException) as exc_info:
-            get_current_user_id(request)
+            get_current_user_id(credentials)
+        assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_empty_token_raises_401(self):
+        credentials = self._make_credentials("")
+        with pytest.raises(HTTPException) as exc_info:
+            get_current_user_id(credentials)
         assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
 
 
@@ -169,16 +153,16 @@ class TestGetWorkspaceId:
 # ---------------------------------------------------------------------------
 
 class TestAuthViaHTTP:
-    def test_missing_authorization_header_returns_401_via_http(self, client):
-        """Verify that missing auth header returns 401 via HTTP."""
+    def test_missing_authorization_header_returns_403_via_http(self, client):
+        """Verify that missing auth header returns 403 via HTTP (HTTPBearer)."""
         response = client.get(
             "/categories/",
             headers={"X-Workspace-Id": TEST_WORKSPACE_ID_HEADER},
         )
-        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_invalid_token_format_returns_401_via_http(self, client):
-        """Verify that an invalid token format returns 401 via HTTP."""
+    def test_invalid_token_format_returns_403_via_http(self, client):
+        """Verify that an invalid token format returns 403 via HTTP (HTTPBearer)."""
         response = client.get(
             "/categories/",
             headers={
@@ -186,4 +170,4 @@ class TestAuthViaHTTP:
                 "X-Workspace-Id": TEST_WORKSPACE_ID_HEADER,
             },
         )
-        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+        assert response.status_code == status.HTTP_403_FORBIDDEN

@@ -20,7 +20,7 @@ class TestAllMCCCodes:
         db.add(non_default_mcc)
         db.commit()
 
-        with patch("app.dependencies.decode_token", return_value=1):
+        with patch("shared.auth.dependencies.decode_token", return_value=1):
             response = client.get(
                 "/mcc/codes",
                 headers={"Authorization": "Bearer testtoken"},
@@ -67,7 +67,7 @@ class TestAllMCCCodes:
         db.add(translation2)
         db.commit()
 
-        with patch("app.dependencies.decode_token", return_value=1):
+        with patch("shared.auth.dependencies.decode_token", return_value=1):
             response = client.get(
                 "/mcc/codes?language=ru",
                 headers={"Authorization": "Bearer testtoken"},
@@ -91,7 +91,7 @@ class TestAllMCCCodes:
         db.add(mcc_code)
         db.commit()
 
-        with patch("app.dependencies.decode_token", return_value=1):
+        with patch("shared.auth.dependencies.decode_token", return_value=1):
             response = client.get(
                 "/mcc/codes?language=uk",
                 headers={"Authorization": "Bearer testtoken"},
@@ -122,7 +122,7 @@ class TestAllMCCCodes:
         db.add(translation)
         db.commit()
 
-        with patch("app.dependencies.decode_token", return_value=1):
+        with patch("shared.auth.dependencies.decode_token", return_value=1):
             response = client.get(
                 "/mcc/codes?language=uk",
                 headers={"Authorization": "Bearer testtoken"},
@@ -144,7 +144,7 @@ class TestAllMCCCodes:
         db.add(mcc_code)
         db.commit()
 
-        with patch("app.dependencies.decode_token", return_value=1):
+        with patch("shared.auth.dependencies.decode_token", return_value=1):
             response = client.get(
                 "/mcc/codes?language=en",
                 headers={"Authorization": "Bearer testtoken"},
@@ -167,7 +167,7 @@ class TestAllMCCCodes:
         db.add(mcc_code)
         db.commit()
 
-        with patch("app.dependencies.decode_token", return_value=1):
+        with patch("shared.auth.dependencies.decode_token", return_value=1):
             response = client.get(
                 "/mcc/codes?language=fr",
                 headers={"Authorization": "Bearer testtoken"},
@@ -179,7 +179,7 @@ class TestAllMCCCodes:
 
     def test_get_all_mcc_codes_empty_result(self, client: TestClient, db: Session):
         """Test getting all MCC codes - results may already contain entries from other tests"""
-        with patch("app.dependencies.decode_token", return_value=1):
+        with patch("shared.auth.dependencies.decode_token", return_value=1):
             response = client.get(
                 "/mcc/codes",
                 headers={"Authorization": "Bearer testtoken"},
@@ -195,4 +195,4 @@ class TestAllMCCCodes:
     def test_get_all_mcc_codes_unauthorized(self, client: TestClient):
         """Test that unauthorized requests are rejected"""
         response = client.get("/mcc/codes")
-        assert response.status_code == 401
+        assert response.status_code == 403

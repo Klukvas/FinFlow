@@ -21,7 +21,7 @@ client = TestClient(app, raise_server_exceptions=False)
 class TestImprovedCategoryService:
     """Test improved category service functionality"""
 
-    @patch("app.dependencies.decode_token")
+    @patch("shared.auth.dependencies.decode_token")
     def test_create_category_with_validation(self, mock_decode):
         """Test category creation with improved validation"""
         mock_decode.return_value = 1
@@ -40,7 +40,7 @@ class TestImprovedCategoryService:
         assert data["name"] == "Food & Dining"
         assert data["user_id"] == 1
 
-    @patch("app.dependencies.decode_token")
+    @patch("shared.auth.dependencies.decode_token")
     def test_create_category_with_invalid_name(self, mock_decode):
         """Test category creation with invalid name"""
         mock_decode.return_value = 1
@@ -68,7 +68,7 @@ class TestImprovedCategoryService:
         assert response.status_code == 400
         assert "must be at least 3 characters long" in response.json()["error"]
 
-    @patch("app.dependencies.decode_token")
+    @patch("shared.auth.dependencies.decode_token")
     def test_circular_relationship_validation(self, mock_decode):
         """Test circular relationship validation"""
         mock_decode.return_value = 1
@@ -97,7 +97,7 @@ class TestImprovedCategoryService:
         assert response.status_code == 400
         assert "cannot be its own parent" in response.json()["error"]
 
-    @patch("app.dependencies.decode_token")
+    @patch("shared.auth.dependencies.decode_token")
     def test_name_uniqueness_validation(self, mock_decode):
         """Test category name uniqueness validation"""
         mock_decode.return_value = 1
@@ -149,7 +149,7 @@ class TestImprovedCategoryService:
         assert data["status"] == "healthy"
         assert data["service"] == "category-service"
 
-    @patch("app.dependencies.decode_token")
+    @patch("shared.auth.dependencies.decode_token")
     def test_improved_error_messages(self, mock_decode):
         """Test improved error messages"""
         mock_decode.return_value = 1
@@ -167,20 +167,18 @@ class TestImprovedCategoryService:
 
     def test_unauthorized_access(self):
         """Test unauthorized access handling"""
-        # Test without authorization header
+        # Test without authorization header - HTTPBearer returns 403
         response = client.get("/categories/")
-        assert response.status_code == 401
-        assert "Authorization header required" in response.json()["error"]
+        assert response.status_code == 403
 
-        # Test with invalid token format
+        # Test with invalid token format - HTTPBearer returns 403
         response = client.get(
             "/categories/",
             headers={"Authorization": "InvalidFormat token"},
         )
-        assert response.status_code == 401
-        assert "Invalid token format" in response.json()["error"]
+        assert response.status_code == 403
 
-    @patch("app.dependencies.decode_token")
+    @patch("shared.auth.dependencies.decode_token")
     def test_hierarchical_category_retrieval(self, mock_decode):
         """Test hierarchical category retrieval"""
         mock_decode.return_value = 1

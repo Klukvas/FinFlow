@@ -36,7 +36,7 @@ class TestGetCategoryInternal:
         user_id = randint(5000, 6000)
         name = fake.word() + fake.word()
 
-        with patch("app.dependencies.decode_token", return_value=user_id):
+        with patch("shared.auth.dependencies.decode_token", return_value=user_id):
             create_resp = client.post(
                 "/categories/",
                 json={"name": name},
@@ -88,7 +88,7 @@ class TestGetCategoryInternal:
         user2_id = randint(7000, 8000)
         name = fake.word() + fake.word()
 
-        with patch("app.dependencies.decode_token", return_value=user1_id):
+        with patch("shared.auth.dependencies.decode_token", return_value=user1_id):
             create_resp = client.post(
                 "/categories/",
                 json={"name": name},

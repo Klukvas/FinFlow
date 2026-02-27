@@ -13,7 +13,7 @@ class TestGetAllCategories:
         user_id = randint(10**2, 10**3)
         categories = [fake.word() + fake.word() for _ in range(3)]  # ensure >= 3 chars
 
-        with patch("app.dependencies.decode_token") as mock_decode:
+        with patch("shared.auth.dependencies.decode_token") as mock_decode:
             mock_decode.return_value = user_id
             for name in categories:
                 client.post(
@@ -47,7 +47,7 @@ class TestGetAllCategories:
 
     def test_get_all_categories_returns_empty_for_new_user(self, client: TestClient):
         user_id = randint(10**4, 10**5)
-        with patch("app.dependencies.decode_token") as mock_decode:
+        with patch("shared.auth.dependencies.decode_token") as mock_decode:
             mock_decode.return_value = user_id
             response = client.get(
                 "/categories/",
@@ -73,7 +73,7 @@ class TestGetAllCategories:
         user1_categories = [fake.word() + fake.word() for _ in range(2)]
         user2_categories = [fake.word() + fake.word() for _ in range(2)]
 
-        with patch("app.dependencies.decode_token") as mock_decode:
+        with patch("shared.auth.dependencies.decode_token") as mock_decode:
             # Create categories for user1
             mock_decode.return_value = user1_id
             for name in user1_categories:
