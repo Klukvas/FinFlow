@@ -303,7 +303,7 @@ export const Income = () => {
             </p>
             {deleteTarget && (
               <div className="theme-bg-secondary rounded-lg p-3 text-sm">
-                <span className="font-medium text-green-600/80 dark:text-green-400/70">
+                <span className="font-medium theme-success">
                   +
                   {deleteTarget.amount.toLocaleString("uk-UA", {
                     minimumFractionDigits: 2,

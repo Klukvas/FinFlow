@@ -224,7 +224,7 @@ export const WorkspaceMembers: React.FC<WorkspaceMembersProps> = ({
             onClick={() => setActiveTab("members")}
             className={`flex items-center gap-2 px-6 py-3 text-sm font-medium theme-transition border-b-2 ${
               activeTab === "members"
-                ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                ? "border-blue-500 theme-accent"
                 : "border-transparent theme-text-secondary hover:theme-text-primary"
             }`}
           >
@@ -236,14 +236,14 @@ export const WorkspaceMembers: React.FC<WorkspaceMembersProps> = ({
               onClick={() => setActiveTab("invites")}
               className={`flex items-center gap-2 px-6 py-3 text-sm font-medium theme-transition border-b-2 ${
                 activeTab === "invites"
-                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                  ? "border-blue-500 theme-accent"
                   : "border-transparent theme-text-secondary hover:theme-text-primary"
               }`}
             >
               <FaEnvelope className="w-4 h-4" />
               {t("workspace.tabs.invites", "Invitations")}
               {pendingInvitesCount > 0 && (
-                <span className="px-1.5 py-0.5 text-xs rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                <span className="px-1.5 py-0.5 text-xs rounded-full theme-accent-light theme-accent">
                   {pendingInvitesCount}
                 </span>
               )}
@@ -255,7 +255,7 @@ export const WorkspaceMembers: React.FC<WorkspaceMembersProps> = ({
         <div className="flex-1 overflow-y-auto p-6">
           {/* Error message */}
           {error && (
-            <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">
+            <div className="mb-4 p-3 rounded-lg theme-error-light theme-error text-sm">
               {error}
             </div>
           )}
@@ -323,7 +323,7 @@ export const WorkspaceMembers: React.FC<WorkspaceMembersProps> = ({
               ) : (
                 <button
                   onClick={() => setShowInviteForm(true)}
-                  className="w-full flex items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed theme-border hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/10 theme-text-secondary hover:text-blue-600 dark:hover:text-blue-400 theme-transition"
+                  className="w-full flex items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed theme-border hover:border-blue-400 hover:theme-surface-hover theme-text-secondary hover:theme-accent theme-transition"
                 >
                   <FaUserPlus className="w-5 h-5" />
                   <span className="font-medium">

@@ -1,6 +1,5 @@
 import React from "react";
 import { DebtResponse, DebtType } from "@/types/debt";
-import { useTheme } from "@/contexts/ThemeContext";
 import {
   Card,
   CardContent,
@@ -77,7 +76,6 @@ export const DebtCard: React.FC<DebtCardProps> = ({
   onViewPayments,
   onMakePayment,
 }) => {
-  const { actualTheme } = useTheme();
   const { formatCurrency } = useCurrencyConversion();
 
   const formatAmount = (amount: number, currency?: string) => {
@@ -106,29 +104,15 @@ export const DebtCard: React.FC<DebtCardProps> = ({
   const progressPercentage = getProgressPercentage();
 
   return (
-    <Card
-      className={`transition-all duration-200 hover:shadow-lg ${
-        actualTheme === "dark"
-          ? "bg-gray-800 border-gray-700 hover:border-gray-600"
-          : "bg-white border-gray-200 hover:border-gray-300"
-      }`}
-    >
+    <Card className="transition-all duration-200 hover:shadow-lg theme-surface theme-border border hover:theme-border">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">
-            <div
-              className={`p-2 rounded-lg ${
-                actualTheme === "dark" ? "bg-blue-900/50" : "bg-blue-100"
-              }`}
-            >
+            <div className="p-2 rounded-lg theme-accent-light">
               {getDebtTypeIcon(debt.debt_type)}
             </div>
             <div>
-              <CardTitle
-                className={`text-lg flex items-center gap-1.5 ${
-                  actualTheme === "dark" ? "text-white" : "text-gray-900"
-                }`}
-              >
+              <CardTitle className="text-lg flex items-center gap-1.5 theme-text-primary">
                 {debt.name}
                 {debt.is_read_only && (
                   <Lock className="w-4 h-4 text-amber-500 flex-shrink-0" />
@@ -160,7 +144,7 @@ export const DebtCard: React.FC<DebtCardProps> = ({
               <Button
                 variant="secondary"
                 size="sm"
-                className={`${actualTheme === "dark" ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-700"}`}
+                className="theme-text-tertiary hover:theme-text-primary"
               >
                 <MoreVertical className="w-4 h-4" />
               </Button>
@@ -180,11 +164,7 @@ export const DebtCard: React.FC<DebtCardProps> = ({
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => onDelete?.(debt.id)}
-              className={`flex items-center space-x-2 ${
-                actualTheme === "dark"
-                  ? "text-red-400 hover:text-red-300 hover:bg-red-900/20"
-                  : "text-red-600 hover:text-red-700 hover:bg-red-50"
-              }`}
+              className="flex items-center space-x-2 theme-error hover:theme-surface-hover"
             >
               <Trash2 className="w-4 h-4" />
               <span>Delete Debt</span>
@@ -196,69 +176,39 @@ export const DebtCard: React.FC<DebtCardProps> = ({
       <CardContent className="space-y-4">
         {/* Debt Amounts */}
         <div className="grid grid-cols-2 gap-4">
-          <div
-            className={`p-3 rounded-lg ${
-              actualTheme === "dark" ? "bg-gray-700/50" : "bg-gray-50"
-            }`}
-          >
+          <div className="p-3 rounded-lg theme-accent-light">
             <div className="flex items-center space-x-2 mb-1">
               {debt.current_balance >= 0 ? (
                 <TrendingDown className="w-4 h-4 text-green-500" />
               ) : (
                 <TrendingDown className="w-4 h-4 text-red-500" />
               )}
-              <span
-                className={`text-sm font-medium ${
-                  actualTheme === "dark" ? "text-gray-300" : "text-gray-600"
-                }`}
-              >
+              <span className="text-sm font-medium theme-text-secondary">
                 Current Balance
               </span>
             </div>
             <p
               className={`text-xl font-bold ${
-                debt.current_balance >= 0
-                  ? "text-green-600 dark:text-green-400"
-                  : "text-red-600 dark:text-red-400"
+                debt.current_balance >= 0 ? "theme-success" : "theme-error"
               }`}
             >
               {formatAmount(Math.abs(debt.current_balance), debt.currency)}
             </p>
-            <p
-              className={`text-xs mt-1 ${
-                actualTheme === "dark" ? "text-gray-400" : "text-gray-500"
-              }`}
-            >
+            <p className="text-xs mt-1 theme-text-tertiary">
               {debt.current_balance >= 0 ? "💰 They owe me" : "💸 I owe them"}
             </p>
           </div>
-          <div
-            className={`p-3 rounded-lg ${
-              actualTheme === "dark" ? "bg-gray-700/50" : "bg-gray-50"
-            }`}
-          >
+          <div className="p-3 rounded-lg theme-accent-light">
             <div className="flex items-center space-x-2 mb-1">
               <DollarSign className="w-4 h-4 text-blue-500" />
-              <span
-                className={`text-sm font-medium ${
-                  actualTheme === "dark" ? "text-gray-300" : "text-gray-600"
-                }`}
-              >
+              <span className="text-sm font-medium theme-text-secondary">
                 Initial Amount
               </span>
             </div>
-            <p
-              className={`text-lg font-semibold ${
-                actualTheme === "dark" ? "text-gray-300" : "text-gray-700"
-              }`}
-            >
+            <p className="text-lg font-semibold theme-text-secondary">
               {formatAmount(Math.abs(debt.initial_amount), debt.currency)}
             </p>
-            <p
-              className={`text-xs mt-1 ${
-                actualTheme === "dark" ? "text-gray-400" : "text-gray-500"
-              }`}
-            >
+            <p className="text-xs mt-1 theme-text-tertiary">
               {debt.initial_amount >= 0 ? "💰 They owe me" : "💸 I owe them"}
             </p>
           </div>
@@ -267,24 +217,12 @@ export const DebtCard: React.FC<DebtCardProps> = ({
         {/* Progress Bar */}
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
-            <span
-              className={`${actualTheme === "dark" ? "text-gray-400" : "text-gray-600"}`}
-            >
-              Progress
-            </span>
-            <span
-              className={`font-medium ${
-                actualTheme === "dark" ? "text-gray-300" : "text-gray-700"
-              }`}
-            >
+            <span className="theme-text-tertiary">Progress</span>
+            <span className="font-medium theme-text-secondary">
               {progressPercentage.toFixed(1)}%
             </span>
           </div>
-          <div
-            className={`w-full rounded-full h-2 ${
-              actualTheme === "dark" ? "bg-gray-700" : "bg-gray-200"
-            }`}
-          >
+          <div className="w-full rounded-full h-2 theme-border theme-bg-tertiary">
             <div
               className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full transition-all duration-300"
               style={{ width: `${progressPercentage}%` }}
@@ -296,64 +234,32 @@ export const DebtCard: React.FC<DebtCardProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
           {debt.interest_rate && (
             <div className="flex justify-between">
-              <span
-                className={`${actualTheme === "dark" ? "text-gray-400" : "text-gray-600"}`}
-              >
-                Interest Rate
-              </span>
-              <span
-                className={`font-medium ${
-                  actualTheme === "dark" ? "text-gray-300" : "text-gray-700"
-                }`}
-              >
+              <span className="theme-text-tertiary">Interest Rate</span>
+              <span className="font-medium theme-text-secondary">
                 {debt.interest_rate}%
               </span>
             </div>
           )}
           {debt.minimum_payment && (
             <div className="flex justify-between">
-              <span
-                className={`${actualTheme === "dark" ? "text-gray-400" : "text-gray-600"}`}
-              >
-                Min Payment
-              </span>
-              <span
-                className={`font-medium ${
-                  actualTheme === "dark" ? "text-gray-300" : "text-gray-700"
-                }`}
-              >
+              <span className="theme-text-tertiary">Min Payment</span>
+              <span className="font-medium theme-text-secondary">
                 {formatAmount(debt.minimum_payment, debt.currency)}
               </span>
             </div>
           )}
           {debt.due_date && (
             <div className="flex justify-between">
-              <span
-                className={`${actualTheme === "dark" ? "text-gray-400" : "text-gray-600"}`}
-              >
-                Due Date
-              </span>
-              <span
-                className={`font-medium ${
-                  actualTheme === "dark" ? "text-gray-300" : "text-gray-700"
-                }`}
-              >
+              <span className="theme-text-tertiary">Due Date</span>
+              <span className="font-medium theme-text-secondary">
                 {formatDate(debt.due_date)}
               </span>
             </div>
           )}
           {debt.last_payment_date && (
             <div className="flex justify-between">
-              <span
-                className={`${actualTheme === "dark" ? "text-gray-400" : "text-gray-600"}`}
-              >
-                Last Payment
-              </span>
-              <span
-                className={`font-medium ${
-                  actualTheme === "dark" ? "text-gray-300" : "text-gray-700"
-                }`}
-              >
+              <span className="theme-text-tertiary">Last Payment</span>
+              <span className="font-medium theme-text-secondary">
                 {formatDate(debt.last_payment_date)}
               </span>
             </div>
@@ -365,12 +271,8 @@ export const DebtCard: React.FC<DebtCardProps> = ({
           <div
             className={`p-3 rounded-lg border ${
               debt.current_balance >= 0
-                ? actualTheme === "dark"
-                  ? "bg-green-900/20 border-green-700"
-                  : "bg-green-50 border-green-200"
-                : actualTheme === "dark"
-                  ? "bg-red-900/20 border-red-700"
-                  : "bg-red-50 border-red-200"
+                ? "theme-success-light theme-border"
+                : "theme-error-light theme-border"
             }`}
           >
             <div className="flex items-center space-x-2 mb-2">
@@ -379,26 +281,14 @@ export const DebtCard: React.FC<DebtCardProps> = ({
                   debt.current_balance >= 0 ? "text-green-500" : "text-red-500"
                 }`}
               />
-              <span
-                className={`text-sm font-medium ${
-                  actualTheme === "dark" ? "text-gray-300" : "text-gray-700"
-                }`}
-              >
+              <span className="text-sm font-medium theme-text-secondary">
                 {debt.current_balance >= 0 ? "💰 They owe me" : "💸 I owe them"}
               </span>
             </div>
-            <p
-              className={`text-sm font-medium ${
-                actualTheme === "dark" ? "text-gray-300" : "text-gray-700"
-              }`}
-            >
+            <p className="text-sm font-medium theme-text-secondary">
               {debt.contact.name}
               {debt.contact.company && (
-                <span
-                  className={`ml-2 text-xs ${
-                    actualTheme === "dark" ? "text-gray-400" : "text-gray-500"
-                  }`}
-                >
+                <span className="ml-2 text-xs theme-text-tertiary">
                   • {debt.contact.company}
                 </span>
               )}

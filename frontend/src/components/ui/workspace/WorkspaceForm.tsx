@@ -1,7 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Workspace, WorkspaceCreate, WorkspaceUpdate, WorkspaceType } from '@/types';
-import { FaUsers, FaUser } from 'react-icons/fa';
+import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import {
+  Workspace,
+  WorkspaceCreate,
+  WorkspaceUpdate,
+  WorkspaceType,
+} from "@/types";
+import { FaUsers, FaUser } from "react-icons/fa";
 
 interface WorkspaceFormProps {
   workspace?: Workspace | null;
@@ -19,8 +24,8 @@ export const WorkspaceForm: React.FC<WorkspaceFormProps> = ({
   const { t } = useTranslation();
   const isEditing = !!workspace;
 
-  const [name, setName] = useState(workspace?.name || '');
-  const [type, setType] = useState<WorkspaceType>(workspace?.type || 'shared');
+  const [name, setName] = useState(workspace?.name || "");
+  const [type, setType] = useState<WorkspaceType>(workspace?.type || "shared");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -35,7 +40,7 @@ export const WorkspaceForm: React.FC<WorkspaceFormProps> = ({
     setError(null);
 
     if (!name.trim()) {
-      setError(t('workspace.form.nameRequired', 'Workspace name is required'));
+      setError(t("workspace.form.nameRequired", "Workspace name is required"));
       return;
     }
 
@@ -46,7 +51,7 @@ export const WorkspaceForm: React.FC<WorkspaceFormProps> = ({
         await onSubmit({ name: name.trim(), type } as WorkspaceCreate);
       }
     } catch (err) {
-      setError(t('workspace.form.submitError', 'Failed to save workspace'));
+      setError(t("workspace.form.submitError", "Failed to save workspace"));
     }
   };
 
@@ -55,13 +60,17 @@ export const WorkspaceForm: React.FC<WorkspaceFormProps> = ({
       {/* Name field */}
       <div>
         <label className="block text-sm font-medium theme-text-primary mb-2">
-          {t('workspace.form.name', 'Workspace Name')} <span className="text-red-500">*</span>
+          {t("workspace.form.name", "Workspace Name")}{" "}
+          <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder={t('workspace.form.namePlaceholder', 'e.g., Family Budget, Business Expenses')}
+          placeholder={t(
+            "workspace.form.namePlaceholder",
+            "e.g., Family Budget, Business Expenses",
+          )}
           className="w-full px-4 py-3 rounded-lg theme-surface theme-border border theme-text-primary placeholder:theme-text-tertiary focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition"
           disabled={isLoading}
           autoFocus
@@ -72,59 +81,67 @@ export const WorkspaceForm: React.FC<WorkspaceFormProps> = ({
       {!isEditing && (
         <div>
           <label className="block text-sm font-medium theme-text-primary mb-3">
-            {t('workspace.form.type', 'Workspace Type')}
+            {t("workspace.form.type", "Workspace Type")}
           </label>
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
-              onClick={() => setType('personal')}
+              onClick={() => setType("personal")}
               className={`flex items-center gap-3 p-4 rounded-xl border theme-transition ${
-                type === 'personal'
-                  ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
-                  : 'theme-border hover:theme-surface-hover'
+                type === "personal"
+                  ? "border-emerald-500 theme-success-light"
+                  : "theme-border hover:theme-surface-hover"
               }`}
               disabled={isLoading}
             >
-              <div className={`p-2 rounded-lg ${
-                type === 'personal'
-                  ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-800/50 dark:text-emerald-400'
-                  : 'theme-surface-hover theme-text-secondary'
-              }`}>
+              <div
+                className={`p-2 rounded-lg ${
+                  type === "personal"
+                    ? "theme-success-light theme-success"
+                    : "theme-surface-hover theme-text-secondary"
+                }`}
+              >
                 <FaUser className="w-5 h-5" />
               </div>
               <div className="text-left">
-                <div className={`font-medium ${type === 'personal' ? 'text-emerald-700 dark:text-emerald-400' : 'theme-text-primary'}`}>
-                  {t('workspace.types.personal', 'Personal')}
+                <div
+                  className={`font-medium ${type === "personal" ? "theme-success" : "theme-text-primary"}`}
+                >
+                  {t("workspace.types.personal", "Personal")}
                 </div>
                 <div className="text-xs theme-text-tertiary">
-                  {t('workspace.types.personalDesc', 'Just for you')}
+                  {t("workspace.types.personalDesc", "Just for you")}
                 </div>
               </div>
             </button>
 
             <button
               type="button"
-              onClick={() => setType('shared')}
+              onClick={() => setType("shared")}
               className={`flex items-center gap-3 p-4 rounded-xl border theme-transition ${
-                type === 'shared'
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                  : 'theme-border hover:theme-surface-hover'
+                type === "shared"
+                  ? "border-blue-500 theme-accent-light"
+                  : "theme-border hover:theme-surface-hover"
               }`}
               disabled={isLoading}
             >
-              <div className={`p-2 rounded-lg ${
-                type === 'shared'
-                  ? 'bg-blue-100 text-blue-600 dark:bg-blue-800/50 dark:text-blue-400'
-                  : 'theme-surface-hover theme-text-secondary'
-              }`}>
+              <div
+                className={`p-2 rounded-lg ${
+                  type === "shared"
+                    ? "theme-accent-light theme-accent"
+                    : "theme-surface-hover theme-text-secondary"
+                }`}
+              >
                 <FaUsers className="w-5 h-5" />
               </div>
               <div className="text-left">
-                <div className={`font-medium ${type === 'shared' ? 'text-blue-700 dark:text-blue-400' : 'theme-text-primary'}`}>
-                  {t('workspace.types.shared', 'Shared')}
+                <div
+                  className={`font-medium ${type === "shared" ? "theme-accent" : "theme-text-primary"}`}
+                >
+                  {t("workspace.types.shared", "Shared")}
                 </div>
                 <div className="text-xs theme-text-tertiary">
-                  {t('workspace.types.sharedDesc', 'Collaborate with others')}
+                  {t("workspace.types.sharedDesc", "Collaborate with others")}
                 </div>
               </div>
             </button>
@@ -134,7 +151,7 @@ export const WorkspaceForm: React.FC<WorkspaceFormProps> = ({
 
       {/* Error message */}
       {error && (
-        <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">
+        <div className="p-3 rounded-lg theme-error-light theme-error text-sm">
           {error}
         </div>
       )}
@@ -147,19 +164,18 @@ export const WorkspaceForm: React.FC<WorkspaceFormProps> = ({
           className="px-4 py-2 rounded-lg theme-text-secondary hover:theme-surface-hover theme-transition"
           disabled={isLoading}
         >
-          {t('common.cancel', 'Cancel')}
+          {t("common.cancel", "Cancel")}
         </button>
         <button
           type="submit"
           className="px-6 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed theme-transition"
           disabled={isLoading || !name.trim()}
         >
-          {isLoading 
-            ? t('common.saving', 'Saving...') 
-            : isEditing 
-              ? t('common.save', 'Save') 
-              : t('workspace.form.create', 'Create Workspace')
-          }
+          {isLoading
+            ? t("common.saving", "Saving...")
+            : isEditing
+              ? t("common.save", "Save")
+              : t("workspace.form.create", "Create Workspace")}
         </button>
       </div>
     </form>
@@ -167,4 +183,3 @@ export const WorkspaceForm: React.FC<WorkspaceFormProps> = ({
 };
 
 export default WorkspaceForm;
-

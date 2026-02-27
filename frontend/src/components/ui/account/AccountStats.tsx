@@ -1,8 +1,8 @@
-import React from 'react';
-import { useTranslation } from 'react-i18next';
-import { Card } from '../shared/Card';
-import { FaChartLine, FaDollarSign, FaWallet } from 'react-icons/fa';
-import { useCurrencyConversion } from '@/hooks/useCurrencyConversion';
+import React from "react";
+import { useTranslation } from "react-i18next";
+import { Card } from "../shared/Card";
+import { FaChartLine, FaDollarSign, FaWallet } from "react-icons/fa";
+import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
 
 interface AccountStatistics {
   total_accounts: number;
@@ -17,7 +17,10 @@ interface AccountStatsProps {
   isLoading?: boolean;
 }
 
-export const AccountStats: React.FC<AccountStatsProps> = ({ statistics, isLoading = false }) => {
+export const AccountStats: React.FC<AccountStatsProps> = ({
+  statistics,
+  isLoading = false,
+}) => {
   const { t } = useTranslation();
   const { formatCurrency } = useCurrencyConversion();
 
@@ -26,8 +29,8 @@ export const AccountStats: React.FC<AccountStatsProps> = ({ statistics, isLoadin
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[1, 2, 3].map((i) => (
           <Card key={i} className="p-6 animate-pulse">
-            <div className="h-6 bg-gray-200 rounded mb-2"></div>
-            <div className="h-8 bg-gray-200 rounded w-24"></div>
+            <div className="h-6 theme-bg-tertiary rounded mb-2"></div>
+            <div className="h-8 theme-bg-tertiary rounded w-24"></div>
           </Card>
         ))}
       </div>
@@ -42,8 +45,12 @@ export const AccountStats: React.FC<AccountStatsProps> = ({ statistics, isLoadin
             <FaWallet className="w-6 h-6 text-blue-600" />
           </div>
           <div className="ml-4">
-            <p className="text-sm font-medium theme-text-secondary">{t('accountPage.stats.totalAccounts')}</p>
-            <p className="text-2xl font-bold theme-text-primary">{statistics.total_accounts}</p>
+            <p className="text-sm font-medium theme-text-secondary">
+              {t("accountPage.stats.totalAccounts")}
+            </p>
+            <p className="text-2xl font-bold theme-text-primary">
+              {statistics.total_accounts}
+            </p>
           </div>
         </div>
       </Card>
@@ -55,14 +62,17 @@ export const AccountStats: React.FC<AccountStatsProps> = ({ statistics, isLoadin
           </div>
           <div className="ml-4">
             <p className="text-sm font-medium theme-text-secondary">
-              {t('accountPage.stats.totalBalance')}
+              {t("accountPage.stats.totalBalance")}
             </p>
             <p className="text-2xl font-bold theme-text-primary">
               {formatCurrency(statistics.total_balance, statistics.currency)}
             </p>
             {statistics.unconvertible_accounts_count > 0 && (
               <p className="text-xs text-orange-600 mt-1">
-                ⚠️ {statistics.unconvertible_accounts_count} {statistics.unconvertible_accounts_count === 1 ? t('accountPage.stats.notIncludedSingle') : t('accountPage.stats.notIncludedPlural')}
+                ⚠️ {statistics.unconvertible_accounts_count}{" "}
+                {statistics.unconvertible_accounts_count === 1
+                  ? t("accountPage.stats.notIncludedSingle")
+                  : t("accountPage.stats.notIncludedPlural")}
               </p>
             )}
           </div>
@@ -75,8 +85,12 @@ export const AccountStats: React.FC<AccountStatsProps> = ({ statistics, isLoadin
             <FaChartLine className="w-6 h-6 text-purple-600" />
           </div>
           <div className="ml-4">
-            <p className="text-sm font-medium theme-text-secondary">{t('accountPage.stats.active')}</p>
-            <p className="text-2xl font-bold theme-text-primary">{statistics.active_accounts}</p>
+            <p className="text-sm font-medium theme-text-secondary">
+              {t("accountPage.stats.active")}
+            </p>
+            <p className="text-2xl font-bold theme-text-primary">
+              {statistics.active_accounts}
+            </p>
           </div>
         </div>
       </Card>

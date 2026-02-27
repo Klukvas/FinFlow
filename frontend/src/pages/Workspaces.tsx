@@ -222,7 +222,7 @@ export const Workspaces: React.FC = () => {
 
       {/* Error message */}
       {error && (
-        <div className="mb-6 p-4 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400">
+        <div className="mb-6 p-4 rounded-lg theme-error-light theme-error">
           {error}
         </div>
       )}
@@ -237,7 +237,7 @@ export const Workspaces: React.FC = () => {
       {/* Workspaces grid */}
       {!isLoading && workspaces.length === 0 && (
         <div className="text-center py-16">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full theme-bg-secondary mb-4">
             <FaUsers className="w-8 h-8 theme-text-tertiary" />
           </div>
           <h3 className="text-lg font-medium theme-text-primary mb-2">

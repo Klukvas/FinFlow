@@ -10,6 +10,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.database import Base, engine
 from app.routers.dept_route import router as debt_router
 from app.routers.contact import router as contact_router
+from app.routers import internal
 from app.config import settings
 from app.utils.logger import get_logger
 from app.exceptions import (
@@ -139,6 +140,7 @@ app.add_middleware(RequestLoggingMiddleware)
 # Include routers
 app.include_router(debt_router, prefix="/debts", tags=["debts"])
 app.include_router(contact_router, prefix="/contacts", tags=["contacts"])
+app.include_router(internal.router)
 
 @app.get("/health")
 async def health_check():

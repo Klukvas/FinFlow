@@ -1,8 +1,13 @@
-import React, { forwardRef } from 'react';
-import { formatNumberWithSpaces, removeSpacesFromNumber } from '@/utils/numberFormat';
+import React, { forwardRef } from "react";
+import {
+  formatNumberWithSpaces,
+  removeSpacesFromNumber,
+} from "@/utils/numberFormat";
 
-export interface FormattedNumberInputProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' | 'value' | 'onChange'> {
+export interface FormattedNumberInputProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "type" | "value" | "onChange"
+> {
   value?: string | number;
   onChange?: (value: string) => void;
   onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
@@ -12,34 +17,40 @@ export interface FormattedNumberInputProps
   required?: boolean;
   disabled?: boolean;
   className?: string;
-  'data-testid'?: string;
+  "data-testid"?: string;
 }
 
-const FormattedNumberInput = forwardRef<HTMLInputElement, FormattedNumberInputProps>(
-  ({ 
-    value = '', 
-    onChange, 
-    onBlur,
-    placeholder = '0',
-    error, 
-    label,
-    required = false,
-    disabled = false,
-    className,
-    'data-testid': testId,
-    ...props 
-  }, ref) => {
+const FormattedNumberInput = forwardRef<
+  HTMLInputElement,
+  FormattedNumberInputProps
+>(
+  (
+    {
+      value = "",
+      onChange,
+      onBlur,
+      placeholder = "0",
+      error,
+      label,
+      required = false,
+      disabled = false,
+      className,
+      "data-testid": testId,
+      ...props
+    },
+    ref,
+  ) => {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const inputValue = e.target.value;
-      
+
       // Remove spaces and validate
       const cleaned = removeSpacesFromNumber(inputValue);
-      
+
       // Allow empty, digits, and single decimal point
-      if (cleaned === '' || /^\d*\.?\d*$/.test(cleaned)) {
+      if (cleaned === "" || /^\d*\.?\d*$/.test(cleaned)) {
         // Re-format with spaces for display
         const formatted = formatNumberWithSpaces(cleaned);
-        
+
         if (onChange) {
           onChange(formatted);
         }
@@ -50,30 +61,40 @@ const FormattedNumberInput = forwardRef<HTMLInputElement, FormattedNumberInputPr
       // Format to 2 decimal places on blur if it's a valid number
       const inputValue = e.target.value;
       const cleaned = removeSpacesFromNumber(inputValue);
-      
+
       if (cleaned && !isNaN(parseFloat(cleaned))) {
-        const formattedValue = formatNumberWithSpaces(parseFloat(cleaned).toFixed(2));
+        const formattedValue = formatNumberWithSpaces(
+          parseFloat(cleaned).toFixed(2),
+        );
         if (onChange) {
           onChange(formattedValue);
         }
       }
-      
+
       if (onBlur) {
         onBlur(e);
       }
     };
 
     // Convert number to formatted string if value is a number
-    const displayValue = typeof value === 'number' 
-      ? formatNumberWithSpaces(value.toString()) 
-      : value;
+    const displayValue =
+      typeof value === "number"
+        ? formatNumberWithSpaces(value.toString())
+        : value;
 
     return (
-      <div className="space-y-2" data-testid={testId ? `${testId}-container` : 'formatted-number-input-container'}>
+      <div
+        className="space-y-2"
+        data-testid={
+          testId ? `${testId}-container` : "formatted-number-input-container"
+        }
+      >
         {label && (
-          <label 
+          <label
             className="block text-sm font-medium leading-none theme-text-primary"
-            data-testid={testId ? `${testId}-label` : 'formatted-number-input-label'}
+            data-testid={
+              testId ? `${testId}-label` : "formatted-number-input-label"
+            }
           >
             {label}
             {required && <span className="text-red-500 ml-1">*</span>}
@@ -88,28 +109,33 @@ const FormattedNumberInput = forwardRef<HTMLInputElement, FormattedNumberInputPr
           onBlur={handleBlurEvent}
           placeholder={placeholder}
           disabled={disabled}
-          data-testid={testId || 'formatted-number-input'}
-          className={`block w-full h-12 px-3 py-3 text-base theme-border border rounded-lg shadow-sm theme-bg theme-text-primary placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition ${
-            error ? "border-red-500 focus:ring-red-500 focus:border-red-500" : ""
+          data-testid={testId || "formatted-number-input"}
+          className={`block w-full h-12 px-3 py-3 text-base theme-border border rounded-lg shadow-sm theme-bg theme-text-primary placeholder:theme-text-tertiary focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition ${
+            error
+              ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+              : ""
           } ${
-            disabled ? "theme-bg-tertiary cursor-not-allowed opacity-50" : "hover:theme-border-hover"
+            disabled
+              ? "theme-bg-tertiary cursor-not-allowed opacity-50"
+              : "hover:theme-border-hover"
           } ${className || ""}`}
           {...props}
         />
         {error && (
-          <p 
-            className="text-sm text-red-600 dark:text-red-400"
-            data-testid={testId ? `${testId}-error` : 'formatted-number-input-error'}
+          <p
+            className="text-sm theme-error"
+            data-testid={
+              testId ? `${testId}-error` : "formatted-number-input-error"
+            }
           >
             {error}
           </p>
         )}
       </div>
     );
-  }
+  },
 );
 
-FormattedNumberInput.displayName = 'FormattedNumberInput';
+FormattedNumberInput.displayName = "FormattedNumberInput";
 
 export { FormattedNumberInput };
-

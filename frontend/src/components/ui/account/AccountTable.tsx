@@ -192,9 +192,7 @@ export const AccountTable: React.FC<AccountTableProps> = ({
   const renderRow = (account: AccountResponse) => {
     const summary = summaryMap.get(account.id);
     const balanceClass =
-      account.balance >= 0
-        ? "text-green-600/80 dark:text-green-400/70"
-        : "text-red-500/80 dark:text-red-400/70";
+      account.balance >= 0 ? "text-green-600/80" : "text-red-500/80";
 
     return (
       <tr
@@ -313,9 +311,7 @@ export const AccountTable: React.FC<AccountTableProps> = ({
   const renderMobileCard = (account: AccountResponse) => {
     const summary = summaryMap.get(account.id);
     const balanceClass =
-      account.balance >= 0
-        ? "text-green-600/80 dark:text-green-400/70"
-        : "text-red-500/80 dark:text-red-400/70";
+      account.balance >= 0 ? "text-green-600/80" : "text-red-500/80";
 
     return (
       <div

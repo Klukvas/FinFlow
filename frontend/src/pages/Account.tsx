@@ -363,9 +363,7 @@ export const Account: React.FC = () => {
                 </span>
                 <span
                   className={`ml-2 font-semibold tabular-nums ${
-                    archiveTarget.balance >= 0
-                      ? "text-green-600/80 dark:text-green-400/70"
-                      : "text-red-500/80 dark:text-red-400/70"
+                    archiveTarget.balance >= 0 ? "theme-success" : "theme-error"
                   }`}
                 >
                   {archiveTarget.balance.toLocaleString("uk-UA", {

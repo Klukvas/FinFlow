@@ -1,6 +1,7 @@
 from datetime import date
-from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from typing import Annotated, Optional
+from uuid import UUID
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -108,6 +109,52 @@ async def execute_payments_now(
         "message": "Manual execution triggered",
         "status": "success"
     }
+
+
+@router.get("/recurring/ai-summary")
+async def get_recurring_ai_summary(
+    user_id: Annotated[int, Query(description="User ID", gt=0)],
+    workspace_id: Annotated[UUID, Query(description="Workspace ID")],
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_internal_token),
+) -> dict:
+    """
+    Internal endpoint returning all active recurring payments for AI analysis.
+
+    Returns aggregated data without PII for the AI assistant to analyze
+    recurring payment patterns and provide financial insights.
+    """
+    try:
+        payments = (
+            db.query(RecurringPayment)
+            .filter(
+                RecurringPayment.user_id == user_id,
+                RecurringPayment.workspace_id == workspace_id,
+                RecurringPayment.status == "active",
+            )
+            .limit(500)
+            .all()
+        )
+        return {
+            "items": [
+                {
+                    "name": p.name,
+                    "amount": float(p.amount),
+                    "currency": p.currency,
+                    "category_id": p.category_id,
+                    "payment_type": p.payment_type,
+                    "schedule_type": p.schedule_type,
+                    "next_execution": str(p.next_execution) if p.next_execution else None,
+                }
+                for p in payments
+            ]
+        }
+    except Exception as e:
+        logger.error(f"Error fetching recurring AI summary: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve recurring payments summary",
+        )
 
 
 @router.get("/health")

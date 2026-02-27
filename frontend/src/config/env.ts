@@ -44,10 +44,14 @@ export const config = {
     paymentServiceUrl:
       import.meta.env.VITE_PAYMENT_SERVICE_URL ||
       (import.meta.env.PROD ? "/api/payments" : "http://localhost:8013"),
+    aiAssistantServiceUrl:
+      import.meta.env.VITE_AI_ASSISTANT_SERVICE_URL ||
+      (import.meta.env.PROD ? "/api/ai-assistant" : "http://localhost:8015"),
   },
   app: {
     name: import.meta.env.VITE_APP_NAME || "FinFlow",
     version: import.meta.env.VITE_APP_VERSION || "1.0.0",
+    url: import.meta.env.VITE_APP_URL || "https://finflow.ltd",
   },
   paddle: {
     clientToken: import.meta.env.VITE_PADDLE_CLIENT_TOKEN || "",

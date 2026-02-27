@@ -110,7 +110,7 @@ export const Terms: React.FC = () => {
                 className="theme-surface theme-border border rounded-xl p-6"
               >
                 <h2 className="text-xl font-semibold theme-text-primary mb-4 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-sm font-bold">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-full theme-accent-light theme-accent text-sm font-bold">
                     {index + 1}
                   </span>
                   {section.title}

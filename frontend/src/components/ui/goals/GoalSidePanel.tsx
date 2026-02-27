@@ -1,8 +1,8 @@
-import React, { useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Goal, Milestone } from '../../../types/goal';
-import { Badge } from '../shared/Badge';
-import { Button } from '../shared/Button';
+import React, { useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { Goal, Milestone } from "../../../types/goal";
+import { Badge } from "../shared/Badge";
+import { Button } from "../shared/Button";
 import {
   getStatusBadgeVariant,
   getPriorityBadgeVariant,
@@ -18,7 +18,7 @@ import {
   PRIORITY_I18N_MAP,
   GOAL_TYPE_I18N_MAP,
   TRACK_STATUS_I18N_MAP,
-} from './goalsHelpers';
+} from "./goalsHelpers";
 
 interface GoalSidePanelProps {
   goal: Goal | null;
@@ -48,20 +48,22 @@ export const GoalSidePanel: React.FC<GoalSidePanelProps> = ({
   // Close on ESC
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) onClose();
+      if (e.key === "Escape" && isOpen) onClose();
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
   }, [isOpen, onClose]);
 
   // Prevent body scroll when panel is open
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     }
-    return () => { document.body.style.overflow = ''; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [isOpen]);
 
   if (!goal) return null;
@@ -70,12 +72,17 @@ export const GoalSidePanel: React.FC<GoalSidePanelProps> = ({
   const daysRemaining = getDaysRemaining(goal.target_date);
   const requiredMonthly = getRequiredMonthlySaving(goal);
   const isOverdue = daysRemaining !== null && daysRemaining < 0;
-  const isPaused = goal.status === 'PAUSED';
-  const canToggle = goal.status === 'ACTIVE' || goal.status === 'PAUSED';
+  const isPaused = goal.status === "PAUSED";
+  const canToggle = goal.status === "ACTIVE" || goal.status === "PAUSED";
 
   // Projected completion: if current saving rate > 0, extrapolate
   const getProjectedCompletion = (): string | null => {
-    if (!goal.target_date || goal.current_amount <= 0 || goal.progress_percentage >= 100) return null;
+    if (
+      !goal.target_date ||
+      goal.current_amount <= 0 ||
+      goal.progress_percentage >= 100
+    )
+      return null;
     const start = new Date(goal.start_date).getTime();
     const now = Date.now();
     const elapsed = now - start;
@@ -87,53 +94,61 @@ export const GoalSidePanel: React.FC<GoalSidePanelProps> = ({
 
     const msToComplete = remaining / rate;
     const projected = new Date(now + msToComplete);
-    return projected.toLocaleDateString('uk-UA');
+    return projected.toLocaleDateString("uk-UA");
   };
 
   const projectedCompletion = getProjectedCompletion();
 
   const overviewRows = [
     {
-      label: t('goalsPage.sidePanel.currentAmount'),
+      label: t("goalsPage.sidePanel.currentAmount"),
       value: formatAmount(goal.current_amount, goal.currency),
-      valueClass: 'text-green-600/80 dark:text-green-400/70 font-semibold',
+      valueClass: "text-green-600/80 font-semibold",
     },
     {
-      label: t('goalsPage.sidePanel.targetAmount'),
+      label: t("goalsPage.sidePanel.targetAmount"),
       value: formatAmount(goal.target_amount, goal.currency),
-      valueClass: 'theme-text-primary font-semibold',
+      valueClass: "theme-text-primary font-semibold",
     },
     {
-      label: t('goalsPage.table.progress'),
+      label: t("goalsPage.table.progress"),
       value: `${goal.progress_percentage.toFixed(1)}%`,
-      valueClass: `font-semibold ${getProgressBarColor(goal.progress_percentage).replace('bg-', 'text-').replace('/70', '/80')}`,
+      valueClass: `font-semibold ${getProgressBarColor(goal.progress_percentage).replace("bg-", "text-").replace("/70", "/80")}`,
     },
     {
-      label: t('goalsPage.sidePanel.requiredMonthly'),
-      value: requiredMonthly !== null ? formatAmount(requiredMonthly, goal.currency) : '\u2014',
-      valueClass: 'theme-text-primary',
+      label: t("goalsPage.sidePanel.requiredMonthly"),
+      value:
+        requiredMonthly !== null
+          ? formatAmount(requiredMonthly, goal.currency)
+          : "\u2014",
+      valueClass: "theme-text-primary",
     },
     {
-      label: t('goalsPage.sidePanel.startDate'),
+      label: t("goalsPage.sidePanel.startDate"),
       value: formatDate(goal.start_date),
-      valueClass: 'theme-text-primary',
+      valueClass: "theme-text-primary",
     },
     {
-      label: t('goalsPage.sidePanel.targetDate'),
+      label: t("goalsPage.sidePanel.targetDate"),
       value: formatDate(goal.target_date),
-      valueClass: 'theme-text-primary',
+      valueClass: "theme-text-primary",
     },
     {
-      label: t('goalsPage.table.info.daysRemaining'),
-      value: daysRemaining !== null
-        ? (isOverdue
-            ? t('goalsPage.table.overdueDays', { days: Math.abs(daysRemaining) })
-            : t('goalsPage.table.remainingDays', { days: daysRemaining }))
-        : '\u2014',
-      valueClass: isOverdue ? 'text-red-500/80 dark:text-red-400/70 font-medium' : 'theme-text-primary',
+      label: t("goalsPage.table.info.daysRemaining"),
+      value:
+        daysRemaining !== null
+          ? isOverdue
+            ? t("goalsPage.table.overdueDays", {
+                days: Math.abs(daysRemaining),
+              })
+            : t("goalsPage.table.remainingDays", { days: daysRemaining })
+          : "\u2014",
+      valueClass: isOverdue
+        ? "text-red-500/80 font-medium"
+        : "theme-text-primary",
     },
     {
-      label: t('goalsPage.table.info.onTrack'),
+      label: t("goalsPage.table.info.onTrack"),
       value: t(TRACK_STATUS_I18N_MAP[trackStatus]),
       valueClass: getTrackStatusColor(trackStatus),
       dot: getTrackDotColor(trackStatus),
@@ -141,7 +156,7 @@ export const GoalSidePanel: React.FC<GoalSidePanelProps> = ({
   ];
 
   const getMilestoneBadgeVariant = (milestone: Milestone) => {
-    return milestone.is_completed ? 'success' : 'secondary';
+    return milestone.is_completed ? "success" : "secondary";
   };
 
   return (
@@ -149,7 +164,7 @@ export const GoalSidePanel: React.FC<GoalSidePanelProps> = ({
       {/* Backdrop */}
       <div
         className={`fixed inset-0 bg-black/30 z-30 transition-opacity duration-300 ${
-          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         onClick={onClose}
       />
@@ -157,14 +172,16 @@ export const GoalSidePanel: React.FC<GoalSidePanelProps> = ({
       {/* Panel */}
       <div
         className={`fixed inset-y-0 right-0 z-40 w-full sm:w-[480px] lg:w-[40%] max-w-[560px] theme-surface border-l theme-border shadow-2xl transform transition-transform duration-300 flex flex-col ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
+          isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
         {/* Header - sticky */}
         <div className="flex items-center justify-between p-4 sm:p-6 border-b theme-border flex-shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             <div className="min-w-0">
-              <h2 className="text-lg font-semibold theme-text-primary truncate">{goal.title}</h2>
+              <h2 className="text-lg font-semibold theme-text-primary truncate">
+                {goal.title}
+              </h2>
               <div className="flex items-center gap-2 mt-1 flex-wrap">
                 <span className="text-xs theme-text-tertiary">
                   {t(GOAL_TYPE_I18N_MAP[goal.goal_type])}
@@ -181,7 +198,9 @@ export const GoalSidePanel: React.FC<GoalSidePanelProps> = ({
                 >
                   {t(STATUS_I18N_MAP[goal.status])}
                 </Badge>
-                <span className={`w-2 h-2 rounded-full ${getTrackDotColor(trackStatus)}`} />
+                <span
+                  className={`w-2 h-2 rounded-full ${getTrackDotColor(trackStatus)}`}
+                />
               </div>
             </div>
           </div>
@@ -189,8 +208,18 @@ export const GoalSidePanel: React.FC<GoalSidePanelProps> = ({
             onClick={onClose}
             className="p-2 rounded-lg hover:theme-bg-secondary transition-colors theme-text-secondary flex-shrink-0"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -210,14 +239,21 @@ export const GoalSidePanel: React.FC<GoalSidePanelProps> = ({
           {/* Overview */}
           <div className="p-4 sm:p-6 space-y-4">
             <h3 className="text-sm font-semibold theme-text-primary uppercase tracking-wide">
-              {t('goalsPage.sidePanel.overview')}
+              {t("goalsPage.sidePanel.overview")}
             </h3>
             <div className="space-y-3">
               {overviewRows.map((row) => (
-                <div key={row.label} className="flex items-center justify-between">
-                  <span className="text-sm theme-text-secondary">{row.label}</span>
-                  <span className={`text-sm tabular-nums flex items-center gap-1.5 ${row.valueClass}`}>
-                    {'dot' in row && row.dot && (
+                <div
+                  key={row.label}
+                  className="flex items-center justify-between"
+                >
+                  <span className="text-sm theme-text-secondary">
+                    {row.label}
+                  </span>
+                  <span
+                    className={`text-sm tabular-nums flex items-center gap-1.5 ${row.valueClass}`}
+                  >
+                    {"dot" in row && row.dot && (
                       <span className={`w-2 h-2 rounded-full ${row.dot}`} />
                     )}
                     {row.value}
@@ -236,11 +272,13 @@ export const GoalSidePanel: React.FC<GoalSidePanelProps> = ({
               <div className="p-4 sm:p-6 space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold theme-text-primary uppercase tracking-wide">
-                    {t('goalsPage.sidePanel.milestones')}
+                    {t("goalsPage.sidePanel.milestones")}
                   </h3>
                   {milestones.length > 0 && (
                     <span className="text-xs theme-text-tertiary">
-                      {t('goalsPage.sidePanel.milestonesCount', { count: milestones.length })}
+                      {t("goalsPage.sidePanel.milestonesCount", {
+                        count: milestones.length,
+                      })}
                     </span>
                   )}
                 </div>
@@ -251,7 +289,7 @@ export const GoalSidePanel: React.FC<GoalSidePanelProps> = ({
                   </div>
                 ) : milestones.length === 0 ? (
                   <p className="text-sm theme-text-tertiary italic py-2">
-                    {t('goalsPage.sidePanel.noMilestones')}
+                    {t("goalsPage.sidePanel.noMilestones")}
                   </p>
                 ) : (
                   <div className="rounded-lg border theme-border overflow-hidden">
@@ -259,16 +297,16 @@ export const GoalSidePanel: React.FC<GoalSidePanelProps> = ({
                       <thead className="theme-bg-secondary">
                         <tr>
                           <th className="px-3 py-2 text-left text-xs font-medium theme-text-secondary">
-                            {t('goalsPage.sidePanel.milestoneTitle')}
+                            {t("goalsPage.sidePanel.milestoneTitle")}
                           </th>
                           <th className="px-3 py-2 text-right text-xs font-medium theme-text-secondary">
-                            {t('goalsPage.sidePanel.milestoneTarget')}
+                            {t("goalsPage.sidePanel.milestoneTarget")}
                           </th>
                           <th className="px-3 py-2 text-right text-xs font-medium theme-text-secondary">
-                            {t('goalsPage.sidePanel.milestoneCurrent')}
+                            {t("goalsPage.sidePanel.milestoneCurrent")}
                           </th>
                           <th className="px-3 py-2 text-left text-xs font-medium theme-text-secondary">
-                            {t('goalsPage.sidePanel.milestoneStatus')}
+                            {t("goalsPage.sidePanel.milestoneStatus")}
                           </th>
                         </tr>
                       </thead>
@@ -279,19 +317,27 @@ export const GoalSidePanel: React.FC<GoalSidePanelProps> = ({
                               {milestone.title}
                             </td>
                             <td className="px-3 py-2 text-sm theme-text-secondary tabular-nums text-right">
-                              {formatAmount(milestone.target_amount, goal.currency)}
+                              {formatAmount(
+                                milestone.target_amount,
+                                goal.currency,
+                              )}
                             </td>
-                            <td className="px-3 py-2 text-sm tabular-nums text-right text-green-600/80 dark:text-green-400/70">
-                              {formatAmount(milestone.current_amount, goal.currency)}
+                            <td className="px-3 py-2 text-sm tabular-nums text-right text-green-600/80">
+                              {formatAmount(
+                                milestone.current_amount,
+                                goal.currency,
+                              )}
                             </td>
                             <td className="px-3 py-2">
                               <Badge
-                                variant={getMilestoneBadgeVariant(milestone) as any}
+                                variant={
+                                  getMilestoneBadgeVariant(milestone) as any
+                                }
                                 size="sm"
                               >
                                 {milestone.is_completed
-                                  ? t('goalsPage.sidePanel.milestoneCompleted')
-                                  : t('goalsPage.sidePanel.milestonePending')}
+                                  ? t("goalsPage.sidePanel.milestoneCompleted")
+                                  : t("goalsPage.sidePanel.milestonePending")}
                               </Badge>
                             </td>
                           </tr>
@@ -309,29 +355,31 @@ export const GoalSidePanel: React.FC<GoalSidePanelProps> = ({
           {/* Projection */}
           <div className="p-4 sm:p-6 space-y-3">
             <h3 className="text-sm font-semibold theme-text-primary uppercase tracking-wide">
-              {t('goalsPage.sidePanel.projection')}
+              {t("goalsPage.sidePanel.projection")}
             </h3>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm theme-text-secondary">
-                  {t('goalsPage.sidePanel.requiredMonthly')}
+                  {t("goalsPage.sidePanel.requiredMonthly")}
                 </span>
                 <span className="text-sm font-medium theme-text-primary tabular-nums">
-                  {requiredMonthly !== null ? formatAmount(requiredMonthly, goal.currency) : '\u2014'}
+                  {requiredMonthly !== null
+                    ? formatAmount(requiredMonthly, goal.currency)
+                    : "\u2014"}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm theme-text-secondary">
-                  {t('goalsPage.sidePanel.projectedCompletion')}
+                  {t("goalsPage.sidePanel.projectedCompletion")}
                 </span>
                 <span className="text-sm font-medium theme-text-primary">
                   {goal.progress_percentage >= 100
-                    ? t('goalsPage.filters.completed')
+                    ? t("goalsPage.filters.completed")
                     : projectedCompletion
                       ? projectedCompletion
                       : goal.target_date
-                        ? '\u2014'
-                        : t('goalsPage.sidePanel.noTargetDate')}
+                        ? "\u2014"
+                        : t("goalsPage.sidePanel.noTargetDate")}
                 </span>
               </div>
             </div>
@@ -343,10 +391,12 @@ export const GoalSidePanel: React.FC<GoalSidePanelProps> = ({
           {/* Notes */}
           <div className="p-4 sm:p-6 space-y-2">
             <h3 className="text-sm font-semibold theme-text-primary uppercase tracking-wide">
-              {t('goalsPage.sidePanel.notes')}
+              {t("goalsPage.sidePanel.notes")}
             </h3>
-            <p className={`text-sm ${goal.description ? 'theme-text-secondary' : 'theme-text-tertiary italic'}`}>
-              {goal.description || t('goalsPage.sidePanel.noNotes')}
+            <p
+              className={`text-sm ${goal.description ? "theme-text-secondary" : "theme-text-tertiary italic"}`}
+            >
+              {goal.description || t("goalsPage.sidePanel.noNotes")}
             </p>
           </div>
         </div>
@@ -354,25 +404,35 @@ export const GoalSidePanel: React.FC<GoalSidePanelProps> = ({
         {/* Action Footer - sticky */}
         <div className="border-t theme-border p-4 sm:p-6 flex-shrink-0">
           <div className="flex flex-wrap gap-2">
-            <Button variant="primary" size="sm" onClick={onUpdateProgress} className="flex-1 sm:flex-none">
-              {t('goalsPage.sidePanel.updateProgress')}
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={onUpdateProgress}
+              className="flex-1 sm:flex-none"
+            >
+              {t("goalsPage.sidePanel.updateProgress")}
             </Button>
             {canToggle && (
               <Button
-                variant={isPaused ? 'outline' : 'outline'}
+                variant={isPaused ? "outline" : "outline"}
                 size="sm"
                 onClick={onPauseResume}
               >
                 {isPaused
-                  ? t('goalsPage.sidePanel.resume')
-                  : t('goalsPage.sidePanel.pause')}
+                  ? t("goalsPage.sidePanel.resume")
+                  : t("goalsPage.sidePanel.pause")}
               </Button>
             )}
             <Button variant="ghost" size="sm" onClick={onEdit}>
-              {t('goalsPage.sidePanel.edit')}
+              {t("goalsPage.sidePanel.edit")}
             </Button>
-            <Button variant="ghost" size="sm" onClick={onDelete} className="text-red-500 hover:text-red-600">
-              {t('goalsPage.sidePanel.delete')}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onDelete}
+              className="text-red-500 hover:text-red-600"
+            >
+              {t("goalsPage.sidePanel.delete")}
             </Button>
           </div>
         </div>

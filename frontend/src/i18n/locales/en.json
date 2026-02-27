@@ -56,12 +56,19 @@
     "profile": "Profile",
     "logout": "Logout",
     "login": "Login",
-    "register": "Register"
+    "register": "Register",
+    "aiAssistant": "AI Assistant"
+  },
+  "sidebar": {
+    "collapse": "Collapse sidebar",
+    "expand": "Expand sidebar",
+    "goToProfile": "Go to profile"
   },
   "publicNav": {
     "howItWorks": "How it works",
     "features": "Features",
-    "pricing": "Pricing"
+    "pricing": "Pricing",
+    "blog": "Blog"
   },
   "header": {
     "appTitle": "FinFlow",
@@ -1759,7 +1766,8 @@
       "product": {
         "features": "Features",
         "pricing": "Pricing",
-        "api": "API"
+        "api": "API",
+        "blog": "Blog"
       },
       "platform": {
         "architecture": "Architecture",
@@ -1780,6 +1788,19 @@
     "bottom": {
       "copyright": "© {{year}} FinFlow, powered by FluxLab. All rights reserved.",
       "madeWith": "Built on FastAPI, PostgreSQL & React"
+    }
+  },
+  "blogPage": {
+    "title": "Blog",
+    "subtitle": "Articles on financial management, expense tracking automation, and budgeting tips",
+    "readMore": "Read more",
+    "backToBlog": "Back to blog",
+    "publishedOn": "Published on",
+    "noPosts": "No articles yet",
+    "cta": {
+      "title": "Ready to automate your finances?",
+      "description": "Try FinFlow for free — track expenses, parse bank statements, and plan your budget.",
+      "button": "Get Started"
     }
   },
   "subscription": {
@@ -2309,5 +2330,81 @@
     "title": "Page Not Found",
     "message": "The page you are looking for does not exist or has been moved.",
     "backHome": "Back to Home"
+  },
+  "aiAssistant": {
+    "title": "AI Financial Assistant",
+    "subtitle": "Get personalized recommendations based on your financial data",
+    "analyzing": "Analyzing your data...",
+    "rateLimited": "Request limit reached",
+    "retryAfter": "Next request available in {{time}}",
+    "insufficientData": "Not enough data for analysis. Add more records.",
+    "error": "An error occurred. Please try again later.",
+    "cachedResult": "Cached result",
+    "freshResult": "Fresh analysis",
+    "usage": {
+      "title": "Monthly usage",
+      "remaining": "{{count}} remaining",
+      "exhausted": "Quota exhausted",
+      "resetsIn": "Resets in {{days}} d"
+    },
+    "locked": {
+      "title": "AI Assistant available on paid plans",
+      "description": "Upgrade to Professional or Enterprise plan to access AI analysis of your finances.",
+      "upgrade": "Upgrade plan"
+    },
+    "blocks": {
+      "expenses": {
+        "title": "Expense Analysis"
+      },
+      "goals": {
+        "title": "Financial Goals"
+      },
+      "debts": {
+        "title": "Debt Management"
+      }
+    },
+    "priority": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "prompts": {
+      "expenses_reduce_spending": {
+        "title": "Where to spend less?",
+        "description": "Expense category analysis with reduction recommendations"
+      },
+      "expenses_save_more": {
+        "title": "Where to save?",
+        "description": "Finding savings opportunities based on income and expenses"
+      },
+      "expenses_anomalies": {
+        "title": "Spending anomalies",
+        "description": "Detecting unusual expenses and suspicious patterns"
+      },
+      "goals_realistic": {
+        "title": "Are goals realistic?",
+        "description": "Assessment of your financial goals achievability"
+      },
+      "goals_faster": {
+        "title": "How to achieve faster?",
+        "description": "Recommendations to accelerate goal achievement"
+      },
+      "goals_prioritize": {
+        "title": "Which to prioritize?",
+        "description": "Optimal priority order for your goals"
+      },
+      "debts_pay_first": {
+        "title": "Which to pay first?",
+        "description": "Optimal debt repayment order"
+      },
+      "debts_risk_assessment": {
+        "title": "Risk assessment",
+        "description": "Debt burden analysis and risk level evaluation"
+      },
+      "debts_repayment_strategy": {
+        "title": "Repayment strategy",
+        "description": "Step-by-step debt repayment plan considering your goals"
+      }
+    }
   }
 }

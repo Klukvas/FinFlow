@@ -1,9 +1,9 @@
-import React from 'react';
-import { useTranslation } from 'react-i18next';
-import { Card } from '../shared/Card';
-import { Skeleton } from '../shared/Skeleton';
-import { GoalStatistics } from '../../../types/goal';
-import { formatAmount, getProgressBarColor } from './goalsHelpers';
+import React from "react";
+import { useTranslation } from "react-i18next";
+import { Card } from "../shared/Card";
+import { Skeleton } from "../shared/Skeleton";
+import { GoalStatistics } from "../../../types/goal";
+import { formatAmount, getProgressBarColor } from "./goalsHelpers";
 
 interface GoalSummaryStripProps {
   stats: GoalStatistics | null;
@@ -31,34 +31,36 @@ export const GoalSummaryStrip: React.FC<GoalSummaryStripProps> = ({
     );
   }
 
-  const currency = stats?.currency || 'USD';
+  const currency = stats?.currency || "USD";
   const progressColor = stats?.overall_progress
-    ? getProgressBarColor(stats.overall_progress).replace('bg-', 'text-').replace('/70', '/80')
-    : 'theme-text-primary';
+    ? getProgressBarColor(stats.overall_progress)
+        .replace("bg-", "text-")
+        .replace("/70", "/80")
+    : "theme-text-primary";
 
   const kpiCards = [
     {
-      label: t('goalsPage.kpi.activeGoals'),
+      label: t("goalsPage.kpi.activeGoals"),
       value: String(stats?.active_goals ?? 0),
-      valueClass: 'text-green-600/80 dark:text-green-400/70',
+      valueClass: "text-green-600/80",
     },
     {
-      label: t('goalsPage.kpi.completed'),
+      label: t("goalsPage.kpi.completed"),
       value: String(stats?.completed_goals ?? 0),
-      valueClass: 'text-blue-600/80 dark:text-blue-400/70',
+      valueClass: "text-blue-600/80",
     },
     {
-      label: t('goalsPage.kpi.totalSaved'),
+      label: t("goalsPage.kpi.totalSaved"),
       value: formatAmount(stats?.total_current_amount ?? 0, currency),
-      valueClass: 'theme-text-primary',
+      valueClass: "theme-text-primary",
     },
     {
-      label: t('goalsPage.kpi.totalTarget'),
+      label: t("goalsPage.kpi.totalTarget"),
       value: formatAmount(stats?.total_target_amount ?? 0, currency),
-      valueClass: 'theme-text-primary',
+      valueClass: "theme-text-primary",
     },
     {
-      label: t('goalsPage.kpi.overallProgress'),
+      label: t("goalsPage.kpi.overallProgress"),
       value: `${(stats?.overall_progress ?? 0).toFixed(1)}%`,
       valueClass: progressColor,
     },

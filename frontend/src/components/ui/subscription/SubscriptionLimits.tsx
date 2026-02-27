@@ -227,7 +227,7 @@ export const SubscriptionLimits: React.FC<SubscriptionLimitsProps> = ({
             {isPaidPlan && !isCanceled && (
               <button
                 onClick={() => setIsCancelModalOpen(true)}
-                className="px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-all hover:scale-105 active:scale-95 border-2 border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+                className="px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-all hover:scale-105 active:scale-95 border-2 border-red-500 text-red-600 hover:theme-surface-hover"
               >
                 <FaBan className="w-4 h-4" />
                 <span>{t("subscription.cancelButton")}</span>
@@ -263,13 +263,13 @@ export const SubscriptionLimits: React.FC<SubscriptionLimitsProps> = ({
 
         {/* Cancellation Warning Banner */}
         {isCanceled && expiresAt && (
-          <div className="mb-4 p-4 rounded-lg bg-orange-50 dark:bg-orange-950 border-2 border-orange-500 flex items-start gap-3">
+          <div className="mb-4 p-4 rounded-lg theme-warning-light border-2 border-orange-500 flex items-start gap-3">
             <FaExclamationTriangle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="font-semibold text-orange-900 dark:text-orange-200 mb-1">
+              <p className="font-semibold theme-text-primary mb-1">
                 {t("subscription.subscriptionCanceled")}
               </p>
-              <p className="text-sm text-orange-800 dark:text-orange-300">
+              <p className="text-sm theme-text-secondary">
                 {t("subscription.accessUntilDate", {
                   date: expiresAt.toLocaleDateString(),
                 })}
@@ -280,13 +280,13 @@ export const SubscriptionLimits: React.FC<SubscriptionLimitsProps> = ({
 
         {/* Past Due Warning Banner */}
         {isPastDue && (
-          <div className="mb-4 p-4 rounded-lg bg-yellow-50 dark:bg-yellow-950 border-2 border-yellow-500 flex items-start gap-3">
-            <FaExclamationTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+          <div className="mb-4 p-4 rounded-lg theme-warning-light border-2 border-yellow-500 flex items-start gap-3">
+            <FaExclamationTriangle className="w-5 h-5 theme-warning flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="font-semibold text-yellow-900 dark:text-yellow-200 mb-1">
+              <p className="font-semibold theme-text-primary mb-1">
                 {t("subscription.pastDue.title")}
               </p>
-              <p className="text-sm text-yellow-800 dark:text-yellow-300 mb-2">
+              <p className="text-sm theme-text-secondary mb-2">
                 {t("subscription.pastDue.message")}
               </p>
               <Button
@@ -302,13 +302,13 @@ export const SubscriptionLimits: React.FC<SubscriptionLimitsProps> = ({
 
         {/* Paused Info Banner */}
         {isPaused && (
-          <div className="mb-4 p-4 rounded-lg bg-gray-50 dark:bg-gray-800 border-2 border-gray-400 flex items-start gap-3">
-            <FaBan className="w-5 h-5 text-gray-500 flex-shrink-0 mt-0.5" />
+          <div className="mb-4 p-4 rounded-lg theme-bg-secondary border-2 theme-border flex items-start gap-3">
+            <FaBan className="w-5 h-5 theme-text-tertiary flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="font-semibold text-gray-900 dark:text-gray-200 mb-1">
+              <p className="font-semibold theme-text-primary mb-1">
                 {t("subscription.paused.title")}
               </p>
-              <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
+              <p className="text-sm theme-text-secondary mb-2">
                 {t("subscription.paused.message")}
               </p>
               <Button

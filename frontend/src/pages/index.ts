@@ -20,6 +20,8 @@ import { Terms } from "./Terms";
 import { Refund } from "./Refund";
 import { PrivacyPolicy } from "./PrivacyPolicy";
 import { NotFound } from "./NotFound";
+import { Blog } from "./Blog";
+import { BlogPost } from "./BlogPost";
 
 export {
   Account,
@@ -44,4 +46,6 @@ export {
   Refund,
   PrivacyPolicy,
   NotFound,
+  Blog,
+  BlogPost,
 };

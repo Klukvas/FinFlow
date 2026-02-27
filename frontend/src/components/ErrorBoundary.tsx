@@ -29,12 +29,12 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         this.props.fallback || (
-          <div className="min-h-screen flex items-center justify-center bg-gray-100">
-            <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-6">
+          <div className="min-h-screen flex items-center justify-center theme-bg-secondary">
+            <div className="max-w-md w-full theme-surface theme-shadow rounded-lg p-6">
               <div className="flex items-center mb-4">
                 <div className="flex-shrink-0">
                   <svg
-                    className="h-8 w-8 text-red-400"
+                    className="h-8 w-8 theme-error"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -48,13 +48,13 @@ export class ErrorBoundary extends Component<Props, State> {
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-lg font-medium text-gray-900">
+                  <h3 className="text-lg font-medium theme-text-primary">
                     Something went wrong
                   </h3>
                 </div>
               </div>
               <div className="mt-2">
-                <p className="text-sm text-gray-500">
+                <p className="text-sm theme-text-secondary">
                   We're sorry, but something unexpected happened. Please try
                   refreshing the page.
                 </p>
@@ -62,7 +62,7 @@ export class ErrorBoundary extends Component<Props, State> {
               <div className="mt-4">
                 <button
                   onClick={() => window.location.reload()}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md text-sm transition-colors"
+                  className="theme-accent-bg hover:theme-accent-hover theme-text-inverse font-medium py-2 px-4 rounded-md text-sm transition-colors"
                 >
                   Refresh Page
                 </button>

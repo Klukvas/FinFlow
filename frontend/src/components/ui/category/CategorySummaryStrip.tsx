@@ -1,8 +1,8 @@
-import React from 'react';
-import { useTranslation } from 'react-i18next';
-import { Card } from '../shared/Card';
-import { Skeleton } from '../shared/Skeleton';
-import { CategoryStatisticsResponse } from '../../../types/category';
+import React from "react";
+import { useTranslation } from "react-i18next";
+import { Card } from "../shared/Card";
+import { Skeleton } from "../shared/Skeleton";
+import { CategoryStatisticsResponse } from "../../../types/category";
 
 interface CategorySummaryStripProps {
   stats: CategoryStatisticsResponse | null;
@@ -32,34 +32,34 @@ export const CategorySummaryStrip: React.FC<CategorySummaryStripProps> = ({
 
   const kpiCards = [
     {
-      testId: 'total-categories-stat',
-      label: t('categoryPage.kpi.totalCategories'),
+      testId: "total-categories-stat",
+      label: t("categoryPage.kpi.totalCategories"),
       value: String(stats?.total_categories ?? 0),
-      valueClass: 'theme-text-primary',
+      valueClass: "theme-text-primary",
     },
     {
-      testId: 'expense-categories-stat',
-      label: t('categoryPage.kpi.expenseCategories'),
+      testId: "expense-categories-stat",
+      label: t("categoryPage.kpi.expenseCategories"),
       value: String(stats?.expense_categories ?? 0),
-      valueClass: 'text-red-500/80 dark:text-red-400/70',
+      valueClass: "text-red-500/80",
     },
     {
-      testId: 'income-categories-stat',
-      label: t('categoryPage.kpi.incomeCategories'),
+      testId: "income-categories-stat",
+      label: t("categoryPage.kpi.incomeCategories"),
       value: String(stats?.income_categories ?? 0),
-      valueClass: 'text-green-600/80 dark:text-green-400/70',
+      valueClass: "text-green-600/80",
     },
     {
-      testId: 'parent-categories-stat',
-      label: t('categoryPage.kpi.withChildren'),
+      testId: "parent-categories-stat",
+      label: t("categoryPage.kpi.withChildren"),
       value: String(stats?.parent_categories ?? 0),
-      valueClass: 'theme-text-primary',
+      valueClass: "theme-text-primary",
     },
     {
-      testId: 'child-categories-stat',
-      label: t('categoryPage.kpi.childCategories', 'With Parents'),
+      testId: "child-categories-stat",
+      label: t("categoryPage.kpi.childCategories", "With Parents"),
       value: String(stats?.child_categories ?? 0),
-      valueClass: 'theme-text-primary',
+      valueClass: "theme-text-primary",
     },
   ];
 
@@ -71,7 +71,10 @@ export const CategorySummaryStrip: React.FC<CategorySummaryStripProps> = ({
             <p className="text-xs font-medium theme-text-secondary uppercase tracking-wide">
               {card.label}
             </p>
-            <p className={`text-xl font-semibold mt-1 ${card.valueClass}`} data-testid={`${card.testId}-value`}>
+            <p
+              className={`text-xl font-semibold mt-1 ${card.valueClass}`}
+              data-testid={`${card.testId}-value`}
+            >
               {card.value}
             </p>
           </div>

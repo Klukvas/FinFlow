@@ -33,6 +33,7 @@ Allow: /contact
 Allow: /terms
 Allow: /privacy
 Allow: /refund
+Allow: /blog
 
 # Crawl delay
 Crawl-delay: 1

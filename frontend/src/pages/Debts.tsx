@@ -619,7 +619,7 @@ export const Debts = () => {
                 <span className="font-medium theme-text-primary">
                   {deleteDebtTarget.name}
                 </span>
-                <span className="ml-2 text-red-500/80 dark:text-red-400/70 font-semibold tabular-nums">
+                <span className="ml-2 theme-error font-semibold tabular-nums">
                   {Math.abs(deleteDebtTarget.current_balance).toLocaleString(
                     "uk-UA",
                     { minimumFractionDigits: 2 },

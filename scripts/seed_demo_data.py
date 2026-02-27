@@ -23,9 +23,9 @@ import uuid
 from datetime import datetime, date, timedelta, timezone
 from decimal import Decimal
 
+import bcrypt as _bcrypt
 import psycopg2
 from psycopg2.extras import execute_values
-from passlib.hash import bcrypt
 
 # ──────────────────────────────────────────────────────────────
 # Configuration
@@ -255,7 +255,7 @@ def seed_user(host, port, db_user, db_password) -> int:
         conn.close()
         return existing[0]
 
-    hashed_pw = bcrypt.hash(DEMO_PASSWORD)
+    hashed_pw = _bcrypt.hashpw(DEMO_PASSWORD.encode(), _bcrypt.gensalt()).decode()
     cur.execute(
         """INSERT INTO users (email, hashed_password, base_currency, role, status, tutorial_version, created_at)
            VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id""",
@@ -321,12 +321,12 @@ def seed_subscription(host, port, db_user, db_password, user_id: int):
         """INSERT INTO subscriptions (user_id, plan_code, status, started_at, expires_at, auto_renew, created_at, updated_at)
            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
         (
-            str(user_id), "basic", "active",
+            str(user_id), "professional", "active",
             USER_CREATED_AT, NOW + timedelta(days=30),
             True, USER_CREATED_AT, NOW,
         ),
     )
-    print("  Created basic subscription.")
+    print("  Created professional subscription.")
     cur.close()
     conn.close()
 

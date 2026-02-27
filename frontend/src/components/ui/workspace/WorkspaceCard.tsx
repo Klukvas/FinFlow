@@ -42,17 +42,14 @@ export const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
   const getRoleBadge = () => {
     const roleConfig: Record<string, { className: string; icon?: boolean }> = {
       owner: {
-        className:
-          "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+        className: "theme-warning-light theme-warning",
         icon: true,
       },
       full: {
-        className:
-          "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400",
+        className: "theme-success-light theme-success",
       },
       read: {
-        className:
-          "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+        className: "theme-accent-light theme-accent",
       },
     };
 
@@ -82,8 +79,8 @@ export const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
           <div
             className={`p-2.5 rounded-lg ${
               workspace.type === "personal"
-                ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
-                : "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                ? "theme-success-light theme-success"
+                : "theme-accent-light theme-accent"
             }`}
           >
             {workspace.type === "personal" ? (
@@ -144,7 +141,7 @@ export const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
         {canManageMembers && onManageMembers && (
           <button
             onClick={() => onManageMembers(workspace)}
-            className="p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-500 theme-transition"
+            className="p-2 rounded-lg hover:theme-surface-hover text-blue-500 theme-transition"
             title={t("workspace.manageMembers", "Manage Members")}
           >
             <FaUsersCog className="w-4 h-4" />
@@ -173,7 +170,7 @@ export const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
         {canLeave && (
           <button
             onClick={() => onLeave(workspace)}
-            className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 theme-transition"
+            className="p-2 rounded-lg hover:theme-surface-hover text-red-500 theme-transition"
             title={t("workspace.leave", "Leave")}
           >
             <FaSignOutAlt className="w-4 h-4" />
@@ -183,7 +180,7 @@ export const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
         {canArchive && (
           <button
             onClick={() => onArchive(workspace)}
-            className="p-2 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-900/20 text-orange-500 theme-transition"
+            className="p-2 rounded-lg hover:theme-surface-hover text-orange-500 theme-transition"
             title={t("workspace.archive", "Archive")}
           >
             <FaArchive className="w-4 h-4" />

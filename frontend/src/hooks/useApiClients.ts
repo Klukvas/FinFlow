@@ -1,38 +1,79 @@
-import { AccountApiClient } from '@/services/api/accountApiClient';
-import { CategoryApiClient } from '@/services/api/categoryApiClient';
-import { ContactApiClient } from '@/services/api/contactApiClient';
-import { CurrencyApiClient } from '@/services/api/currencyApiClient';
-import { DebtApiClient } from '@/services/api/debtApiClient';
-import { ExpenseApiClient } from '@/services/api/expenseApiClient';
-import { IncomeApiClient } from '@/services/api/incomeApiClient';
-import { UserApiClient } from '@/services/api/userApiClient';
-import { GoalsApiClient } from '@/services/api/goalsApi';
-import { PDFParserApiClient } from '@/services/api/pdfParserApiClient';
-import { SubscriptionApiClient } from '@/services/api/subscriptionApiClient';
-import { RecurringApiClient } from '@/services/api/recurringApi';
-import { PaymentApiClient } from '@/services/api/paymentApiClient';
-import { useAuth } from '@/contexts/AuthContext';
-import { useMemo } from 'react';
+import { AccountApiClient } from "@/services/api/accountApiClient";
+import { CategoryApiClient } from "@/services/api/categoryApiClient";
+import { ContactApiClient } from "@/services/api/contactApiClient";
+import { CurrencyApiClient } from "@/services/api/currencyApiClient";
+import { DebtApiClient } from "@/services/api/debtApiClient";
+import { ExpenseApiClient } from "@/services/api/expenseApiClient";
+import { IncomeApiClient } from "@/services/api/incomeApiClient";
+import { UserApiClient } from "@/services/api/userApiClient";
+import { GoalsApiClient } from "@/services/api/goalsApi";
+import { PDFParserApiClient } from "@/services/api/pdfParserApiClient";
+import { SubscriptionApiClient } from "@/services/api/subscriptionApiClient";
+import { RecurringApiClient } from "@/services/api/recurringApi";
+import { PaymentApiClient } from "@/services/api/paymentApiClient";
+import { AiAssistantApiClient } from "@/services/api/aiAssistantApiClient";
+import { useAuth } from "@/contexts/AuthContext";
+import { useMemo } from "react";
 
 export const useApiClients = () => {
   const { token, refreshAccessToken } = useAuth();
-  
+
   const getToken = () => token;
-  
-  const account = useMemo(() => new AccountApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
-  const category = useMemo(() => new CategoryApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
-  const contact = useMemo(() => new ContactApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
+
+  const account = useMemo(
+    () => new AccountApiClient(getToken, refreshAccessToken),
+    [token, refreshAccessToken],
+  );
+  const category = useMemo(
+    () => new CategoryApiClient(getToken, refreshAccessToken),
+    [token, refreshAccessToken],
+  );
+  const contact = useMemo(
+    () => new ContactApiClient(getToken, refreshAccessToken),
+    [token, refreshAccessToken],
+  );
   const currency = useMemo(() => new CurrencyApiClient(), []);
-  const debt = useMemo(() => new DebtApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
-  const user = useMemo(() => new UserApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
-  const expense = useMemo(() => new ExpenseApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
-  const income = useMemo(() => new IncomeApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
-  const goals = useMemo(() => new GoalsApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
-  const pdfParser = useMemo(() => new PDFParserApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
-  const subscription = useMemo(() => new SubscriptionApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
-  const recurring = useMemo(() => new RecurringApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
-  const payment = useMemo(() => new PaymentApiClient(getToken, refreshAccessToken), [token, refreshAccessToken]);
-  
+  const debt = useMemo(
+    () => new DebtApiClient(getToken, refreshAccessToken),
+    [token, refreshAccessToken],
+  );
+  const user = useMemo(
+    () => new UserApiClient(getToken, refreshAccessToken),
+    [token, refreshAccessToken],
+  );
+  const expense = useMemo(
+    () => new ExpenseApiClient(getToken, refreshAccessToken),
+    [token, refreshAccessToken],
+  );
+  const income = useMemo(
+    () => new IncomeApiClient(getToken, refreshAccessToken),
+    [token, refreshAccessToken],
+  );
+  const goals = useMemo(
+    () => new GoalsApiClient(getToken, refreshAccessToken),
+    [token, refreshAccessToken],
+  );
+  const pdfParser = useMemo(
+    () => new PDFParserApiClient(getToken, refreshAccessToken),
+    [token, refreshAccessToken],
+  );
+  const subscription = useMemo(
+    () => new SubscriptionApiClient(getToken, refreshAccessToken),
+    [token, refreshAccessToken],
+  );
+  const recurring = useMemo(
+    () => new RecurringApiClient(getToken, refreshAccessToken),
+    [token, refreshAccessToken],
+  );
+  const payment = useMemo(
+    () => new PaymentApiClient(getToken, refreshAccessToken),
+    [token, refreshAccessToken],
+  );
+  const aiAssistant = useMemo(
+    () => new AiAssistantApiClient(getToken, refreshAccessToken),
+    [token, refreshAccessToken],
+  );
+
   return {
     account,
     category,
@@ -46,6 +87,7 @@ export const useApiClients = () => {
     pdfParser,
     subscription,
     recurring,
-    payment
+    payment,
+    aiAssistant,
   };
-}; 
+};

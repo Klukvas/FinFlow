@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { WorkspaceInviteCreate, AssignableRole } from '@/types';
-import { FaEnvelope, FaEye, FaEdit, FaSpinner } from 'react-icons/fa';
+import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { WorkspaceInviteCreate, AssignableRole } from "@/types";
+import { FaEnvelope, FaEye, FaEdit, FaSpinner } from "react-icons/fa";
 
 interface InviteFormProps {
   onSubmit: (data: WorkspaceInviteCreate) => Promise<void>;
@@ -17,8 +17,8 @@ export const InviteForm: React.FC<InviteFormProps> = ({
   error: externalError,
 }) => {
   const { t } = useTranslation();
-  const [email, setEmail] = useState('');
-  const [role, setRole] = useState<AssignableRole>('read');
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState<AssignableRole>("read");
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -26,16 +26,21 @@ export const InviteForm: React.FC<InviteFormProps> = ({
     setError(null);
 
     const trimmedEmail = email.trim().toLowerCase();
-    
+
     if (!trimmedEmail) {
-      setError(t('workspace.invite.emailRequired', 'Email is required'));
+      setError(t("workspace.invite.emailRequired", "Email is required"));
       return;
     }
 
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(trimmedEmail)) {
-      setError(t('workspace.invite.invalidEmail', 'Please enter a valid email address'));
+      setError(
+        t(
+          "workspace.invite.invalidEmail",
+          "Please enter a valid email address",
+        ),
+      );
       return;
     }
 
@@ -53,7 +58,8 @@ export const InviteForm: React.FC<InviteFormProps> = ({
       {/* Email field */}
       <div>
         <label className="block text-sm font-medium theme-text-primary mb-2">
-          {t('workspace.invite.email', 'Email Address')} <span className="text-red-500">*</span>
+          {t("workspace.invite.email", "Email Address")}{" "}
+          <span className="text-red-500">*</span>
         </label>
         <div className="relative">
           <FaEnvelope className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 theme-text-tertiary" />
@@ -61,73 +67,87 @@ export const InviteForm: React.FC<InviteFormProps> = ({
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder={t('workspace.invite.emailPlaceholder', 'colleague@example.com')}
+            placeholder={t(
+              "workspace.invite.emailPlaceholder",
+              "colleague@example.com",
+            )}
             className="w-full pl-11 pr-4 py-3 rounded-lg theme-surface theme-border border theme-text-primary placeholder:theme-text-tertiary focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition"
             disabled={isLoading}
             autoFocus
           />
         </div>
         <p className="mt-1.5 text-sm theme-text-tertiary">
-          {t('workspace.invite.emailHint', 'The user must have an existing account')}
+          {t(
+            "workspace.invite.emailHint",
+            "The user must have an existing account",
+          )}
         </p>
       </div>
 
       {/* Role selection */}
       <div>
         <label className="block text-sm font-medium theme-text-primary mb-3">
-          {t('workspace.invite.role', 'Permission Level')}
+          {t("workspace.invite.role", "Permission Level")}
         </label>
         <div className="grid grid-cols-2 gap-3">
           <button
             type="button"
-            onClick={() => setRole('read')}
+            onClick={() => setRole("read")}
             className={`flex items-center gap-3 p-4 rounded-xl border theme-transition ${
-              role === 'read'
-                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                : 'theme-border hover:theme-surface-hover'
+              role === "read"
+                ? "border-blue-500 theme-accent-light"
+                : "theme-border hover:theme-surface-hover"
             }`}
             disabled={isLoading}
           >
-            <div className={`p-2 rounded-lg ${
-              role === 'read'
-                ? 'bg-blue-100 text-blue-600 dark:bg-blue-800/50 dark:text-blue-400'
-                : 'theme-surface-hover theme-text-secondary'
-            }`}>
+            <div
+              className={`p-2 rounded-lg ${
+                role === "read"
+                  ? "theme-accent-light theme-accent"
+                  : "theme-surface-hover theme-text-secondary"
+              }`}
+            >
               <FaEye className="w-5 h-5" />
             </div>
             <div className="text-left">
-              <div className={`font-medium ${role === 'read' ? 'text-blue-700 dark:text-blue-400' : 'theme-text-primary'}`}>
-                {t('workspace.roles.read', 'View Only')}
+              <div
+                className={`font-medium ${role === "read" ? "theme-accent" : "theme-text-primary"}`}
+              >
+                {t("workspace.roles.read", "View Only")}
               </div>
               <div className="text-xs theme-text-tertiary">
-                {t('workspace.roles.readDesc', 'Can view all data')}
+                {t("workspace.roles.readDesc", "Can view all data")}
               </div>
             </div>
           </button>
 
           <button
             type="button"
-            onClick={() => setRole('full')}
+            onClick={() => setRole("full")}
             className={`flex items-center gap-3 p-4 rounded-xl border theme-transition ${
-              role === 'full'
-                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
-                : 'theme-border hover:theme-surface-hover'
+              role === "full"
+                ? "border-emerald-500 theme-success-light"
+                : "theme-border hover:theme-surface-hover"
             }`}
             disabled={isLoading}
           >
-            <div className={`p-2 rounded-lg ${
-              role === 'full'
-                ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-800/50 dark:text-emerald-400'
-                : 'theme-surface-hover theme-text-secondary'
-            }`}>
+            <div
+              className={`p-2 rounded-lg ${
+                role === "full"
+                  ? "theme-success-light theme-success"
+                  : "theme-surface-hover theme-text-secondary"
+              }`}
+            >
               <FaEdit className="w-5 h-5" />
             </div>
             <div className="text-left">
-              <div className={`font-medium ${role === 'full' ? 'text-emerald-700 dark:text-emerald-400' : 'theme-text-primary'}`}>
-                {t('workspace.roles.full', 'Full Access')}
+              <div
+                className={`font-medium ${role === "full" ? "theme-success" : "theme-text-primary"}`}
+              >
+                {t("workspace.roles.full", "Full Access")}
               </div>
               <div className="text-xs theme-text-tertiary">
-                {t('workspace.roles.fullDesc', 'Can view and edit')}
+                {t("workspace.roles.fullDesc", "Can view and edit")}
               </div>
             </div>
           </button>
@@ -136,7 +156,7 @@ export const InviteForm: React.FC<InviteFormProps> = ({
 
       {/* Error message */}
       {displayError && (
-        <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">
+        <div className="p-3 rounded-lg theme-error-light theme-error text-sm">
           {displayError}
         </div>
       )}
@@ -149,7 +169,7 @@ export const InviteForm: React.FC<InviteFormProps> = ({
           className="px-4 py-2 rounded-lg theme-text-secondary hover:theme-surface-hover theme-transition"
           disabled={isLoading}
         >
-          {t('common.cancel', 'Cancel')}
+          {t("common.cancel", "Cancel")}
         </button>
         <button
           type="submit"
@@ -157,10 +177,9 @@ export const InviteForm: React.FC<InviteFormProps> = ({
           disabled={isLoading || !email.trim()}
         >
           {isLoading && <FaSpinner className="w-4 h-4 animate-spin" />}
-          {isLoading 
-            ? t('workspace.invite.sending', 'Sending...') 
-            : t('workspace.invite.send', 'Send Invite')
-          }
+          {isLoading
+            ? t("workspace.invite.sending", "Sending...")
+            : t("workspace.invite.send", "Send Invite")}
         </button>
       </div>
     </form>

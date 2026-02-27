@@ -1,7 +1,9 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef } from "react";
 
-export interface MoneyInputProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' | 'onChange'> {
+export interface MoneyInputProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "type" | "onChange"
+> {
   value?: string | number;
   onChange?: (value: string) => void;
   placeholder?: string;
@@ -11,40 +13,43 @@ export interface MoneyInputProps
   disabled?: boolean;
   className?: string;
   currency?: string;
-  'data-testid'?: string;
+  "data-testid"?: string;
 }
 
 const MoneyInput = forwardRef<HTMLInputElement, MoneyInputProps>(
-  ({ 
-    value = '', 
-    onChange, 
-    placeholder = '0.00', 
-    error, 
-    label,
-    required = false,
-    disabled = false,
-    className,
-    currency = '$',
-    'data-testid': testId,
-    ...props 
-  }, ref) => {
+  (
+    {
+      value = "",
+      onChange,
+      placeholder = "0.00",
+      error,
+      label,
+      required = false,
+      disabled = false,
+      className,
+      currency = "$",
+      "data-testid": testId,
+      ...props
+    },
+    ref,
+  ) => {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const inputValue = e.target.value;
-      
+
       // Allow empty string, numbers, and decimal point
-      if (inputValue === '' || /^\d*\.?\d*$/.test(inputValue)) {
+      if (inputValue === "" || /^\d*\.?\d*$/.test(inputValue)) {
         // Limit to 2 decimal places
-        const parts = inputValue.split('.');
+        const parts = inputValue.split(".");
         if (parts.length === 2 && parts[1] && parts[1].length > 2) {
           return; // Don't update if more than 2 decimal places
         }
-        
+
         // Limit to reasonable amount (999,999.99)
         const numValue = parseFloat(inputValue);
         if (numValue > 999999.99) {
           return; // Don't update if amount is too large
         }
-        
+
         if (onChange) {
           onChange(inputValue);
         }
@@ -63,21 +68,35 @@ const MoneyInput = forwardRef<HTMLInputElement, MoneyInputProps>(
     };
 
     return (
-      <div className="space-y-2" data-testid={testId ? `${testId}-container` : 'money-input-container'}>
+      <div
+        className="space-y-2"
+        data-testid={testId ? `${testId}-container` : "money-input-container"}
+      >
         {label && (
-          <label 
+          <label
             className="block text-sm font-medium theme-text-primary"
-            data-testid={testId ? `${testId}-label` : 'money-input-label'}
+            data-testid={testId ? `${testId}-label` : "money-input-label"}
           >
             {label}
-            {required && <span className="text-red-500 ml-1" data-testid={testId ? `${testId}-required` : 'money-input-required'}>*</span>}
+            {required && (
+              <span
+                className="text-red-500 ml-1"
+                data-testid={
+                  testId ? `${testId}-required` : "money-input-required"
+                }
+              >
+                *
+              </span>
+            )}
           </label>
         )}
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <span 
+            <span
               className="theme-text-secondary text-sm font-medium"
-              data-testid={testId ? `${testId}-currency` : 'money-input-currency'}
+              data-testid={
+                testId ? `${testId}-currency` : "money-input-currency"
+              }
             >
               {currency}
             </span>
@@ -91,31 +110,39 @@ const MoneyInput = forwardRef<HTMLInputElement, MoneyInputProps>(
             onBlur={handleBlur}
             placeholder={placeholder}
             disabled={disabled}
-            data-testid={testId || 'money-input'}
-            className={`block w-full pl-8 pr-3 py-3 text-base theme-border border rounded-lg shadow-sm theme-bg theme-text-primary placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition ${
-              error ? "border-red-500 focus:ring-red-500 focus:border-red-500" : ""
+            data-testid={testId || "money-input"}
+            className={`block w-full pl-8 pr-3 py-3 text-base theme-border border rounded-lg shadow-sm theme-bg theme-text-primary placeholder:theme-text-tertiary focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition ${
+              error
+                ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                : ""
             } ${
-              disabled ? "theme-bg-tertiary cursor-not-allowed opacity-50" : "hover:theme-border-hover"
+              disabled
+                ? "theme-bg-tertiary cursor-not-allowed opacity-50"
+                : "hover:theme-border-hover"
             } ${className || ""}`}
             {...props}
           />
         </div>
         {error && (
-          <p 
-            className="text-sm text-red-600 dark:text-red-400 flex items-center gap-1"
-            data-testid={testId ? `${testId}-error` : 'money-input-error'}
+          <p
+            className="text-sm theme-error flex items-center gap-1"
+            data-testid={testId ? `${testId}-error` : "money-input-error"}
           >
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              <path
+                fillRule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                clipRule="evenodd"
+              />
             </svg>
             {error}
           </p>
         )}
       </div>
     );
-  }
+  },
 );
 
-MoneyInput.displayName = 'MoneyInput';
+MoneyInput.displayName = "MoneyInput";
 
 export { MoneyInput };

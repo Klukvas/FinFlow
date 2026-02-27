@@ -31,7 +31,7 @@ export const ConsentCheckbox: React.FC<ConsentCheckboxProps> = ({
           type="checkbox"
           checked={checked}
           onChange={(e) => onChange(e.target.checked)}
-          className="mt-1 w-5 h-5 rounded border-gray-300 theme-accent-border text-blue-600 focus:ring-blue-500 focus:ring-2 cursor-pointer"
+          className="mt-1 w-5 h-5 rounded theme-border theme-accent-border text-blue-600 focus:ring-blue-500 focus:ring-2 cursor-pointer"
           aria-label={t(
             "subscription.consent.ariaLabel",
             "Agree to subscription terms",

@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta, timezone
+
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from typing import Annotated, List
 from uuid import UUID
@@ -82,7 +84,7 @@ async def internal_expense_create(
 async def get_expenses_by_account(
     account_id: int,
     user_id: Annotated[int, Query(description="User ID to validate ownership", gt=0)],
-    workspace_id: Annotated[UUID, Query(description="Workspace ID")] = None,
+    workspace_id: Annotated[UUID, Query(..., description="Workspace ID")],
     limit: Annotated[int, Query(description="Maximum number of expenses to return", ge=1, le=1000)] = 100,
     offset: Annotated[int, Query(description="Number of expenses to skip", ge=0)] = 0,
     service: ExpenseService = Depends(get_expense_service_internal),
@@ -115,10 +117,9 @@ async def get_expenses_by_account(
         # Get expenses for the account
         filters = [
             Expense.account_id == account_id,
-            Expense.user_id == user_id
+            Expense.user_id == user_id,
+            Expense.workspace_id == workspace_id,
         ]
-        if workspace_id is not None:
-            filters.append(Expense.workspace_id == workspace_id)
         expenses = service.db.query(Expense).filter(*filters).order_by(Expense.date.desc()).offset(offset).limit(limit).all()
         
         logger.info(f"Retrieved {len(expenses)} expenses for account {account_id} and user {user_id}")
@@ -189,4 +190,57 @@ async def validate_account_for_expenses(
             "Account not found or not owned by user",
             ErrorCode.ACCOUNT_NOT_FOUND,
             {"original_error": str(e), "account_id": account_id, "user_id": user_id}
+        )
+
+
+@router.get(
+    '/expenses/ai-summary',
+    summary="Get expense summary for AI analysis",
+    description="Internal endpoint returning aggregated expense data for AI assistant analysis",
+    responses={
+        200: {"description": "Expense summary retrieved successfully"},
+        403: {"description": "Invalid internal token"},
+    }
+)
+async def get_expenses_ai_summary(
+    user_id: Annotated[int, Query(description="User ID", gt=0)],
+    workspace_id: Annotated[UUID, Query(description="Workspace ID")],
+    service: ExpenseService = Depends(get_expense_service_internal),
+    _: None = Depends(verify_internal_token),
+) -> dict:
+    """
+    Internal endpoint returning last 3 months of expenses for AI analysis.
+
+    Returns aggregated data without PII for the AI assistant to analyze
+    spending patterns and provide financial insights.
+    """
+    try:
+        three_months_ago = datetime.now(timezone.utc) - timedelta(days=90)
+        expenses = (
+            service.db.query(Expense)
+            .filter(
+                Expense.user_id == user_id,
+                Expense.workspace_id == workspace_id,
+                Expense.date >= three_months_ago,
+            )
+            .order_by(Expense.date.desc())
+            .limit(500)
+            .all()
+        )
+        return {
+            "items": [
+                {
+                    "amount": float(e.amount),
+                    "category_id": e.category_id,
+                    "currency": e.currency,
+                    "date": str(e.date),
+                }
+                for e in expenses
+            ]
+        }
+    except Exception as e:
+        logger.error(f"Error fetching expenses AI summary: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve expenses summary",
         )

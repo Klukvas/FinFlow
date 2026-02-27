@@ -1,27 +1,29 @@
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { DebtCreate, DebtUpdate, DebtType } from '@/types/debt';
-import { ContactResponse } from '@/types/contact';
-import { useTheme } from '@/contexts/ThemeContext';
-import { 
-  Button, 
-  Input, 
-  Label, 
+import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { DebtCreate, DebtUpdate, DebtType } from "@/types/debt";
+import { ContactResponse } from "@/types/contact";
+import {
+  Button,
+  Input,
+  Label,
   FormattedNumberInput,
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue, 
-  Textarea, 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui';
-import { CurrencySelect } from '@/components/ui/forms/CurrencySelect';
-import { removeSpacesFromNumber, formatNumberWithSpaces } from '@/utils/numberFormat';
-import { Calendar, DollarSign, User, Building2 } from 'lucide-react';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Textarea,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui";
+import { CurrencySelect } from "@/components/ui/forms/CurrencySelect";
+import {
+  removeSpacesFromNumber,
+  formatNumberWithSpaces,
+} from "@/utils/numberFormat";
+import { Calendar, DollarSign, User, Building2 } from "lucide-react";
 
 interface DebtFormProps {
   initialData?: Partial<DebtCreate>;
@@ -30,19 +32,23 @@ interface DebtFormProps {
   onSubmit: (data: DebtCreate | DebtUpdate) => void;
   onCancel: () => void;
   isLoading?: boolean;
-  mode: 'create' | 'edit';
+  mode: "create" | "edit";
   showCard?: boolean;
   paymentCount?: number; // Number of payments for validation
 }
 
 const debtTypeConfigs: { value: DebtType; labelKey: string; icon: string }[] = [
-  { value: 'CREDIT_CARD', labelKey: 'debtPage.types.creditCard', icon: '💳' },
-  { value: 'PERSONAL_LOAN', labelKey: 'debtPage.types.personalLoan', icon: '🏦' },
-  { value: 'AUTO_LOAN', labelKey: 'debtPage.types.autoLoan', icon: '🚗' },
-  { value: 'STUDENT_LOAN', labelKey: 'debtPage.types.studentLoan', icon: '🎓' },
-  { value: 'MORTGAGE', labelKey: 'debtPage.types.mortgage', icon: '🏠' },
-  { value: 'LOAN', labelKey: 'debtPage.types.generalLoan', icon: '💰' },
-  { value: 'OTHER', labelKey: 'debtPage.types.other', icon: '📋' }
+  { value: "CREDIT_CARD", labelKey: "debtPage.types.creditCard", icon: "💳" },
+  {
+    value: "PERSONAL_LOAN",
+    labelKey: "debtPage.types.personalLoan",
+    icon: "🏦",
+  },
+  { value: "AUTO_LOAN", labelKey: "debtPage.types.autoLoan", icon: "🚗" },
+  { value: "STUDENT_LOAN", labelKey: "debtPage.types.studentLoan", icon: "🎓" },
+  { value: "MORTGAGE", labelKey: "debtPage.types.mortgage", icon: "🏠" },
+  { value: "LOAN", labelKey: "debtPage.types.generalLoan", icon: "💰" },
+  { value: "OTHER", labelKey: "debtPage.types.other", icon: "📋" },
 ];
 
 export const DebtForm: React.FC<DebtFormProps> = ({
@@ -54,29 +60,33 @@ export const DebtForm: React.FC<DebtFormProps> = ({
   isLoading = false,
   mode,
   showCard = true,
-  paymentCount = 0
+  paymentCount = 0,
 }) => {
   const { t } = useTranslation();
-  const { actualTheme } = useTheme();
-  
+
   const [formData, setFormData] = useState<DebtCreate>({
-    name: initialData.name || '',
-    description: initialData.description || '',
-    debt_type: initialData.debt_type || 'CREDIT_CARD',
+    name: initialData.name || "",
+    description: initialData.description || "",
+    debt_type: initialData.debt_type || "CREDIT_CARD",
     contact_id: initialData.contact_id || null,
     category_id: initialData.category_id || null,
-    currency: initialData.currency || 'USD',
+    currency: initialData.currency || "USD",
     initial_amount: initialData.initial_amount || 0,
     interest_rate: initialData.interest_rate || null,
     minimum_payment: initialData.minimum_payment || null,
-    start_date: initialData.start_date || new Date().toISOString().split('T')[0] || '',
-    due_date: initialData.due_date || null
+    start_date:
+      initialData.start_date || new Date().toISOString().split("T")[0] || "",
+    due_date: initialData.due_date || null,
   });
   const [initialAmountDisplay, setInitialAmountDisplay] = useState(
-    initialData.initial_amount ? formatNumberWithSpaces(initialData.initial_amount.toString()) : ''
+    initialData.initial_amount
+      ? formatNumberWithSpaces(initialData.initial_amount.toString())
+      : "",
   );
   const [minimumPaymentDisplay, setMinimumPaymentDisplay] = useState(
-    initialData.minimum_payment ? formatNumberWithSpaces(initialData.minimum_payment.toString()) : ''
+    initialData.minimum_payment
+      ? formatNumberWithSpaces(initialData.minimum_payment.toString())
+      : "",
   );
 
   // Debug: log formData after initialization
@@ -87,25 +97,37 @@ export const DebtForm: React.FC<DebtFormProps> = ({
     const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = t('debtPage.form.errors.nameRequired');
+      newErrors.name = t("debtPage.form.errors.nameRequired");
     }
 
     // Category is optional for debts
 
     if (!formData.initial_amount || formData.initial_amount === 0) {
-      newErrors.initial_amount = t('debtPage.form.errors.initialAmountCannotBeZero');
+      newErrors.initial_amount = t(
+        "debtPage.form.errors.initialAmountCannotBeZero",
+      );
     }
 
-    if (formData.interest_rate !== null && formData.interest_rate !== undefined && (formData.interest_rate < 0 || formData.interest_rate > 100)) {
-      newErrors.interest_rate = t('debtPage.form.errors.interestRateRange');
+    if (
+      formData.interest_rate !== null &&
+      formData.interest_rate !== undefined &&
+      (formData.interest_rate < 0 || formData.interest_rate > 100)
+    ) {
+      newErrors.interest_rate = t("debtPage.form.errors.interestRateRange");
     }
 
-    if (formData.minimum_payment !== null && formData.minimum_payment !== undefined && formData.minimum_payment <= 0) {
-      newErrors.minimum_payment = t('debtPage.form.errors.minimumPaymentMustBeGreater');
+    if (
+      formData.minimum_payment !== null &&
+      formData.minimum_payment !== undefined &&
+      formData.minimum_payment <= 0
+    ) {
+      newErrors.minimum_payment = t(
+        "debtPage.form.errors.minimumPaymentMustBeGreater",
+      );
     }
 
     if (!formData.start_date) {
-      newErrors.start_date = t('debtPage.form.errors.startDateRequired');
+      newErrors.start_date = t("debtPage.form.errors.startDateRequired");
     }
 
     setErrors(newErrors);
@@ -114,18 +136,18 @@ export const DebtForm: React.FC<DebtFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Prevent currency changes if debt has payments
-    if (mode === 'edit' && paymentCount > 0 && initialData?.currency) {
+    if (mode === "edit" && paymentCount > 0 && initialData?.currency) {
       if (formData.currency !== initialData.currency) {
-        setErrors(prev => ({
+        setErrors((prev) => ({
           ...prev,
-          currency: t('debtPage.form.currencyLocked')
+          currency: t("debtPage.form.currencyLocked"),
         }));
         return;
       }
     }
-    
+
     if (validateForm()) {
       // Clean the form data - ensure empty strings become null
       const cleanedFormData = {
@@ -140,437 +162,412 @@ export const DebtForm: React.FC<DebtFormProps> = ({
   };
 
   const handleInputChange = (field: keyof DebtCreate, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
+      setErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
 
   const getDebtTypes = () => {
-    return debtTypeConfigs.map(config => ({
+    return debtTypeConfigs.map((config) => ({
       value: config.value,
       label: t(config.labelKey),
-      icon: config.icon
+      icon: config.icon,
     }));
   };
 
   const debtTypes = getDebtTypes();
-  const selectedDebtType = debtTypes.find(type => type.value === formData.debt_type);
+  const selectedDebtType = debtTypes.find(
+    (type) => type.value === formData.debt_type,
+  );
 
   const formContent = (
     <>
       {showCard && (
         <div className="mb-4">
-          <h2 className={`text-lg font-semibold ${
-            actualTheme === 'dark' ? 'text-white' : 'text-gray-900'
-          }`}>
-            {mode === 'create' ? t('debtPage.form.title') : t('debtPage.form.editTitle')}
+          <h2 className="text-lg font-semibold theme-text-primary">
+            {mode === "create"
+              ? t("debtPage.form.title")
+              : t("debtPage.form.editTitle")}
           </h2>
         </div>
       )}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Debt Name */}
-          <div className="space-y-2">
-            <Label htmlFor="name" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
-              {t('debtPage.form.name')} *
-            </Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
-              placeholder={t('debtPage.form.namePlaceholder')}
-              className={`${
-                actualTheme === 'dark' 
-                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-              } ${errors.name ? 'border-red-500' : ''}`}
-            />
-            {errors.name && (
-              <p className="text-sm text-red-500">{errors.name}</p>
-            )}
-          </div>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Debt Name */}
+        <div className="space-y-2">
+          <Label htmlFor="name" className="theme-text-secondary">
+            {t("debtPage.form.name")} *
+          </Label>
+          <Input
+            id="name"
+            value={formData.name}
+            onChange={(e) => handleInputChange("name", e.target.value)}
+            placeholder={t("debtPage.form.namePlaceholder")}
+            className={`theme-surface theme-border border theme-text-primary placeholder:theme-text-tertiary ${errors.name ? "border-red-500" : ""}`}
+          />
+          {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
+        </div>
 
-          {/* Debt Type */}
-          <div className="space-y-2">
-            <Label className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
-              {t('debtPage.form.debtType')} *
-            </Label>
-            <Select
-              value={formData.debt_type}
-              onValueChange={(value: string) => handleInputChange('debt_type', value as DebtType)}
-            >
-              <SelectTrigger className={`${
-                actualTheme === 'dark' 
-                  ? 'bg-gray-700 border-gray-600 text-white' 
-                  : 'bg-white border-gray-300 text-gray-900'
-              }`}>
-                <SelectValue>
-                  {selectedDebtType && (
-                    <span className="flex items-center space-x-2">
-                      <span>{selectedDebtType.icon}</span>
-                      <span>{selectedDebtType.label}</span>
-                    </span>
-                  )}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent className={actualTheme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'}>
-                {debtTypes.map((type) => (
-                  <SelectItem 
-                    key={type.value} 
-                    value={type.value}
-                    className={actualTheme === 'dark' ? 'text-white hover:bg-gray-600' : 'text-gray-900 hover:bg-gray-100'}
-                  >
-                    <span className="flex items-center space-x-2">
-                      <span>{type.icon}</span>
-                      <span>{type.label}</span>
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
-              {t('debtPage.form.description')}
-            </Label>
-            <Textarea
-              id="description"
-              value={formData.description || ''}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange('description', e.target.value)}
-              placeholder={t('debtPage.form.descriptionPlaceholder')}
-              rows={3}
-              className={`${
-                actualTheme === 'dark' 
-                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-              }`}
-            />
-          </div>
-
-          {/* Currency */}
-          <div className="space-y-2">
-            <Label htmlFor="currency" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
-              {t('debtPage.form.currency')}
-            </Label>
-            <CurrencySelect
-              value={formData.currency}
-              onChange={(value) => {
-                // Prevent changes if debt has payments
-                if (mode === 'edit' && paymentCount > 0) {
-                  return;
-                }
-                handleInputChange('currency', value);
-              }}
-              disabled={mode === 'edit' && paymentCount > 0}
-              className={`${
-                actualTheme === 'dark' 
-                  ? 'bg-gray-700 border-gray-600 text-white' 
-                  : 'bg-white border-gray-300 text-gray-900'
-              } ${mode === 'edit' && paymentCount > 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-              placeholder={t('debtPage.form.selectCurrency')}
-              showFlags={true}
-            />
-            {errors.currency && (
-              <p className="text-sm text-red-500">{errors.currency}</p>
-            )}
-            {mode === 'edit' && paymentCount > 0 && !errors.currency && (
-              <p className={`text-xs mt-1 ${
-                actualTheme === 'dark' ? 'text-yellow-400' : 'text-yellow-600'
-              }`}>
-                ⚠️ {t('debtPage.form.currencyLocked')}
-              </p>
-            )}
-          </div>
-
-          {/* Amount and Financial Details */}
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-              <div>
-                <FormattedNumberInput
-                  label={t('debtPage.form.initialAmount')}
-                  value={initialAmountDisplay}
-                  onChange={(value) => {
-                    setInitialAmountDisplay(value);
-                    const cleanedValue = removeSpacesFromNumber(value);
-                    const numValue = cleanedValue ? Math.round(parseFloat(cleanedValue) * 100) / 100 : 0;
-                    handleInputChange('initial_amount', numValue);
-                  }}
-                  placeholder="0.00"
-                  required
-                  error={errors.initial_amount || ''}
-                  className="w-full"
-                />
-                <div className={`mt-2 text-xs ${
-                  actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                }`}>
-                  💡 <strong>{t('debtPage.form.tip')}</strong> {t('debtPage.form.amountTip')}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="interest_rate" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
-                  {t('debtPage.form.interestRate')}
-                </Label>
-                <Input
-                  id="interest_rate"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max="100"
-                  value={formData.interest_rate || ''}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    // Use parseFloat but round to 2 decimal places to avoid precision errors
-                    const numValue = value ? Math.round(parseFloat(value) * 100) / 100 : null;
-                    handleInputChange('interest_rate', numValue);
-                  }}
-                  placeholder="0.00"
-                  className={`${
-                    actualTheme === 'dark' 
-                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                  } ${errors.interest_rate ? 'border-red-500' : ''}`}
-                />
-                {errors.interest_rate && (
-                  <p className="text-sm text-red-500">{errors.interest_rate}</p>
+        {/* Debt Type */}
+        <div className="space-y-2">
+          <Label className="theme-text-secondary">
+            {t("debtPage.form.debtType")} *
+          </Label>
+          <Select
+            value={formData.debt_type}
+            onValueChange={(value: string) =>
+              handleInputChange("debt_type", value as DebtType)
+            }
+          >
+            <SelectTrigger className="theme-surface theme-border border theme-text-primary">
+              <SelectValue>
+                {selectedDebtType && (
+                  <span className="flex items-center space-x-2">
+                    <span>{selectedDebtType.icon}</span>
+                    <span>{selectedDebtType.label}</span>
+                  </span>
                 )}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent className="theme-surface theme-border border">
+              {debtTypes.map((type) => (
+                <SelectItem
+                  key={type.value}
+                  value={type.value}
+                  className="theme-text-primary hover:theme-surface-hover"
+                >
+                  <span className="flex items-center space-x-2">
+                    <span>{type.icon}</span>
+                    <span>{type.label}</span>
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Description */}
+        <div className="space-y-2">
+          <Label htmlFor="description" className="theme-text-secondary">
+            {t("debtPage.form.description")}
+          </Label>
+          <Textarea
+            id="description"
+            value={formData.description || ""}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+              handleInputChange("description", e.target.value)
+            }
+            placeholder={t("debtPage.form.descriptionPlaceholder")}
+            rows={3}
+            className="theme-surface theme-border border theme-text-primary placeholder:theme-text-tertiary"
+          />
+        </div>
+
+        {/* Currency */}
+        <div className="space-y-2">
+          <Label htmlFor="currency" className="theme-text-secondary">
+            {t("debtPage.form.currency")}
+          </Label>
+          <CurrencySelect
+            value={formData.currency}
+            onChange={(value) => {
+              // Prevent changes if debt has payments
+              if (mode === "edit" && paymentCount > 0) {
+                return;
+              }
+              handleInputChange("currency", value);
+            }}
+            disabled={mode === "edit" && paymentCount > 0}
+            className={`theme-surface theme-border border theme-text-primary ${mode === "edit" && paymentCount > 0 ? "opacity-50 cursor-not-allowed" : ""}`}
+            placeholder={t("debtPage.form.selectCurrency")}
+            showFlags={true}
+          />
+          {errors.currency && (
+            <p className="text-sm text-red-500">{errors.currency}</p>
+          )}
+          {mode === "edit" && paymentCount > 0 && !errors.currency && (
+            <p className="text-xs mt-1 theme-warning">
+              ⚠️ {t("debtPage.form.currencyLocked")}
+            </p>
+          )}
+        </div>
+
+        {/* Amount and Financial Details */}
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+            <div>
+              <FormattedNumberInput
+                label={t("debtPage.form.initialAmount")}
+                value={initialAmountDisplay}
+                onChange={(value) => {
+                  setInitialAmountDisplay(value);
+                  const cleanedValue = removeSpacesFromNumber(value);
+                  const numValue = cleanedValue
+                    ? Math.round(parseFloat(cleanedValue) * 100) / 100
+                    : 0;
+                  handleInputChange("initial_amount", numValue);
+                }}
+                placeholder="0.00"
+                required
+                error={errors.initial_amount || ""}
+                className="w-full"
+              />
+              <div className="mt-2 text-xs theme-text-tertiary">
+                💡 <strong>{t("debtPage.form.tip")}</strong>{" "}
+                {t("debtPage.form.amountTip")}
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-              <div>
-                <FormattedNumberInput
-                  label={t('debtPage.form.minimumPayment')}
-                  value={minimumPaymentDisplay}
-                  onChange={(value) => {
-                    setMinimumPaymentDisplay(value);
-                    const cleanedValue = removeSpacesFromNumber(value);
-                    const numValue = cleanedValue ? Math.round(parseFloat(cleanedValue) * 100) / 100 : null;
-                    handleInputChange('minimum_payment', numValue);
-                  }}
-                  placeholder="0"
-                  error={errors.minimum_payment || ''}
-                  className="w-full"
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="interest_rate" className="theme-text-secondary">
+                {t("debtPage.form.interestRate")}
+              </Label>
+              <Input
+                id="interest_rate"
+                type="number"
+                step="0.01"
+                min="0"
+                max="100"
+                value={formData.interest_rate || ""}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Use parseFloat but round to 2 decimal places to avoid precision errors
+                  const numValue = value
+                    ? Math.round(parseFloat(value) * 100) / 100
+                    : null;
+                  handleInputChange("interest_rate", numValue);
+                }}
+                placeholder="0.00"
+                className={`theme-surface theme-border border theme-text-primary placeholder:theme-text-tertiary ${errors.interest_rate ? "border-red-500" : ""}`}
+              />
+              {errors.interest_rate && (
+                <p className="text-sm text-red-500">{errors.interest_rate}</p>
+              )}
+            </div>
+          </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="category_id" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
-                  {t('debtPage.form.category')}
-                </Label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+            <div>
+              <FormattedNumberInput
+                label={t("debtPage.form.minimumPayment")}
+                value={minimumPaymentDisplay}
+                onChange={(value) => {
+                  setMinimumPaymentDisplay(value);
+                  const cleanedValue = removeSpacesFromNumber(value);
+                  const numValue = cleanedValue
+                    ? Math.round(parseFloat(cleanedValue) * 100) / 100
+                    : null;
+                  handleInputChange("minimum_payment", numValue);
+                }}
+                placeholder="0"
+                error={errors.minimum_payment || ""}
+                className="w-full"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="category_id" className="theme-text-secondary">
+                {t("debtPage.form.category")}
+              </Label>
+              <Select
+                value={formData.category_id?.toString() || "none"}
+                onValueChange={(value: string) =>
+                  handleInputChange(
+                    "category_id",
+                    value && value !== "none" ? parseInt(value) : null,
+                  )
+                }
+              >
+                <SelectTrigger className="theme-surface theme-border border theme-text-primary">
+                  <SelectValue>
+                    {formData.category_id
+                      ? categories.find((c) => c.id === formData.category_id)
+                          ?.name
+                      : t("debtPage.form.noCategory")}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="theme-surface theme-border border">
+                  <SelectItem
+                    value="none"
+                    className="theme-text-primary hover:theme-surface-hover"
+                  >
+                    {t("debtPage.form.noCategory")}
+                  </SelectItem>
+                  {categories.map((category) => (
+                    <SelectItem
+                      key={category.id}
+                      value={category.id.toString()}
+                      className="theme-text-primary hover:theme-surface-hover"
+                    >
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+
+        {/* Dates */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="start_date" className="theme-text-secondary">
+              {t("debtPage.form.startDate")} *
+            </Label>
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 theme-text-tertiary" />
+              <Input
+                id="start_date"
+                type="date"
+                value={formData.start_date}
+                onChange={(e) =>
+                  handleInputChange("start_date", e.target.value)
+                }
+                className={`pl-10 theme-surface theme-border border theme-text-primary ${errors.start_date ? "border-red-500" : ""}`}
+              />
+            </div>
+            {errors.start_date && (
+              <p className="text-sm text-red-500">{errors.start_date}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="due_date" className="theme-text-secondary">
+              {t("debtPage.form.dueDate")}
+            </Label>
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 theme-text-tertiary" />
+              <Input
+                id="due_date"
+                type="date"
+                value={formData.due_date || ""}
+                onChange={(e) =>
+                  handleInputChange("due_date", e.target.value || null)
+                }
+                className="pl-10 theme-surface theme-border border theme-text-primary"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Contact Selection */}
+        <div className="space-y-2">
+          <Label className="theme-text-secondary">
+            <User className="w-4 h-4 inline mr-2" />
+            {t("debtPage.form.contactInformation")}
+          </Label>
+          <div className="p-4 rounded-lg theme-surface theme-border border">
+            <p className="text-sm mb-3 theme-text-secondary">
+              {t("debtPage.form.selectContact")}
+            </p>
+            {contacts.length === 0 ? (
+              <div className="p-3 rounded-lg border theme-warning-light theme-border">
+                <p className="text-sm theme-warning">
+                  ⚠️ {t("debtPage.form.noContactsAvailable")}
+                </p>
+              </div>
+            ) : (
+              <div className="relative">
                 <Select
-                  value={formData.category_id?.toString() || 'none'}
-                  onValueChange={(value: string) => handleInputChange('category_id', value && value !== 'none' ? parseInt(value) : null)}
+                  value={formData.contact_id?.toString() || ""}
+                  onValueChange={(value: string) => {
+                    handleInputChange(
+                      "contact_id",
+                      value ? parseInt(value) : null,
+                    );
+                  }}
                 >
-                  <SelectTrigger className={`${
-                    actualTheme === 'dark' 
-                      ? 'bg-gray-700 border-gray-600 text-white' 
-                      : 'bg-white border-gray-300 text-gray-900'
-                  }`}>
-                    <SelectValue>
-                      {formData.category_id ? 
-                        categories.find(c => c.id === formData.category_id)?.name : 
-                        t('debtPage.form.noCategory')
-                      }
+                  <SelectTrigger className="theme-surface theme-border border theme-text-primary">
+                    <SelectValue placeholder={t("debtPage.form.chooseContact")}>
+                      {formData.contact_id
+                        ? (() => {
+                            const selectedContact = contacts.find(
+                              (c) => c.id === formData.contact_id,
+                            );
+                            return selectedContact ? (
+                              <span className="flex items-center space-x-2">
+                                <User className="w-4 h-4" />
+                                <span>{selectedContact.name}</span>
+                                {selectedContact.company && (
+                                  <>
+                                    <Building2 className="w-4 h-4" />
+                                    <span className="text-sm opacity-75">
+                                      ({selectedContact.company})
+                                    </span>
+                                  </>
+                                )}
+                              </span>
+                            ) : null;
+                          })()
+                        : null}
                     </SelectValue>
                   </SelectTrigger>
-                  <SelectContent className={actualTheme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'}>
-                    <SelectItem 
-                      value="none"
-                      className={actualTheme === 'dark' ? 'text-white hover:bg-gray-600' : 'text-gray-900 hover:bg-gray-100'}
+                  <SelectContent className="theme-surface theme-border border">
+                    <SelectItem
+                      value=""
+                      className="theme-text-primary hover:theme-surface-hover"
                     >
-                      {t('debtPage.form.noCategory')}
+                      <span className="flex items-center space-x-2">
+                        <span>👤</span>
+                        <span>{t("debtPage.form.noSpecificContact")}</span>
+                      </span>
                     </SelectItem>
-                    {categories.map((category) => (
-                      <SelectItem 
-                        key={category.id} 
-                        value={category.id.toString()}
-                        className={actualTheme === 'dark' ? 'text-white hover:bg-gray-600' : 'text-gray-900 hover:bg-gray-100'}
+                    {contacts.map((contact) => (
+                      <SelectItem
+                        key={contact.id}
+                        value={contact.id.toString()}
+                        className="theme-text-primary hover:theme-surface-hover"
                       >
-                        {category.name}
+                        <span className="flex items-center space-x-2">
+                          <User className="w-4 h-4" />
+                          <span>{contact.name}</span>
+                          {contact.company && (
+                            <>
+                              <Building2 className="w-4 h-4" />
+                              <span className="text-sm opacity-75">
+                                ({contact.company})
+                              </span>
+                            </>
+                          )}
+                        </span>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+            )}
+            <div className="mt-3 text-xs theme-text-tertiary">
+              💡 <strong>{t("debtPage.form.tip")}</strong>
+              <br />• <strong>{t("debtPage.form.positiveAmount")}</strong>{" "}
+              {t("debtPage.form.theyOweYou")}
+              <br />• <strong>{t("debtPage.form.negativeAmount")}</strong>{" "}
+              {t("debtPage.form.youOweThem")}
+              <br />• {t("debtPage.form.useContacts")}
             </div>
           </div>
+        </div>
 
-          {/* Dates */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="start_date" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
-                {t('debtPage.form.startDate')} *
-              </Label>
-              <div className="relative">
-                <Calendar className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
-                  actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                }`} />
-                <Input
-                  id="start_date"
-                  type="date"
-                  value={formData.start_date}
-                  onChange={(e) => handleInputChange('start_date', e.target.value)}
-                  className={`pl-10 ${
-                    actualTheme === 'dark' 
-                      ? 'bg-gray-700 border-gray-600 text-white' 
-                      : 'bg-white border-gray-300 text-gray-900'
-                  } ${errors.start_date ? 'border-red-500' : ''}`}
-                />
-              </div>
-              {errors.start_date && (
-                <p className="text-sm text-red-500">{errors.start_date}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="due_date" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
-                {t('debtPage.form.dueDate')}
-              </Label>
-              <div className="relative">
-                <Calendar className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
-                  actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                }`} />
-                <Input
-                  id="due_date"
-                  type="date"
-                  value={formData.due_date || ''}
-                  onChange={(e) => handleInputChange('due_date', e.target.value || null)}
-                  className={`pl-10 ${
-                    actualTheme === 'dark' 
-                      ? 'bg-gray-700 border-gray-600 text-white' 
-                      : 'bg-white border-gray-300 text-gray-900'
-                  }`}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Contact Selection */}
-          <div className="space-y-2">
-            <Label className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
-              <User className="w-4 h-4 inline mr-2" />
-              {t('debtPage.form.contactInformation')}
-            </Label>
-            <div className={`p-4 rounded-lg border ${
-              actualTheme === 'dark' 
-                ? 'bg-gray-700 border-gray-600' 
-                : 'bg-gray-50 border-gray-300'
-            }`}>
-              <p className={`text-sm mb-3 ${
-                actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-600'
-              }`}>
-                {t('debtPage.form.selectContact')}
-              </p>
-              {contacts.length === 0 ? (
-                <div className={`p-3 rounded-lg border ${
-                  actualTheme === 'dark' 
-                    ? 'bg-gray-600 border-gray-500' 
-                    : 'bg-yellow-50 border-yellow-200'
-                }`}>
-                  <p className={`text-sm ${
-                    actualTheme === 'dark' ? 'text-gray-300' : 'text-yellow-700'
-                  }`}>
-                    ⚠️ {t('debtPage.form.noContactsAvailable')}
-                  </p>
-                </div>
-              ) : (
-                <div className="relative">
-                  <Select
-                    value={formData.contact_id?.toString() || ''}
-                    onValueChange={(value: string) => {
-                      handleInputChange('contact_id', value ? parseInt(value) : null);
-                    }}
-                  >
-                    <SelectTrigger className={`${
-                      actualTheme === 'dark' 
-                        ? 'bg-gray-800 border-gray-600 text-white' 
-                        : 'bg-white border-gray-300 text-gray-900'
-                    }`}>
-                      <SelectValue placeholder={t('debtPage.form.chooseContact')}>
-                        {formData.contact_id ? (() => {
-                          const selectedContact = contacts.find(c => c.id === formData.contact_id);
-                          return selectedContact ? (
-                            <span className="flex items-center space-x-2">
-                              <User className="w-4 h-4" />
-                              <span>{selectedContact.name}</span>
-                              {selectedContact.company && (
-                                <>
-                                  <Building2 className="w-4 h-4" />
-                                  <span className="text-sm opacity-75">({selectedContact.company})</span>
-                                </>
-                              )}
-                            </span>
-                          ) : null;
-                        })() : null}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent className={actualTheme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'}>
-                      <SelectItem 
-                        value=""
-                        className={actualTheme === 'dark' ? 'text-white hover:bg-gray-600' : 'text-gray-900 hover:bg-gray-100'}
-                      >
-                        <span className="flex items-center space-x-2">
-                          <span>👤</span>
-                          <span>{t('debtPage.form.noSpecificContact')}</span>
-                        </span>
-                      </SelectItem>
-                      {contacts.map((contact) => (
-                          <SelectItem 
-                            key={contact.id} 
-                            value={contact.id.toString()}
-                            className={actualTheme === 'dark' ? 'text-white hover:bg-gray-600' : 'text-gray-900 hover:bg-gray-100'}
-                          >
-                          <span className="flex items-center space-x-2">
-                            <User className="w-4 h-4" />
-                            <span>{contact.name}</span>
-                            {contact.company && (
-                              <>
-                                <Building2 className="w-4 h-4" />
-                                <span className="text-sm opacity-75">({contact.company})</span>
-                              </>
-                            )}
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              <div className={`mt-3 text-xs ${
-                actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-              }`}>
-                💡 <strong>{t('debtPage.form.tip')}</strong> 
-                <br />• <strong>{t('debtPage.form.positiveAmount')}</strong> {t('debtPage.form.theyOweYou')}
-                <br />• <strong>{t('debtPage.form.negativeAmount')}</strong> {t('debtPage.form.youOweThem')}
-                <br />• {t('debtPage.form.useContacts')}
-              </div>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-6">
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="flex-1"
-            >
-              {isLoading ? t('debtPage.form.saving') : mode === 'create' ? t('debtPage.form.create') : t('debtPage.form.update')}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onCancel}
-              disabled={isLoading}
-              className="flex-1"
-            >
-              {t('common.cancel')}
-            </Button>
-          </div>
-        </form>
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-3 pt-6">
+          <Button type="submit" disabled={isLoading} className="flex-1">
+            {isLoading
+              ? t("debtPage.form.saving")
+              : mode === "create"
+                ? t("debtPage.form.create")
+                : t("debtPage.form.update")}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isLoading}
+            className="flex-1"
+          >
+            {t("common.cancel")}
+          </Button>
+        </div>
+      </form>
     </>
   );
 
@@ -579,22 +576,18 @@ export const DebtForm: React.FC<DebtFormProps> = ({
   }
 
   return (
-    <Card className={`max-w-2xl mx-auto ${
-      actualTheme === 'dark' 
-        ? 'bg-gray-800 border-gray-700' 
-        : 'bg-white border-gray-200'
-    }`}>
+    <Card className="max-w-2xl mx-auto theme-surface theme-border border">
       <CardHeader>
-        <CardTitle className={`flex items-center space-x-2 ${
-          actualTheme === 'dark' ? 'text-white' : 'text-gray-900'
-        }`}>
+        <CardTitle className="flex items-center space-x-2 theme-text-primary">
           <DollarSign className="w-5 h-5" />
-          <span>{mode === 'create' ? t('debtPage.form.title') : t('debtPage.form.editTitle')}</span>
+          <span>
+            {mode === "create"
+              ? t("debtPage.form.title")
+              : t("debtPage.form.editTitle")}
+          </span>
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        {formContent}
-      </CardContent>
+      <CardContent>{formContent}</CardContent>
     </Card>
   );
 };

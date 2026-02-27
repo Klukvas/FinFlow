@@ -35,6 +35,9 @@ inputs:
     description: Production domain
     required: false
     default: finflow.ltd
+  anthropic-api-key:
+    description: Anthropic API key for AI assistant
+    required: true
   payments-enabled:
     description: Enable payment processing
     required: false
@@ -91,6 +94,7 @@ runs:
         REDIS_PASSWORD: ${{ inputs['redis-password'] }}
         CORS_ORIGINS: ${{ inputs['cors-origins'] }}
         DOMAIN: ${{ inputs.domain }}
+        ANTHROPIC_API_KEY: ${{ inputs['anthropic-api-key'] }}
         PAYMENTS_ENABLED: ${{ inputs['payments-enabled'] }}
         SERVICES: ${{ inputs.services }}
       run: |
@@ -99,11 +103,11 @@ runs:
 
         # Default services if none specified
         if [ -z "${SERVICES:-}" ]; then
-          SERVICES="caddy postgres redis frontend account_service category_service currency_service debt_service expense_service goals_service income_service payment_service pdf_parser_service recurring_service scheduler_service subscription_service user_service workspace_service"
+          SERVICES="caddy postgres redis frontend account_service ai_assistant_service category_service currency_service debt_service expense_service goals_service income_service payment_service pdf_parser_service recurring_service scheduler_service subscription_service user_service workspace_service"
         fi
 
         # URL-encode the DB password
-        DB_PASSWORD_ENCODED=$(python3 -c "import urllib.parse; print(urllib.parse.quote_plus('$DB_PASSWORD'))")
+        DB_PASSWORD_ENCODED=$(python3 -c "import urllib.parse, os; print(urllib.parse.quote_plus(os.environ['DB_PASSWORD']))")
 
         # Generate .env on server
         ssh -o StrictHostKeyChecking=accept-new "$USER@$HOST" bash -s <<REMOTE_SCRIPT
@@ -130,12 +134,15 @@ runs:
         DOMAIN=${DOMAIN}
         NODE_ENV=production
         PAYMENTS_ENABLED=${PAYMENTS_ENABLED:-false}
+        ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
         ENVEOF
 
         # Append generated secrets (not overwritten on re-deploy)
         echo "SECRET_KEY=\$SECRET_KEY" >> .env
         echo "ALGORITHM=\$ALGORITHM" >> .env
         echo "INTERNAL_SECRET_TOKEN=\$INTERNAL_SECRET_TOKEN" >> .env
+
+        chmod 600 .env
 
         # Pull images
         echo "Pulling images..."

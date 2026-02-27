@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ContactCreate, ContactUpdate } from '@/types/contact';
-import { useTheme } from '@/contexts/ThemeContext';
 import { Button } from '@/components/ui/shared/Button';
 import { Input } from '@/components/ui/forms/Input';
 import { Label } from '@/components/ui/forms/Label';
@@ -27,8 +26,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
   showCard = true
 }) => {
   const { t } = useTranslation();
-  const { actualTheme } = useTheme();
-  
+
   const [formData, setFormData] = useState<ContactCreate>({
     name: initialData.name || '',
     email: initialData.email || null,
@@ -83,9 +81,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
     <>
       {showCard && (
         <div className="mb-4">
-          <h2 className={`text-lg font-semibold ${
-            actualTheme === 'dark' ? 'text-white' : 'text-gray-900'
-          }`}>
+          <h2 className="text-lg font-semibold theme-text-primary">
             {mode === 'create' ? t('debtPage.contacts.form.createTitle') : t('debtPage.contacts.form.editTitle')}
           </h2>
         </div>
@@ -93,7 +89,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Contact Name */}
           <div className="space-y-2">
-            <Label htmlFor="name" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
+            <Label htmlFor="name" className="theme-text-secondary">
               <User className="w-4 h-4 inline mr-2" />
               {t('debtPage.contacts.form.name')} *
             </Label>
@@ -102,11 +98,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
               value={formData.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
               placeholder={t('debtPage.contacts.form.namePlaceholder')}
-              className={`${
-                actualTheme === 'dark' 
-                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-              } ${errors.name ? 'border-red-500' : ''}`}
+              className={`theme-surface theme-border border theme-text-primary placeholder:theme-text-tertiary ${errors.name ? 'border-red-500' : ''}`}
             />
             {errors.name && (
               <p className="text-sm text-red-500">{errors.name}</p>
@@ -116,7 +108,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
           {/* Email and Phone */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
+              <Label htmlFor="email" className="theme-text-secondary">
                 <Mail className="w-4 h-4 inline mr-2" />
                 {t('debtPage.contacts.form.email')}
               </Label>
@@ -126,11 +118,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
                 value={formData.email || ''}
                 onChange={(e) => handleInputChange('email', e.target.value || null)}
                 placeholder={t('debtPage.contacts.form.emailPlaceholder')}
-                className={`${
-                  actualTheme === 'dark' 
-                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                } ${errors.email ? 'border-red-500' : ''}`}
+                className={`theme-surface theme-border border theme-text-primary placeholder:theme-text-tertiary ${errors.email ? 'border-red-500' : ''}`}
               />
               {errors.email && (
                 <p className="text-sm text-red-500">{errors.email}</p>
@@ -138,7 +126,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="phone" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
+              <Label htmlFor="phone" className="theme-text-secondary">
                 <Phone className="w-4 h-4 inline mr-2" />
                 {t('debtPage.contacts.form.phone')}
               </Label>
@@ -148,18 +136,14 @@ export const ContactForm: React.FC<ContactFormProps> = ({
                 value={formData.phone || ''}
                 onChange={(e) => handleInputChange('phone', e.target.value || null)}
                 placeholder={t('debtPage.contacts.form.phonePlaceholder')}
-                className={`${
-                  actualTheme === 'dark' 
-                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                }`}
+                className="theme-surface theme-border border theme-text-primary placeholder:theme-text-tertiary"
               />
             </div>
           </div>
 
           {/* Company */}
           <div className="space-y-2">
-            <Label htmlFor="company" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
+            <Label htmlFor="company" className="theme-text-secondary">
               <Building2 className="w-4 h-4 inline mr-2" />
               {t('debtPage.contacts.form.company')}
             </Label>
@@ -168,17 +152,13 @@ export const ContactForm: React.FC<ContactFormProps> = ({
               value={formData.company || ''}
               onChange={(e) => handleInputChange('company', e.target.value || null)}
               placeholder={t('debtPage.contacts.form.companyPlaceholder')}
-              className={`${
-                actualTheme === 'dark' 
-                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-              }`}
+              className="theme-surface theme-border border theme-text-primary placeholder:theme-text-tertiary"
             />
           </div>
 
           {/* Address */}
           <div className="space-y-2">
-            <Label htmlFor="address" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
+            <Label htmlFor="address" className="theme-text-secondary">
               <MapPin className="w-4 h-4 inline mr-2" />
               {t('debtPage.contacts.form.address')}
             </Label>
@@ -188,17 +168,13 @@ export const ContactForm: React.FC<ContactFormProps> = ({
               onChange={(e) => handleInputChange('address', e.target.value || null)}
               placeholder={t('debtPage.contacts.form.addressPlaceholder')}
               rows={3}
-              className={`${
-                actualTheme === 'dark' 
-                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-              }`}
+              className="theme-surface theme-border border theme-text-primary placeholder:theme-text-tertiary"
             />
           </div>
 
           {/* Notes */}
           <div className="space-y-2">
-            <Label htmlFor="notes" className={actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>
+            <Label htmlFor="notes" className="theme-text-secondary">
               <FileText className="w-4 h-4 inline mr-2" />
               {t('debtPage.contacts.form.notes')}
             </Label>
@@ -208,11 +184,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
               onChange={(e) => handleInputChange('notes', e.target.value || null)}
               placeholder={t('debtPage.contacts.form.notesPlaceholder')}
               rows={4}
-              className={`${
-                actualTheme === 'dark' 
-                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-              }`}
+              className="theme-surface theme-border border theme-text-primary placeholder:theme-text-tertiary"
             />
           </div>
 
@@ -244,15 +216,9 @@ export const ContactForm: React.FC<ContactFormProps> = ({
   }
 
   return (
-    <Card className={`max-w-2xl mx-auto ${
-      actualTheme === 'dark' 
-        ? 'bg-gray-800 border-gray-700' 
-        : 'bg-white border-gray-200'
-    }`}>
+    <Card className="max-w-2xl mx-auto theme-surface theme-border border">
       <CardHeader>
-        <CardTitle className={`flex items-center space-x-2 ${
-          actualTheme === 'dark' ? 'text-white' : 'text-gray-900'
-        }`}>
+        <CardTitle className="flex items-center space-x-2 theme-text-primary">
           <User className="w-5 h-5" />
           <span>{mode === 'create' ? t('debtPage.contacts.form.createTitle') : t('debtPage.contacts.form.editTitle')}</span>
         </CardTitle>

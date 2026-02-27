@@ -49,7 +49,7 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({
     try {
       const currencyClient = new CurrencyApiClient();
       const response = await currencyClient.getSupportedCurrencies();
-      setCurrencies(response.currencies);
+      setCurrencies(response.currencies ?? []);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to fetch currencies";

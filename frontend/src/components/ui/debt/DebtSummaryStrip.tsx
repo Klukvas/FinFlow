@@ -1,9 +1,9 @@
-import React from 'react';
-import { useTranslation } from 'react-i18next';
-import { Card } from '../shared/Card';
-import { Skeleton } from '../shared/Skeleton';
-import { DebtSummary } from '../../../types/debt';
-import { useCurrencyConversion } from '../../../hooks/useCurrencyConversion';
+import React from "react";
+import { useTranslation } from "react-i18next";
+import { Card } from "../shared/Card";
+import { Skeleton } from "../shared/Skeleton";
+import { DebtSummary } from "../../../types/debt";
+import { useCurrencyConversion } from "../../../hooks/useCurrencyConversion";
 
 interface DebtSummaryStripProps {
   summary: DebtSummary | null;
@@ -36,26 +36,27 @@ export const DebtSummaryStrip: React.FC<DebtSummaryStripProps> = ({
 
   const kpiCards = [
     {
-      label: t('debtPage.kpi.totalOutstanding'),
+      label: t("debtPage.kpi.totalOutstanding"),
       value: formatCurrency(summary?.total_debt ?? 0, currency),
-      valueClass: 'text-red-500/80 dark:text-red-400/70',
+      valueClass: "text-red-500/80",
     },
     {
-      label: t('debtPage.kpi.totalPaid'),
+      label: t("debtPage.kpi.totalPaid"),
       value: formatCurrency(summary?.total_payments ?? 0, currency),
-      valueClass: 'text-green-600/80 dark:text-green-400/70',
+      valueClass: "text-green-600/80",
     },
     {
-      label: t('debtPage.kpi.activeDebts'),
+      label: t("debtPage.kpi.activeDebts"),
       value: String(summary?.active_debts ?? 0),
-      valueClass: 'theme-text-primary',
+      valueClass: "theme-text-primary",
     },
     {
-      label: t('debtPage.kpi.avgInterest'),
-      value: summary?.average_interest_rate != null
-        ? `${summary.average_interest_rate.toFixed(1)}%`
-        : 'N/A',
-      valueClass: 'theme-text-primary',
+      label: t("debtPage.kpi.avgInterest"),
+      value:
+        summary?.average_interest_rate != null
+          ? `${summary.average_interest_rate.toFixed(1)}%`
+          : "N/A",
+      valueClass: "theme-text-primary",
     },
   ];
 

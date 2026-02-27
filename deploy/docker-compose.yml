@@ -493,6 +493,41 @@ services:
     deploy: *fastapi-deploy
     logging: *default-logging
 
+  ai_assistant_service:
+    image: ${REGISTRY}/${IMAGE_PREFIX}/ai_assistant_service:latest
+    container_name: ai_assistant_service
+    restart: unless-stopped
+    environment:
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=${ALGORITHM}
+      - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - ANTHROPIC_MODEL=claude-haiku-4-5-20251001
+      - EXPENSE_SERVICE_URL=http://expense_service:8000
+      - INCOME_SERVICE_URL=http://income_service:8000
+      - DEBT_SERVICE_URL=http://debt_service:8000
+      - GOALS_SERVICE_URL=http://goals_service:8000
+      - ACCOUNT_SERVICE_URL=http://account_service:8000
+      - CATEGORY_SERVICE_URL=http://category_service:8000
+      - RECURRING_SERVICE_URL=http://recurring_service:8000
+      - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
+      - LOG_LEVEL=INFO
+      - DOCS_ENABLED=false
+    networks:
+      - app_network
+    depends_on:
+      redis:
+        condition: service_healthy
+      subscription_service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+      <<: *fastapi-healthcheck
+    deploy: *fastapi-deploy
+    logging: *default-logging
+
   pdf_parser_service:
     image: ${REGISTRY}/${IMAGE_PREFIX}/pdf_parser_service:latest
     container_name: pdf_parser_service

@@ -192,7 +192,7 @@ export const DebtTable: React.FC<DebtTableProps> = ({
                     {t(DEBT_TYPE_I18N_MAP[debt.debt_type])}
                   </div>
                   <div className="flex items-center gap-3 mb-2">
-                    <span className="text-sm font-semibold text-red-500/80 dark:text-red-400/70 tabular-nums">
+                    <span className="text-sm font-semibold text-red-500/80 tabular-nums">
                       {Math.abs(debt.current_balance).toLocaleString("uk-UA", {
                         minimumFractionDigits: 2,
                       })}{" "}
@@ -341,7 +341,7 @@ export const DebtTable: React.FC<DebtTableProps> = ({
                       </div>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <span className="text-sm font-semibold text-red-500/80 dark:text-red-400/70 tabular-nums">
+                      <span className="text-sm font-semibold text-red-500/80 tabular-nums">
                         {Math.abs(debt.current_balance).toLocaleString(
                           "uk-UA",
                           { minimumFractionDigits: 2 },

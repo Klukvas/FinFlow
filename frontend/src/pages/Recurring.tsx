@@ -428,8 +428,8 @@ export const Recurring = () => {
                   className={`ml-2 font-semibold tabular-nums ${
                     deleteTarget.payment_type === "expense" ||
                     deleteTarget.payment_type === ("EXPENSE" as string)
-                      ? "text-red-500/80 dark:text-red-400/70"
-                      : "text-green-600/80 dark:text-green-400/70"
+                      ? "theme-error"
+                      : "theme-success"
                   }`}
                 >
                   {deleteTarget.amount.toLocaleString("uk-UA", {

@@ -6,7 +6,6 @@ import {
   ParsedTransaction,
   TransactionValidation,
 } from "@/services/api/pdfParserApiClient";
-import { useTheme } from "@/contexts/ThemeContext";
 import i18n from "@/i18n";
 import { MccBatchResponse } from "@/services/api/categoryApiClient";
 import { normalizeLanguageCode } from "@/utils";
@@ -15,7 +14,6 @@ import { logger } from "@/utils/logger";
 export const PdfParser: React.FC = () => {
   const { t } = useTranslation();
   const { income, expense, category } = useApiClients();
-  const { actualTheme } = useTheme();
   const [showUploader, setShowUploader] = useState(false);
   const [showReview, setShowReview] = useState(false);
   const [parsedTransactions, setParsedTransactions] = useState<
@@ -710,7 +708,7 @@ export const PdfParser: React.FC = () => {
                           {mccProcessingProgress.failed} failed
                         </span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="w-full theme-bg-tertiary rounded-full h-2">
                         <div
                           className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                           style={{
@@ -785,11 +783,7 @@ export const PdfParser: React.FC = () => {
             <button
               onClick={() => setShowUploader(true)}
               disabled={isCreating}
-              className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                actualTheme === "dark"
-                  ? "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-600 disabled:to-gray-700"
-                  : "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-300 disabled:to-gray-400"
-              } text-white disabled:cursor-not-allowed theme-shadow hover:theme-shadow-hover disabled:shadow-none`}
+              className="px-6 py-3 rounded-lg font-medium transition-colors bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 text-white disabled:cursor-not-allowed theme-shadow hover:theme-shadow-hover disabled:shadow-none"
             >
               {isCreating
                 ? t("pdfParserPage.creatingTransactions")

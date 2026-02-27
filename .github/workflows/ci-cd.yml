@@ -62,6 +62,7 @@ jobs:
       user_service: ${{ steps.detect.outputs.user_service }}
       subscription_service: ${{ steps.detect.outputs.subscription_service }}
       workspace_service: ${{ steps.detect.outputs.workspace_service }}
+      ai_assistant_service: ${{ steps.detect.outputs.ai_assistant_service }}
       services_list: ${{ steps.detect.outputs.services_list }}
     steps:
       - name: Checkout
@@ -71,6 +72,8 @@ jobs:
 
       - name: Detect specific services
         id: detect
+        env:
+          INPUT_SERVICES: ${{ inputs.services }}
         run: |
           # Initialize all services as false
           FRONTEND="false"
@@ -89,11 +92,11 @@ jobs:
           USER_SERVICE="false"
           SUBSCRIPTION_SERVICE="false"
           WORKSPACE_SERVICE="false"
-          
+          AI_ASSISTANT_SERVICE="false"
+
           # If manual dispatch with specific services
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]] && [[ -n "${{ inputs.services }}" ]]; then
-            SERVICES="${{ inputs.services }}"
-            for svc in $SERVICES; do
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]] && [[ -n "${INPUT_SERVICES}" ]]; then
+            for svc in ${INPUT_SERVICES}; do
               case $svc in
                 frontend) FRONTEND="true" ;;
                 account_service) ACCOUNT_SERVICE="true" ;;
@@ -111,6 +114,7 @@ jobs:
                 user_service) USER_SERVICE="true" ;;
                 subscription_service) SUBSCRIPTION_SERVICE="true" ;;
                 workspace_service) WORKSPACE_SERVICE="true" ;;
+                ai_assistant_service) AI_ASSISTANT_SERVICE="true" ;;
               esac
             done
           else
@@ -164,7 +168,10 @@ jobs:
             if git diff --name-only HEAD^..HEAD | grep -q "^workspace_service/"; then
               WORKSPACE_SERVICE="true"
             fi
-            
+            if git diff --name-only HEAD^..HEAD | grep -q "^ai_assistant_service/"; then
+              AI_ASSISTANT_SERVICE="true"
+            fi
+
             # If no service directories changed, skip individual service builds/tests.
             # E2E tests still run and cover all services via docker-compose.
             if [[ "$FRONTEND" == "false" ]] && \
@@ -182,7 +189,8 @@ jobs:
                [[ "$SCHEDULER_SERVICE" == "false" ]] && \
                [[ "$USER_SERVICE" == "false" ]] && \
                [[ "$SUBSCRIPTION_SERVICE" == "false" ]] && \
-               [[ "$WORKSPACE_SERVICE" == "false" ]]; then
+               [[ "$WORKSPACE_SERVICE" == "false" ]] && \
+               [[ "$AI_ASSISTANT_SERVICE" == "false" ]]; then
               echo "No service changes detected — only E2E tests will run"
             fi
           fi
@@ -204,7 +212,8 @@ jobs:
           echo "user_service=$USER_SERVICE" >> $GITHUB_OUTPUT
           echo "subscription_service=$SUBSCRIPTION_SERVICE" >> $GITHUB_OUTPUT
           echo "workspace_service=$WORKSPACE_SERVICE" >> $GITHUB_OUTPUT
-          
+          echo "ai_assistant_service=$AI_ASSISTANT_SERVICE" >> $GITHUB_OUTPUT
+
           # Build list for deployment
           SERVICES_LIST=""
           [[ "$FRONTEND" == "true" ]] && SERVICES_LIST="$SERVICES_LIST frontend"
@@ -223,7 +232,8 @@ jobs:
           [[ "$USER_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST user_service"
           [[ "$SUBSCRIPTION_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST subscription_service"
           [[ "$WORKSPACE_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST workspace_service"
-          
+          [[ "$AI_ASSISTANT_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST ai_assistant_service"
+
           echo "services_list=$SERVICES_LIST" >> $GITHUB_OUTPUT
           echo "Services to build/deploy:$SERVICES_LIST"
 
@@ -797,6 +807,38 @@ jobs:
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/scheduler_service:latest
           cache-to: type=inline
 
+  # Stage 17: AI Assistant Service Build
+  stage17-ai-assistant-service:
+    name: "Stage 17: Build AI Assistant Service"
+    needs: [detect-changes, e2e-tests]
+    if: needs.detect-changes.outputs.ai_assistant_service == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./ai_assistant_service/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/ai_assistant_service:latest
+            ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/ai_assistant_service:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/ai_assistant_service:latest
+          cache-to: type=inline
+
   # E2E API Tests: build all services, run integration tests
   e2e-tests:
     name: "E2E API Tests"
@@ -936,6 +978,18 @@ jobs:
           RATE_LIMIT_PER_MINUTE=400
           EOF
 
+          # ai_assistant_service
+          cat > ai_assistant_service/.env.docker << EOF
+          ANTHROPIC_API_KEY=sk-ant-test-key-not-real
+          ANTHROPIC_MODEL=claude-haiku-4-5-20251001
+          REDIS_URL=redis://redis:6379
+          SECRET_KEY=$SECRET
+          ALGORITHM=$ALGO
+          INTERNAL_SECRET_TOKEN=$INTERNAL_TOKEN
+          CORS_ORIGINS=*
+          LOG_LEVEL=INFO
+          EOF
+
           # payment_service
           cat > payment_service/.env.docker << EOF
           DATABASE_URL=postgresql://postgres:postgres@db:5432/payment_db
@@ -972,7 +1026,7 @@ jobs:
 
       - name: Wait for services to be healthy
         run: |
-          SERVICES="8001 8002 8003 8004 8005 8006 8007 8008 8009 8010 8011 8012 8013 8014"
+          SERVICES="8001 8002 8003 8004 8005 8006 8007 8008 8009 8010 8011 8012 8013 8014 8015"
           MAX_WAIT=180
           ELAPSED=0
           INTERVAL=5
@@ -1046,6 +1100,7 @@ jobs:
       - stage14-admin-panel
       - stage15-payment-service
       - stage16-scheduler-service
+      - stage17-ai-assistant-service
     # Deploy only after ALL builds complete successfully (or skip if no changes)
     # This ensures we don't deploy while builds are still running
     # Run if: on main/manual dispatch, no failures/cancellations, and at least one service built
@@ -1073,6 +1128,7 @@ jobs:
           db-user: ${{ secrets.DB_USER || 'finflow' }}
           db-password: ${{ secrets.DB_PASSWORD }}
           redis-password: ${{ secrets.REDIS_PASSWORD }}
+          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
           cors-origins: ${{ secrets.CORS_ORIGINS || 'https://finflow.ltd' }}
           domain: ${{ secrets.DOMAIN || 'finflow.ltd' }}
           payments-enabled: ${{ secrets.PAYMENTS_ENABLED || 'false' }}
@@ -1101,6 +1157,7 @@ jobs:
           [[ "${{ needs.stage14-admin-panel.result }}" == "success" ]] && echo "- ✅ Admin Panel" >> $GITHUB_STEP_SUMMARY
           [[ "${{ needs.stage15-payment-service.result }}" == "success" ]] && echo "- ✅ Payment Service" >> $GITHUB_STEP_SUMMARY
           [[ "${{ needs.stage16-scheduler-service.result }}" == "success" ]] && echo "- ✅ Scheduler Service" >> $GITHUB_STEP_SUMMARY
+          [[ "${{ needs.stage17-ai-assistant-service.result }}" == "success" ]] && echo "- ✅ AI Assistant Service" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Environment**: ${{ github.event.inputs.environment || 'production' }}" >> $GITHUB_STEP_SUMMARY
           echo "**Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY

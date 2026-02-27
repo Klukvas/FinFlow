@@ -139,7 +139,7 @@ export const MyInvites: React.FC = () => {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3">
-          <div className="p-3 rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+          <div className="p-3 rounded-xl theme-accent-light theme-accent">
             <FaEnvelope className="w-6 h-6" />
           </div>
           <div>
@@ -161,7 +161,7 @@ export const MyInvites: React.FC = () => {
 
       {/* Success message */}
       {successMessage && (
-        <div className="mb-6 p-4 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 flex items-center gap-3">
+        <div className="mb-6 p-4 rounded-lg theme-success-light theme-success flex items-center gap-3">
           <FaCheckCircle className="w-5 h-5 flex-shrink-0" />
           <span>{successMessage}</span>
         </div>
@@ -169,7 +169,7 @@ export const MyInvites: React.FC = () => {
 
       {/* Error message */}
       {error && (
-        <div className="mb-6 p-4 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400">
+        <div className="mb-6 p-4 rounded-lg theme-error-light theme-error">
           {error}
         </div>
       )}
@@ -184,7 +184,7 @@ export const MyInvites: React.FC = () => {
       {/* Empty state */}
       {!isLoading && invites.length === 0 && (
         <div className="text-center py-16">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full theme-bg-secondary mb-4">
             <FaInbox className="w-10 h-10 theme-text-tertiary" />
           </div>
           <h3 className="text-lg font-medium theme-text-primary mb-2">

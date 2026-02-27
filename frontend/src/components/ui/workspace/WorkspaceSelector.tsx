@@ -58,7 +58,7 @@ export const WorkspaceSelector: React.FC<WorkspaceSelectorProps> = ({
   if (isLoading) {
     return (
       <div className="px-3 py-2 rounded-lg theme-surface-hover animate-pulse">
-        <div className="h-5 w-24 bg-gray-300 dark:bg-gray-600 rounded"></div>
+        <div className="h-5 w-24 theme-bg-tertiary rounded"></div>
       </div>
     );
   }

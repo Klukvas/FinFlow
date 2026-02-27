@@ -229,14 +229,14 @@ export const GoalsOverview: React.FC = () => {
               return (
                 <div
                   key={goal.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  className="flex items-center justify-between p-3 theme-bg-secondary rounded-lg"
                 >
                   <div className="flex-1">
-                    <h5 className="font-medium text-gray-900 text-sm">
+                    <h5 className="font-medium theme-text-primary text-sm">
                       {goal.title}
                     </h5>
                     <div className="flex items-center mt-1">
-                      <div className="w-16 bg-gray-200 rounded-full h-1.5 mr-3">
+                      <div className="w-16 theme-bg-tertiary rounded-full h-1.5 mr-3">
                         <div
                           className={`h-1.5 rounded-full ${getProgressColor(goal.progress_percentage)}`}
                           style={{
@@ -244,19 +244,19 @@ export const GoalsOverview: React.FC = () => {
                           }}
                         />
                       </div>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs theme-text-tertiary">
                         {goal.progress_percentage.toFixed(0)}%
                       </span>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-sm font-medium theme-text-primary">
                       {goal.current_amount.toLocaleString()} /{" "}
                       {goal.target_amount.toLocaleString()}
                     </p>
                     {goal.target_date && (
                       <p
-                        className={`text-xs ${isOverdue ? "text-red-500" : "text-gray-500"}`}
+                        className={`text-xs ${isOverdue ? "text-red-500" : "theme-text-tertiary"}`}
                       >
                         {isOverdue
                           ? t("dashboard.goalsOverview.overdueDays", {

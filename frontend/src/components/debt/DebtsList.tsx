@@ -13,7 +13,6 @@ interface DebtsListProps {
   onMakePayment: (debtId: number) => void;
   onDelete: (debtId: number) => void;
   onCreateClick: () => void;
-  actualTheme: 'light' | 'dark';
 }
 
 export const DebtsList: React.FC<DebtsListProps> = ({
@@ -22,28 +21,19 @@ export const DebtsList: React.FC<DebtsListProps> = ({
   onViewPayments,
   onMakePayment,
   onDelete,
-  onCreateClick,
-  actualTheme
+  onCreateClick
 }) => {
   const { t } = useTranslation();
 
   if (debts.length === 0) {
     return (
-      <Card className={`${
-        actualTheme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-      }`}>
+      <Card className="theme-surface theme-border border">
         <CardContent className="p-12 text-center">
-          <AlertCircle className={`w-12 h-12 mx-auto mb-4 ${
-            actualTheme === 'dark' ? 'text-gray-600' : 'text-gray-400'
-          }`} />
-          <h3 className={`text-lg font-medium mb-2 ${
-            actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-          }`}>
+          <AlertCircle className="w-12 h-12 mx-auto mb-4 theme-text-tertiary" />
+          <h3 className="text-lg font-medium mb-2 theme-text-secondary">
             {t('debtPage.emptyStates.noDebtsTitle')}
           </h3>
-          <p className={`mb-6 ${
-            actualTheme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-          }`}>
+          <p className="mb-6 theme-text-tertiary">
             {t('debtPage.emptyStates.noDebtsDescription')}
           </p>
           <Button onClick={onCreateClick}>
@@ -70,4 +60,3 @@ export const DebtsList: React.FC<DebtsListProps> = ({
     </div>
   );
 };
-

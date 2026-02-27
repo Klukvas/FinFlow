@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import { logger } from "@/utils/logger";
 import { useApiClients } from "@/hooks/useApiClients";
 import { ParsedTransaction } from "@/services/api/pdfParserApiClient";
-import { useTheme } from "@/contexts/ThemeContext";
 import i18n from "@/i18n";
 import { normalizeLanguageCode } from "@/utils";
 
@@ -18,7 +17,6 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({
 }) => {
   const { t } = useTranslation();
   const { pdfParser } = useApiClients();
-  const { actualTheme } = useTheme();
   const [file, setFile] = useState<File | null>(null);
   const [bankType, setBankType] = useState<string>("");
   const [supportedBanks, setSupportedBanks] = useState<string[]>([]);
@@ -191,14 +189,14 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({
           </div>
 
           {/* Bank Request Banner */}
-          <div className="p-3 rounded-lg border theme-border bg-blue-50 dark:bg-blue-950/30">
+          <div className="p-3 rounded-lg border theme-border theme-accent-light">
             <p className="text-sm theme-text-secondary">
               {t("pdfParserPage.uploadModal.bankRequestBanner")}{" "}
               <a
-                href="mailto:support@financeapp.com"
-                className="text-blue-600 dark:text-blue-400 underline font-medium"
+                href="mailto:finflow@flux-lab.dev"
+                className="theme-accent underline font-medium"
               >
-                support@financeapp.com
+                finflow@flux-lab.dev
               </a>
             </p>
           </div>
@@ -211,11 +209,7 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({
             <div
               onDrop={handleDrop}
               onDragOver={handleDragOver}
-              className={`border-2 border-dashed theme-border rounded-lg p-6 text-center hover:theme-border-hover transition-colors ${
-                actualTheme === "dark"
-                  ? "border-slate-600 hover:border-slate-500"
-                  : "border-gray-300 hover:border-gray-400"
-              }`}
+              className="border-2 border-dashed theme-border rounded-lg p-6 text-center hover:theme-border-hover transition-colors"
             >
               <input
                 ref={fileInputRef}
@@ -273,11 +267,7 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({
                   </p>
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                      actualTheme === "dark"
-                        ? "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
-                        : "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
-                    } text-white theme-shadow hover:theme-shadow-hover`}
+                    className="px-4 py-2 rounded-lg font-medium transition-colors bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white theme-shadow hover:theme-shadow-hover"
                   >
                     {t("pdfParserPage.uploadModal.chooseFile")}
                   </button>
@@ -300,11 +290,7 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({
             <button
               onClick={handleUpload}
               disabled={!file || !bankType || isUploading}
-              className={`flex-1 px-4 py-3 rounded-lg font-medium transition-colors ${
-                actualTheme === "dark"
-                  ? "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-600 disabled:to-gray-700"
-                  : "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-300 disabled:to-gray-400"
-              } text-white disabled:cursor-not-allowed theme-shadow hover:theme-shadow-hover disabled:shadow-none`}
+              className="flex-1 px-4 py-3 rounded-lg font-medium transition-colors bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 text-white disabled:cursor-not-allowed theme-shadow hover:theme-shadow-hover disabled:shadow-none"
             >
               {isUploading ? (
                 <div className="flex items-center justify-center">

@@ -1,8 +1,8 @@
-import React from 'react';
-import { useTranslation } from 'react-i18next';
-import { Card } from '../shared/Card';
-import { Skeleton } from '../shared/Skeleton';
-import { PaymentStatistics } from '../../../services/api/recurringApi';
+import React from "react";
+import { useTranslation } from "react-i18next";
+import { Card } from "../shared/Card";
+import { Skeleton } from "../shared/Skeleton";
+import { PaymentStatistics } from "../../../services/api/recurringApi";
 
 interface RecurringSummaryStripProps {
   stats: PaymentStatistics | null;
@@ -32,29 +32,31 @@ export const RecurringSummaryStrip: React.FC<RecurringSummaryStripProps> = ({
 
   const kpiCards = [
     {
-      label: t('recurringPage.kpi.total'),
+      label: t("recurringPage.kpi.total"),
       value: String(stats?.total_payments ?? 0),
-      valueClass: 'theme-text-primary',
+      valueClass: "theme-text-primary",
     },
     {
-      label: t('recurringPage.kpi.active'),
+      label: t("recurringPage.kpi.active"),
       value: String(stats?.active_payments ?? 0),
-      valueClass: 'text-green-600/80 dark:text-green-400/70',
+      valueClass: "text-green-600/80",
     },
     {
-      label: t('recurringPage.kpi.paused'),
+      label: t("recurringPage.kpi.paused"),
       value: String(stats?.paused_payments ?? 0),
-      valueClass: 'text-yellow-600/80 dark:text-yellow-400/70',
+      valueClass: "text-yellow-600/80",
     },
     {
-      label: t('recurringPage.kpi.executedThisMonth'),
+      label: t("recurringPage.kpi.executedThisMonth"),
       value: String(stats?.executed_this_month ?? 0),
-      valueClass: 'theme-text-primary',
+      valueClass: "theme-text-primary",
     },
     {
-      label: t('recurringPage.kpi.failedThisMonth'),
+      label: t("recurringPage.kpi.failedThisMonth"),
       value: String(stats?.failed_this_month ?? 0),
-      valueClass: stats?.failed_this_month ? 'text-red-500/80 dark:text-red-400/70' : 'theme-text-primary',
+      valueClass: stats?.failed_this_month
+        ? "text-red-500/80"
+        : "theme-text-primary",
     },
   ];
 

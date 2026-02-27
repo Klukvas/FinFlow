@@ -467,6 +467,47 @@ services:
         max-file: "3"
         labels: "service=scheduler_service"
 
+  ai_assistant_service:
+    build:
+      context: .
+      dockerfile: ./ai_assistant_service/Dockerfile
+    environment:
+      CORS_ORIGINS: "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
+      REDIS_URL: "redis://redis:6379"
+      SECRET_KEY: "${SECRET_KEY:-}"
+      INTERNAL_SECRET_TOKEN: "${INTERNAL_SECRET_TOKEN:-}"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+      ANTHROPIC_MODEL: "claude-haiku-4-5-20251001"
+      EXPENSE_SERVICE_URL: "http://expense_service:8000"
+      INCOME_SERVICE_URL: "http://income_service:8000"
+      DEBT_SERVICE_URL: "http://debt_service:8000"
+      GOALS_SERVICE_URL: "http://goals_service:8000"
+      ACCOUNT_SERVICE_URL: "http://account_service:8000"
+      CATEGORY_SERVICE_URL: "http://category_service:8000"
+      RECURRING_SERVICE_URL: "http://recurring_service:8000"
+      SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
+    env_file:
+      - ./ai_assistant_service/.env.docker
+    depends_on:
+      redis:
+        condition: service_healthy
+      subscription_service:
+        condition: service_started
+    ports:
+      - "8015:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service=ai_assistant_service"
+
   workspace_service:
     build:
       context: .

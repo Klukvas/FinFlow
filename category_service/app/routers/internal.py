@@ -1,17 +1,69 @@
 from fastapi import APIRouter, Depends, status, Query, Path, Request, HTTPException
 from typing import Annotated
 from uuid import UUID
+from sqlalchemy.orm import Session
 
 from app.schemas.category import CategoryOut, MCCCodeListResponse, DefaultCategoryListResponse, SupportedLanguage
 from app.services.category import CategoryService
 from app.services.mcc_categories import DefaultCategoryService
-from app.dependencies import verify_internal_token, get_category_service_internal, get_default_category_service
+from app.dependencies import get_db, verify_internal_token, get_category_service_internal, get_default_category_service
+from app.models.category import Category
 from app.exceptions import CategoryNotFoundError, CategoryOwnershipError
 from app.utils.logger import get_logger, log_operation
 
 # Create a separate router for internal endpoints
 internal_router = APIRouter(prefix="/internal", tags=["Internal"])
 logger = get_logger(__name__)
+
+
+@internal_router.get(
+    "/categories/ai-summary",
+    summary="Get categories summary for AI analysis",
+    description="Internal endpoint returning all categories for AI assistant analysis",
+    responses={
+        200: {"description": "Categories summary retrieved successfully"},
+        403: {"description": "Invalid internal token"},
+    }
+)
+async def get_categories_ai_summary(
+    user_id: Annotated[int, Query(description="User ID", gt=0)],
+    workspace_id: Annotated[UUID, Query(description="Workspace ID")],
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_internal_token),
+) -> dict:
+    """
+    Internal endpoint returning all categories for AI analysis.
+
+    Returns category data for the AI assistant to understand the user's
+    categorization structure for expenses and incomes.
+    """
+    try:
+        categories = (
+            db.query(Category)
+            .filter(
+                Category.user_id == user_id,
+                Category.workspace_id == workspace_id,
+            )
+            .limit(500)
+            .all()
+        )
+        return {
+            "items": [
+                {
+                    "id": c.id,
+                    "name": c.name,
+                    "type": str(c.type.value) if c.type else None,
+                    "parent_id": c.parent_id,
+                }
+                for c in categories
+            ]
+        }
+    except Exception as e:
+        logger.error(f"Error fetching categories AI summary: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve categories summary",
+        )
 
 
 @internal_router.get(
@@ -121,10 +173,7 @@ async def get_mcc_codes_internal(
         HTTPException: 403 if invalid internal token
     """
     try:
-        logger.info(f"Language parameter: {language}, value: {language.value}")
-        language_value = language.value
-        logger.info(f"Language value to pass: {language_value}")
-        mcc_codes = service.get_all_mcc_codes(language_value)
+        mcc_codes = service.get_all_mcc_codes(language.value)
         
         log_operation(
             logger,

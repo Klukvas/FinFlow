@@ -172,7 +172,7 @@ export const CategoryForm = React.memo<CategoryFormProps>(
                 value={formData.name}
                 onChange={handleChange}
                 placeholder={t("category.form.namePlaceholder")}
-                className={`w-full px-3 sm:px-4 py-3 theme-surface border rounded-lg sm:rounded-xl theme-text-primary placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px] ${
+                className={`w-full px-3 sm:px-4 py-3 theme-surface border rounded-lg sm:rounded-xl theme-text-primary placeholder:theme-text-tertiary focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px] ${
                   fieldErrors.name ? "border-red-500" : "theme-border"
                 }`}
               />

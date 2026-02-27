@@ -1,5 +1,6 @@
 import React from "react";
 import { Helmet } from "react-helmet-async";
+import { config } from "@/config/env";
 
 interface SEOHeadProps {
   title?: string;
@@ -15,8 +16,8 @@ export const SEOHead: React.FC<SEOHeadProps> = ({
   title = "FinFlow - Умный учет финансов и бюджетирование",
   description = "Автоматизируйте учет финансов с помощью ИИ. Парсинг банковских выписок, категоризация трат, планирование бюджета и аналитика расходов.",
   keywords = "учет финансов, бюджетирование, парсинг банковских выписок, финансовая аналитика, управление деньгами, личные финансы",
-  image = "https://finflow.ltd/og-image.png",
-  url = "https://finflow.ltd",
+  image = `${config.app.url}/og-image.png`,
+  url = config.app.url,
   type = "website",
   structuredData,
 }) => {
@@ -71,7 +72,7 @@ export const SEOConfigs = {
       name: "FinFlow",
       description:
         "Умное приложение для учета финансов с автоматической категоризацией трат",
-      url: "https://finflow.ltd",
+      url: config.app.url,
       applicationCategory: "FinanceApplication",
       operatingSystem: "Web",
       offers: {
@@ -151,7 +152,7 @@ export const SEOConfigs = {
       "Условия использования сервиса FinFlow. Информация о поставщике услуг, правила использования, подписки и оплата.",
     keywords:
       "условия использования, пользовательское соглашение, правила, подписка, оплата",
-    url: "https://finflow.ltd/terms",
+    url: `${config.app.url}/terms`,
   },
 
   privacyPolicy: {
@@ -160,7 +161,7 @@ export const SEOConfigs = {
       "Политика конфиденциальности FinFlow. Как мы собираем, используем и защищаем ваши персональные данные.",
     keywords:
       "политика конфиденциальности, защита данных, персональные данные, GDPR, приватность",
-    url: "https://finflow.ltd/privacy",
+    url: `${config.app.url}/privacy`,
   },
 
   refund: {
@@ -169,6 +170,15 @@ export const SEOConfigs = {
       "Политика возврата средств FinFlow. Информация о гарантии возврата денег, отмене подписки и процедуре возврата.",
     keywords:
       "возврат средств, отмена подписки, гарантия возврата, политика возврата",
-    url: "https://finflow.ltd/refund",
+    url: `${config.app.url}/refund`,
+  },
+
+  blog: {
+    title: "Блог - FinFlow",
+    description:
+      "Статьи о финансовом учёте, автоматизации расходов, парсинге банковских выписок и управлении бюджетом.",
+    keywords:
+      "финансовый блог, учёт расходов, парсинг выписок, бюджетирование, автоматизация финансов",
+    url: `${config.app.url}/blog`,
   },
 };

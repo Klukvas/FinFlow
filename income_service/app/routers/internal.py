@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta, timezone
+
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from typing import Annotated, List
 from uuid import UUID
@@ -67,7 +69,7 @@ async def internal_income_create(
 async def get_incomes_by_account(
     account_id: int,
     user_id: Annotated[int, Query(description="User ID to validate ownership", gt=0)],
-    workspace_id: Annotated[UUID, Query(description="Workspace ID")] = None,
+    workspace_id: Annotated[UUID, Query(..., description="Workspace ID")],
     limit: Annotated[int, Query(description="Maximum number of incomes to return", ge=1, le=1000)] = 100,
     offset: Annotated[int, Query(description="Number of incomes to skip", ge=0)] = 0,
     service: IncomeService = Depends(get_income_service_internal),
@@ -79,10 +81,9 @@ async def get_incomes_by_account(
     try:
         filters = [
             Income.account_id == account_id,
-            Income.user_id == user_id
+            Income.user_id == user_id,
+            Income.workspace_id == workspace_id,
         ]
-        if workspace_id is not None:
-            filters.append(Income.workspace_id == workspace_id)
         incomes = service.db.query(Income).filter(*filters).order_by(Income.date.desc()).offset(offset).limit(limit).all()
 
         logger.info(f"Retrieved {len(incomes)} incomes for account {account_id} and user {user_id}")
@@ -133,4 +134,57 @@ async def validate_account_for_incomes(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Account not found or not owned by user"
+        )
+
+
+@router.get(
+    '/incomes/ai-summary',
+    summary="Get income summary for AI analysis",
+    description="Internal endpoint returning aggregated income data for AI assistant analysis",
+    responses={
+        200: {"description": "Income summary retrieved successfully"},
+        403: {"description": "Invalid internal token"},
+    }
+)
+async def get_incomes_ai_summary(
+    user_id: Annotated[int, Query(description="User ID", gt=0)],
+    workspace_id: Annotated[UUID, Query(description="Workspace ID")],
+    service: IncomeService = Depends(get_income_service_internal),
+    _: None = Depends(verify_internal_token),
+) -> dict:
+    """
+    Internal endpoint returning last 3 months of incomes for AI analysis.
+
+    Returns aggregated data without PII for the AI assistant to analyze
+    income patterns and provide financial insights.
+    """
+    try:
+        three_months_ago = datetime.now(timezone.utc) - timedelta(days=90)
+        incomes = (
+            service.db.query(Income)
+            .filter(
+                Income.user_id == user_id,
+                Income.workspace_id == workspace_id,
+                Income.date >= three_months_ago,
+            )
+            .order_by(Income.date.desc())
+            .limit(500)
+            .all()
+        )
+        return {
+            "items": [
+                {
+                    "amount": float(i.amount),
+                    "category_id": i.category_id,
+                    "currency": i.currency,
+                    "date": str(i.date),
+                }
+                for i in incomes
+            ]
+        }
+    except Exception as e:
+        logger.error(f"Error fetching incomes AI summary: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve incomes summary",
         )

@@ -15,6 +15,8 @@ import {
   Refund,
   PrivacyPolicy,
   NotFound,
+  Blog,
+  BlogPost,
 } from "@/pages";
 
 // Protected pages — lazy loaded (behind auth, not needed on initial load)
@@ -31,6 +33,7 @@ const Debts = React.lazy(() => import("@/pages/Debts"));
 const Workspaces = React.lazy(() => import("@/pages/Workspaces"));
 const MyInvites = React.lazy(() => import("@/pages/MyInvites"));
 const PaymentReturn = React.lazy(() => import("@/pages/payment/PaymentReturn"));
+const AiAssistant = React.lazy(() => import("@/pages/AiAssistant"));
 const PaymentHistory = React.lazy(
   () => import("@/pages/payment/PaymentHistory"),
 );
@@ -132,6 +135,22 @@ export const AppRoutes: React.FC = () => {
             element={
               <PublicLayout>
                 <CancelHelpPage />
+              </PublicLayout>
+            }
+          />
+          <Route
+            path="/blog"
+            element={
+              <PublicLayout>
+                <Blog />
+              </PublicLayout>
+            }
+          />
+          <Route
+            path="/blog/:slug"
+            element={
+              <PublicLayout>
+                <BlogPost />
               </PublicLayout>
             }
           />
@@ -247,6 +266,16 @@ export const AppRoutes: React.FC = () => {
             }
           />
           <Route
+            path="/ai-assistant"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <AiAssistant />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/workspaces"
             element={
               <ProtectedRoute>
@@ -331,6 +360,22 @@ export const AppRoutes: React.FC = () => {
             element={
               <PublicLayout>
                 <CancelHelpPage />
+              </PublicLayout>
+            }
+          />
+          <Route
+            path="/blog"
+            element={
+              <PublicLayout>
+                <Blog />
+              </PublicLayout>
+            }
+          />
+          <Route
+            path="/blog/:slug"
+            element={
+              <PublicLayout>
+                <BlogPost />
               </PublicLayout>
             }
           />
@@ -438,6 +483,22 @@ export const AppRoutes: React.FC = () => {
           element={
             <PublicLayout>
               <CancelHelpPage />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/blog"
+          element={
+            <PublicLayout>
+              <Blog />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/blog/:slug"
+          element={
+            <PublicLayout>
+              <BlogPost />
             </PublicLayout>
           }
         />

@@ -11,6 +11,7 @@ export const PublicFooter: React.FC = () => {
     product: [
       { label: t("footer.links.product.features"), href: "/features" },
       { label: t("footer.links.product.pricing"), href: "/pricing" },
+      { label: t("footer.links.product.blog"), href: "/blog" },
     ],
     platform: [
       { label: t("footer.links.platform.architecture"), href: "/about" },

@@ -30,6 +30,9 @@ const PUBLIC_ROUTES = [
   '/terms',
   '/privacy',
   '/refund',
+  '/blog',
+  '/blog/kak-parsit-bankovskuyu-vypisku',
+  '/blog/5-sposobov-avtomatizirovat-uchet',
 ];
 
 // Simple static file server for the dist folder

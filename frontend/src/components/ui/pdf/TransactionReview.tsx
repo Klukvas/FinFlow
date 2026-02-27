@@ -7,7 +7,6 @@ import {
   PDFLimitInfo,
 } from "@/services/api/pdfParserApiClient";
 import { Category } from "@/types";
-import { useTheme } from "@/contexts/ThemeContext";
 import { useTranslation } from "react-i18next";
 
 interface TransactionReviewProps {
@@ -26,7 +25,6 @@ export const TransactionReview: React.FC<TransactionReviewProps> = ({
   onClose,
 }) => {
   const { category, expense, income } = useApiClients();
-  const { actualTheme } = useTheme();
   const { t } = useTranslation();
   const [categories, setCategories] = useState<Category[]>([]);
   const [validatedTransactions, setValidatedTransactions] = useState<
@@ -299,8 +297,8 @@ export const TransactionReview: React.FC<TransactionReviewProps> = ({
   if (isLoading) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6">
-          <p>Loading categories...</p>
+        <div className="theme-surface rounded-lg p-6">
+          <p className="theme-text-primary">Loading categories...</p>
         </div>
       </div>
     );
@@ -310,13 +308,7 @@ export const TransactionReview: React.FC<TransactionReviewProps> = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto p-2 sm:p-4">
       <div className="theme-surface rounded-xl theme-shadow-hover w-full max-w-7xl max-h-[95vh] overflow-hidden flex flex-col theme-transition mx-auto">
         {/* Header */}
-        <div
-          className={`flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 sm:p-6 theme-border border-b ${
-            actualTheme === "dark"
-              ? "bg-gradient-to-r from-slate-800 to-slate-700"
-              : "bg-gradient-to-r from-blue-50 to-indigo-50"
-          }`}
-        >
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 sm:p-6 theme-border border-b theme-bg-secondary">
           <div className="flex-1 min-w-0">
             <h2 className="text-xl sm:text-2xl font-bold theme-text-primary truncate">
               Review Parsed Transactions
@@ -599,12 +591,8 @@ export const TransactionReview: React.FC<TransactionReviewProps> = ({
                 key={transaction.transaction_id}
                 className={`theme-border border rounded-xl p-4 sm:p-6 theme-transition theme-shadow hover:theme-shadow-hover ${
                   transaction.is_valid
-                    ? actualTheme === "dark"
-                      ? "theme-success-light border-green-600"
-                      : "theme-success-light border-green-200"
-                    : actualTheme === "dark"
-                      ? "theme-error-light border-red-600"
-                      : "theme-error-light border-red-200"
+                    ? "theme-success-light"
+                    : "theme-error-light"
                 }`}
               >
                 <div className="flex items-start justify-between">
@@ -627,12 +615,8 @@ export const TransactionReview: React.FC<TransactionReviewProps> = ({
                         <span
                           className={`inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs font-medium ${
                             transaction.transaction_type === "income"
-                              ? actualTheme === "dark"
-                                ? "theme-success-light theme-success"
-                                : "bg-green-100 text-green-800"
-                              : actualTheme === "dark"
-                                ? "theme-error-light theme-error"
-                                : "bg-red-100 text-red-800"
+                              ? "theme-success-light theme-success"
+                              : "theme-error-light theme-error"
                           }`}
                         >
                           <svg
@@ -867,8 +851,8 @@ export const TransactionReview: React.FC<TransactionReviewProps> = ({
                         {transactions[index]?.mcc_code &&
                           !transactions[index]?.category_exists &&
                           !transaction.category_id && (
-                            <div className="mt-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                              <div className="flex items-center text-xs text-yellow-800 dark:text-yellow-200">
+                            <div className="mt-2 p-2 theme-warning-light theme-border border rounded-lg">
+                              <div className="flex items-center text-xs theme-warning">
                                 <svg
                                   className="w-3 h-3 mr-1"
                                   fill="currentColor"
@@ -921,28 +905,22 @@ export const TransactionReview: React.FC<TransactionReviewProps> = ({
 
                         {/* MCC Code Badge */}
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium theme-bg-secondary theme-text-primary">
                             MCC: {transactions[index]?.mcc_code}
                           </span>
                           {transactions[index]?.category_exists ? (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium theme-success-light theme-success">
                               ✓ Category Exists
                             </span>
                           ) : (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium theme-warning-light theme-warning">
                               ⚡ Auto-Create
                             </span>
                           )}
                         </div>
 
                         {/* Category Name Display */}
-                        <div
-                          className={`px-3 py-2 sm:py-3 rounded-lg border-l-4 ${
-                            actualTheme === "dark"
-                              ? "bg-blue-900/30 border-blue-400 text-blue-200"
-                              : "bg-blue-50 border-blue-400 text-blue-800"
-                          }`}
-                        >
+                        <div className="px-3 py-2 sm:py-3 rounded-lg border-l-4 theme-accent-light border-blue-400 theme-text-primary">
                           <div className="flex items-center justify-between">
                             <div>
                               <div className="text-sm font-semibold">
@@ -1065,7 +1043,7 @@ export const TransactionReview: React.FC<TransactionReviewProps> = ({
             ) : !validationResult.canProceed ? (
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                <span className="text-xs sm:text-sm font-medium text-yellow-600 dark:text-yellow-400">
+                <span className="text-xs sm:text-sm font-medium theme-warning">
                   {t("pdfParserPage.reviewModal.validation.validationPassed")}
                 </span>
               </div>
@@ -1089,11 +1067,7 @@ export const TransactionReview: React.FC<TransactionReviewProps> = ({
             <button
               onClick={handleSubmit}
               disabled={!validationResult.canProceed || isSubmitting}
-              className={`px-6 sm:px-8 py-2 sm:py-3 rounded-lg font-medium flex items-center justify-center space-x-2 theme-transition text-sm sm:text-base ${
-                actualTheme === "dark"
-                  ? "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-600 disabled:to-gray-700"
-                  : "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-300 disabled:to-gray-400"
-              } text-white disabled:cursor-not-allowed theme-shadow hover:theme-shadow-hover disabled:shadow-none`}
+              className="px-6 sm:px-8 py-2 sm:py-3 rounded-lg font-medium flex items-center justify-center space-x-2 theme-transition text-sm sm:text-base bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 text-white disabled:cursor-not-allowed theme-shadow hover:theme-shadow-hover disabled:shadow-none"
             >
               {isSubmitting && (
                 <svg

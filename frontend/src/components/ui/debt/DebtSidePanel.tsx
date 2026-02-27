@@ -1,9 +1,14 @@
-import React, { useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { DebtResponse, DebtPaymentResponse } from '../../../types/debt';
-import { Badge } from '../shared/Badge';
-import { Button } from '../shared/Button';
-import { getProgressPercentage, getDebtStatus, getStatusBadgeVariant, DEBT_TYPE_I18N_MAP } from './debtHelpers';
+import React, { useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { DebtResponse, DebtPaymentResponse } from "../../../types/debt";
+import { Badge } from "../shared/Badge";
+import { Button } from "../shared/Button";
+import {
+  getProgressPercentage,
+  getDebtStatus,
+  getStatusBadgeVariant,
+  DEBT_TYPE_I18N_MAP,
+} from "./debtHelpers";
 
 interface DebtSidePanelProps {
   debt: DebtResponse | null;
@@ -33,25 +38,27 @@ export const DebtSidePanel: React.FC<DebtSidePanelProps> = ({
   // Close on ESC
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) onClose();
+      if (e.key === "Escape" && isOpen) onClose();
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
   }, [isOpen, onClose]);
 
   // Prevent body scroll when panel is open
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     }
-    return () => { document.body.style.overflow = ''; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [isOpen]);
 
   const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return '—';
-    return new Date(dateString).toLocaleDateString('uk-UA');
+    if (!dateString) return "—";
+    return new Date(dateString).toLocaleDateString("uk-UA");
   };
 
   if (!debt) return null;
@@ -60,13 +67,44 @@ export const DebtSidePanel: React.FC<DebtSidePanelProps> = ({
   const progress = getProgressPercentage(debt);
 
   const overviewRows = [
-    { label: t('debtPage.sidePanel.balance'), value: `${Math.abs(debt.current_balance).toLocaleString('uk-UA', { minimumFractionDigits: 2 })} ${debt.currency}`, valueClass: 'text-red-500/80 dark:text-red-400/70 font-semibold' },
-    { label: t('debtPage.sidePanel.initialAmount'), value: `${Math.abs(debt.initial_amount).toLocaleString('uk-UA', { minimumFractionDigits: 2 })} ${debt.currency}`, valueClass: 'theme-text-primary' },
-    { label: t('debtPage.sidePanel.interestRate'), value: debt.interest_rate != null ? `${debt.interest_rate}%` : '—', valueClass: 'theme-text-primary' },
-    { label: t('debtPage.sidePanel.minimumPayment'), value: debt.minimum_payment != null ? `${debt.minimum_payment.toLocaleString('uk-UA', { minimumFractionDigits: 2 })} ${debt.currency}` : '—', valueClass: 'theme-text-primary' },
-    { label: t('debtPage.sidePanel.dueDate'), value: formatDate(debt.due_date), valueClass: 'theme-text-primary' },
-    { label: t('debtPage.sidePanel.startDate'), value: formatDate(debt.start_date), valueClass: 'theme-text-primary' },
-    { label: t('debtPage.sidePanel.lastPayment'), value: formatDate(debt.last_payment_date), valueClass: 'theme-text-primary' },
+    {
+      label: t("debtPage.sidePanel.balance"),
+      value: `${Math.abs(debt.current_balance).toLocaleString("uk-UA", { minimumFractionDigits: 2 })} ${debt.currency}`,
+      valueClass: "text-red-500/80 font-semibold",
+    },
+    {
+      label: t("debtPage.sidePanel.initialAmount"),
+      value: `${Math.abs(debt.initial_amount).toLocaleString("uk-UA", { minimumFractionDigits: 2 })} ${debt.currency}`,
+      valueClass: "theme-text-primary",
+    },
+    {
+      label: t("debtPage.sidePanel.interestRate"),
+      value: debt.interest_rate != null ? `${debt.interest_rate}%` : "—",
+      valueClass: "theme-text-primary",
+    },
+    {
+      label: t("debtPage.sidePanel.minimumPayment"),
+      value:
+        debt.minimum_payment != null
+          ? `${debt.minimum_payment.toLocaleString("uk-UA", { minimumFractionDigits: 2 })} ${debt.currency}`
+          : "—",
+      valueClass: "theme-text-primary",
+    },
+    {
+      label: t("debtPage.sidePanel.dueDate"),
+      value: formatDate(debt.due_date),
+      valueClass: "theme-text-primary",
+    },
+    {
+      label: t("debtPage.sidePanel.startDate"),
+      value: formatDate(debt.start_date),
+      valueClass: "theme-text-primary",
+    },
+    {
+      label: t("debtPage.sidePanel.lastPayment"),
+      value: formatDate(debt.last_payment_date),
+      valueClass: "theme-text-primary",
+    },
   ];
 
   return (
@@ -74,7 +112,7 @@ export const DebtSidePanel: React.FC<DebtSidePanelProps> = ({
       {/* Backdrop */}
       <div
         className={`fixed inset-0 bg-black/30 z-30 transition-opacity duration-300 ${
-          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         onClick={onClose}
       />
@@ -82,18 +120,32 @@ export const DebtSidePanel: React.FC<DebtSidePanelProps> = ({
       {/* Panel */}
       <div
         className={`fixed inset-y-0 right-0 z-40 w-full sm:w-[480px] lg:w-[40%] max-w-[560px] theme-surface border-l theme-border shadow-2xl transform transition-transform duration-300 flex flex-col ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
+          isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
         {/* Header - sticky */}
         <div className="flex items-center justify-between p-4 sm:p-6 border-b theme-border flex-shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             <div className="min-w-0">
-              <h2 className="text-lg font-semibold theme-text-primary truncate">{debt.name}</h2>
+              <h2 className="text-lg font-semibold theme-text-primary truncate">
+                {debt.name}
+              </h2>
               <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-xs theme-text-tertiary">{t(DEBT_TYPE_I18N_MAP[debt.debt_type])}</span>
-                <Badge variant={getStatusBadgeVariant(status) as 'success' | 'info' | 'secondary'} size="sm">
-                  {t(`debtPage.status.${status === 'paid_off' ? 'paidOff' : status}`)}
+                <span className="text-xs theme-text-tertiary">
+                  {t(DEBT_TYPE_I18N_MAP[debt.debt_type])}
+                </span>
+                <Badge
+                  variant={
+                    getStatusBadgeVariant(status) as
+                      | "success"
+                      | "info"
+                      | "secondary"
+                  }
+                  size="sm"
+                >
+                  {t(
+                    `debtPage.status.${status === "paid_off" ? "paidOff" : status}`,
+                  )}
                 </Badge>
               </div>
             </div>
@@ -102,8 +154,18 @@ export const DebtSidePanel: React.FC<DebtSidePanelProps> = ({
             onClick={onClose}
             className="p-2 rounded-lg hover:theme-bg-secondary transition-colors theme-text-secondary flex-shrink-0"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -113,13 +175,20 @@ export const DebtSidePanel: React.FC<DebtSidePanelProps> = ({
           {/* Overview */}
           <div className="p-4 sm:p-6 space-y-4">
             <h3 className="text-sm font-semibold theme-text-primary uppercase tracking-wide">
-              {t('debtPage.sidePanel.overview')}
+              {t("debtPage.sidePanel.overview")}
             </h3>
             <div className="space-y-3">
               {overviewRows.map((row) => (
-                <div key={row.label} className="flex items-center justify-between">
-                  <span className="text-sm theme-text-secondary">{row.label}</span>
-                  <span className={`text-sm tabular-nums ${row.valueClass}`}>{row.value}</span>
+                <div
+                  key={row.label}
+                  className="flex items-center justify-between"
+                >
+                  <span className="text-sm theme-text-secondary">
+                    {row.label}
+                  </span>
+                  <span className={`text-sm tabular-nums ${row.valueClass}`}>
+                    {row.value}
+                  </span>
                 </div>
               ))}
             </div>
@@ -127,8 +196,12 @@ export const DebtSidePanel: React.FC<DebtSidePanelProps> = ({
             {/* Progress bar */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-sm theme-text-secondary">{t('debtPage.sidePanel.progress')}</span>
-                <span className="text-sm font-medium theme-text-primary tabular-nums">{Math.round(progress)}%</span>
+                <span className="text-sm theme-text-secondary">
+                  {t("debtPage.sidePanel.progress")}
+                </span>
+                <span className="text-sm font-medium theme-text-primary tabular-nums">
+                  {Math.round(progress)}%
+                </span>
               </div>
               <div className="w-full h-2 rounded-full theme-bg-tertiary overflow-hidden">
                 <div
@@ -146,11 +219,13 @@ export const DebtSidePanel: React.FC<DebtSidePanelProps> = ({
           <div className="p-4 sm:p-6 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold theme-text-primary uppercase tracking-wide">
-                {t('debtPage.sidePanel.paymentHistory')}
+                {t("debtPage.sidePanel.paymentHistory")}
               </h3>
               {payments.length > 0 && (
                 <span className="text-xs theme-text-tertiary">
-                  {t('debtPage.sidePanel.paymentsCount', { count: payments.length })}
+                  {t("debtPage.sidePanel.paymentsCount", {
+                    count: payments.length,
+                  })}
                 </span>
               )}
             </div>
@@ -161,7 +236,7 @@ export const DebtSidePanel: React.FC<DebtSidePanelProps> = ({
               </div>
             ) : payments.length === 0 ? (
               <p className="text-sm theme-text-tertiary italic py-2">
-                {t('debtPage.sidePanel.noPayments')}
+                {t("debtPage.sidePanel.noPayments")}
               </p>
             ) : (
               <div className="space-y-0 rounded-lg border theme-border overflow-hidden">
@@ -169,13 +244,13 @@ export const DebtSidePanel: React.FC<DebtSidePanelProps> = ({
                   <thead className="theme-bg-secondary">
                     <tr>
                       <th className="px-3 py-2 text-left text-xs font-medium theme-text-secondary">
-                        {t('debtPage.sidePanel.paymentDate')}
+                        {t("debtPage.sidePanel.paymentDate")}
                       </th>
                       <th className="px-3 py-2 text-right text-xs font-medium theme-text-secondary">
-                        {t('debtPage.sidePanel.paymentAmount')}
+                        {t("debtPage.sidePanel.paymentAmount")}
                       </th>
                       <th className="px-3 py-2 text-left text-xs font-medium theme-text-secondary">
-                        {t('debtPage.sidePanel.paymentMethod')}
+                        {t("debtPage.sidePanel.paymentMethod")}
                       </th>
                     </tr>
                   </thead>
@@ -185,11 +260,14 @@ export const DebtSidePanel: React.FC<DebtSidePanelProps> = ({
                         <td className="px-3 py-2 text-sm theme-text-secondary">
                           {formatDate(p.payment_date)}
                         </td>
-                        <td className="px-3 py-2 text-sm text-right text-green-600/80 dark:text-green-400/70 font-medium tabular-nums">
-                          +{p.amount.toLocaleString('uk-UA', { minimumFractionDigits: 2 })}
+                        <td className="px-3 py-2 text-sm text-right text-green-600/80 font-medium tabular-nums">
+                          +
+                          {p.amount.toLocaleString("uk-UA", {
+                            minimumFractionDigits: 2,
+                          })}
                         </td>
                         <td className="px-3 py-2 text-sm theme-text-tertiary">
-                          {p.payment_method || '—'}
+                          {p.payment_method || "—"}
                         </td>
                       </tr>
                     ))}
@@ -205,10 +283,12 @@ export const DebtSidePanel: React.FC<DebtSidePanelProps> = ({
           {/* Notes */}
           <div className="p-4 sm:p-6 space-y-2">
             <h3 className="text-sm font-semibold theme-text-primary uppercase tracking-wide">
-              {t('debtPage.sidePanel.notes')}
+              {t("debtPage.sidePanel.notes")}
             </h3>
-            <p className={`text-sm ${debt.description ? 'theme-text-secondary' : 'theme-text-tertiary italic'}`}>
-              {debt.description || t('debtPage.sidePanel.noNotes')}
+            <p
+              className={`text-sm ${debt.description ? "theme-text-secondary" : "theme-text-tertiary italic"}`}
+            >
+              {debt.description || t("debtPage.sidePanel.noNotes")}
             </p>
           </div>
 
@@ -218,22 +298,31 @@ export const DebtSidePanel: React.FC<DebtSidePanelProps> = ({
               <div className="border-t theme-border" />
               <div className="p-4 sm:p-6 space-y-2">
                 <h3 className="text-sm font-semibold theme-text-primary uppercase tracking-wide">
-                  {t('debtPage.sidePanel.contact')}
+                  {t("debtPage.sidePanel.contact")}
                 </h3>
                 <div className="space-y-1.5">
-                  <p className="text-sm font-medium theme-text-primary">{debt.contact.name}</p>
+                  <p className="text-sm font-medium theme-text-primary">
+                    {debt.contact.name}
+                  </p>
                   {debt.contact.email && (
                     <p className="text-sm theme-text-secondary">
-                      <a href={`mailto:${debt.contact.email}`} className="hover:theme-accent transition-colors">
+                      <a
+                        href={`mailto:${debt.contact.email}`}
+                        className="hover:theme-accent transition-colors"
+                      >
                         {debt.contact.email}
                       </a>
                     </p>
                   )}
                   {debt.contact.company && (
-                    <p className="text-sm theme-text-tertiary">{debt.contact.company}</p>
+                    <p className="text-sm theme-text-tertiary">
+                      {debt.contact.company}
+                    </p>
                   )}
                   {debt.contact.phone && (
-                    <p className="text-sm theme-text-tertiary">{debt.contact.phone}</p>
+                    <p className="text-sm theme-text-tertiary">
+                      {debt.contact.phone}
+                    </p>
                   )}
                 </div>
               </div>
@@ -246,19 +335,34 @@ export const DebtSidePanel: React.FC<DebtSidePanelProps> = ({
           <div className="flex flex-wrap gap-2">
             {!debt.is_paid_off && (
               <>
-                <Button variant="primary" size="sm" onClick={onMakePayment} className="flex-1 sm:flex-none">
-                  {t('debtPage.sidePanel.makePayment')}
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={onMakePayment}
+                  className="flex-1 sm:flex-none"
+                >
+                  {t("debtPage.sidePanel.makePayment")}
                 </Button>
-                <Button variant="outline" size="sm" onClick={onMarkAsPaid} className="flex-1 sm:flex-none">
-                  {t('debtPage.sidePanel.markAsPaid')}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onMarkAsPaid}
+                  className="flex-1 sm:flex-none"
+                >
+                  {t("debtPage.sidePanel.markAsPaid")}
                 </Button>
               </>
             )}
             <Button variant="ghost" size="sm" onClick={onEdit}>
-              {t('debtPage.sidePanel.edit')}
+              {t("debtPage.sidePanel.edit")}
             </Button>
-            <Button variant="ghost" size="sm" onClick={onDelete} className="text-red-500 hover:text-red-600">
-              {t('debtPage.sidePanel.delete')}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onDelete}
+              className="text-red-500 hover:text-red-600"
+            >
+              {t("debtPage.sidePanel.delete")}
             </Button>
           </div>
         </div>

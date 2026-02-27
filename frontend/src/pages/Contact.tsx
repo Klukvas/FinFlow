@@ -112,7 +112,7 @@ export const Contact: React.FC = () => {
                                 ? "noopener noreferrer"
                                 : undefined
                             }
-                            className="text-blue-600 dark:text-blue-400 hover:underline font-medium mb-1 block"
+                            className="theme-accent hover:underline font-medium mb-1 block"
                           >
                             {info.value}
                           </a>

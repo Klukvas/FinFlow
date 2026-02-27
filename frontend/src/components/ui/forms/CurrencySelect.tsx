@@ -1,6 +1,6 @@
-import React from 'react';
-import { useTranslation } from 'react-i18next';
-import { useCurrency } from '@/contexts/CurrencyContext';
+import React from "react";
+import { useTranslation } from "react-i18next";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 interface CurrencySelectProps {
   value: string;
@@ -18,16 +18,17 @@ export const CurrencySelect: React.FC<CurrencySelectProps> = (props) => {
     value,
     onChange,
     disabled = false,
-    className = '',
+    className = "",
     placeholder,
     showFlags = true,
     onBlur,
-    dataTestId
+    dataTestId,
   } = props;
   const { t } = useTranslation();
-  const { currencies, isLoading, error } = useCurrency();
+  const { currencies = [], isLoading, error } = useCurrency();
 
-  const defaultClassName = "w-full px-3 py-3 theme-border border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition theme-bg theme-text-primary disabled:opacity-50 text-base";
+  const defaultClassName =
+    "w-full px-3 py-3 theme-border border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent theme-transition theme-bg theme-text-primary disabled:opacity-50 text-base";
   const combinedClassName = `${defaultClassName} ${className}`;
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -42,9 +43,11 @@ export const CurrencySelect: React.FC<CurrencySelectProps> = (props) => {
         onBlur={onBlur}
         disabled={disabled || true}
         className={combinedClassName}
-        {...(dataTestId && { 'data-testid': dataTestId })}
+        {...(dataTestId && { "data-testid": dataTestId })}
       >
-        <option value="USD">⚠️ USD {t('common.currencyLoadError') || 'Error loading currencies'}</option>
+        <option value="USD">
+          ⚠️ USD {t("common.currencyLoadError") || "Error loading currencies"}
+        </option>
       </select>
     );
   }
@@ -56,10 +59,12 @@ export const CurrencySelect: React.FC<CurrencySelectProps> = (props) => {
       onBlur={onBlur}
       disabled={disabled || isLoading}
       className={combinedClassName}
-      {...(dataTestId && { 'data-testid': dataTestId })}
+      {...(dataTestId && { "data-testid": dataTestId })}
     >
       {isLoading ? (
-        <option disabled>🔄 {t('common.loadingCurrencies') || 'Loading currencies...'}</option>
+        <option disabled>
+          🔄 {t("common.loadingCurrencies") || "Loading currencies..."}
+        </option>
       ) : currencies.length === 0 ? (
         <option value="USD">🇺🇸 USD</option>
       ) : (
@@ -71,7 +76,8 @@ export const CurrencySelect: React.FC<CurrencySelectProps> = (props) => {
           )}
           {currencies.map((currency) => (
             <option key={currency.code} value={currency.code}>
-              {showFlags ? `${currency.flag} ` : ''}{currency.code}
+              {showFlags ? `${currency.flag} ` : ""}
+              {currency.code}
             </option>
           ))}
         </>

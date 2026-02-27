@@ -29,7 +29,7 @@ export const NotFound: React.FC = () => {
           </p>
           <Link
             to="/"
-            className="inline-flex items-center px-6 py-3 rounded-lg font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center px-6 py-3 rounded-lg font-medium theme-text-inverse theme-accent-bg hover:theme-accent-hover transition-colors"
           >
             {t("notFoundPage.backHome", "Back to Home")}
           </Link>
