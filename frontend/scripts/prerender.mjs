@@ -31,8 +31,29 @@ const PUBLIC_ROUTES = [
   '/privacy',
   '/refund',
   '/blog',
+  // Existing posts
   '/blog/kak-parsit-bankovskuyu-vypisku',
   '/blog/5-sposobov-avtomatizirovat-uchet',
+  // Russian posts
+  '/blog/ai-analiz-finansov',
+  '/blog/kak-upravlyat-dolgami',
+  '/blog/finansovye-tseli-kak-dostigat',
+  '/blog/multivalyutnyj-uchet',
+  '/blog/rekurrentnye-platezhi-kontrol',
+  // Ukrainian posts
+  '/blog/yak-vesty-oblik-vytrat',
+  '/blog/finansove-planuvannya-2026',
+  '/blog/yak-kontrolyuvaty-borgy',
+  '/blog/avtomatyzatsiya-finansiv',
+  '/blog/finansovi-tsili-pokrokovo',
+  // English posts
+  '/blog/ai-financial-analysis-guide',
+  '/blog/personal-finance-tracking-best-practices',
+  '/blog/how-to-set-financial-goals',
+  '/blog/multi-currency-expense-tracking',
+  '/blog/recurring-payments-management',
+  '/blog/bank-statement-parsing-automation',
+  '/blog/budgeting-tips-for-freelancers',
 ];
 
 // Simple static file server for the dist folder

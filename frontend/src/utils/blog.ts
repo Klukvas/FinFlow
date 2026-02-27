@@ -1,5 +1,20 @@
-import matter from "gray-matter";
+import yaml from "js-yaml";
 import { logger } from "@/utils/logger";
+
+/**
+ * Browser-compatible frontmatter parser.
+ * Replaces gray-matter which depends on Node.js Buffer.
+ */
+function parseFrontmatter(raw: string): {
+  data: Record<string, unknown>;
+  content: string;
+} {
+  const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (!match) return { data: {}, content: raw };
+  const data = (yaml.load(match[1]) ?? {}) as Record<string, unknown>;
+  const content = raw.slice(match[0].length).trim();
+  return { data, content };
+}
 
 export interface BlogPostMeta {
   slug: string;
@@ -29,16 +44,21 @@ function toSafeSlug(raw: string): string {
 }
 
 function parsePost(filePath: string, raw: string): BlogPost | null {
-  const { data, content } = matter(raw);
+  const { data, content } = parseFrontmatter(raw);
   const fileName = filePath.split("/").pop()?.replace(".md", "") ?? "";
 
   const title = typeof data.title === "string" ? data.title : null;
   const description =
     typeof data.description === "string" ? data.description : "";
+
+  // js-yaml may parse "2026-02-25" as a Date object, so handle both
+  const rawDate = data.date;
   const date =
-    typeof data.date === "string" && !isNaN(Date.parse(data.date))
-      ? data.date
-      : null;
+    rawDate instanceof Date
+      ? rawDate.toISOString().slice(0, 10)
+      : typeof rawDate === "string" && !isNaN(Date.parse(rawDate))
+        ? rawDate
+        : null;
   const tags = Array.isArray(data.tags) ? (data.tags as string[]) : [];
   const author = typeof data.author === "string" ? data.author : "FinFlow";
   const rawSlug = typeof data.slug === "string" ? data.slug : fileName;
