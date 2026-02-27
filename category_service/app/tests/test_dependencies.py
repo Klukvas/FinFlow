@@ -1,8 +1,7 @@
 """
 Tests for app/dependencies.py - dependency functions.
 Covers: verify_internal_token, decode_token, get_current_user_id,
-        get_current_user_id_simple, get_workspace_id, get_db.
-Lines targeted: 41-47, 95-103, 122-127, 132-169, 176-184
+        get_workspace_id, get_db.
 """
 import pytest
 from fastapi import HTTPException, status
@@ -15,7 +14,6 @@ from app.dependencies import (
     decode_token,
     get_current_user_id,
     get_workspace_id,
-    get_current_user_id_simple,
 )
 from app.config import settings
 from app.tests.conftest import TEST_WORKSPACE_ID_HEADER
@@ -164,34 +162,6 @@ class TestGetWorkspaceId:
             get_workspace_id(x_workspace_id="not-a-uuid")
         assert exc_info.value.status_code == status.HTTP_400_BAD_REQUEST
         assert "Invalid workspace ID format" in exc_info.value.detail
-
-
-# ---------------------------------------------------------------------------
-# get_current_user_id_simple
-# ---------------------------------------------------------------------------
-
-class TestGetCurrentUserIdSimple:
-    def test_valid_credentials_returns_user_id(self):
-        from fastapi.security import HTTPAuthorizationCredentials
-        user_id = 77
-        token = jwt.encode(
-            {"sub": str(user_id)}, settings.SECRET_KEY, algorithm=settings.ALGORITHM
-        )
-        credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
-        result = get_current_user_id_simple(credentials)
-        assert result == user_id
-
-    def test_none_credentials_raises_401(self):
-        with pytest.raises(HTTPException) as exc_info:
-            get_current_user_id_simple(None)
-        assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
-
-    def test_empty_credentials_raises_401(self):
-        from fastapi.security import HTTPAuthorizationCredentials
-        credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="")
-        with pytest.raises(HTTPException) as exc_info:
-            get_current_user_id_simple(credentials)
-        assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 # ---------------------------------------------------------------------------
