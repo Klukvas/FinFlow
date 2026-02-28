@@ -524,7 +524,6 @@ services:
       ACCOUNT_SERVICE_URL: "http://account_service:8000"
       CATEGORY_SERVICE_URL: "http://category_service:8000"
       SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
-      BANK_TOKEN_ENCRYPTION_KEY: "${BANK_TOKEN_ENCRYPTION_KEY:-}"
     env_file:
       - ./bank_sync_service/.env.docker
     depends_on:
