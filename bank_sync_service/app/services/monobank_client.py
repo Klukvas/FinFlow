@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import time
 
@@ -49,6 +50,17 @@ class MonobankClient:
         if elapsed < self.rate_limit_seconds:
             remaining = int(self.rate_limit_seconds - elapsed) + 1
             raise RateLimitError(remaining)
+
+    async def wait_for_rate_limit(self, token: str) -> None:
+        """Wait until rate limit window expires instead of raising."""
+        key = self._token_key(token)
+        now = time.time()
+        last = self._last_request_time.get(key, 0)
+        elapsed = now - last
+        if elapsed < self.rate_limit_seconds:
+            wait_time = self.rate_limit_seconds - elapsed + 1
+            logger.info(f"Rate limit: waiting {wait_time:.0f}s before next Monobank request")
+            await asyncio.sleep(wait_time)
 
     def _record_request(self, token: str) -> None:
         self._last_request_time[self._token_key(token)] = time.time()
