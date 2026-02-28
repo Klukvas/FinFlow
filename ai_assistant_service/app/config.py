@@ -62,7 +62,9 @@ class Settings(BaseSettings):
         if not self.SECRET_KEY or self.SECRET_KEY in _placeholders:
             raise ValueError("SECRET_KEY must be set to a strong, unique value")
         if not self.ANTHROPIC_API_KEY or self.ANTHROPIC_API_KEY.startswith("sk-placeholder"):
-            raise ValueError("ANTHROPIC_API_KEY must be set to a valid Anthropic API key")
+            raise ValueError(
+                "ANTHROPIC_API_KEY must be set to a valid Anthropic API key"
+            )
         return self
 
     @property
