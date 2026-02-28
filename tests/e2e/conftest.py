@@ -8,6 +8,8 @@ from __future__ import annotations
 import asyncio
 import pytest
 
+import base64
+import json
 import os
 
 from tests.e2e.clients.user_client import UserApiClient
@@ -243,8 +245,13 @@ async def professional_user():
     result = await user_client.register(email, password)
     data = result.raise_on_error()
 
-    user_id = data.get("user_id") or data.get("id")
     token = data["access_token"]
+
+    # Decode JWT to extract user_id (registration response doesn't include it)
+    payload_b64 = token.split(".")[1]
+    payload_b64 += "==" * (4 - len(payload_b64) % 4)
+    jwt_payload = json.loads(base64.urlsafe_b64decode(payload_b64))
+    user_id = jwt_payload["sub"]
 
     internal_token = os.environ.get("INTERNAL_SECRET_TOKEN")
     assert internal_token, "INTERNAL_SECRET_TOKEN env var must be set for AI assistant tests"
