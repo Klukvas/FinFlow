@@ -57,7 +57,8 @@
     "logout": "Logout",
     "login": "Login",
     "register": "Register",
-    "aiAssistant": "AI Assistant"
+    "aiAssistant": "AI Assistant",
+    "dashboard": "Dashboard"
   },
   "sidebar": {
     "collapse": "Collapse sidebar",
@@ -73,6 +74,7 @@
   "header": {
     "appTitle": "FinFlow",
     "goToProfile": "Go to profile",
+    "goToDashboard": "Go to Dashboard",
     "user": "User"
   },
   "auth": {
@@ -1713,6 +1715,43 @@
     }
   },
   "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Your financial overview",
+    "kpi": {
+      "totalIncome": "Income This Month",
+      "totalExpenses": "Expenses This Month",
+      "netCashFlow": "Net Cash Flow",
+      "totalBalance": "Total Balance"
+    },
+    "cashFlow": {
+      "title": "Cash Flow — Last 6 Months",
+      "income": "Income",
+      "expenses": "Expenses"
+    },
+    "expensesByCategory": "Expenses by Category",
+    "incomeByCategory": "Income by Category",
+    "accounts": {
+      "title": "Account Balances",
+      "viewAll": "View All",
+      "noAccounts": "No accounts yet"
+    },
+    "noData": "No data for this month",
+    "debt": {
+      "title": "Debt Overview",
+      "totalDebt": "Total Debt",
+      "active": "Active",
+      "paidOff": "Paid Off",
+      "avgRate": "Avg Rate",
+      "noDebts": "No debts"
+    },
+    "recurring": {
+      "title": "Recurring Payments",
+      "active": "Active",
+      "executed": "Executed",
+      "failed": "Failed",
+      "thisMonth": "this month",
+      "noRecurring": "No recurring payments"
+    },
     "goalsOverview": {
       "title": "Financial Goals",
       "noGoals": "No Financial Goals",

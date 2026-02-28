@@ -20,6 +20,7 @@ import {
 } from "@/pages";
 
 // Protected pages — lazy loaded (behind auth, not needed on initial load)
+const Dashboard = React.lazy(() => import("@/pages/Dashboard"));
 const Account = React.lazy(() => import("@/pages/Account"));
 const Category = React.lazy(() => import("@/pages/Category"));
 const CategoryDetail = React.lazy(() => import("@/pages/CategoryDetail"));
@@ -165,6 +166,16 @@ export const AppRoutes: React.FC = () => {
     return (
       <Suspense fallback={lazyFallback}>
         <Routes>
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Dashboard />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/account"
             element={
@@ -383,7 +394,7 @@ export const AppRoutes: React.FC = () => {
             path="/"
             element={
               <Navigate
-                to={currentWorkspaceId ? "/category" : "/workspaces"}
+                to={currentWorkspaceId ? "/dashboard" : "/workspaces"}
                 replace
               />
             }
@@ -392,7 +403,7 @@ export const AppRoutes: React.FC = () => {
             path="*"
             element={
               <Navigate
-                to={currentWorkspaceId ? "/category" : "/workspaces"}
+                to={currentWorkspaceId ? "/dashboard" : "/workspaces"}
                 replace
               />
             }

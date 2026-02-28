@@ -68,7 +68,7 @@ export default function Register() {
       if (result.success) {
         if (config.debug) {
         }
-        navigate("/category", { replace: true });
+        navigate("/dashboard", { replace: true });
       } else {
         if (config.debug) {
           logger.error("Registration error:", result.error);

@@ -3,15 +3,14 @@ import { useTranslation } from "react-i18next";
 import { CreateExpense } from "../components/ui/expense/createExpense";
 import { EditExpense } from "../components/ui/expense/editExpense";
 import { ExpenseList } from "../components/ui/expense/expenseList";
-import { ExpenseDashboard } from "../components/ui/expense/ExpenseDashboard";
+
 import { ExpensePageHeader } from "../components/ui/expense/ExpensePageHeader";
 import { ExpenseSummaryStrip } from "../components/ui/expense/ExpenseSummaryStrip";
 import { ExpenseFilterBar } from "../components/ui/expense/ExpenseFilterBar";
 import { Modal } from "../components/ui/shared/Modal";
 import { Card } from "../components/ui/shared/Card";
 import { Button } from "../components/ui/shared/Button";
-import { Tabs } from "../components/ui/shared/Tabs";
-import { FaTable, FaChartBar } from "react-icons/fa";
+
 import { ExpenseResponse, ExpenseFilters } from "@/types";
 import { useApiClients } from "@/hooks";
 import { useCategories } from "@/contexts/CategoriesContext";
@@ -34,8 +33,7 @@ export const Expense = () => {
   );
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Tab & filter state
-  const [activeTab, setActiveTab] = useState("table");
+  // Filter state
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [filters, setFilters] = useState<ExpenseFilters>({ page: 1, size: 10 });
 
@@ -163,19 +161,6 @@ export const Expense = () => {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  const tabs = [
-    {
-      id: "table",
-      label: t("expensePage.tabs.table"),
-      icon: <FaTable className="w-4 h-4" />,
-    },
-    {
-      id: "dashboard",
-      label: t("expensePage.tabs.dashboard"),
-      icon: <FaChartBar className="w-4 h-4" />,
-    },
-  ];
-
   const refreshData = () => {
     fetchAllExpenses();
     fetchPaginatedExpenses();
@@ -255,43 +240,27 @@ export const Expense = () => {
           isVisible={filtersVisible}
         />
 
-        {/* Tabs */}
+        {/* Expense List */}
         <Card>
-          <Tabs
-            tabs={tabs}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            className="px-4 sm:px-6"
+          <ExpenseList
+            expenses={clientPaginatedExpenses}
+            loading={paginatedLoading || (hasActiveFilters && allLoading)}
+            categories={categoryMap}
+            currentPage={filters.page || 1}
+            totalPages={displayedTotalPages}
+            pageSize={filters.size || 10}
+            totalItems={displayedTotalItems}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+            onEditExpense={handleEditExpense}
+            onDeleteRequest={handleDeleteRequest}
+            emptyMessage={
+              hasActiveFilters
+                ? t("expensePage.filters.noMatchFilters")
+                : undefined
+            }
           />
         </Card>
-
-        {/* Tab Content */}
-        {activeTab === "table" && (
-          <Card>
-            <ExpenseList
-              expenses={clientPaginatedExpenses}
-              loading={paginatedLoading || (hasActiveFilters && allLoading)}
-              categories={categoryMap}
-              currentPage={filters.page || 1}
-              totalPages={displayedTotalPages}
-              pageSize={filters.size || 10}
-              totalItems={displayedTotalItems}
-              onPageChange={handlePageChange}
-              onPageSizeChange={handlePageSizeChange}
-              onEditExpense={handleEditExpense}
-              onDeleteRequest={handleDeleteRequest}
-              emptyMessage={
-                hasActiveFilters
-                  ? t("expensePage.filters.noMatchFilters")
-                  : undefined
-              }
-            />
-          </Card>
-        )}
-
-        {activeTab === "dashboard" && (
-          <ExpenseDashboard expenses={allExpenses} loading={allLoading} />
-        )}
 
         {/* Create Modal */}
         <Modal

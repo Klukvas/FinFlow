@@ -57,7 +57,8 @@
     "logout": "Выйти",
     "login": "Войти",
     "register": "Регистрация",
-    "aiAssistant": "AI Ассистент"
+    "aiAssistant": "AI Ассистент",
+    "dashboard": "Дашборд"
   },
   "sidebar": {
     "collapse": "Свернуть сайдбар",
@@ -73,6 +74,7 @@
   "header": {
     "appTitle": "FinFlow",
     "goToProfile": "Перейти к профилю",
+    "goToDashboard": "Перейти к дашборду",
     "user": "Пользователь"
   },
   "auth": {
@@ -1700,6 +1702,43 @@
     }
   },
   "dashboard": {
+    "title": "Дашборд",
+    "subtitle": "Ваш финансовый обзор",
+    "kpi": {
+      "totalIncome": "Доход за месяц",
+      "totalExpenses": "Расходы за месяц",
+      "netCashFlow": "Чистый денежный поток",
+      "totalBalance": "Общий баланс"
+    },
+    "cashFlow": {
+      "title": "Денежный поток — последние 6 месяцев",
+      "income": "Доходы",
+      "expenses": "Расходы"
+    },
+    "expensesByCategory": "Расходы по категориям",
+    "incomeByCategory": "Доходы по категориям",
+    "accounts": {
+      "title": "Балансы счетов",
+      "viewAll": "Все счета",
+      "noAccounts": "Пока нет счетов"
+    },
+    "noData": "Нет данных за этот месяц",
+    "debt": {
+      "title": "Обзор долгов",
+      "totalDebt": "Общий долг",
+      "active": "Активные",
+      "paidOff": "Погашены",
+      "avgRate": "Средняя ставка",
+      "noDebts": "Нет долгов"
+    },
+    "recurring": {
+      "title": "Повторяющиеся платежи",
+      "active": "Активные",
+      "executed": "Выполнено",
+      "failed": "Ошибки",
+      "thisMonth": "в этом месяце",
+      "noRecurring": "Нет повторяющихся платежей"
+    },
     "goalsOverview": {
       "title": "Финансовые цели",
       "noGoals": "Нет финансовых целей",

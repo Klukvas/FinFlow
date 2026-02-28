@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { logger } from "@/utils/logger";
 import { Modal } from "../shared/Modal";
@@ -31,6 +32,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
   onSwitchToLogin,
 }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { register } = useAuth();
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({
     email: "",
@@ -87,6 +89,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
           if (config.debug) {
           }
           onClose();
+          navigate("/dashboard", { replace: true });
         } else {
           if (config.debug) {
             logger.error("Registration error:", result.error);

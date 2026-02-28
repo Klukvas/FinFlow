@@ -31,7 +31,7 @@ export default function Login() {
         if (result.success) {
           if (config.debug) {
           }
-          navigate("/category", { replace: true });
+          navigate("/dashboard", { replace: true });
         } else {
           if (config.debug) {
             logger.error("Login error:", result.error);

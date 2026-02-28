@@ -57,7 +57,8 @@
     "logout": "Вийти",
     "login": "Увійти",
     "register": "Реєстрація",
-    "aiAssistant": "AI Асистент"
+    "aiAssistant": "AI Асистент",
+    "dashboard": "Дашборд"
   },
   "sidebar": {
     "collapse": "Згорнути бічну панель",
@@ -73,6 +74,7 @@
   "header": {
     "appTitle": "FinFlow",
     "goToProfile": "Перейти до профілю",
+    "goToDashboard": "Перейти до дашборду",
     "user": "Користувач"
   },
   "auth": {
@@ -1557,6 +1559,43 @@
     }
   },
   "dashboard": {
+    "title": "Дашборд",
+    "subtitle": "Ваш фінансовий огляд",
+    "kpi": {
+      "totalIncome": "Дохід за місяць",
+      "totalExpenses": "Витрати за місяць",
+      "netCashFlow": "Чистий грошовий потік",
+      "totalBalance": "Загальний баланс"
+    },
+    "cashFlow": {
+      "title": "Грошовий потік — останні 6 місяців",
+      "income": "Доходи",
+      "expenses": "Витрати"
+    },
+    "expensesByCategory": "Витрати за категоріями",
+    "incomeByCategory": "Доходи за категоріями",
+    "accounts": {
+      "title": "Баланси рахунків",
+      "viewAll": "Всі рахунки",
+      "noAccounts": "Поки немає рахунків"
+    },
+    "noData": "Немає даних за цей місяць",
+    "debt": {
+      "title": "Огляд боргів",
+      "totalDebt": "Загальний борг",
+      "active": "Активні",
+      "paidOff": "Погашені",
+      "avgRate": "Середня ставка",
+      "noDebts": "Немає боргів"
+    },
+    "recurring": {
+      "title": "Повторювані платежі",
+      "active": "Активні",
+      "executed": "Виконано",
+      "failed": "Помилки",
+      "thisMonth": "цього місяця",
+      "noRecurring": "Немає повторюваних платежів"
+    },
     "goalsOverview": {
       "title": "Фінансові цілі",
       "noGoals": "Немає фінансових цілей",

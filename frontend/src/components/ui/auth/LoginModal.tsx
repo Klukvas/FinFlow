@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { logger } from "@/utils/logger";
 import { Modal } from "../shared/Modal";
@@ -24,6 +25,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   onSwitchToRegister,
 }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { login } = useAuth();
   const { handleUserError } = useErrorHandler();
   const [emailError, setEmailError] = useState<string>("");
@@ -53,6 +55,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           if (config.debug) {
           }
           onClose();
+          navigate("/dashboard", { replace: true });
         } else {
           if (config.debug) {
             logger.error("Login error:", result.error);

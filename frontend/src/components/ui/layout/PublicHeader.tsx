@@ -5,6 +5,7 @@ import { ThemeToggle } from "../shared/ThemeToggle";
 import { LanguageSelector } from "../shared/LanguageSelector";
 import { AuthModals } from "../auth/AuthModals";
 import { useModal } from "@/contexts/ModalContext";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   FaHome,
   FaFolder,
@@ -14,6 +15,7 @@ import {
   FaBars,
   FaTimes,
   FaBookOpen,
+  FaChartLine,
 } from "react-icons/fa";
 
 export const PublicHeader: React.FC = () => {
@@ -21,6 +23,7 @@ export const PublicHeader: React.FC = () => {
   const { t } = useTranslation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { openLoginModal, openRegisterModal } = useModal();
+  const { isAuthenticated } = useAuth();
 
   // Close mobile menu when route changes
   useEffect(() => {
@@ -70,14 +73,25 @@ export const PublicHeader: React.FC = () => {
             <div className="flex items-center space-x-2">
               <LanguageSelector />
               <ThemeToggle />
-              <button
-                onClick={openLoginModal}
-                data-testid="login-modal-trigger-mobile"
-                className="p-2 theme-text-primary hover:theme-surface-hover rounded-lg theme-transition"
-                title={t("navigation.login")}
-              >
-                <FaSignInAlt className="w-4 h-4" />
-              </button>
+              {isAuthenticated ? (
+                <Link
+                  to="/dashboard"
+                  data-testid="go-to-dashboard-mobile"
+                  className="p-2 theme-accent hover:theme-accent-hover rounded-lg theme-transition"
+                  title={t("header.goToDashboard")}
+                >
+                  <FaChartLine className="w-4 h-4" />
+                </Link>
+              ) : (
+                <button
+                  onClick={openLoginModal}
+                  data-testid="login-modal-trigger-mobile"
+                  className="p-2 theme-text-primary hover:theme-surface-hover rounded-lg theme-transition"
+                  title={t("navigation.login")}
+                >
+                  <FaSignInAlt className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -132,25 +146,38 @@ export const PublicHeader: React.FC = () => {
               <LanguageSelector />
               <ThemeToggle />
 
-              <button
-                onClick={openLoginModal}
-                data-testid="login-modal-trigger"
-                className="flex items-center px-4 py-2 text-sm theme-text-primary hover:theme-surface-hover rounded-lg theme-transition"
-                title={t("navigation.login")}
-              >
-                <FaSignInAlt className="w-4 h-4 mr-2" />
-                {t("navigation.login")}
-              </button>
+              {isAuthenticated ? (
+                <Link
+                  to="/dashboard"
+                  data-testid="go-to-dashboard"
+                  className="flex items-center px-4 py-2 text-sm theme-accent-bg theme-text-inverse hover:theme-accent-hover rounded-lg theme-transition"
+                >
+                  <FaChartLine className="w-4 h-4 mr-2" />
+                  {t("header.goToDashboard")}
+                </Link>
+              ) : (
+                <>
+                  <button
+                    onClick={openLoginModal}
+                    data-testid="login-modal-trigger"
+                    className="flex items-center px-4 py-2 text-sm theme-text-primary hover:theme-surface-hover rounded-lg theme-transition"
+                    title={t("navigation.login")}
+                  >
+                    <FaSignInAlt className="w-4 h-4 mr-2" />
+                    {t("navigation.login")}
+                  </button>
 
-              <button
-                onClick={openRegisterModal}
-                data-testid="register-modal-trigger"
-                className="flex items-center px-4 py-2 text-sm theme-accent-bg theme-text-inverse hover:theme-accent-hover rounded-lg theme-transition"
-                title={t("navigation.register")}
-              >
-                <FaUserPlus className="w-4 h-4 mr-2" />
-                {t("navigation.register")}
-              </button>
+                  <button
+                    onClick={openRegisterModal}
+                    data-testid="register-modal-trigger"
+                    className="flex items-center px-4 py-2 text-sm theme-accent-bg theme-text-inverse hover:theme-accent-hover rounded-lg theme-transition"
+                    title={t("navigation.register")}
+                  >
+                    <FaUserPlus className="w-4 h-4 mr-2" />
+                    {t("navigation.register")}
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -217,28 +244,42 @@ export const PublicHeader: React.FC = () => {
             <ThemeToggle />
           </div>
 
-          <button
-            onClick={() => {
-              openLoginModal();
-              closeMobileMenu();
-            }}
-            data-testid="mobile-login-button"
-            className="w-full flex items-center justify-center px-4 py-3 text-sm theme-text-primary hover:theme-surface-hover rounded-lg theme-transition theme-border border"
-          >
-            <FaSignInAlt className="w-4 h-4 mr-2" />
-            {t("navigation.login")}
-          </button>
-          <button
-            onClick={() => {
-              openRegisterModal();
-              closeMobileMenu();
-            }}
-            data-testid="mobile-register-button"
-            className="w-full flex items-center justify-center px-4 py-3 text-sm theme-accent-bg theme-text-inverse hover:theme-accent-hover rounded-lg theme-transition"
-          >
-            <FaUserPlus className="w-4 h-4 mr-2" />
-            {t("navigation.register")}
-          </button>
+          {isAuthenticated ? (
+            <Link
+              to="/dashboard"
+              onClick={closeMobileMenu}
+              data-testid="mobile-go-to-dashboard"
+              className="w-full flex items-center justify-center px-4 py-3 text-sm theme-accent-bg theme-text-inverse hover:theme-accent-hover rounded-lg theme-transition"
+            >
+              <FaChartLine className="w-4 h-4 mr-2" />
+              {t("header.goToDashboard")}
+            </Link>
+          ) : (
+            <>
+              <button
+                onClick={() => {
+                  openLoginModal();
+                  closeMobileMenu();
+                }}
+                data-testid="mobile-login-button"
+                className="w-full flex items-center justify-center px-4 py-3 text-sm theme-text-primary hover:theme-surface-hover rounded-lg theme-transition theme-border border"
+              >
+                <FaSignInAlt className="w-4 h-4 mr-2" />
+                {t("navigation.login")}
+              </button>
+              <button
+                onClick={() => {
+                  openRegisterModal();
+                  closeMobileMenu();
+                }}
+                data-testid="mobile-register-button"
+                className="w-full flex items-center justify-center px-4 py-3 text-sm theme-accent-bg theme-text-inverse hover:theme-accent-hover rounded-lg theme-transition"
+              >
+                <FaUserPlus className="w-4 h-4 mr-2" />
+                {t("navigation.register")}
+              </button>
+            </>
+          )}
         </div>
       </div>
 

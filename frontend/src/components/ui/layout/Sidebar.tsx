@@ -4,9 +4,11 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useTutorial } from "@/contexts/TutorialContext";
+import { Badge } from "@/components/ui/shared/Badge";
+import { useApiClients } from "@/hooks/useApiClients";
 import { WorkspaceSelector } from "@/components/ui/workspace";
 import {
-  FaHome,
+  FaChartLine,
   FaFolder,
   FaSignOutAlt,
   FaTimes,
@@ -21,6 +23,7 @@ import {
   FaChevronLeft,
   FaChevronRight,
   FaRobot,
+  FaReceipt,
 } from "react-icons/fa";
 
 interface SidebarProps {
@@ -37,9 +40,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { logout, user, isLoading } = useAuth();
   const { currentWorkspaceId } = useWorkspace();
   const { isActive: isTutorialActive } = useTutorial();
+  const { subscription: subscriptionApi } = useApiClients();
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(false);
+  const [planCode, setPlanCode] = useState<string | null>(null);
   const { t } = useTranslation();
+
+  useEffect(() => {
+    if (!user?.id) return;
+    subscriptionApi.getUserSubscription(user.id).then((res) => {
+      if (!("error" in res)) setPlanCode(res.plan_code);
+    });
+  }, [user?.id, subscriptionApi]);
 
   // Force sidebar open on mobile when tutorial is active
   useEffect(() => {
@@ -67,6 +79,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const allNavigationItems = [
     {
+      path: "/dashboard",
+      icon: FaChartLine,
+      label: t("navigation.dashboard"),
+      requiresWorkspace: true,
+    },
+    {
       path: "/category",
       icon: FaFolder,
       label: t("navigation.categories"),
@@ -80,7 +98,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       path: "/expense",
-      icon: FaHome,
+      icon: FaReceipt,
       label: t("navigation.expenses"),
       requiresWorkspace: true,
     },
@@ -244,12 +262,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   ? t("common.loading")
                   : user?.email || t("header.user")}
               </p>
-              <p
-                className="text-xs theme-text-tertiary truncate"
-                data-testid="user-email"
-              >
-                {user?.email || t("navigation.profile")}
-              </p>
+              {planCode && (
+                <Badge
+                  size="sm"
+                  variant={
+                    planCode === "enterprise"
+                      ? "warning"
+                      : planCode === "professional"
+                        ? "default"
+                        : "secondary"
+                  }
+                  data-testid="subscription-badge"
+                >
+                  {t(
+                    `homepage.plans.${planCode}.name`,
+                    planCode.charAt(0).toUpperCase() + planCode.slice(1),
+                  )}
+                </Badge>
+              )}
             </div>
           )}
         </Link>
