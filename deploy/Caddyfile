@@ -118,6 +118,20 @@ finflow.ltd {
     reverse_proxy workspace_service:8000
   }
 
+  # Block vulnerability scanners — dotfiles, config files, SQL dumps, PHP probes
+  @blocked {
+    path /.env* /.git/* /.aws/* /.ssh/* /.svn/* /.docker/* /.npmrc /.yarnrc /.htpasswd /.pgpass /.my.cnf /.netrc
+    path /wp-config* /wp-admin/* /wp-content/* /wp-includes/*
+    path /config.json /config.yml /config.yaml /config.php /configuration.php
+    path /settings.json /settings.yml /secrets.json /secrets.yml
+    path /appsettings* /application.yml /application.properties /application-*.yml
+    path /docker-compose* /database.yml /web.config /local.settings.json
+    path /*.sql /id_rsa /serviceAccountKey.json /firebase-adminsdk.json
+    path /google-credentials.json /gcloud-service-key.json /keyfile.json /service-account.json /credentials.json
+    path /*.php /actuator/* /debug/* /solr/* /hudson /cgi-bin/* /sdk /sse /mcp
+  }
+  respond @blocked 404
+
   # Frontend - SPA routing with fallback to index.html
   handle /* {
     reverse_proxy frontend:80 {
