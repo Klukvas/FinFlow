@@ -47,7 +47,7 @@ class SyncService(WorkspaceAuthorizationMixin):
         self.mapper = TransactionMapper()
 
     async def connect(self, user_id: int, workspace_id: UUID, token: str) -> BankConnection:
-        await self.authorize_workspace_access(workspace_id, user_id, required_role="member")
+        self.authorize_workspace_access(workspace_id, user_id, required_role="member")
 
         # Validate token by fetching client info
         try:
