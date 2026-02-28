@@ -15,6 +15,7 @@ on:
       - '.github/workflows/**'
       - '.github/actions/**'
       - 'deploy/**'
+      - 'docker-compose.yml'
       - 'init/**'
       - 'tests/e2e/**'
       - '**/tests/**'
