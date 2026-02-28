@@ -58,7 +58,8 @@
     "login": "Войти",
     "register": "Регистрация",
     "aiAssistant": "AI Ассистент",
-    "dashboard": "Дашборд"
+    "dashboard": "Дашборд",
+    "bankSync": "Синхронизация"
   },
   "sidebar": {
     "collapse": "Свернуть сайдбар",
@@ -2432,5 +2433,49 @@
         "description": "Пошаговый план погашения долгов с учётом целей"
       }
     }
+  },
+  "bankSync": {
+    "title": "Синхронизация с банком",
+    "connectTitle": "Подключить Monobank",
+    "connectDescription": "Автоматический импорт транзакций с ваших счетов Monobank",
+    "howToGetToken": "Как получить токен:",
+    "step1": "Откройте api.monobank.ua в браузере",
+    "step2": "Войдите через QR-код из приложения Monobank",
+    "step3": "Скопируйте персональный токен со страницы",
+    "tokenLabel": "API токен Monobank",
+    "tokenPlaceholder": "Вставьте токен сюда",
+    "connectButton": "Подключить",
+    "connectSuccess": "Monobank успешно подключён!",
+    "connectError": "Не удалось подключить Monobank. Проверьте токен.",
+    "disconnect": "Отключить",
+    "disconnectConfirm": "Вы уверены, что хотите отключить этот банковский счёт?",
+    "disconnectError": "Не удалось отключить",
+    "connectedSince": "Подключён с",
+    "lastSync": "Последняя синхр.",
+    "syncNow": "Синхронизировать",
+    "syncing": "Синхронизация...",
+    "syncComplete": "Синхронизация завершена: {{imported}} из {{found}} транзакций импортировано",
+    "syncError": "Синхронизация не удалась. Попробуйте позже.",
+    "syncHistory": "История синхронизации",
+    "noSyncHistory": "Истории ещё нет. Запустите синхронизацию для импорта транзакций.",
+    "syncDate": "Дата",
+    "status": "Статус",
+    "found": "Найдено",
+    "imported": "Импортировано",
+    "skipped": "Пропущено",
+    "linkedAccounts": "Банковские счета",
+    "unknownAccount": "Неизвестный счёт",
+    "mapToAccount": "Привязать к счёту FinFlow",
+    "selectAccount": "Выберите счёт...",
+    "enableSync": "Включить синхр.",
+    "disableSync": "Выключить синхр.",
+    "loadError": "Не удалось загрузить данные синхронизации",
+    "linkError": "Не удалось привязать счёт",
+    "toggleError": "Не удалось переключить синхронизацию",
+    "statusCompleted": "Завершено",
+    "statusCompletedWithErrors": "Завершено с ошибками",
+    "statusInProgress": "В процессе",
+    "statusPending": "Ожидание",
+    "statusFailed": "Ошибка"
   }
 }

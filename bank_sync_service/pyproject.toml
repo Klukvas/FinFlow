@@ -1,0 +1,20 @@
+[project]
+name = "bank-sync-service"
+version = "1.0.0"
+description = "Bank synchronization service for FinFlow accounting app"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["app/tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88

@@ -13,6 +13,7 @@ CREATE DATABASE payment_db;
 CREATE DATABASE scheduler_db;
 CREATE DATABASE currency_db;
 CREATE DATABASE workspace_db;
+CREATE DATABASE bank_sync_db;
 
 -- Grant permissions to postgres user
 GRANT ALL PRIVILEGES ON DATABASE user_db TO postgres;
@@ -28,3 +29,4 @@ GRANT ALL PRIVILEGES ON DATABASE payment_db TO postgres;
 GRANT ALL PRIVILEGES ON DATABASE scheduler_db TO postgres;
 GRANT ALL PRIVILEGES ON DATABASE currency_db TO postgres;
 GRANT ALL PRIVILEGES ON DATABASE workspace_db TO postgres;
+GRANT ALL PRIVILEGES ON DATABASE bank_sync_db TO postgres;

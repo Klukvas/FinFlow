@@ -24,6 +24,7 @@ import {
   FaChevronRight,
   FaRobot,
   FaReceipt,
+  FaUniversity,
 } from "react-icons/fa";
 
 interface SidebarProps {
@@ -136,6 +137,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       path: "/ai-assistant",
       icon: FaRobot,
       label: t("navigation.aiAssistant"),
+      requiresWorkspace: true,
+    },
+    {
+      path: "/bank-sync",
+      icon: FaUniversity,
+      label: t("navigation.bankSync"),
       requiresWorkspace: true,
     },
     {

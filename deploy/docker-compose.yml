@@ -528,6 +528,38 @@ services:
     deploy: *fastapi-deploy
     logging: *default-logging
 
+  bank_sync_service:
+    image: ${REGISTRY}/${IMAGE_PREFIX}/bank_sync_service:latest
+    container_name: bank_sync_service
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD_ENCODED}@postgres:5432/bank_sync_db
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=${ALGORITHM}
+      - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      - WORKSPACE_SERVICE_URL=http://workspace_service:8000
+      - EXPENSE_SERVICE_URL=http://expense_service:8000
+      - INCOME_SERVICE_URL=http://income_service:8000
+      - ACCOUNT_SERVICE_URL=http://account_service:8000
+      - CATEGORY_SERVICE_URL=http://category_service:8000
+      - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
+      - BANK_TOKEN_ENCRYPTION_KEY=${BANK_TOKEN_ENCRYPTION_KEY}
+      - LOG_LEVEL=INFO
+      - DOCS_ENABLED=false
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      workspace_service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+      <<: *fastapi-healthcheck
+    deploy: *fastapi-deploy
+    logging: *default-logging
+
   pdf_parser_service:
     image: ${REGISTRY}/${IMAGE_PREFIX}/pdf_parser_service:latest
     container_name: pdf_parser_service

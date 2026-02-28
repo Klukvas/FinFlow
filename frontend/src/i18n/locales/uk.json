@@ -58,7 +58,8 @@
     "login": "Увійти",
     "register": "Реєстрація",
     "aiAssistant": "AI Асистент",
-    "dashboard": "Дашборд"
+    "dashboard": "Дашборд",
+    "bankSync": "Синхронізація"
   },
   "sidebar": {
     "collapse": "Згорнути бічну панель",
@@ -2343,5 +2344,49 @@
         "description": "Покроковий план погашення боргів з урахуванням цілей"
       }
     }
+  },
+  "bankSync": {
+    "title": "Синхронізація з банком",
+    "connectTitle": "Підключити Monobank",
+    "connectDescription": "Автоматичний імпорт транзакцій з ваших рахунків Monobank",
+    "howToGetToken": "Як отримати токен:",
+    "step1": "Відкрийте api.monobank.ua у браузері",
+    "step2": "Увійдіть через QR-код із застосунку Monobank",
+    "step3": "Скопіюйте персональний токен зі сторінки",
+    "tokenLabel": "API токен Monobank",
+    "tokenPlaceholder": "Вставте токен сюди",
+    "connectButton": "Підключити",
+    "connectSuccess": "Monobank успішно підключено!",
+    "connectError": "Не вдалося підключити Monobank. Перевірте токен.",
+    "disconnect": "Відключити",
+    "disconnectConfirm": "Ви впевнені, що хочете відключити цей банківський рахунок?",
+    "disconnectError": "Не вдалося відключити",
+    "connectedSince": "Підключено з",
+    "lastSync": "Остання синхр.",
+    "syncNow": "Синхронізувати",
+    "syncing": "Синхронізація...",
+    "syncComplete": "Синхронізацію завершено: {{imported}} із {{found}} транзакцій імпортовано",
+    "syncError": "Синхронізація не вдалася. Спробуйте пізніше.",
+    "syncHistory": "Історія синхронізації",
+    "noSyncHistory": "Історії ще немає. Запустіть синхронізацію для імпорту транзакцій.",
+    "syncDate": "Дата",
+    "status": "Статус",
+    "found": "Знайдено",
+    "imported": "Імпортовано",
+    "skipped": "Пропущено",
+    "linkedAccounts": "Банківські рахунки",
+    "unknownAccount": "Невідомий рахунок",
+    "mapToAccount": "Прив'язати до рахунку FinFlow",
+    "selectAccount": "Оберіть рахунок...",
+    "enableSync": "Увімкнути синхр.",
+    "disableSync": "Вимкнути синхр.",
+    "loadError": "Не вдалося завантажити дані синхронізації",
+    "linkError": "Не вдалося прив'язати рахунок",
+    "toggleError": "Не вдалося перемкнути синхронізацію",
+    "statusCompleted": "Завершено",
+    "statusCompletedWithErrors": "Завершено з помилками",
+    "statusInProgress": "В процесі",
+    "statusPending": "Очікування",
+    "statusFailed": "Помилка"
   }
 }

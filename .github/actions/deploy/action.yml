@@ -42,6 +42,10 @@ inputs:
     description: Enable payment processing
     required: false
     default: "false"
+  bank-token-encryption-key:
+    description: Fernet key for encrypting bank tokens (generated on first deploy if empty)
+    required: false
+    default: ""
   services:
     description: Space-separated services to deploy (empty = all)
     required: false
@@ -103,7 +107,7 @@ runs:
 
         # Default services if none specified
         if [ -z "${SERVICES:-}" ]; then
-          SERVICES="caddy postgres redis frontend account_service ai_assistant_service category_service currency_service debt_service expense_service goals_service income_service payment_service pdf_parser_service recurring_service scheduler_service subscription_service user_service workspace_service"
+          SERVICES="caddy postgres redis frontend account_service ai_assistant_service bank_sync_service category_service currency_service debt_service expense_service goals_service income_service payment_service pdf_parser_service recurring_service scheduler_service subscription_service user_service workspace_service"
         fi
 
         # URL-encode the DB password
@@ -122,8 +126,11 @@ runs:
         SECRET_KEY="\${SECRET_KEY:-$(openssl rand -hex 32)}"
         ALGORITHM="\${ALGORITHM:-HS256}"
         INTERNAL_SECRET_TOKEN="\${INTERNAL_SECRET_TOKEN:-$(openssl rand -hex 32)}"
+        INPUT_BANK_KEY="${{ inputs['bank-token-encryption-key'] }}"
+        BANK_TOKEN_ENCRYPTION_KEY="\${INPUT_BANK_KEY:-\${BANK_TOKEN_ENCRYPTION_KEY:-\$(python3 -c 'import os,base64;print(base64.urlsafe_b64encode(os.urandom(32)).decode())')}}"
 
-        cat > .env <<'ENVEOF'
+        install -m 600 /dev/null .env
+        cat >> .env <<'ENVEOF'
         REGISTRY=${REGISTRY}
         IMAGE_PREFIX=${IMAGE_PREFIX}
         DB_USER=${DB_USER}
@@ -141,8 +148,7 @@ runs:
         echo "SECRET_KEY=\$SECRET_KEY" >> .env
         echo "ALGORITHM=\$ALGORITHM" >> .env
         echo "INTERNAL_SECRET_TOKEN=\$INTERNAL_SECRET_TOKEN" >> .env
-
-        chmod 600 .env
+        echo "BANK_TOKEN_ENCRYPTION_KEY=\$BANK_TOKEN_ENCRYPTION_KEY" >> .env
 
         # Pull images
         echo "Pulling images..."

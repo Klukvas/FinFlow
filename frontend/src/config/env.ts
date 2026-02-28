@@ -47,6 +47,9 @@ export const config = {
     aiAssistantServiceUrl:
       import.meta.env.VITE_AI_ASSISTANT_SERVICE_URL ||
       (import.meta.env.PROD ? "/api/ai-assistant" : "http://localhost:8015"),
+    bankSyncServiceUrl:
+      import.meta.env.VITE_BANK_SYNC_SERVICE_URL ||
+      (import.meta.env.PROD ? "/api/bank-sync" : "http://localhost:8016"),
   },
   app: {
     name: import.meta.env.VITE_APP_NAME || "FinFlow",

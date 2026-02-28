@@ -102,6 +102,10 @@ finflow.ltd {
     reverse_proxy ai_assistant_service:8000
   }
 
+  handle_path /api/bank-sync/* {
+    reverse_proxy bank_sync_service:8000
+  }
+
   # Workspaces API - strip only /api, keep /workspaces path
   handle /api/workspaces* {
     uri strip_prefix /api

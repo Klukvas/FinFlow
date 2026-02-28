@@ -35,6 +35,7 @@ const Workspaces = React.lazy(() => import("@/pages/Workspaces"));
 const MyInvites = React.lazy(() => import("@/pages/MyInvites"));
 const PaymentReturn = React.lazy(() => import("@/pages/payment/PaymentReturn"));
 const AiAssistant = React.lazy(() => import("@/pages/AiAssistant"));
+const BankSync = React.lazy(() => import("@/pages/BankSync"));
 const PaymentHistory = React.lazy(
   () => import("@/pages/payment/PaymentHistory"),
 );
@@ -282,6 +283,16 @@ export const AppRoutes: React.FC = () => {
               <ProtectedRoute>
                 <Layout>
                   <AiAssistant />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/bank-sync"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <BankSync />
                 </Layout>
               </ProtectedRoute>
             }

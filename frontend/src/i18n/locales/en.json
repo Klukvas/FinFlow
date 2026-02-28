@@ -58,7 +58,8 @@
     "login": "Login",
     "register": "Register",
     "aiAssistant": "AI Assistant",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "bankSync": "Bank Sync"
   },
   "sidebar": {
     "collapse": "Collapse sidebar",
@@ -2445,5 +2446,49 @@
         "description": "Step-by-step debt repayment plan considering your goals"
       }
     }
+  },
+  "bankSync": {
+    "title": "Bank Sync",
+    "connectTitle": "Connect Monobank",
+    "connectDescription": "Automatically import transactions from your Monobank accounts",
+    "howToGetToken": "How to get your token:",
+    "step1": "Open api.monobank.ua in your browser",
+    "step2": "Log in with QR code from the Monobank app",
+    "step3": "Copy the personal token from the page",
+    "tokenLabel": "Monobank API Token",
+    "tokenPlaceholder": "Paste your token here",
+    "connectButton": "Connect",
+    "connectSuccess": "Monobank connected successfully!",
+    "connectError": "Failed to connect Monobank. Check your token.",
+    "disconnect": "Disconnect",
+    "disconnectConfirm": "Are you sure you want to disconnect this bank account?",
+    "disconnectError": "Failed to disconnect",
+    "connectedSince": "Connected since",
+    "lastSync": "Last sync",
+    "syncNow": "Sync Now",
+    "syncing": "Syncing...",
+    "syncComplete": "Sync complete: {{imported}} of {{found}} transactions imported",
+    "syncError": "Sync failed. Please try again later.",
+    "syncHistory": "Sync History",
+    "noSyncHistory": "No sync history yet. Trigger a sync to import transactions.",
+    "syncDate": "Date",
+    "status": "Status",
+    "found": "Found",
+    "imported": "Imported",
+    "skipped": "Skipped",
+    "linkedAccounts": "Bank Accounts",
+    "unknownAccount": "Unknown Account",
+    "mapToAccount": "Map to FinFlow account",
+    "selectAccount": "Select account...",
+    "enableSync": "Enable sync",
+    "disableSync": "Disable sync",
+    "loadError": "Failed to load bank sync data",
+    "linkError": "Failed to link account",
+    "toggleError": "Failed to toggle sync",
+    "statusCompleted": "Completed",
+    "statusCompletedWithErrors": "Completed with errors",
+    "statusInProgress": "In progress",
+    "statusPending": "Pending",
+    "statusFailed": "Failed"
   }
 }

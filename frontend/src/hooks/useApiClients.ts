@@ -12,6 +12,7 @@ import { SubscriptionApiClient } from "@/services/api/subscriptionApiClient";
 import { RecurringApiClient } from "@/services/api/recurringApi";
 import { PaymentApiClient } from "@/services/api/paymentApiClient";
 import { AiAssistantApiClient } from "@/services/api/aiAssistantApiClient";
+import { BankSyncApiClient } from "@/services/api/bankSyncApiClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMemo } from "react";
 
@@ -73,6 +74,10 @@ export const useApiClients = () => {
     () => new AiAssistantApiClient(getToken, refreshAccessToken),
     [token, refreshAccessToken],
   );
+  const bankSync = useMemo(
+    () => new BankSyncApiClient(getToken, refreshAccessToken),
+    [token, refreshAccessToken],
+  );
 
   return {
     account,
@@ -89,5 +94,6 @@ export const useApiClients = () => {
     recurring,
     payment,
     aiAssistant,
+    bankSync,
   };
 };
