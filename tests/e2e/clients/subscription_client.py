@@ -30,6 +30,13 @@ class SubscriptionApiClient(BaseApiClient):
         resp = await self._get(f"/v1/features/{user_id}")
         return self._parse(resp)
 
-    async def set_plan(self, user_id: int, plan_code: str) -> ApiResponse:
-        resp = await self._post(f"/v1/subscriptions/{user_id}:set_plan", json={"plan_code": plan_code})
+    async def set_plan(
+        self, user_id: int, plan_code: str, internal_token: str | None = None
+    ) -> ApiResponse:
+        extra = {"X-Internal-Token": internal_token} if internal_token else None
+        resp = await self._post(
+            f"/v1/subscriptions/{user_id}:set_plan",
+            json={"plan_code": plan_code},
+            extra_headers=extra,
+        )
         return self._parse(resp)

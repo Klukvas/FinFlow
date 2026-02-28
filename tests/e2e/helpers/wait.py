@@ -13,6 +13,7 @@ SERVICE_HEALTH_ENDPOINTS: dict[str, str] = {
     "income_service": "http://localhost:8004/health",
     "account_service": "http://localhost:8009/health",
     "subscription_service": "http://localhost:8011/health",
+    "ai_assistant_service": "http://localhost:8015/health",
 }
 
 

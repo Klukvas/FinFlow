@@ -8,6 +8,8 @@ from __future__ import annotations
 import asyncio
 import pytest
 
+import os
+
 from tests.e2e.clients.user_client import UserApiClient
 from tests.e2e.clients.workspace_client import WorkspaceApiClient
 from tests.e2e.clients.category_client import CategoryApiClient
@@ -15,6 +17,7 @@ from tests.e2e.clients.expense_client import ExpenseApiClient
 from tests.e2e.clients.income_client import IncomeApiClient
 from tests.e2e.clients.account_client import AccountApiClient
 from tests.e2e.clients.subscription_client import SubscriptionApiClient
+from tests.e2e.clients.ai_assistant_client import AiAssistantApiClient
 from tests.e2e.helpers.test_data import unique_email, strong_password, workspace_name
 from tests.e2e.helpers.wait import wait_for_services
 
@@ -212,4 +215,71 @@ def secondary_expense_client(secondary_user, workspace_id) -> ExpenseApiClient:
     client = ExpenseApiClient()
     client.set_token(secondary_user["token"])
     client.set_workspace_id(workspace_id)
+    return client
+
+
+# ---------------------------------------------------------------------------
+# AI Assistant: basic-plan client (uses primary_user)
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def ai_assistant_client(primary_user, workspace_id) -> AiAssistantApiClient:
+    client = AiAssistantApiClient()
+    client.set_token(primary_user["token"])
+    client.set_workspace_id(workspace_id)
+    return client
+
+
+# ---------------------------------------------------------------------------
+# Session-scoped: professional-plan user for AI assistant tests
+# ---------------------------------------------------------------------------
+
+@pytest.fixture(scope="session")
+async def professional_user():
+    """Register a user and upgrade to professional plan."""
+    email = unique_email()
+    password = strong_password()
+    user_client = UserApiClient()
+    result = await user_client.register(email, password)
+    data = result.raise_on_error()
+
+    user_id = data.get("user_id") or data.get("id")
+    token = data["access_token"]
+
+    internal_token = os.environ.get("INTERNAL_SECRET_TOKEN")
+    assert internal_token, "INTERNAL_SECRET_TOKEN env var must be set for AI assistant tests"
+    sub_client = SubscriptionApiClient()
+    result = await sub_client.set_plan(user_id, "professional", internal_token=internal_token)
+    result.raise_on_error()
+
+    return {
+        "email": email,
+        "password": password,
+        "token": token,
+        "user_id": user_id,
+    }
+
+
+@pytest.fixture(scope="session")
+async def professional_workspace(professional_user):
+    """Get auto-created workspace for the professional user."""
+    client = WorkspaceApiClient()
+    client.set_token(professional_user["token"])
+    result = await client.list_all()
+    data = result.raise_on_error()
+    workspaces = data.get("workspaces", data) if isinstance(data, dict) else data
+    assert len(workspaces) >= 1, "Expected at least one workspace"
+    return workspaces[0]
+
+
+@pytest.fixture(scope="session")
+def professional_workspace_id(professional_workspace) -> str:
+    return str(professional_workspace["id"])
+
+
+@pytest.fixture
+def pro_ai_client(professional_user, professional_workspace_id) -> AiAssistantApiClient:
+    client = AiAssistantApiClient()
+    client.set_token(professional_user["token"])
+    client.set_workspace_id(professional_workspace_id)
     return client

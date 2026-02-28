@@ -24,4 +24,5 @@ markers = [
     "income: Income CRUD and query tests",
     "subscription: Subscription and feature gating tests",
     "cross_service: Cross-service isolation and authorization tests",
+    "ai_assistant: AI assistant feature tests",
 ]

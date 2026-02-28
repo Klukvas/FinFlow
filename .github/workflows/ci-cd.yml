@@ -1014,6 +1014,7 @@ jobs:
           SECRET_KEY: ${{ env.E2E_SECRET_KEY }}
           JWT_SECRET_KEY: ${{ env.E2E_SECRET_KEY }}
           INTERNAL_SECRET_TOKEN: ${{ env.E2E_INTERNAL_TOKEN }}
+          ANTHROPIC_API_KEY: "sk-ant-test-key-not-real"
         run: docker compose up --build -d
 
       - name: Set up Python
@@ -1064,6 +1065,8 @@ jobs:
           exit 1
 
       - name: Run E2E tests
+        env:
+          INTERNAL_SECRET_TOKEN: ${{ env.E2E_INTERNAL_TOKEN }}
         run: python -m pytest tests/e2e/tests/ -v --tb=short --junitxml=e2e-results.xml
 
       - name: Upload test results
