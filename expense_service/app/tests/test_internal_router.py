@@ -52,7 +52,7 @@ class TestGetExpensesByAccount:
         app.dependency_overrides[get_expense_service_internal] = lambda: mock_service
         try:
             response = client.get(
-                "/internal/expenses/account/5?user_id=10",
+                f"/internal/expenses/account/5?user_id=10&workspace_id={WORKSPACE_ID}",
                 headers=INTERNAL_HEADERS
             )
         finally:
@@ -62,12 +62,12 @@ class TestGetExpensesByAccount:
         assert response.json() == []
 
     def test_missing_token_returns_403(self, client):
-        response = client.get("/internal/expenses/account/5?user_id=10")
+        response = client.get(f"/internal/expenses/account/5?user_id=10&workspace_id={WORKSPACE_ID}")
         assert response.status_code == 403
 
     def test_wrong_token_returns_403(self, client):
         response = client.get(
-            "/internal/expenses/account/5?user_id=10",
+            f"/internal/expenses/account/5?user_id=10&workspace_id={WORKSPACE_ID}",
             headers={"X-Internal-Token": "wrong-token"}
         )
         assert response.status_code == 403
@@ -77,7 +77,7 @@ class TestGetExpensesByAccount:
         app.dependency_overrides[get_expense_service_internal] = lambda: mock_service
         try:
             response = client.get(
-                "/internal/expenses/account/5?user_id=10&limit=5&offset=10",
+                f"/internal/expenses/account/5?user_id=10&workspace_id={WORKSPACE_ID}&limit=5&offset=10",
                 headers=INTERNAL_HEADERS
             )
         finally:
@@ -93,7 +93,7 @@ class TestGetExpensesByAccount:
         app.dependency_overrides[get_expense_service_internal] = lambda: mock_service
         try:
             response = client.get(
-                "/internal/expenses/account/5?user_id=10",
+                f"/internal/expenses/account/5?user_id=10&workspace_id={WORKSPACE_ID}",
                 headers=INTERNAL_HEADERS
             )
         finally:
@@ -109,7 +109,7 @@ class TestGetExpensesByAccount:
         app.dependency_overrides[get_expense_service_internal] = lambda: mock_service
         try:
             response = client.get(
-                "/internal/expenses/account/5?user_id=10&limit=9999",
+                f"/internal/expenses/account/5?user_id=10&workspace_id={WORKSPACE_ID}&limit=9999",
                 headers=INTERNAL_HEADERS
             )
         finally:
@@ -123,7 +123,7 @@ class TestGetExpensesByAccount:
         app.dependency_overrides[get_expense_service_internal] = lambda: mock_service
         try:
             response = client.get(
-                "/internal/expenses/account/5?user_id=10&offset=-1",
+                f"/internal/expenses/account/5?user_id=10&workspace_id={WORKSPACE_ID}&offset=-1",
                 headers=INTERNAL_HEADERS
             )
         finally:
@@ -205,14 +205,14 @@ class TestValidateAccountForExpenses:
 class TestInternalExpenseCreate:
     def test_missing_token_returns_403(self, client):
         response = client.post(
-            "/internal/?user_id=10",
+            f"/internal/?user_id=10&workspace_id={WORKSPACE_ID}",
             json={"amount": 50.0}
         )
         assert response.status_code == 403
 
     def test_invalid_token_returns_403(self, client):
         response = client.post(
-            "/internal/?user_id=10",
+            f"/internal/?user_id=10&workspace_id={WORKSPACE_ID}",
             json={"amount": 50.0},
             headers={"X-Internal-Token": "bad-token"}
         )
@@ -225,7 +225,7 @@ class TestInternalExpenseCreate:
         app.dependency_overrides[get_expense_service_internal] = lambda: mock_service
         try:
             response = client.post(
-                "/internal/?user_id=10",
+                f"/internal/?user_id=10&workspace_id={WORKSPACE_ID}",
                 json={"amount": 50.0},
                 headers=INTERNAL_HEADERS
             )
@@ -241,7 +241,7 @@ class TestInternalExpenseCreate:
         app.dependency_overrides[get_expense_service_internal] = lambda: mock_service
         try:
             response = client.post(
-                "/internal/?user_id=10",
+                f"/internal/?user_id=10&workspace_id={WORKSPACE_ID}",
                 json={"amount": -10.0},
                 headers=INTERNAL_HEADERS
             )

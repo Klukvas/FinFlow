@@ -24,7 +24,7 @@ WORKSPACE_HEADER = {"X-Workspace-Id": "550e8400-e29b-41d4-a716-446655440000"}
 class TestImprovedExpenseService:
     """Test improved expense service functionality"""
 
-    @patch("app.dependencies.decode_token")
+    @patch("shared.auth.dependencies.decode_token")
     @patch("app.clients.category_service_client.CategoryServiceClient.validate_category")
     def test_create_expense_with_validation(self, mock_validate, mock_decode):
         """Test expense creation with improved validation"""
@@ -48,7 +48,7 @@ class TestImprovedExpenseService:
         assert data["category_id"] == 1
         assert data["user_id"] == 1
 
-    @patch("app.dependencies.decode_token")
+    @patch("shared.auth.dependencies.decode_token")
     def test_create_expense_with_invalid_amount(self, mock_decode):
         """Test expense creation with invalid amount"""
         mock_decode.return_value = 1
@@ -71,7 +71,7 @@ class TestImprovedExpenseService:
         assert response.status_code == 400
         assert "Amount must be greater than 0" in response.json()["error"]
 
-    @patch("app.dependencies.decode_token")
+    @patch("shared.auth.dependencies.decode_token")
     def test_create_expense_with_invalid_description(self, mock_decode):
         """Test expense creation with invalid description"""
         mock_decode.return_value = 1
@@ -90,7 +90,7 @@ class TestImprovedExpenseService:
         assert response.status_code == 400
         assert "exceeds maximum length" in response.json()["error"]
 
-    @patch("app.dependencies.decode_token")
+    @patch("shared.auth.dependencies.decode_token")
     def test_create_expense_with_future_date(self, mock_decode):
         """Test expense creation with future date"""
         mock_decode.return_value = 1
@@ -108,7 +108,7 @@ class TestImprovedExpenseService:
         assert response.status_code == 400
         assert "cannot be in the future" in response.json()["error"]
 
-    @patch("app.dependencies.decode_token")
+    @patch("shared.auth.dependencies.decode_token")
     @patch("app.clients.category_service_client.CategoryServiceClient.validate_category")
     def test_create_expense_with_category_validation(self, mock_validate, mock_decode):
         """Test expense creation with category validation failure"""
@@ -124,7 +124,7 @@ class TestImprovedExpenseService:
         assert response.status_code == 503
         assert "Category does not exist" in response.json()["error"]
 
-    @patch("app.dependencies.decode_token")
+    @patch("shared.auth.dependencies.decode_token")
     @patch("app.clients.category_service_client.CategoryServiceClient.validate_category")
     def test_update_expense_with_validation(self, mock_validate, mock_decode):
         """Test expense update with validation"""
@@ -151,7 +151,7 @@ class TestImprovedExpenseService:
         assert data["amount"] == 30.00
         assert data["description"] == "Updated lunch"
 
-    @patch("app.dependencies.decode_token")
+    @patch("shared.auth.dependencies.decode_token")
     def test_get_expense_not_found(self, mock_decode):
         """Test getting non-existent expense"""
         mock_decode.return_value = 1
@@ -163,7 +163,7 @@ class TestImprovedExpenseService:
         assert response.status_code == 404
         assert "Expense with ID 999 not found" in response.json()["error"]
 
-    @patch("app.dependencies.decode_token")
+    @patch("shared.auth.dependencies.decode_token")
     @patch("app.clients.category_service_client.CategoryServiceClient.validate_category")
     def test_get_expenses_by_category(self, mock_validate, mock_decode):
         """Test getting expenses by category"""
@@ -187,7 +187,7 @@ class TestImprovedExpenseService:
         assert "expenses" in data
         assert len(data["expenses"]) >= 1
 
-    @patch("app.dependencies.decode_token")
+    @patch("shared.auth.dependencies.decode_token")
     @patch("app.clients.category_service_client.CategoryServiceClient.validate_category")
     def test_get_expenses_by_date_range(self, mock_validate, mock_decode):
         """Test getting expenses by date range"""
@@ -234,7 +234,7 @@ class TestImprovedExpenseService:
         assert data["status"] == "healthy"
         assert data["service"] == "expense-service"
 
-    @patch("app.dependencies.decode_token")
+    @patch("shared.auth.dependencies.decode_token")
     @patch("app.clients.category_service_client.CategoryServiceClient.validate_category")
     def test_amount_precision_handling(self, mock_validate, mock_decode):
         """Test amount precision handling"""
@@ -255,7 +255,7 @@ class TestImprovedExpenseService:
         data = response.json()
         assert data["amount"] == 25.56
 
-    @patch("app.dependencies.decode_token")
+    @patch("shared.auth.dependencies.decode_token")
     @patch("app.clients.category_service_client.CategoryServiceClient.validate_category")
     def test_description_whitespace_handling(self, mock_validate, mock_decode):
         """Test description whitespace handling"""
@@ -276,7 +276,7 @@ class TestImprovedExpenseService:
         data = response.json()
         assert data["description"] == "Lunch at restaurant"  # Should be trimmed
 
-    @patch("app.dependencies.decode_token")
+    @patch("shared.auth.dependencies.decode_token")
     @patch("app.clients.category_service_client.CategoryServiceClient.validate_category")
     def test_empty_description_handling(self, mock_validate, mock_decode):
         """Test empty description handling"""

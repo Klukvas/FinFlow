@@ -16,7 +16,7 @@ class TestReadSingleExpense:
         category_id = 456
         amount = float(fake.pydecimal(left_digits=2, right_digits=2, positive=True))
 
-        with patch("app.dependencies.decode_token") as mock_decode, \
+        with patch("shared.auth.dependencies.decode_token") as mock_decode, \
              patch("app.clients.category_service_client.CategoryServiceClient.validate_category") as mock_validate:
 
             mock_decode.return_value = user_id
@@ -47,7 +47,7 @@ class TestReadSingleExpense:
     def test_get_expense_by_id_not_found(self, client: TestClient):
         user_id = randint(1000, 2000)
 
-        with patch("app.dependencies.decode_token") as mock_decode:
+        with patch("shared.auth.dependencies.decode_token") as mock_decode:
             mock_decode.return_value = user_id
             response = client.get(
                 "/expenses/99999",
@@ -62,7 +62,7 @@ class TestReadSingleExpense:
         category_id = 456
         amount = float(fake.pydecimal(left_digits=2, right_digits=2, positive=True))
 
-        with patch("app.dependencies.decode_token") as mock_decode, \
+        with patch("shared.auth.dependencies.decode_token") as mock_decode, \
              patch("app.clients.category_service_client.CategoryServiceClient.validate_category") as mock_validate:
 
             mock_decode.return_value = user1_id

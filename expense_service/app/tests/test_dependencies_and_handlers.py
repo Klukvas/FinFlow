@@ -294,7 +294,7 @@ class TestDependencyIntegration:
         # Remove the override to test the real dependency
         app.dependency_overrides.pop(gw, None)
         try:
-            with patch("app.dependencies.decode_token", return_value=1):
+            with patch("shared.auth.dependencies.decode_token", return_value=1):
                 response = http_client.get(
                     "/expenses/",
                     headers={"Authorization": "Bearer dummy"}
@@ -311,7 +311,7 @@ class TestDependencyIntegration:
         orig_override = app.dependency_overrides.get(gw)
         app.dependency_overrides.pop(gw, None)
         try:
-            with patch("app.dependencies.decode_token", return_value=1):
+            with patch("shared.auth.dependencies.decode_token", return_value=1):
                 response = http_client.get(
                     "/expenses/",
                     headers={

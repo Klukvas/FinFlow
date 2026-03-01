@@ -15,7 +15,7 @@ class TestReadExpenses:
     def test_get_expenses_empty(self, client: TestClient):
         user_id = randint(1000, 2000)
 
-        with patch("app.dependencies.decode_token") as mock_decode:
+        with patch("shared.auth.dependencies.decode_token") as mock_decode:
             mock_decode.return_value = user_id
             response = client.get(
                 "/expenses/",
@@ -29,7 +29,7 @@ class TestReadExpenses:
         user_id = randint(1000, 2000)
         category_id = 20
 
-        with patch("app.dependencies.decode_token") as mock_decode, \
+        with patch("shared.auth.dependencies.decode_token") as mock_decode, \
              patch("app.clients.category_service_client.CategoryServiceClient.validate_category") as mock_validate:
 
             mock_decode.return_value = user_id

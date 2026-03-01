@@ -17,7 +17,7 @@ class TestUpdateExpense:
         user_id = randint(1000, 2000)
         category_id = 20
 
-        with patch("app.dependencies.decode_token") as mock_decode, \
+        with patch("shared.auth.dependencies.decode_token") as mock_decode, \
              patch("app.clients.category_service_client.CategoryServiceClient.validate_category") as mock_validate:
             mock_decode.return_value = user_id
             mock_validate.return_value = {"user_id": user_id, "category_id": category_id}
@@ -52,7 +52,7 @@ class TestUpdateExpense:
     def test_update_expense_not_found(self, client: TestClient):
         user_id = randint(1000, 2000)
 
-        with patch("app.dependencies.decode_token") as mock_decode:
+        with patch("shared.auth.dependencies.decode_token") as mock_decode:
             mock_decode.return_value = user_id
             response = client.patch(
                 "/expenses/99999",
@@ -68,7 +68,7 @@ class TestUpdateExpense:
         user2_id = randint(2000, 3000)
         category_id = 20
 
-        with patch("app.dependencies.decode_token") as mock_decode, \
+        with patch("shared.auth.dependencies.decode_token") as mock_decode, \
              patch("app.clients.category_service_client.CategoryServiceClient.validate_category") as mock_validate:
             mock_decode.return_value = user1_id
             mock_validate.return_value = {"user_id": user1_id, "category_id": category_id}
@@ -101,7 +101,7 @@ class TestUpdateExpense:
         category_id = 20
         new_category_id = 30
 
-        with patch("app.dependencies.decode_token") as mock_decode, \
+        with patch("shared.auth.dependencies.decode_token") as mock_decode, \
              patch("app.clients.category_service_client.CategoryServiceClient.validate_category") as mock_validate:
             mock_decode.return_value = user_id
             mock_validate.return_value = {"user_id": user_id, "category_id": category_id}

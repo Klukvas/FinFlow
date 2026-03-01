@@ -19,7 +19,7 @@ class TestCreateExpense:
             "category_id": category_id
         }
 
-        with patch("app.dependencies.decode_token") as mock_decode, \
+        with patch("shared.auth.dependencies.decode_token") as mock_decode, \
              patch("app.clients.category_service_client.CategoryServiceClient.validate_category") as mock_validate:
 
             mock_decode.return_value = user_id
@@ -44,7 +44,7 @@ class TestCreateExpense:
             "category_id": 999
         }
 
-        with patch("app.dependencies.decode_token") as mock_decode, \
+        with patch("shared.auth.dependencies.decode_token") as mock_decode, \
              patch("app.clients.category_service_client.CategoryServiceClient.validate_category") as mock_validate:
 
             mock_decode.return_value = user_id

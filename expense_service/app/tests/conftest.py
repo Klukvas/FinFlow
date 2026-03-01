@@ -18,7 +18,7 @@ from uuid import UUID
 
 from app.main import app
 from app.database import Base
-from app.dependencies import get_db, get_workspace_id, get_current_user_id
+from app.dependencies import get_db, get_workspace_id
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 

@@ -15,7 +15,7 @@ class TestDeleteExpense:
         user_id = randint(1000, 2000)
         category_id = 20
 
-        with patch("app.dependencies.decode_token") as mock_decode, \
+        with patch("shared.auth.dependencies.decode_token") as mock_decode, \
              patch("app.clients.category_service_client.CategoryServiceClient.validate_category") as mock_validate:
             mock_decode.return_value = user_id
             mock_validate.return_value = {"user_id": user_id, "category_id": category_id}
@@ -38,12 +38,12 @@ class TestDeleteExpense:
                 f"/expenses/{expense_id}",
                 headers={"Authorization": "Bearer 123", **WORKSPACE_HEADER}
             )
-            assert delete_resp.status_code == status.HTTP_200_OK
+            assert delete_resp.status_code == status.HTTP_204_NO_CONTENT
 
     def test_delete_expense_not_found(self, client: TestClient):
         user_id = randint(1000, 2000)
 
-        with patch("app.dependencies.decode_token") as mock_decode:
+        with patch("shared.auth.dependencies.decode_token") as mock_decode:
             mock_decode.return_value = user_id
             response = client.delete(
                 "/expenses/99999",
@@ -57,7 +57,7 @@ class TestDeleteExpense:
         user2_id = randint(2000, 3000)
         category_id = 20
 
-        with patch("app.dependencies.decode_token") as mock_decode, \
+        with patch("shared.auth.dependencies.decode_token") as mock_decode, \
              patch("app.clients.category_service_client.CategoryServiceClient.validate_category") as mock_validate:
             mock_decode.return_value = user1_id
             mock_validate.return_value = {"user_id": user1_id, "category_id": category_id}

@@ -22,7 +22,7 @@ def client():
 
 class TestPaginatedExpenses:
     def test_paginated_endpoint_returns_list_response(self, client):
-        with patch("app.dependencies.decode_token", return_value=1), \
+        with patch("shared.auth.dependencies.decode_token", return_value=1), \
              patch("app.services.expense.ExpenseService.get_all_paginated", return_value=([], 0)):
             response = client.get(
                 "/expenses/paginated?page=1&size=10",
@@ -42,7 +42,7 @@ class TestPaginatedExpenses:
         assert data["pages"] == 0
 
     def test_paginated_endpoint_page_2(self, client):
-        with patch("app.dependencies.decode_token", return_value=1), \
+        with patch("shared.auth.dependencies.decode_token", return_value=1), \
              patch("app.services.expense.ExpenseService.get_all_paginated", return_value=([], 25)):
             response = client.get(
                 "/expenses/paginated?page=2&size=10",
@@ -55,7 +55,7 @@ class TestPaginatedExpenses:
         assert data["pages"] == 3  # ceil(25/10) = 3
 
     def test_paginated_endpoint_calculates_pages_correctly(self, client):
-        with patch("app.dependencies.decode_token", return_value=1), \
+        with patch("shared.auth.dependencies.decode_token", return_value=1), \
              patch("app.services.expense.ExpenseService.get_all_paginated", return_value=([], 100)):
             response = client.get(
                 "/expenses/paginated?page=1&size=10",
@@ -66,7 +66,7 @@ class TestPaginatedExpenses:
 
     def test_paginated_endpoint_default_values(self, client):
         """Default page=1, size=50."""
-        with patch("app.dependencies.decode_token", return_value=1), \
+        with patch("shared.auth.dependencies.decode_token", return_value=1), \
              patch("app.services.expense.ExpenseService.get_all_paginated", return_value=([], 5)):
             response = client.get(
                 "/expenses/paginated",
@@ -79,7 +79,7 @@ class TestPaginatedExpenses:
 
     def test_paginated_endpoint_size_exceeds_max_returns_400(self, client):
         """size > 100 should return validation error."""
-        with patch("app.dependencies.decode_token", return_value=1):
+        with patch("shared.auth.dependencies.decode_token", return_value=1):
             response = client.get(
                 "/expenses/paginated?size=200",
                 headers={"Authorization": "Bearer token", **WORKSPACE_HEADER}
@@ -102,7 +102,7 @@ class TestCurrentMonthCount:
         """Since /current-month-count comes after /{expense_id} in routing,
         the path is matched by /{expense_id} first, which expects an integer.
         The custom validation handler returns 400."""
-        with patch("app.dependencies.decode_token", return_value=1):
+        with patch("shared.auth.dependencies.decode_token", return_value=1):
             response = client.get(
                 "/expenses/current-month-count",
                 headers={"Authorization": "Bearer token", **WORKSPACE_HEADER}
