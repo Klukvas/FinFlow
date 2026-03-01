@@ -24,6 +24,7 @@ from app.exceptions import (
     SyncInProgressError,
     RateLimitError,
     ExternalServiceError,
+    TransactionLimitExceededError,
 )
 from app.utils.logger import get_logger
 from shared.auth.workspace_auth import WorkspaceAuthorizationMixin
@@ -189,17 +190,38 @@ class SyncService(WorkspaceAuthorizationMixin):
         self.db.refresh(linked)
         return linked
 
-    async def sync_connection(
-        self,
-        connection_id: int,
-        user_id: int,
-        workspace_id: UUID,
-        account_ids: list[int] | None = None,
-        days_back: int = 30,
-    ) -> SyncLog:
-        connection = self.get_connection(connection_id, user_id, workspace_id)
+    def _get_linked_accounts(
+        self, connection: BankConnection, account_ids: list[int] | None = None,
+    ) -> list[LinkedAccount]:
+        """Get linked accounts that are synced and mapped to FinFlow accounts."""
+        query = self.db.query(LinkedAccount).filter(
+            LinkedAccount.connection_id == connection.id,
+            LinkedAccount.is_synced.is_(True),
+        )
+        if account_ids:
+            query = query.filter(LinkedAccount.id.in_(account_ids))
+        accounts = query.all()
 
-        # Check no sync currently in progress
+        unlinked = [a for a in accounts if not a.finflow_account_id]
+        if unlinked:
+            logger.warning(
+                f"Skipping {len(unlinked)} accounts not linked to FinFlow",
+                extra={"connection_id": connection.id},
+            )
+        return [a for a in accounts if a.finflow_account_id]
+
+    def _enforce_rate_limit(self, connection: BankConnection) -> None:
+        """Enforce minimum cooldown between syncs."""
+        if connection.last_sync_at:
+            last_sync = connection.last_sync_at
+            if last_sync.tzinfo is None:
+                last_sync = last_sync.replace(tzinfo=timezone.utc)
+            elapsed = (_utcnow() - last_sync).total_seconds()
+            if elapsed < 60:
+                raise RateLimitError(int(60 - elapsed) + 1)
+
+    def _check_no_active_sync(self, connection: BankConnection) -> None:
+        """Raise if a sync is already in progress."""
         active_sync = (
             self.db.query(SyncLog)
             .filter(
@@ -209,36 +231,242 @@ class SyncService(WorkspaceAuthorizationMixin):
             .first()
         )
         if active_sync:
-            raise SyncInProgressError(connection_id)
+            raise SyncInProgressError(connection.id)
 
-        # Enforce minimum cooldown between syncs (handle both naive and aware datetimes)
-        if connection.last_sync_at:
-            last_sync = connection.last_sync_at
-            if last_sync.tzinfo is None:
-                last_sync = last_sync.replace(tzinfo=timezone.utc)
-            elapsed = (_utcnow() - last_sync).total_seconds()
-            if elapsed < 60:
-                raise RateLimitError(int(60 - elapsed) + 1)
+    async def _fetch_and_map_transactions(
+        self,
+        connection: BankConnection,
+        linked_accounts: list[LinkedAccount],
+        user_id: int,
+        workspace_id: UUID,
+        days_back: int,
+    ) -> tuple[list[dict], int, int]:
+        """Fetch statements, deduplicate, map to FinFlow format, resolve MCC categories.
 
+        Returns (mapped_transactions, total_found, total_skipped).
+        """
         token = encryption.decrypt(connection.encrypted_token)
+        now = _utcnow()
+        all_mapped: list[dict] = []
+        total_found = 0
+        total_skipped = 0
 
-        # Get accounts to sync
-        query = self.db.query(LinkedAccount).filter(
-            LinkedAccount.connection_id == connection.id,
-            LinkedAccount.is_synced.is_(True),
-        )
-        if account_ids:
-            query = query.filter(LinkedAccount.id.in_(account_ids))
-        accounts = query.all()
+        for linked_account in linked_accounts:
+            from_ts = int((now - timedelta(days=days_back)).timestamp())
+            to_ts = int(now.timestamp())
 
-        # Warn about unlinked accounts
-        unlinked = [a for a in accounts if not a.finflow_account_id]
-        if unlinked:
-            logger.warning(
-                f"Skipping {len(unlinked)} accounts not linked to FinFlow",
-                extra={"connection_id": connection_id},
+            await monobank_client.wait_for_rate_limit(token)
+
+            statements = await monobank_client.get_statements(
+                token,
+                linked_account.external_account_id,
+                from_ts,
+                to_ts,
             )
-        linked_accounts = [a for a in accounts if a.finflow_account_id]
+
+            total_found += len(statements)
+
+            # Batch deduplication
+            external_ids = [item.id for item in statements]
+            existing_ids: set[str] = set()
+            if external_ids:
+                existing_rows = (
+                    self.db.query(SyncedTransaction.external_transaction_id)
+                    .filter(
+                        SyncedTransaction.connection_id == connection.id,
+                        SyncedTransaction.external_transaction_id.in_(external_ids),
+                    )
+                    .all()
+                )
+                existing_ids = {row[0] for row in existing_rows}
+
+            for item in statements:
+                mapped = self.mapper.map_to_finflow(
+                    item,
+                    linked_account.finflow_account_id,
+                )
+                if mapped is None:
+                    total_skipped += 1
+                    continue
+
+                if mapped["external_id"] in existing_ids:
+                    total_skipped += 1
+                    continue
+
+                # Resolve MCC category
+                cat_result = await self.category_client.get_category_by_mcc(
+                    mapped["mcc"], user_id, str(workspace_id)
+                )
+                if cat_result and "id" in cat_result:
+                    mapped["data"]["category_id"] = cat_result["id"]
+                    mapped["category_id"] = cat_result["id"]
+                    mapped["category_name"] = cat_result.get("name")
+
+                all_mapped.append(mapped)
+
+        return all_mapped, total_found, total_skipped
+
+    async def preview_sync(
+        self,
+        connection_id: int,
+        user_id: int,
+        workspace_id: UUID,
+        account_ids: list[int] | None = None,
+        days_back: int = 30,
+    ) -> dict:
+        """Fetch and preview transactions without creating anything."""
+        connection = self.get_connection(connection_id, user_id, workspace_id)
+        self._enforce_rate_limit(connection)
+
+        linked_accounts = self._get_linked_accounts(connection, account_ids)
+
+        mapped_txns, total_found, total_skipped = await self._fetch_and_map_transactions(
+            connection, linked_accounts, user_id, workspace_id, days_back
+        )
+
+        # Update last_sync_at so rate limit applies to preview calls too
+        connection.last_sync_at = _utcnow()
+        self.db.commit()
+
+        transactions = [
+            {
+                "external_id": m["external_id"],
+                "type": m["type"],
+                "amount": m["data"]["amount"],
+                "currency": m["data"].get("currency", "UAH"),
+                "date": m["data"]["date"],
+                "description": m["data"].get("description", ""),
+                "mcc": m.get("mcc"),
+                "category_id": m.get("category_id"),
+                "category_name": m.get("category_name"),
+                "account_id": m["data"]["account_id"],
+            }
+            for m in mapped_txns
+        ]
+
+        return {
+            "transactions": transactions,
+            "total_found": total_found,
+            "total_new": len(mapped_txns),
+            "total_skipped": total_skipped,
+        }
+
+    async def confirm_sync(
+        self,
+        connection_id: int,
+        user_id: int,
+        workspace_id: UUID,
+        transactions: list[dict],
+        days_back: int = 30,
+    ) -> SyncLog:
+        """Create selected transactions and record a SyncLog."""
+        connection = self.get_connection(connection_id, user_id, workspace_id)
+        self._check_no_active_sync(connection)
+
+        now = _utcnow()
+        sync_log = SyncLog(
+            connection_id=connection.id,
+            status="in_progress",
+            sync_from=now - timedelta(days=days_back),
+            sync_to=now,
+        )
+        self.db.add(sync_log)
+        self.db.flush()
+
+        total_imported = 0
+        total_skipped = 0
+        errors: list[str] = []
+        expense_limit_hit = False
+        income_limit_hit = False
+
+        try:
+            for txn in transactions:
+                if txn["type"] == "expense" and expense_limit_hit:
+                    total_skipped += 1
+                    continue
+                if txn["type"] == "income" and income_limit_hit:
+                    total_skipped += 1
+                    continue
+
+                create_data = {
+                    "amount": str(txn["amount"]),
+                    "currency": txn.get("currency", "UAH"),
+                    "date": str(txn["date"]),
+                    "description": txn.get("description", ""),
+                    "account_id": txn["account_id"],
+                }
+                if txn.get("category_id"):
+                    create_data["category_id"] = txn["category_id"]
+
+                try:
+                    if txn["type"] == "expense":
+                        result = await self.expense_client.create_expense(
+                            create_data, user_id, str(workspace_id)
+                        )
+                    else:
+                        result = await self.income_client.create_income(
+                            create_data, user_id, str(workspace_id)
+                        )
+
+                    finflow_id = result.get("id", 0)
+
+                    synced = SyncedTransaction(
+                        connection_id=connection.id,
+                        external_transaction_id=txn["external_id"],
+                        finflow_type=txn["type"],
+                        finflow_id=finflow_id,
+                        amount=create_data["amount"],
+                        date=create_data["date"],
+                        description=create_data.get("description"),
+                    )
+                    self.db.add(synced)
+                    total_imported += 1
+
+                except TransactionLimitExceededError as e:
+                    if e.transaction_type == "expense":
+                        expense_limit_hit = True
+                        errors.append("Expense limit reached. Upgrade your plan to sync more.")
+                    elif e.transaction_type == "income":
+                        income_limit_hit = True
+                        errors.append("Income limit reached. Upgrade your plan to sync more.")
+                    else:
+                        logger.error(f"Unknown transaction type in limit error: {e.transaction_type}")
+                    total_skipped += 1
+                    logger.warning(f"Subscription limit hit for {e.transaction_type}")
+
+                except Exception as e:
+                    logger.error(f"Failed to create {txn['type']}: {e}")
+                    errors.append(f"Failed to create {txn['type']}")
+                    total_skipped += 1
+
+        finally:
+            sync_log.status = "completed" if not errors else "completed_with_errors"
+            sync_log.transactions_found = len(transactions)
+            sync_log.transactions_imported = total_imported
+            sync_log.transactions_skipped = total_skipped
+            sync_log.error_message = "; ".join(errors) if errors else None
+            sync_log.completed_at = _utcnow()
+
+            connection.last_sync_at = _utcnow()
+
+            self.db.commit()
+            self.db.refresh(sync_log)
+
+        return sync_log
+
+    async def sync_connection(
+        self,
+        connection_id: int,
+        user_id: int,
+        workspace_id: UUID,
+        account_ids: list[int] | None = None,
+        days_back: int = 30,
+    ) -> SyncLog:
+        connection = self.get_connection(connection_id, user_id, workspace_id)
+        self._check_no_active_sync(connection)
+        self._enforce_rate_limit(connection)
+
+        linked_accounts = self._get_linked_accounts(connection, account_ids)
 
         now = _utcnow()
         sync_log = SyncLog(
@@ -254,97 +482,64 @@ class SyncService(WorkspaceAuthorizationMixin):
         total_imported = 0
         total_skipped = 0
         errors: list[str] = []
+        expense_limit_hit = False
+        income_limit_hit = False
 
         try:
-            for linked_account in linked_accounts:
+            mapped_txns, total_found, total_skipped = await self._fetch_and_map_transactions(
+                connection, linked_accounts, user_id, workspace_id, days_back
+            )
+
+            for mapped in mapped_txns:
+                if mapped["type"] == "expense" and expense_limit_hit:
+                    total_skipped += 1
+                    continue
+                if mapped["type"] == "income" and income_limit_hit:
+                    total_skipped += 1
+                    continue
+
                 try:
-                    from_ts = int((now - timedelta(days=days_back)).timestamp())
-                    to_ts = int(now.timestamp())
+                    if mapped["type"] == "expense":
+                        result = await self.expense_client.create_expense(
+                            mapped["data"], user_id, str(workspace_id)
+                        )
+                    else:
+                        result = await self.income_client.create_income(
+                            mapped["data"], user_id, str(workspace_id)
+                        )
 
-                    # Wait for rate limit before each Monobank API call
-                    await monobank_client.wait_for_rate_limit(token)
+                    finflow_id = result.get("id", 0)
 
-                    statements = await monobank_client.get_statements(
-                        token,
-                        linked_account.external_account_id,
-                        from_ts,
-                        to_ts,
+                    synced = SyncedTransaction(
+                        connection_id=connection.id,
+                        external_transaction_id=mapped["external_id"],
+                        finflow_type=mapped["type"],
+                        finflow_id=finflow_id,
+                        amount=mapped["data"]["amount"],
+                        date=mapped["data"]["date"],
+                        description=mapped["data"].get("description"),
                     )
+                    self.db.add(synced)
+                    total_imported += 1
 
-                    total_found += len(statements)
-
-                    # Batch deduplication: single query scoped by connection
-                    external_ids = [item.id for item in statements]
-                    existing_ids: set[str] = set()
-                    if external_ids:
-                        existing_rows = (
-                            self.db.query(SyncedTransaction.external_transaction_id)
-                            .filter(
-                                SyncedTransaction.connection_id == connection.id,
-                                SyncedTransaction.external_transaction_id.in_(external_ids),
-                            )
-                            .all()
-                        )
-                        existing_ids = {row[0] for row in existing_rows}
-
-                    for item in statements:
-                        mapped = self.mapper.map_to_finflow(
-                            item,
-                            linked_account.finflow_account_id,
-                        )
-                        if mapped is None:
-                            total_skipped += 1
-                            continue
-
-                        if mapped["external_id"] in existing_ids:
-                            total_skipped += 1
-                            continue
-
-                        # Try to get category by MCC (client already handles errors gracefully)
-                        cat_result = await self.category_client.get_category_by_mcc(
-                            mapped["mcc"], user_id, str(workspace_id)
-                        )
-                        if cat_result and "id" in cat_result:
-                            mapped["data"]["category_id"] = cat_result["id"]
-
-                        # Create expense or income
-                        try:
-                            if mapped["type"] == "expense":
-                                result = await self.expense_client.create_expense(
-                                    mapped["data"], user_id, str(workspace_id)
-                                )
-                            else:
-                                result = await self.income_client.create_income(
-                                    mapped["data"], user_id, str(workspace_id)
-                                )
-
-                            finflow_id = result.get("id", 0)
-
-                            synced = SyncedTransaction(
-                                connection_id=connection.id,
-                                external_transaction_id=mapped["external_id"],
-                                finflow_type=mapped["type"],
-                                finflow_id=finflow_id,
-                                amount=mapped["data"]["amount"],
-                                date=mapped["data"]["date"],
-                                description=mapped["data"].get("description"),
-                            )
-                            self.db.add(synced)
-                            total_imported += 1
-
-                        except Exception as e:
-                            logger.error(f"Failed to create {mapped['type']}: {e}")
-                            errors.append(f"Failed to create {mapped['type']}")
-                            total_skipped += 1
-
-                    linked_account.last_sync_at = now
+                except TransactionLimitExceededError as e:
+                    if e.transaction_type == "expense":
+                        expense_limit_hit = True
+                        errors.append("Expense limit reached. Upgrade your plan to sync more.")
+                    elif e.transaction_type == "income":
+                        income_limit_hit = True
+                        errors.append("Income limit reached. Upgrade your plan to sync more.")
+                    else:
+                        logger.error(f"Unknown transaction type in limit error: {e.transaction_type}")
+                    total_skipped += 1
+                    logger.warning(f"Subscription limit hit for {e.transaction_type}")
 
                 except Exception as e:
-                    logger.error(f"Failed to sync account {linked_account.id}: {e}")
-                    errors.append(f"Account {linked_account.external_account_id}: sync failed")
+                    logger.error(f"Failed to create {mapped['type']}: {e}")
+                    errors.append(f"Failed to create {mapped['type']}")
+                    total_skipped += 1
 
         finally:
-            # Always finalize SyncLog — never leave it stuck in "in_progress"
             sync_log.status = "completed" if not errors else "completed_with_errors"
             sync_log.transactions_found = total_found
             sync_log.transactions_imported = total_imported

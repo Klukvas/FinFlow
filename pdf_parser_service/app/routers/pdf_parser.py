@@ -33,7 +33,7 @@ subscription_client = SubscriptionClient()
 
 @router.post("/parse", response_model=PDFParseResponse)
 async def parse_pdf(
-    file: UploadFile = File(..., description="PDF file to parse"),
+    file: UploadFile = File(..., description="Bank statement file to parse (PDF, XLSX, or CSV)"),
     bank_type: Optional[str] = Form(None, description="Specific bank type (optional)"),
     language: str = Form("en", description="Language for MCC category translations (ru, uk, en)"),
     user_id: int = Depends(get_current_user_id),
@@ -93,26 +93,31 @@ async def parse_pdf(
         logger.info(f"Received file upload request: {file.filename}, size: {file.size}, type: {file.content_type}")
         
         # Validate file type (MIME type check)
-        if file.content_type != "application/pdf":
+        allowed_types = {
+            "application/pdf",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "text/csv",
+        }
+        if file.content_type not in allowed_types:
             logger.warning(f"Invalid file type: {file.content_type}")
             raise FileProcessingError(
-                "Only PDF files are supported",
+                "Only PDF, XLSX, and CSV files are supported",
                 ErrorCodes.INVALID_FILE_TYPE
             )
+
+        is_xlsx = file.content_type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        is_csv = file.content_type == "text/csv"
         
         # Create upload directory if it doesn't exist
         os.makedirs(settings.upload_directory, exist_ok=True)
         
         # Generate unique filename with sanitized extension
         file_id = str(uuid.uuid4())
-        # Sanitize filename - only allow .pdf extension, prevent path traversal
-        if file.filename:
-            original_extension = os.path.splitext(file.filename)[1].lower()
-            # Only allow .pdf extension
-            if original_extension != ".pdf":
-                file_extension = ".pdf"
-            else:
-                file_extension = ".pdf"
+        # Sanitize filename - only allow .pdf/.xlsx/.csv extension, prevent path traversal
+        if is_csv:
+            file_extension = ".csv"
+        elif is_xlsx:
+            file_extension = ".xlsx"
         else:
             file_extension = ".pdf"
         
@@ -134,20 +139,45 @@ async def parse_pdf(
                 content = await file.read()
                 buffer.write(content)
             
-            # Validate actual PDF content (magic bytes)
+            # Validate actual file content (magic bytes)
             with open(temp_file_path, "rb") as f:
                 header = f.read(5)
-                if not header.startswith(b"%PDF-"):
-                    raise FileProcessingError(
-                        "File is not a valid PDF (invalid header)",
-                        ErrorCodes.INVALID_PDF_FORMAT
-                    )
+                if is_csv:
+                    # CSV files are plain text — read larger sample to validate
+                    with open(temp_file_path, "rb") as f2:
+                        sample = f2.read(4096)
+                    try:
+                        sample.decode("utf-8")
+                    except UnicodeDecodeError:
+                        raise FileProcessingError(
+                            "File is not a valid CSV (not valid text)",
+                            ErrorCodes.INVALID_PDF_FORMAT
+                        )
+                elif is_xlsx:
+                    # XLSX files are ZIP archives — magic bytes PK\x03\x04
+                    if not header[:4] == b"PK\x03\x04":
+                        raise FileProcessingError(
+                            "File is not a valid XLSX (invalid header)",
+                            ErrorCodes.INVALID_PDF_FORMAT
+                        )
+                else:
+                    if not header.startswith(b"%PDF-"):
+                        raise FileProcessingError(
+                            "File is not a valid PDF (invalid header)",
+                            ErrorCodes.INVALID_PDF_FORMAT
+                        )
             
-            logger.info(f"Processing PDF file: {file.filename} (ID: {file_id})")
+            logger.info(f"Processing file: {file.filename} (ID: {file_id}, type: {'xlsx' if is_xlsx else 'pdf'})")
             
-            # Parse PDF
+            # Parse statement
             from app.models.transaction import BankType
-            bank_type_enum = BankType(bank_type) if bank_type else None
+            try:
+                bank_type_enum = BankType(bank_type) if bank_type else None
+            except ValueError:
+                raise FileProcessingError(
+                    f"Unsupported bank type: {bank_type}",
+                    ErrorCodes.VALIDATION_ERROR
+                )
             
             result = await pdf_parser_service.parse_pdf(temp_file_path, bank_type_enum, language, user_id)
 

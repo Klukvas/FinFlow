@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Database Seed Script — Creates a demo user with a year of realistic platform usage.
+Database Seed Script — Creates 3 demo users (Free/Pro/Enterprise) with 2 years of data.
 
 Usage:
     python scripts/seed_demo_data.py [--host localhost] [--port 5433] [--clean]
@@ -12,9 +12,10 @@ Options:
     --password  PostgreSQL password (default: postgres)
     --clean     Delete existing demo data before seeding
 
-Demo credentials:
-    Email:    demo@example.com
-    Password: Demo1234!
+Demo credentials (all passwords: Demo1234!):
+    Free user:       free@demo.finflow.ltd       (basic plan)
+    Pro user:        pro@demo.finflow.ltd        (professional plan)
+    Enterprise user: enterprise@demo.finflow.ltd (enterprise plan)
 """
 
 import argparse
@@ -31,11 +32,8 @@ from psycopg2.extras import execute_values
 # Configuration
 # ──────────────────────────────────────────────────────────────
 
-DEMO_EMAIL = "demo@example.com"
 DEMO_PASSWORD = "Demo1234!"
-DEMO_CURRENCY = "USD"
 
-# Databases (one per service)
 DATABASES = {
     "user": "user_db",
     "workspace": "workspace_db",
@@ -49,55 +47,89 @@ DATABASES = {
     "recurring": "recurring_db",
 }
 
-# Date range: past 12 months
 NOW = datetime.now(timezone.utc)
-ONE_YEAR_AGO = NOW - timedelta(days=365)
-USER_CREATED_AT = ONE_YEAR_AGO
+TWO_YEARS_AGO = NOW - timedelta(days=730)
+USER_CREATED_AT = TWO_YEARS_AGO
 
 # ──────────────────────────────────────────────────────────────
-# Helpers
+# User profiles
 # ──────────────────────────────────────────────────────────────
 
-def get_conn(db_name: str, host: str, port: int, user: str, password: str):
-    return psycopg2.connect(
-        dbname=db_name, host=host, port=port, user=user, password=password
-    )
-
-
-def random_date_in_month(year: int, month: int) -> date:
-    """Return a random date within the given month."""
-    if month == 12:
-        max_day = 31
-    else:
-        next_month = date(year, month + 1, 1)
-        max_day = (next_month - timedelta(days=1)).day
-    day = random.randint(1, max_day)
-    return date(year, month, day)
-
-
-def random_datetime_in_month(year: int, month: int) -> datetime:
-    """Return a random datetime within the given month."""
-    d = random_date_in_month(year, month)
-    hour = random.randint(8, 22)
-    minute = random.randint(0, 59)
-    return datetime(d.year, d.month, d.day, hour, minute, 0, tzinfo=timezone.utc)
-
-
-def months_in_range():
-    """Yield (year, month) tuples for the past 12 months."""
-    current = ONE_YEAR_AGO.replace(day=1)
-    end = NOW.replace(day=1)
-    while current <= end:
-        # Don't generate data for future dates
-        yield current.year, current.month
-        if current.month == 12:
-            current = current.replace(year=current.year + 1, month=1)
-        else:
-            current = current.replace(month=current.month + 1)
-
+PROFILES = [
+    {
+        "email": "free@demo.finflow.ltd",
+        "plan": "basic",
+        "currency": "USD",
+        "accounts": [
+            ("Cash Wallet", "CASH", "USD", 312.40),
+            ("Main Bank Account", "BANK", "USD", 1580.25),
+        ],
+        "expense_categories": ["Food & Groceries", "Transport", "Housing & Utilities"],
+        "income_types": ["salary", "rare_freelance"],
+        "expense_freq_multiplier": 0.55,  # ~20 txns/month
+        "goals_count": 1,
+        "debts_count": 1,
+        "recurring_count": 2,
+        "monthly_budgets": {},
+    },
+    {
+        "email": "pro@demo.finflow.ltd",
+        "plan": "professional",
+        "currency": "USD",
+        "accounts": [
+            ("Cash Wallet", "CASH", "USD", 487.50),
+            ("Main Bank Account", "BANK", "USD", 3215.80),
+            ("Savings Account", "BANK", "USD", 8450.00),
+        ],
+        "expense_categories": [
+            "Food & Groceries", "Transport", "Housing & Utilities",
+            "Entertainment", "Shopping", "Health", "Education",
+        ],
+        "income_types": ["salary", "freelance", "investments"],
+        "expense_freq_multiplier": 1.0,  # ~35 txns/month
+        "goals_count": 2,
+        "debts_count": 2,
+        "recurring_count": 3,
+        "monthly_budgets": {
+            "Food & Groceries": 600.00,
+            "Transport": 200.00,
+            "Entertainment": 150.00,
+        },
+    },
+    {
+        "email": "enterprise@demo.finflow.ltd",
+        "plan": "enterprise",
+        "currency": "USD",
+        "accounts": [
+            ("Cash Wallet", "CASH", "USD", 725.00),
+            ("Main Bank Account", "BANK", "USD", 12450.30),
+            ("Savings Account", "BANK", "USD", 25000.00),
+            ("Credit Card", "CREDIT", "USD", -1280.50),
+            ("EUR Account", "BANK", "EUR", 3500.00),
+        ],
+        "expense_categories": [
+            "Food & Groceries", "Transport", "Housing & Utilities",
+            "Entertainment", "Shopping", "Health", "Education",
+        ],
+        "income_types": ["salary", "freelance", "investments", "consulting"],
+        "expense_freq_multiplier": 1.4,  # ~50 txns/month
+        "goals_count": 3,
+        "debts_count": 3,
+        "recurring_count": 5,
+        "monthly_budgets": {
+            "Food & Groceries": 800.00,
+            "Transport": 300.00,
+            "Housing & Utilities": 1500.00,
+            "Entertainment": 200.00,
+            "Shopping": 400.00,
+            "Health": 200.00,
+            "Education": 150.00,
+        },
+    },
+]
 
 # ──────────────────────────────────────────────────────────────
-# Expense generation data
+# Expense / Income templates
 # ──────────────────────────────────────────────────────────────
 
 EXPENSE_TEMPLATES = {
@@ -143,7 +175,6 @@ EXPENSE_TEMPLATES = {
     ],
 }
 
-# How many expenses per category per month (min, max)
 EXPENSE_FREQUENCY = {
     "Food & Groceries": (8, 15),
     "Transport": (3, 6),
@@ -165,92 +196,64 @@ INCOME_TEMPLATES = {
         ("Dividend payment", 20, 100),
         ("Stock sale profit", 50, 300),
     ],
+    "Consulting": [
+        ("Strategic consulting", 500, 2000),
+        ("Technical advisory", 300, 1000),
+    ],
 }
 
 # ──────────────────────────────────────────────────────────────
-# Clean existing demo data
+# Helpers
 # ──────────────────────────────────────────────────────────────
 
-def clean_demo_data(host, port, db_user, db_password):
-    """Remove all data associated with the demo user."""
-    print("\n--- Cleaning existing demo data ---")
+def get_conn(db_name: str, host: str, port: int, user: str, password: str):
+    return psycopg2.connect(
+        dbname=db_name, host=host, port=port, user=user, password=password
+    )
 
-    # 1. Find user ID
-    conn = get_conn(DATABASES["user"], host, port, db_user, db_password)
-    conn.autocommit = True
-    cur = conn.cursor()
-    cur.execute("SELECT id, default_workspace_id FROM users WHERE email = %s", (DEMO_EMAIL,))
-    row = cur.fetchone()
-    if not row:
-        print("No demo user found, nothing to clean.")
-        cur.close()
-        conn.close()
-        return
-    user_id, workspace_id = row
-    print(f"Found demo user: id={user_id}, workspace_id={workspace_id}")
-    cur.close()
-    conn.close()
 
-    # 2. Clean each service database
-    cleanup_queries = {
-        "expense": [("DELETE FROM expenses WHERE user_id = %s", (user_id,))],
-        "income": [("DELETE FROM incomes WHERE user_id = %s", (user_id,))],
-        "category": [("DELETE FROM categories WHERE user_id = %s", (user_id,))],
-        "account": [("DELETE FROM accounts WHERE owner_id = %s", (user_id,))],
-        "goals": [
-            ("DELETE FROM milestones WHERE goal_id IN (SELECT id FROM goals WHERE user_id = %s)", (user_id,)),
-            ("DELETE FROM goals WHERE user_id = %s", (user_id,)),
-        ],
-        "debt": [
-            ("DELETE FROM debt_payments WHERE user_id = %s", (user_id,)),
-            ("DELETE FROM debts WHERE user_id = %s", (user_id,)),
-            ("DELETE FROM contacts WHERE user_id = %s", (user_id,)),
-        ],
-        "recurring": [
-            ("DELETE FROM payment_schedules WHERE recurring_payment_id IN (SELECT id FROM recurring_payments WHERE user_id = %s)", (user_id,)),
-            ("DELETE FROM recurring_payments WHERE user_id = %s", (user_id,)),
-        ],
-        "subscription": [
-            ("DELETE FROM subscription_consent_log WHERE user_id = %s", (str(user_id),)),
-            ("DELETE FROM subscriptions WHERE user_id = %s", (str(user_id),)),
-        ],
-        "workspace": [
-            ("DELETE FROM workspace_invites WHERE workspace_id IN (SELECT id FROM workspaces WHERE owner_user_id = %s)", (user_id,)),
-            ("DELETE FROM workspace_members WHERE user_id = %s", (user_id,)),
-            ("DELETE FROM workspaces WHERE owner_user_id = %s", (user_id,)),
-        ],
-        "user": [("DELETE FROM users WHERE id = %s", (user_id,))],
-    }
+def random_date_in_month(year: int, month: int) -> date:
+    if month == 12:
+        max_day = 31
+    else:
+        next_month = date(year, month + 1, 1)
+        max_day = (next_month - timedelta(days=1)).day
+    day = random.randint(1, max_day)
+    return date(year, month, day)
 
-    for db_key, queries in cleanup_queries.items():
-        conn = get_conn(DATABASES[db_key], host, port, db_user, db_password)
-        conn.autocommit = True
-        cur = conn.cursor()
-        for sql, params in queries:
-            cur.execute(sql, params)
-            print(f"  [{db_key}] {sql.split()[0]}...{sql.split()[2]}: {cur.rowcount} rows")
-        cur.close()
-        conn.close()
 
-    print("Clean complete.\n")
+def random_datetime_in_month(year: int, month: int) -> datetime:
+    d = random_date_in_month(year, month)
+    hour = random.randint(8, 22)
+    minute = random.randint(0, 59)
+    return datetime(d.year, d.month, d.day, hour, minute, 0, tzinfo=timezone.utc)
+
+
+def months_in_range():
+    """Yield (year, month) tuples for the past 24 months."""
+    current = TWO_YEARS_AGO.replace(day=1)
+    end = NOW.replace(day=1)
+    while current <= end:
+        yield current.year, current.month
+        if current.month == 12:
+            current = current.replace(year=current.year + 1, month=1)
+        else:
+            current = current.replace(month=current.month + 1)
 
 
 # ──────────────────────────────────────────────────────────────
-# Seed functions
+# Seed steps (per-user)
 # ──────────────────────────────────────────────────────────────
 
-def seed_user(host, port, db_user, db_password) -> int:
-    """Create demo user. Returns user ID."""
-    print("\n[1/10] Seeding user...")
-    conn = get_conn(DATABASES["user"], host, port, db_user, db_password)
+def seed_user(conn_params, email: str) -> int:
+    conn = get_conn(DATABASES["user"], **conn_params)
     conn.autocommit = True
     cur = conn.cursor()
 
-    # Check if user already exists
-    cur.execute("SELECT id FROM users WHERE email = %s", (DEMO_EMAIL,))
+    cur.execute("SELECT id FROM users WHERE email = %s", (email,))
     existing = cur.fetchone()
     if existing:
-        print(f"  User already exists with id={existing[0]}")
+        print(f"  User already exists: id={existing[0]}")
         cur.close()
         conn.close()
         return existing[0]
@@ -259,39 +262,48 @@ def seed_user(host, port, db_user, db_password) -> int:
     cur.execute(
         """INSERT INTO users (email, hashed_password, base_currency, role, status, tutorial_version, created_at)
            VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id""",
-        (DEMO_EMAIL, hashed_pw, DEMO_CURRENCY, "user", "active", 1, USER_CREATED_AT),
+        (email, hashed_pw, "USD", "user", "active", 1, USER_CREATED_AT),
     )
     user_id = cur.fetchone()[0]
-    print(f"  Created user: id={user_id}, email={DEMO_EMAIL}")
+    print(f"  Created user: id={user_id}, email={email}")
     cur.close()
     conn.close()
     return user_id
 
 
-def seed_workspace(host, port, db_user, db_password, user_id: int) -> str:
-    """Create personal workspace. Returns workspace UUID string."""
-    print("\n[2/10] Seeding workspace...")
+def seed_workspace(conn_params, user_id: int) -> str:
+    # Check if workspace already exists via user's default_workspace_id
+    conn = get_conn(DATABASES["user"], **conn_params)
+    conn.autocommit = True
+    cur = conn.cursor()
+    cur.execute("SELECT default_workspace_id FROM users WHERE id = %s", (user_id,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    if row and row[0]:
+        print(f"  Workspace already exists: {row[0]}")
+        return str(row[0])
+
     workspace_id = str(uuid.uuid4())
 
-    conn = get_conn(DATABASES["workspace"], host, port, db_user, db_password)
+    conn = get_conn(DATABASES["workspace"], **conn_params)
     conn.autocommit = True
     cur = conn.cursor()
 
     cur.execute(
         """INSERT INTO workspaces (id, name, type, owner_user_id, created_at, updated_at)
            VALUES (%s, %s, %s, %s, %s, %s)""",
-        (workspace_id, "Personal", "PERSONAL", user_id, USER_CREATED_AT, USER_CREATED_AT),
+        (workspace_id, "Personal", "personal", user_id, USER_CREATED_AT, USER_CREATED_AT),
     )
     cur.execute(
         """INSERT INTO workspace_members (workspace_id, user_id, role, status, joined_at, created_at, updated_at)
            VALUES (%s, %s, %s, %s, %s, %s, %s)""",
-        (workspace_id, user_id, "OWNER", "ACTIVE", USER_CREATED_AT, USER_CREATED_AT, USER_CREATED_AT),
+        (workspace_id, user_id, "owner", "active", USER_CREATED_AT, USER_CREATED_AT, USER_CREATED_AT),
     )
     cur.close()
     conn.close()
 
-    # Update user's default_workspace_id
-    conn = get_conn(DATABASES["user"], host, port, db_user, db_password)
+    conn = get_conn(DATABASES["user"], **conn_params)
     conn.autocommit = True
     cur = conn.cursor()
     cur.execute("UPDATE users SET default_workspace_id = %s WHERE id = %s", (workspace_id, user_id))
@@ -302,14 +314,11 @@ def seed_workspace(host, port, db_user, db_password, user_id: int) -> str:
     return workspace_id
 
 
-def seed_subscription(host, port, db_user, db_password, user_id: int):
-    """Create basic subscription."""
-    print("\n[3/10] Seeding subscription...")
-    conn = get_conn(DATABASES["subscription"], host, port, db_user, db_password)
+def seed_subscription(conn_params, user_id: int, plan: str):
+    conn = get_conn(DATABASES["subscription"], **conn_params)
     conn.autocommit = True
     cur = conn.cursor()
 
-    # Check if subscription exists
     cur.execute("SELECT id FROM subscriptions WHERE user_id = %s", (str(user_id),))
     if cur.fetchone():
         print("  Subscription already exists, skipping.")
@@ -321,121 +330,116 @@ def seed_subscription(host, port, db_user, db_password, user_id: int):
         """INSERT INTO subscriptions (user_id, plan_code, status, started_at, expires_at, auto_renew, created_at, updated_at)
            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
         (
-            str(user_id), "professional", "active",
+            str(user_id), plan, "active",
             USER_CREATED_AT, NOW + timedelta(days=30),
             True, USER_CREATED_AT, NOW,
         ),
     )
-    print("  Created professional subscription.")
+    print(f"  Created {plan} subscription.")
     cur.close()
     conn.close()
 
 
-def seed_accounts(host, port, db_user, db_password, user_id: int, workspace_id: str) -> dict:
-    """Create 2 accounts. Returns {name: id} mapping."""
-    print("\n[4/10] Seeding accounts...")
-    conn = get_conn(DATABASES["account"], host, port, db_user, db_password)
+def seed_accounts(conn_params, user_id: int, workspace_id: str, account_defs: list) -> dict:
+    conn = get_conn(DATABASES["account"], **conn_params)
     conn.autocommit = True
     cur = conn.cursor()
 
-    accounts = [
-        ("Cash Wallet", "CASH", 487.50),
-        ("Main Bank Account", "BANK", 3215.80),
-    ]
     account_ids = {}
-    for name, acc_type, balance in accounts:
+    for name, acc_type, currency, balance in account_defs:
         cur.execute(
             """INSERT INTO accounts (name, type, currency, balance, is_active, is_archived, owner_id, workspace_id, created_at, updated_at)
                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
-            (name, acc_type, DEMO_CURRENCY, balance, True, False, user_id, workspace_id, USER_CREATED_AT, USER_CREATED_AT),
+            (name, acc_type, currency, balance, True, False, user_id, workspace_id, USER_CREATED_AT, USER_CREATED_AT),
         )
         account_ids[name] = cur.fetchone()[0]
-        print(f"  Created account: {name} (id={account_ids[name]}, balance=${balance})")
+        print(f"  Account: {name} ({currency}, balance={balance})")
 
     cur.close()
     conn.close()
     return account_ids
 
 
-def seed_categories(host, port, db_user, db_password, user_id: int, workspace_id: str) -> dict:
-    """Create 10 categories. Returns {name: id} mapping."""
-    print("\n[5/10] Seeding categories...")
-    conn = get_conn(DATABASES["category"], host, port, db_user, db_password)
+def seed_categories(conn_params, user_id: int, workspace_id: str,
+                    expense_cats: list, monthly_budgets: dict) -> dict:
+    conn = get_conn(DATABASES["category"], **conn_params)
     conn.autocommit = True
     cur = conn.cursor()
 
-    categories = [
-        ("Food & Groceries", "EXPENSE"),
-        ("Transport", "EXPENSE"),
-        ("Housing & Utilities", "EXPENSE"),
-        ("Entertainment", "EXPENSE"),
-        ("Shopping", "EXPENSE"),
-        ("Health", "EXPENSE"),
-        ("Education", "EXPENSE"),
+    all_categories = [(c, "EXPENSE") for c in expense_cats] + [
         ("Salary", "INCOME"),
         ("Freelance", "INCOME"),
         ("Investments", "INCOME"),
+        ("Consulting", "INCOME"),
     ]
+
     cat_ids = {}
-    for name, cat_type in categories:
+    for name, cat_type in all_categories:
+        budget = monthly_budgets.get(name)
         cur.execute(
-            """INSERT INTO categories (name, user_id, workspace_id, type, created_by, created_at, updated_at)
-               VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id""",
-            (name, user_id, workspace_id, cat_type, "USER", USER_CREATED_AT, USER_CREATED_AT),
+            """INSERT INTO categories (name, user_id, workspace_id, type, monthly_budget, created_by, created_at, updated_at)
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
+            (name, user_id, workspace_id, cat_type, budget, "USER", USER_CREATED_AT, USER_CREATED_AT),
         )
         cat_ids[name] = cur.fetchone()[0]
 
-    print(f"  Created {len(cat_ids)} categories: {list(cat_ids.keys())}")
+    print(f"  Created {len(cat_ids)} categories")
     cur.close()
     conn.close()
     return cat_ids
 
 
-def seed_expenses(host, port, db_user, db_password, user_id: int, workspace_id: str,
-                  category_ids: dict, account_ids: dict):
-    """Generate ~30-45 expenses per month for 12 months."""
-    print("\n[6/10] Seeding expenses...")
-    conn = get_conn(DATABASES["expense"], host, port, db_user, db_password)
+def seed_expenses(conn_params, user_id: int, workspace_id: str,
+                  category_ids: dict, account_ids: dict, profile: dict):
+    conn = get_conn(DATABASES["expense"], **conn_params)
     conn.autocommit = True
     cur = conn.cursor()
 
-    cash_id = account_ids["Cash Wallet"]
-    bank_id = account_ids["Main Bank Account"]
+    multiplier = profile["expense_freq_multiplier"]
+    allowed_cats = profile["expense_categories"]
+    account_names = list(account_ids.keys())
+    has_eur = any("EUR" in n for n in account_names)
     total = 0
 
     for year, month in months_in_range():
         month_expenses = []
-        month_count = 0
 
-        for cat_name, templates in EXPENSE_TEMPLATES.items():
+        for cat_name in allowed_cats:
+            templates = EXPENSE_TEMPLATES.get(cat_name)
+            if not templates:
+                continue
             cat_id = category_ids.get(cat_name)
             if not cat_id:
                 continue
 
             freq_min, freq_max = EXPENSE_FREQUENCY[cat_name]
-            count = random.randint(freq_min, freq_max)
+            count = max(0, round(random.randint(freq_min, freq_max) * multiplier))
 
             for _ in range(count):
-                if month_count >= 48:  # Stay under 50/month limit
-                    break
                 desc, amt_min, amt_max = random.choice(templates)
                 amount = round(random.uniform(amt_min, amt_max), 2)
                 expense_date = random_date_in_month(year, month)
-                # Don't create future expenses
                 if expense_date > NOW.date():
                     continue
-                account_id = cash_id if random.random() < 0.3 else bank_id
-                created_at = datetime(expense_date.year, expense_date.month, expense_date.day,
-                                      random.randint(8, 22), random.randint(0, 59), 0, tzinfo=timezone.utc)
 
+                # Pick account: 30% cash, 70% bank, enterprise gets occasional EUR
+                currency = "USD"
+                if has_eur and random.random() < 0.15:
+                    account_id = account_ids.get("EUR Account", account_ids[account_names[1]])
+                    currency = "EUR"
+                elif random.random() < 0.3:
+                    account_id = account_ids["Cash Wallet"]
+                else:
+                    account_id = account_ids["Main Bank Account"]
+
+                created_at = datetime(
+                    expense_date.year, expense_date.month, expense_date.day,
+                    random.randint(8, 22), random.randint(0, 59), 0, tzinfo=timezone.utc,
+                )
                 month_expenses.append((
                     amount, expense_date, desc, user_id, workspace_id,
-                    cat_id, account_id, DEMO_CURRENCY, created_at, created_at
+                    cat_id, account_id, currency, created_at, created_at,
                 ))
-                month_count += 1
-
-            if month_count >= 48:
-                break
 
         if month_expenses:
             execute_values(
@@ -446,71 +450,103 @@ def seed_expenses(host, port, db_user, db_password, user_id: int, workspace_id: 
             )
             total += len(month_expenses)
 
-    print(f"  Created {total} expenses across 12 months.")
+    print(f"  Created {total} expenses across 24 months")
     cur.close()
     conn.close()
 
 
-def seed_incomes(host, port, db_user, db_password, user_id: int, workspace_id: str,
-                 category_ids: dict, account_ids: dict):
-    """Generate incomes for 12 months."""
-    print("\n[7/10] Seeding incomes...")
-    conn = get_conn(DATABASES["income"], host, port, db_user, db_password)
+def seed_incomes(conn_params, user_id: int, workspace_id: str,
+                 category_ids: dict, account_ids: dict, profile: dict):
+    conn = get_conn(DATABASES["income"], **conn_params)
     conn.autocommit = True
     cur = conn.cursor()
 
+    income_types = profile["income_types"]
     bank_id = account_ids["Main Bank Account"]
+    has_eur = "EUR Account" in account_ids
     total = 0
 
     for year, month in months_in_range():
         month_incomes = []
 
-        # Monthly salary (always on ~25th of the month)
-        salary_cat_id = category_ids.get("Salary")
-        if salary_cat_id:
-            salary_day = min(25, 28)
-            salary_date = date(year, month, salary_day)
-            if salary_date <= NOW.date():
-                amount = round(random.uniform(4200, 4800), 2)
-                created_at = datetime(salary_date.year, salary_date.month, salary_date.day,
-                                      10, 0, 0, tzinfo=timezone.utc)
-                month_incomes.append((
-                    user_id, workspace_id, amount, salary_cat_id, bank_id,
-                    DEMO_CURRENCY, "Monthly salary", created_at, created_at, created_at
-                ))
+        # Salary — always on ~25th
+        if "salary" in income_types:
+            salary_cat_id = category_ids.get("Salary")
+            if salary_cat_id:
+                salary_date = date(year, month, min(25, 28))
+                if salary_date <= NOW.date():
+                    amount = round(random.uniform(4200, 4800), 2)
+                    created_at = datetime(salary_date.year, salary_date.month, salary_date.day,
+                                          10, 0, 0, tzinfo=timezone.utc)
+                    month_incomes.append((
+                        user_id, workspace_id, amount, salary_cat_id, bank_id,
+                        "USD", "Monthly salary", salary_date, created_at, created_at,
+                    ))
 
-        # Occasional freelance (0-3 per month)
-        freelance_cat_id = category_ids.get("Freelance")
-        if freelance_cat_id:
-            freelance_count = random.randint(0, 3)
-            for _ in range(freelance_count):
-                templates = INCOME_TEMPLATES["Freelance"]
-                desc, amt_min, amt_max = random.choice(templates)
+        # Freelance
+        if "freelance" in income_types:
+            freelance_cat_id = category_ids.get("Freelance")
+            if freelance_cat_id:
+                count = random.randint(0, 3)
+                for _ in range(count):
+                    desc, amt_min, amt_max = random.choice(INCOME_TEMPLATES["Freelance"])
+                    amount = round(random.uniform(amt_min, amt_max), 2)
+                    income_date = random_date_in_month(year, month)
+                    if income_date > NOW.date():
+                        continue
+                    created_at = datetime(income_date.year, income_date.month, income_date.day,
+                                          random.randint(10, 18), random.randint(0, 59), 0, tzinfo=timezone.utc)
+                    month_incomes.append((
+                        user_id, workspace_id, amount, freelance_cat_id, bank_id,
+                        "USD", desc, income_date, created_at, created_at,
+                    ))
+
+        # Rare freelance (for free plan — 1 every ~3 months)
+        if "rare_freelance" in income_types:
+            freelance_cat_id = category_ids.get("Freelance")
+            if freelance_cat_id and random.random() < 0.33:
+                desc, amt_min, amt_max = random.choice(INCOME_TEMPLATES["Freelance"])
                 amount = round(random.uniform(amt_min, amt_max), 2)
                 income_date = random_date_in_month(year, month)
-                if income_date > NOW.date():
-                    continue
-                created_at = datetime(income_date.year, income_date.month, income_date.day,
-                                      random.randint(10, 18), random.randint(0, 59), 0, tzinfo=timezone.utc)
-                month_incomes.append((
-                    user_id, workspace_id, amount, freelance_cat_id, bank_id,
-                    DEMO_CURRENCY, desc, created_at, created_at, created_at
-                ))
+                if income_date <= NOW.date():
+                    created_at = datetime(income_date.year, income_date.month, income_date.day,
+                                          14, 0, 0, tzinfo=timezone.utc)
+                    month_incomes.append((
+                        user_id, workspace_id, amount, freelance_cat_id, bank_id,
+                        "USD", desc, income_date, created_at, created_at,
+                    ))
 
-        # Rare investment returns (0-1 per month, ~30% chance)
-        investment_cat_id = category_ids.get("Investments")
-        if investment_cat_id and random.random() < 0.3:
-            templates = INCOME_TEMPLATES["Investments"]
-            desc, amt_min, amt_max = random.choice(templates)
-            amount = round(random.uniform(amt_min, amt_max), 2)
-            income_date = random_date_in_month(year, month)
-            if income_date <= NOW.date():
-                created_at = datetime(income_date.year, income_date.month, income_date.day,
-                                      12, 0, 0, tzinfo=timezone.utc)
-                month_incomes.append((
-                    user_id, workspace_id, amount, investment_cat_id, bank_id,
-                    DEMO_CURRENCY, desc, created_at, created_at, created_at
-                ))
+        # Investments
+        if "investments" in income_types:
+            investment_cat_id = category_ids.get("Investments")
+            if investment_cat_id and random.random() < 0.3:
+                desc, amt_min, amt_max = random.choice(INCOME_TEMPLATES["Investments"])
+                amount = round(random.uniform(amt_min, amt_max), 2)
+                income_date = random_date_in_month(year, month)
+                if income_date <= NOW.date():
+                    created_at = datetime(income_date.year, income_date.month, income_date.day,
+                                          12, 0, 0, tzinfo=timezone.utc)
+                    month_incomes.append((
+                        user_id, workspace_id, amount, investment_cat_id, bank_id,
+                        "USD", desc, income_date, created_at, created_at,
+                    ))
+
+        # Consulting (enterprise)
+        if "consulting" in income_types:
+            consulting_cat_id = category_ids.get("Consulting")
+            if consulting_cat_id and random.random() < 0.5:
+                desc, amt_min, amt_max = random.choice(INCOME_TEMPLATES["Consulting"])
+                amount = round(random.uniform(amt_min, amt_max), 2)
+                currency = "EUR" if has_eur and random.random() < 0.3 else "USD"
+                target_account = account_ids.get("EUR Account", bank_id) if currency == "EUR" else bank_id
+                income_date = random_date_in_month(year, month)
+                if income_date <= NOW.date():
+                    created_at = datetime(income_date.year, income_date.month, income_date.day,
+                                          11, 0, 0, tzinfo=timezone.utc)
+                    month_incomes.append((
+                        user_id, workspace_id, amount, consulting_cat_id, target_account,
+                        currency, desc, income_date, created_at, created_at,
+                    ))
 
         if month_incomes:
             execute_values(
@@ -521,56 +557,68 @@ def seed_incomes(host, port, db_user, db_password, user_id: int, workspace_id: s
             )
             total += len(month_incomes)
 
-    print(f"  Created {total} incomes across 12 months.")
+    print(f"  Created {total} incomes across 24 months")
     cur.close()
     conn.close()
 
 
-def seed_goals(host, port, db_user, db_password, user_id: int, workspace_id: str):
-    """Create 2 goals with milestones."""
-    print("\n[8/10] Seeding goals...")
-    conn = get_conn(DATABASES["goals"], host, port, db_user, db_password)
+# ── Goals ──
+
+GOAL_POOL = [
+    {
+        "title": "Emergency Fund",
+        "description": "Build a 3-month emergency fund",
+        "goal_type": "EMERGENCY_FUND",
+        "priority": "HIGH",
+        "target_amount": 5000.0,
+        "current_amount": 3050.0,
+        "milestones": [
+            ("First $1000", 1000, 1000, True),
+            ("Halfway there", 2500, 2500, True),
+            ("Almost done", 4000, 3050, False),
+            ("Goal complete", 5000, 3050, False),
+        ],
+    },
+    {
+        "title": "New Laptop",
+        "description": "Save up for a MacBook Pro",
+        "goal_type": "SAVINGS",
+        "priority": "MEDIUM",
+        "target_amount": 2000.0,
+        "current_amount": 620.0,
+        "milestones": [
+            ("First $500", 500, 500, True),
+            ("Halfway", 1000, 620, False),
+            ("Goal complete", 2000, 620, False),
+        ],
+    },
+    {
+        "title": "Vacation Fund",
+        "description": "Summer vacation to Europe",
+        "goal_type": "SAVINGS",
+        "priority": "LOW",
+        "target_amount": 3000.0,
+        "current_amount": 1200.0,
+        "milestones": [
+            ("First $500", 500, 500, True),
+            ("$1000 saved", 1000, 1000, True),
+            ("Halfway", 1500, 1200, False),
+            ("Goal complete", 3000, 1200, False),
+        ],
+    },
+]
+
+
+def seed_goals(conn_params, user_id: int, workspace_id: str, count: int):
+    conn = get_conn(DATABASES["goals"], **conn_params)
     conn.autocommit = True
     cur = conn.cursor()
 
-    goals = [
-        {
-            "title": "Emergency Fund",
-            "description": "Build a 3-month emergency fund for unexpected expenses",
-            "goal_type": "EMERGENCY_FUND",
-            "priority": "HIGH",
-            "status": "ACTIVE",
-            "target_amount": 5000.0,
-            "current_amount": 3050.0,
-            "progress_percentage": 61.0,
-            "target_date": NOW + timedelta(days=180),
-            "milestones": [
-                ("First $1000", 1000, 1000, True),
-                ("Halfway there", 2500, 2500, True),
-                ("Almost done", 4000, 3050, False),
-                ("Goal complete", 5000, 3050, False),
-            ],
-        },
-        {
-            "title": "New Laptop",
-            "description": "Save up for a MacBook Pro for development work",
-            "goal_type": "SAVINGS",
-            "priority": "MEDIUM",
-            "status": "ACTIVE",
-            "target_amount": 2000.0,
-            "current_amount": 620.0,
-            "progress_percentage": 31.0,
-            "target_date": NOW + timedelta(days=120),
-            "milestones": [
-                ("First $500", 500, 500, True),
-                ("Halfway", 1000, 620, False),
-                ("Goal complete", 2000, 620, False),
-            ],
-        },
-    ]
+    goals = GOAL_POOL[:count]
 
     for g in goals:
         started = USER_CREATED_AT + timedelta(days=random.randint(10, 60))
+        progress = round(g["current_amount"] / g["target_amount"] * 100, 1)
         cur.execute(
             """INSERT INTO goals (user_id, workspace_id, title, description, goal_type, priority,
                status, target_amount, current_amount, currency, start_date, target_date,
@@ -578,9 +626,9 @@ def seed_goals(host, port, db_user, db_password, user_id: int, workspace_id: str
                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
             (
                 user_id, workspace_id, g["title"], g["description"], g["goal_type"],
-                g["priority"], g["status"], g["target_amount"], g["current_amount"],
-                DEMO_CURRENCY, started, g["target_date"],
-                g["progress_percentage"], True, started, NOW,
+                g["priority"], "ACTIVE", g["target_amount"], g["current_amount"],
+                "USD", started, NOW + timedelta(days=180),
+                progress, True, started, NOW,
             ),
         )
         goal_id = cur.fetchone()[0]
@@ -593,161 +641,211 @@ def seed_goals(host, port, db_user, db_password, user_id: int, workspace_id: str
                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
                 (goal_id, m_title, m_target, m_current, m_done, completed_at, idx, started, NOW),
             )
-
-        print(f"  Created goal: {g['title']} (${g['current_amount']}/{g['target_amount']})")
+        print(f"  Goal: {g['title']} (${g['current_amount']}/{g['target_amount']})")
 
     cur.close()
     conn.close()
 
 
-def seed_debts(host, port, db_user, db_password, user_id: int, workspace_id: str):
-    """Create 2 debts with contacts and payments."""
-    print("\n[9/10] Seeding debts...")
-    conn = get_conn(DATABASES["debt"], host, port, db_user, db_password)
+# ── Debts ──
+
+DEBT_POOL = [
+    {
+        "contact_name": "Federal Student Aid",
+        "contact_email": "support@studentaid.gov",
+        "contact_notes": "Student loan servicer",
+        "debt_name": "Student Loan",
+        "debt_desc": "Federal student loan for education",
+        "debt_type": "loan",
+        "initial_amount": 10000.0,
+        "current_balance": 7600.0,
+        "interest_rate": 4.5,
+        "minimum_payment": 200.0,
+        "monthly_payment": 200.0,
+        "due_years": 3,
+    },
+    {
+        "contact_name": "Alex Johnson",
+        "contact_email": "alex@example.com",
+        "contact_notes": "Friend",
+        "debt_name": "Loan from Alex",
+        "debt_desc": "Borrowed for emergency car repair",
+        "debt_type": "personal",
+        "initial_amount": 500.0,
+        "current_balance": 200.0,
+        "interest_rate": None,
+        "minimum_payment": None,
+        "monthly_payment": 100.0,
+        "due_years": 1,
+    },
+    {
+        "contact_name": "City Credit Union",
+        "contact_email": "loans@creditunion.com",
+        "contact_notes": "Auto loan provider",
+        "debt_name": "Car Loan",
+        "debt_desc": "Auto financing for company car",
+        "debt_type": "loan",
+        "initial_amount": 15000.0,
+        "current_balance": 11200.0,
+        "interest_rate": 3.9,
+        "minimum_payment": 350.0,
+        "monthly_payment": 350.0,
+        "due_years": 4,
+    },
+]
+
+
+def seed_debts(conn_params, user_id: int, workspace_id: str, count: int):
+    conn = get_conn(DATABASES["debt"], **conn_params)
     conn.autocommit = True
     cur = conn.cursor()
 
-    # Create contacts
-    cur.execute(
-        """INSERT INTO contacts (user_id, workspace_id, name, email, notes, created_at, updated_at)
-           VALUES (%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
-        (user_id, workspace_id, "Federal Student Aid", "support@studentaid.gov",
-         "Student loan servicer", USER_CREATED_AT, USER_CREATED_AT),
-    )
-    contact_1_id = cur.fetchone()[0]
+    debts = DEBT_POOL[:count]
 
-    cur.execute(
-        """INSERT INTO contacts (user_id, workspace_id, name, email, notes, created_at, updated_at)
-           VALUES (%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
-        (user_id, workspace_id, "Alex Johnson", "alex@example.com",
-         "Friend", USER_CREATED_AT, USER_CREATED_AT),
-    )
-    contact_2_id = cur.fetchone()[0]
-
-    # Debt 1: Student Loan
-    cur.execute(
-        """INSERT INTO debts (user_id, workspace_id, contact_id, name, description, debt_type,
-           currency, initial_amount, current_balance, interest_rate, minimum_payment,
-           start_date, due_date, is_active, is_paid_off, created_at, updated_at)
-           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
-        (
-            user_id, workspace_id, contact_1_id,
-            "Student Loan", "Federal student loan for education", "loan",
-            DEMO_CURRENCY, 10000.0, 7600.0, 4.5, 200.0,
-            (ONE_YEAR_AGO - timedelta(days=365)).date(),  # Started 2 years ago
-            (NOW + timedelta(days=365 * 3)).date(),  # Due in 3 years
-            True, False, USER_CREATED_AT, NOW,
-        ),
-    )
-    debt_1_id = cur.fetchone()[0]
-
-    # Payments for student loan (monthly $200 over the past year)
-    payment_count = 0
-    for year, month in months_in_range():
-        pay_date = date(year, month, 15)
-        if pay_date > NOW.date():
-            continue
-        principal = round(random.uniform(160, 180), 2)
-        interest = round(200.0 - principal, 2)
-        created_at = datetime(pay_date.year, pay_date.month, pay_date.day, 10, 0, 0, tzinfo=timezone.utc)
+    for d in debts:
+        # Create contact
         cur.execute(
-            """INSERT INTO debt_payments (debt_id, user_id, amount, principal_amount, interest_amount,
-               payment_date, description, payment_method, created_at, updated_at)
-               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
-            (debt_1_id, user_id, 200.0, principal, interest, pay_date,
-             "Monthly payment", "bank_transfer", created_at, created_at),
+            """INSERT INTO contacts (user_id, workspace_id, name, email, notes, created_at, updated_at)
+               VALUES (%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
+            (user_id, workspace_id, d["contact_name"], d["contact_email"],
+             d["contact_notes"], USER_CREATED_AT, USER_CREATED_AT),
         )
-        payment_count += 1
+        contact_id = cur.fetchone()[0]
 
-    print(f"  Created debt: Student Loan ($10,000 → $7,600) with {payment_count} payments")
+        start_date = (TWO_YEARS_AGO - timedelta(days=365)).date()
+        due_date = (NOW + timedelta(days=365 * d["due_years"])).date()
 
-    # Debt 2: Friend loan
-    cur.execute(
-        """INSERT INTO debts (user_id, workspace_id, contact_id, name, description, debt_type,
-           currency, initial_amount, current_balance, start_date, is_active, is_paid_off,
-           created_at, updated_at)
-           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
-        (
-            user_id, workspace_id, contact_2_id,
-            "Loan from Alex", "Borrowed for emergency car repair", "personal",
-            DEMO_CURRENCY, 500.0, 200.0,
-            (ONE_YEAR_AGO + timedelta(days=60)).date(),
-            True, False, USER_CREATED_AT + timedelta(days=60), NOW,
-        ),
-    )
-    debt_2_id = cur.fetchone()[0]
+        if d["interest_rate"] is not None:
+            cur.execute(
+                """INSERT INTO debts (user_id, workspace_id, contact_id, name, description, debt_type,
+                   currency, initial_amount, current_balance, interest_rate, minimum_payment,
+                   start_date, due_date, is_active, is_paid_off, created_at, updated_at)
+                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
+                (
+                    user_id, workspace_id, contact_id,
+                    d["debt_name"], d["debt_desc"], d["debt_type"],
+                    "USD", d["initial_amount"], d["current_balance"],
+                    d["interest_rate"], d["minimum_payment"],
+                    start_date, due_date,
+                    True, False, USER_CREATED_AT, NOW,
+                ),
+            )
+        else:
+            cur.execute(
+                """INSERT INTO debts (user_id, workspace_id, contact_id, name, description, debt_type,
+                   currency, initial_amount, current_balance, start_date, is_active, is_paid_off,
+                   created_at, updated_at)
+                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
+                (
+                    user_id, workspace_id, contact_id,
+                    d["debt_name"], d["debt_desc"], d["debt_type"],
+                    "USD", d["initial_amount"], d["current_balance"],
+                    (TWO_YEARS_AGO + timedelta(days=60)).date(),
+                    True, False, USER_CREATED_AT + timedelta(days=60), NOW,
+                ),
+            )
+        debt_id = cur.fetchone()[0]
 
-    # 3 payments for friend loan
-    for i, amount in enumerate([100, 100, 100]):
-        pay_date = (ONE_YEAR_AGO + timedelta(days=90 + i * 60)).date()
-        if pay_date > NOW.date():
-            continue
-        created_at = datetime(pay_date.year, pay_date.month, pay_date.day, 14, 0, 0, tzinfo=timezone.utc)
-        cur.execute(
-            """INSERT INTO debt_payments (debt_id, user_id, amount, principal_amount, payment_date,
-               description, payment_method, created_at, updated_at)
-               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
-            (debt_2_id, user_id, amount, amount, pay_date,
-             "Repayment to Alex", "cash", created_at, created_at),
-        )
+        # Monthly payments
+        payment_count = 0
+        for year, month in months_in_range():
+            pay_date = date(year, month, 15)
+            if pay_date > NOW.date():
+                continue
+            payment_amt = d["monthly_payment"]
+            if d["interest_rate"]:
+                principal = round(random.uniform(payment_amt * 0.75, payment_amt * 0.90), 2)
+                interest = round(payment_amt - principal, 2)
+                cur.execute(
+                    """INSERT INTO debt_payments (debt_id, user_id, amount, principal_amount, interest_amount,
+                       payment_date, description, payment_method, created_at, updated_at)
+                       VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                    (debt_id, user_id, payment_amt, principal, interest, pay_date,
+                     "Monthly payment", "bank_transfer",
+                     datetime(pay_date.year, pay_date.month, pay_date.day, 10, 0, 0, tzinfo=timezone.utc),
+                     datetime(pay_date.year, pay_date.month, pay_date.day, 10, 0, 0, tzinfo=timezone.utc)),
+                )
+            else:
+                cur.execute(
+                    """INSERT INTO debt_payments (debt_id, user_id, amount, principal_amount, payment_date,
+                       description, payment_method, created_at, updated_at)
+                       VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                    (debt_id, user_id, payment_amt, payment_amt, pay_date,
+                     "Repayment", "cash",
+                     datetime(pay_date.year, pay_date.month, pay_date.day, 14, 0, 0, tzinfo=timezone.utc),
+                     datetime(pay_date.year, pay_date.month, pay_date.day, 14, 0, 0, tzinfo=timezone.utc)),
+                )
+            payment_count += 1
 
-    print(f"  Created debt: Loan from Alex ($500 → $200)")
+        print(f"  Debt: {d['debt_name']} (${d['current_balance']}/{d['initial_amount']}) — {payment_count} payments")
+
     cur.close()
     conn.close()
 
 
-def seed_recurring(host, port, db_user, db_password, user_id: int, workspace_id: str,
-                   category_ids: dict):
-    """Create 3 recurring payments."""
-    print("\n[10/10] Seeding recurring payments...")
-    conn = get_conn(DATABASES["recurring"], host, port, db_user, db_password)
+# ── Recurring ──
+
+RECURRING_POOL = [
+    {
+        "name": "Rent",
+        "description": "Monthly apartment rent",
+        "amount": 1200.00,
+        "category": "Housing & Utilities",
+        "payment_type": "EXPENSE",
+        "schedule_config": '{"day_of_month": 1}',
+    },
+    {
+        "name": "Netflix",
+        "description": "Streaming subscription",
+        "amount": 15.99,
+        "category": "Entertainment",
+        "payment_type": "EXPENSE",
+        "schedule_config": '{"day_of_month": 5}',
+    },
+    {
+        "name": "Monthly Salary",
+        "description": "Regular employment salary",
+        "amount": 4500.00,
+        "category": "Salary",
+        "payment_type": "INCOME",
+        "schedule_config": '{"day_of_month": 25}',
+    },
+    {
+        "name": "Gym Membership",
+        "description": "Monthly gym subscription",
+        "amount": 45.00,
+        "category": "Health",
+        "payment_type": "EXPENSE",
+        "schedule_config": '{"day_of_month": 1}',
+    },
+    {
+        "name": "Cloud Hosting",
+        "description": "AWS monthly bill",
+        "amount": 85.00,
+        "category": "Education",
+        "payment_type": "EXPENSE",
+        "schedule_config": '{"day_of_month": 3}',
+    },
+]
+
+
+def seed_recurring(conn_params, user_id: int, workspace_id: str,
+                   category_ids: dict, count: int):
+    conn = get_conn(DATABASES["recurring"], **conn_params)
     conn.autocommit = True
     cur = conn.cursor()
 
-    housing_cat = category_ids.get("Housing & Utilities")
-    entertainment_cat = category_ids.get("Entertainment")
-    salary_cat = category_ids.get("Salary")
+    items = RECURRING_POOL[:count]
+    today = NOW.date()
+    next_exec = today.replace(day=1) + timedelta(days=30)
 
-    recurring_items = [
-        {
-            "name": "Rent",
-            "description": "Monthly apartment rent",
-            "amount": 1200.00,
-            "category_id": housing_cat,
-            "payment_type": "EXPENSE",
-            "schedule_type": "monthly",
-            "schedule_config": '{"day_of_month": 1}',
-        },
-        {
-            "name": "Netflix",
-            "description": "Streaming subscription",
-            "amount": 15.99,
-            "category_id": entertainment_cat,
-            "payment_type": "EXPENSE",
-            "schedule_type": "monthly",
-            "schedule_config": '{"day_of_month": 5}',
-        },
-        {
-            "name": "Monthly Salary",
-            "description": "Regular employment salary",
-            "amount": 4500.00,
-            "category_id": salary_cat,
-            "payment_type": "INCOME",
-            "schedule_type": "monthly",
-            "schedule_config": '{"day_of_month": 25}',
-        },
-    ]
-
-    for item in recurring_items:
-        if not item["category_id"]:
+    for item in items:
+        cat_id = category_ids.get(item["category"])
+        if not cat_id:
             print(f"  Skipping {item['name']}: category not found")
             continue
 
         rec_id = str(uuid.uuid4())
-        # Calculate next execution date
-        today = NOW.date()
-        next_exec = today.replace(day=1) + timedelta(days=30)
-
         cur.execute(
             """INSERT INTO recurring_payments (id, user_id, workspace_id, name, description,
                amount, currency, category_id, payment_type, schedule_type, schedule_config,
@@ -755,16 +853,132 @@ def seed_recurring(host, port, db_user, db_password, user_id: int, workspace_id:
                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
             (
                 rec_id, user_id, workspace_id, item["name"], item["description"],
-                item["amount"], DEMO_CURRENCY, item["category_id"],
-                item["payment_type"], item["schedule_type"], item["schedule_config"],
-                ONE_YEAR_AGO.date(), "active", next_exec,
+                item["amount"], "USD", cat_id,
+                item["payment_type"], "monthly", item["schedule_config"],
+                TWO_YEARS_AGO.date(), "active", next_exec,
                 USER_CREATED_AT, NOW,
             ),
         )
-        print(f"  Created recurring: {item['name']} (${item['amount']}/{item['schedule_type']})")
+        print(f"  Recurring: {item['name']} (${item['amount']}/monthly)")
 
     cur.close()
     conn.close()
+
+
+# ──────────────────────────────────────────────────────────────
+# Orchestrator
+# ──────────────────────────────────────────────────────────────
+
+def seed_user_profile(profile: dict, conn_params: dict):
+    email = profile["email"]
+    plan = profile["plan"]
+    print(f"\n{'─' * 50}")
+    print(f"  Seeding: {email} ({plan})")
+    print(f"{'─' * 50}")
+
+    print("\n[1/10] User...")
+    user_id = seed_user(conn_params, email)
+
+    print("[2/10] Workspace...")
+    workspace_id = seed_workspace(conn_params, user_id)
+
+    print(f"[3/10] Subscription ({plan})...")
+    seed_subscription(conn_params, user_id, plan)
+
+    print("[4/10] Accounts...")
+    account_ids = seed_accounts(conn_params, user_id, workspace_id, profile["accounts"])
+
+    print("[5/10] Categories...")
+    category_ids = seed_categories(
+        conn_params, user_id, workspace_id,
+        profile["expense_categories"], profile["monthly_budgets"],
+    )
+
+    print("[6/10] Expenses...")
+    seed_expenses(conn_params, user_id, workspace_id, category_ids, account_ids, profile)
+
+    print("[7/10] Incomes...")
+    seed_incomes(conn_params, user_id, workspace_id, category_ids, account_ids, profile)
+
+    print(f"[8/10] Goals ({profile['goals_count']})...")
+    seed_goals(conn_params, user_id, workspace_id, profile["goals_count"])
+
+    print(f"[9/10] Debts ({profile['debts_count']})...")
+    seed_debts(conn_params, user_id, workspace_id, profile["debts_count"])
+
+    print(f"[10/10] Recurring ({profile['recurring_count']})...")
+    seed_recurring(conn_params, user_id, workspace_id, category_ids, profile["recurring_count"])
+
+    print(f"\n  Done: {email}")
+
+
+# ──────────────────────────────────────────────────────────────
+# Clean
+# ──────────────────────────────────────────────────────────────
+
+def clean_demo_data(conn_params):
+    """Remove all data for all 3 demo users."""
+    print("\n--- Cleaning existing demo data ---")
+
+    emails = [p["email"] for p in PROFILES]
+
+    for email in emails:
+        conn = get_conn(DATABASES["user"], **conn_params)
+        conn.autocommit = True
+        cur = conn.cursor()
+        cur.execute("SELECT id, default_workspace_id FROM users WHERE email = %s", (email,))
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+
+        if not row:
+            print(f"  No user found for {email}, skipping.")
+            continue
+
+        user_id, workspace_id = row
+        print(f"  Cleaning {email}: id={user_id}")
+
+        cleanup_queries = {
+            "expense": [("DELETE FROM expenses WHERE user_id = %s", (user_id,))],
+            "income": [("DELETE FROM incomes WHERE user_id = %s", (user_id,))],
+            "category": [("DELETE FROM categories WHERE user_id = %s", (user_id,))],
+            "account": [("DELETE FROM accounts WHERE owner_id = %s", (user_id,))],
+            "goals": [
+                ("DELETE FROM milestones WHERE goal_id IN (SELECT id FROM goals WHERE user_id = %s)", (user_id,)),
+                ("DELETE FROM goals WHERE user_id = %s", (user_id,)),
+            ],
+            "debt": [
+                ("DELETE FROM debt_payments WHERE user_id = %s", (user_id,)),
+                ("DELETE FROM debts WHERE user_id = %s", (user_id,)),
+                ("DELETE FROM contacts WHERE user_id = %s", (user_id,)),
+            ],
+            "recurring": [
+                ("DELETE FROM payment_schedules WHERE recurring_payment_id IN (SELECT id FROM recurring_payments WHERE user_id = %s)", (user_id,)),
+                ("DELETE FROM recurring_payments WHERE user_id = %s", (user_id,)),
+            ],
+            "subscription": [
+                ("DELETE FROM subscription_consent_log WHERE user_id = %s", (str(user_id),)),
+                ("DELETE FROM subscriptions WHERE user_id = %s", (str(user_id),)),
+            ],
+            "workspace": [
+                ("DELETE FROM workspace_invites WHERE workspace_id IN (SELECT id FROM workspaces WHERE owner_user_id = %s)", (user_id,)),
+                ("DELETE FROM workspace_members WHERE user_id = %s", (user_id,)),
+                ("DELETE FROM workspaces WHERE owner_user_id = %s", (user_id,)),
+            ],
+            "user": [("DELETE FROM users WHERE id = %s", (user_id,))],
+        }
+
+        for db_key, queries in cleanup_queries.items():
+            conn = get_conn(DATABASES[db_key], **conn_params)
+            conn.autocommit = True
+            cur = conn.cursor()
+            for sql, params in queries:
+                cur.execute(sql, params)
+                print(f"    [{db_key}] {sql.split()[0]}...{sql.split()[2]}: {cur.rowcount} rows")
+            cur.close()
+            conn.close()
+
+    print("Clean complete.\n")
 
 
 # ──────────────────────────────────────────────────────────────
@@ -780,32 +994,32 @@ def main():
     parser.add_argument("--clean", action="store_true", help="Clean existing demo data first")
     args = parser.parse_args()
 
+    conn_params = {
+        "host": args.host,
+        "port": args.port,
+        "user": args.user,
+        "password": args.password,
+    }
+
     print("=" * 60)
     print("  Accounting App — Demo Data Seeder")
     print("=" * 60)
     print(f"  Host: {args.host}:{args.port}")
-    print(f"  Demo user: {DEMO_EMAIL} / {DEMO_PASSWORD}")
-    print(f"  Date range: {ONE_YEAR_AGO.date()} → {NOW.date()}")
+    print(f"  Users: {', '.join(p['email'] for p in PROFILES)}")
+    print(f"  Date range: {TWO_YEARS_AGO.date()} → {NOW.date()}")
     print("=" * 60)
 
     if args.clean:
-        clean_demo_data(args.host, args.port, args.user, args.password)
+        clean_demo_data(conn_params)
 
-    # Seed in dependency order
-    user_id = seed_user(args.host, args.port, args.user, args.password)
-    workspace_id = seed_workspace(args.host, args.port, args.user, args.password, user_id)
-    seed_subscription(args.host, args.port, args.user, args.password, user_id)
-    account_ids = seed_accounts(args.host, args.port, args.user, args.password, user_id, workspace_id)
-    category_ids = seed_categories(args.host, args.port, args.user, args.password, user_id, workspace_id)
-    seed_expenses(args.host, args.port, args.user, args.password, user_id, workspace_id, category_ids, account_ids)
-    seed_incomes(args.host, args.port, args.user, args.password, user_id, workspace_id, category_ids, account_ids)
-    seed_goals(args.host, args.port, args.user, args.password, user_id, workspace_id)
-    seed_debts(args.host, args.port, args.user, args.password, user_id, workspace_id)
-    seed_recurring(args.host, args.port, args.user, args.password, user_id, workspace_id, category_ids)
+    for profile in PROFILES:
+        seed_user_profile(profile, conn_params)
 
     print("\n" + "=" * 60)
     print("  Seeding complete!")
-    print(f"  Login with: {DEMO_EMAIL} / {DEMO_PASSWORD}")
+    print("  Login credentials (password: Demo1234!):")
+    for p in PROFILES:
+        print(f"    {p['plan']:15s} → {p['email']}")
     print("=" * 60)
 
 

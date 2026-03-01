@@ -9,7 +9,7 @@ from app.services.expense import ExpenseService
 from app.dependencies import get_expense_service_internal, verify_internal_token
 from app.utils.logger import get_logger
 from app.models.expense import Expense
-from app.exceptions import ErrorCode, ExpenseValidationError
+from app.exceptions import ErrorCode, ExpenseValidationError, ExpenseLimitExceededError
 
 # Create a separate router for internal endpoints
 router = APIRouter(prefix="/internal", tags=["Internal"])
@@ -23,8 +23,9 @@ logger = get_logger(__name__)
     description="Internal endpoint for other services to create expenses",
     responses={
         200: {"description": "Expense created successfully"},
-        403: {"description": "Invalid internal token or unauthorized access"},
         400: {"description": "Invalid expense data"},
+        403: {"description": "Invalid internal token or unauthorized access"},
+        429: {"description": "Subscription expense limit exceeded"},
     }
 )
 async def internal_expense_create(
@@ -56,11 +57,17 @@ async def internal_expense_create(
     """
     try:
         created_expense = service.create(expense, user_id, workspace_id)
-        
+
         logger.info(f"Internal expense created: {created_expense.id} for user {user_id}")
-        
+
         return created_expense
-        
+
+    except ExpenseLimitExceededError as e:
+        logger.warning(f"Expense limit exceeded for user {user_id}: {e}")
+        raise HTTPException(
+            status_code=429,
+            detail={"error_code": "EXPENSE_LIMIT_EXCEEDED", "message": str(e)}
+        )
     except Exception as e:
         logger.error(f"Unexpected error in internal expense creation: {e}")
         raise ExpenseValidationError(

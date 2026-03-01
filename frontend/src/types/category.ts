@@ -6,6 +6,7 @@ export interface Category {
   user_id: number;
   parent_id?: number;
   type: CategoryType;
+  monthly_budget?: number | null;
   children?: Category[];
   created_at?: string;
   updated_at?: string;

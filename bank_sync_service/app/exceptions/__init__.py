@@ -10,6 +10,7 @@ from .bank_sync_exceptions import (
     SyncInProgressError,
     AccountNotLinkedError,
     ExternalServiceError,
+    TransactionLimitExceededError,
     DatabaseError,
 )
 
@@ -25,5 +26,6 @@ __all__ = [
     "SyncInProgressError",
     "AccountNotLinkedError",
     "ExternalServiceError",
+    "TransactionLimitExceededError",
     "DatabaseError",
 ]

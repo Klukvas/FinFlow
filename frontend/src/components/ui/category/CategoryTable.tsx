@@ -331,7 +331,7 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
 
       {/* Desktop Table View */}
       <div className="hidden lg:block">
-        <div className="overflow-hidden">
+        <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="theme-bg-secondary">
               <tr>

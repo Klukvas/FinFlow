@@ -415,78 +415,104 @@ export const PdfParser: React.FC = () => {
         }
       }
 
-      // Step 3: Create transactions with proper category IDs
+      // Step 3: Create transactions sequentially with early abort on limit errors
       logger.info(
         `Creating ${transactionsWithCategories.length} transactions with categories from batch creation`,
       );
       let successfulIncomeCount = 0;
       let successfulExpenseCount = 0;
       let successfulDebtCount = 0;
+      let expenseLimitHit = false;
+      let incomeLimitHit = false;
 
-      const createPromises = transactionsWithCategories.map(
-        async ({ transaction, originalTransaction, categoryId }) => {
-          try {
-            // If we don't have a category ID yet, get it from our MCC mapping
-            if (!categoryId && originalTransaction?.mcc_code) {
-              categoryId = mccCodeToCategoryId.get(
-                originalTransaction.mcc_code,
+      for (const {
+        transaction,
+        originalTransaction,
+        categoryId: rawCategoryId,
+      } of transactionsWithCategories) {
+        let categoryId = rawCategoryId;
+
+        // Skip if limit already hit for this type
+        const isIncome = transaction.transaction_type === "income";
+        const isExpense = !isIncome;
+        if (isIncome && incomeLimitHit) continue;
+        if (isExpense && expenseLimitHit) continue;
+
+        try {
+          // If we don't have a category ID yet, get it from our MCC mapping
+          if (!categoryId && originalTransaction?.mcc_code) {
+            categoryId = mccCodeToCategoryId.get(originalTransaction.mcc_code);
+            if (categoryId) {
+              logger.info(
+                `Using created category ID ${categoryId} for MCC ${originalTransaction.mcc_code} in transaction: ${transaction.description}`,
               );
-              if (categoryId) {
-                logger.info(
-                  `Using created category ID ${categoryId} for MCC ${originalTransaction.mcc_code} in transaction: ${transaction.description}`,
+            } else {
+              logger.error(
+                `No category ID found for MCC ${originalTransaction.mcc_code}. Skipping transaction: ${transaction.description}`,
+              );
+              errors.push(
+                `Transaction "${transaction.description}" requires a category selection (MCC ${originalTransaction.mcc_code} category creation failed)`,
+              );
+              continue;
+            }
+          }
+
+          // Create the transaction with the category
+          if (isIncome) {
+            const incomeData = {
+              amount: transaction.amount,
+              description: transaction.description,
+              date: transaction.transaction_date,
+              ...(categoryId && { category_id: categoryId }),
+            };
+            const response = await income.createIncome(incomeData);
+
+            if ("error" in response) {
+              if (response.status === 429) {
+                incomeLimitHit = true;
+                errors.push(t("pdfParserPage.errors.incomeLimitExceeded"));
+                logger.warn(
+                  "PdfParser: Income limit exceeded, skipping remaining incomes",
                 );
               } else {
-                logger.error(
-                  `No category ID found for MCC ${originalTransaction.mcc_code}. Skipping transaction: ${transaction.description}`,
-                );
-                errors.push(
-                  `Transaction "${transaction.description}" requires a category selection (MCC ${originalTransaction.mcc_code} category creation failed)`,
-                );
-                return; // Skip this transaction
-              }
-            }
-
-            // Create the transaction with the category
-            if (transaction.transaction_type === "income") {
-              const incomeData = {
-                amount: transaction.amount,
-                description: transaction.description,
-                date: transaction.transaction_date,
-                ...(categoryId && { category_id: categoryId }),
-              };
-              const response = await income.createIncome(incomeData);
-
-              if ("error" in response) {
                 logger.error(
                   "PdfParser: Income creation failed:",
                   response.error,
                 );
                 errors.push(`Income creation failed: ${response.error}`);
-              } else {
-                successfulIncomeCount++;
               }
-            } else if (
-              transaction.transaction_type === "expense" &&
-              transaction.description?.toLowerCase().includes("debt")
-            ) {
-              // For debt transactions, create a debt payment
-              if (!categoryId) {
-                logger.warn(
-                  "PdfParser: Skipping debt transaction without category_id",
-                );
-                errors.push(
-                  `Debt transaction requires a category: ${transaction.description}`,
-                );
-              } else {
-                const expenseData = {
-                  amount: transaction.amount,
-                  description: `[DEBT] ${transaction.description}`,
-                  date: transaction.transaction_date,
-                  category_id: categoryId,
-                };
-                const response = await expense.createExpense(expenseData);
+            } else {
+              successfulIncomeCount++;
+            }
+          } else if (
+            transaction.transaction_type === "expense" &&
+            transaction.description?.toLowerCase().includes("debt")
+          ) {
+            // For debt transactions, create a debt payment
+            if (!categoryId) {
+              logger.warn(
+                "PdfParser: Skipping debt transaction without category_id",
+              );
+              errors.push(
+                `Debt transaction requires a category: ${transaction.description}`,
+              );
+            } else {
+              const expenseData = {
+                amount: transaction.amount,
+                description: `[DEBT] ${transaction.description}`,
+                date: transaction.transaction_date,
+                category_id: categoryId,
+              };
+              const response = await expense.createExpense(expenseData);
 
-                if ("error" in response) {
+              if ("error" in response) {
+                if (response.status === 429) {
+                  expenseLimitHit = true;
+                  errors.push(t("pdfParserPage.errors.expenseLimitExceeded"));
+                  logger.warn(
+                    "PdfParser: Expense limit exceeded, skipping remaining expenses",
+                  );
+                } else {
                   logger.error(
                     "PdfParser: Debt expense creation failed:",
                     response.error,
@@ -494,43 +520,49 @@ export const PdfParser: React.FC = () => {
                   errors.push(
                     `Debt expense creation failed: ${response.error}`,
                   );
-                } else {
-                  successfulDebtCount++;
                 }
+              } else {
+                successfulDebtCount++;
               }
-            } else {
-              // Default to expense for any other transaction type
-              const expenseData = {
-                amount: transaction.amount,
-                description: transaction.description,
-                date: transaction.transaction_date,
-                ...(categoryId && { category_id: categoryId }),
-              };
-              const response = await expense.createExpense(expenseData);
+            }
+          } else {
+            // Default to expense for any other transaction type
+            const expenseData = {
+              amount: transaction.amount,
+              description: transaction.description,
+              date: transaction.transaction_date,
+              ...(categoryId && { category_id: categoryId }),
+            };
+            const response = await expense.createExpense(expenseData);
 
-              if ("error" in response) {
+            if ("error" in response) {
+              if (response.status === 429) {
+                expenseLimitHit = true;
+                errors.push(t("pdfParserPage.errors.expenseLimitExceeded"));
+                logger.warn(
+                  "PdfParser: Expense limit exceeded, skipping remaining expenses",
+                );
+              } else {
                 logger.error(
                   "PdfParser: Expense creation failed:",
                   response.error,
                 );
                 errors.push(`Expense creation failed: ${response.error}`);
-              } else {
-                successfulExpenseCount++;
               }
+            } else {
+              successfulExpenseCount++;
             }
-          } catch (err) {
-            logger.error(
-              `PdfParser: Failed to create ${transaction.transaction_type}:`,
-              err,
-            );
-            errors.push(
-              `Failed to create ${transaction.transaction_type}: ${err}`,
-            );
           }
-        },
-      );
-
-      await Promise.all(createPromises);
+        } catch (err) {
+          logger.error(
+            `PdfParser: Failed to create ${transaction.transaction_type}:`,
+            err,
+          );
+          errors.push(
+            `Failed to create ${transaction.transaction_type}: ${err}`,
+          );
+        }
+      }
 
       if (errors.length > 0) {
         logger.error("PdfParser: Errors occurred:", errors);

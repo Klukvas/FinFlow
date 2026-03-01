@@ -19,6 +19,7 @@ import traceback
 request_id_var: ContextVar[Optional[str]] = ContextVar('request_id', default=None)
 user_id_var: ContextVar[Optional[int]] = ContextVar('user_id', default=None)
 service_name_var: ContextVar[Optional[str]] = ContextVar('service_name', default=None)
+country_code_var: ContextVar[Optional[str]] = ContextVar('country_code', default=None)
 
 class JSONFormatter(logging.Formatter):
     """Custom JSON formatter for structured logging"""
@@ -46,6 +47,9 @@ class JSONFormatter(logging.Formatter):
 
         if user_id_var.get():
             log_entry["user_id"] = user_id_var.get()
+
+        if country_code_var.get():
+            log_entry["country_code"] = country_code_var.get()
 
         # Add extra fields from the log record
         if hasattr(record, 'extra_fields'):

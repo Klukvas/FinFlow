@@ -3,6 +3,8 @@ from fastapi import FastAPI, HTTPException, Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZIPMiddleware
+from shared.geoip import GeoIPMiddleware
 
 from app.routers import (
     workspaces_router,
@@ -143,6 +145,8 @@ app.add_exception_handler(HTTPException, http_exception_handler)
 
 # Add middleware
 app.add_middleware(RequestLoggingMiddleware)
+app.add_middleware(GeoIPMiddleware)
+app.add_middleware(GZIPMiddleware, minimum_size=500)
 
 # Include routers
 app.include_router(workspaces_router)

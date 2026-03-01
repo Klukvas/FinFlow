@@ -4,11 +4,13 @@ import { Card } from "../shared/Card";
 import { Skeleton } from "../shared/Skeleton";
 import { ExpenseResponse, IncomeOut, AccountSummary } from "@/types";
 import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
+import { getPeriodBoundaries } from "@/utils/periodUtils";
 
 interface DashboardKpiStripProps {
   expenses: ExpenseResponse[];
   incomes: IncomeOut[];
   accounts: AccountSummary[];
+  periodMonths: number;
   loading: boolean;
 }
 
@@ -16,6 +18,7 @@ export const DashboardKpiStrip: React.FC<DashboardKpiStripProps> = ({
   expenses,
   incomes,
   accounts,
+  periodMonths,
   loading,
 }) => {
   const { t } = useTranslation();
@@ -23,25 +26,21 @@ export const DashboardKpiStrip: React.FC<DashboardKpiStripProps> = ({
     useCurrencyConversion();
 
   const stats = useMemo(() => {
-    const now = new Date();
-    const thisMonth = now.getMonth();
-    const thisYear = now.getFullYear();
-    const prevMonth = thisMonth === 0 ? 11 : thisMonth - 1;
-    const prevYear = thisMonth === 0 ? thisYear - 1 : thisYear;
+    const { periodStart, prevPeriodStart } = getPeriodBoundaries(periodMonths);
 
-    let thisMonthExpenses = 0;
-    let prevMonthExpenses = 0;
-    let thisMonthIncome = 0;
-    let prevMonthIncome = 0;
+    let curExpenses = 0;
+    let prevExpenses = 0;
+    let curIncome = 0;
+    let prevIncome = 0;
 
     for (const exp of expenses) {
       const d = new Date(exp.date);
       const converted =
         convertToUserCurrency(exp.amount, exp.currency) ?? exp.amount;
-      if (d.getMonth() === thisMonth && d.getFullYear() === thisYear) {
-        thisMonthExpenses += converted;
-      } else if (d.getMonth() === prevMonth && d.getFullYear() === prevYear) {
-        prevMonthExpenses += converted;
+      if (d >= periodStart) {
+        curExpenses += converted;
+      } else if (d >= prevPeriodStart) {
+        prevExpenses += converted;
       }
     }
 
@@ -49,10 +48,10 @@ export const DashboardKpiStrip: React.FC<DashboardKpiStripProps> = ({
       const d = new Date(inc.date);
       const converted =
         convertToUserCurrency(inc.amount, inc.currency) ?? inc.amount;
-      if (d.getMonth() === thisMonth && d.getFullYear() === thisYear) {
-        thisMonthIncome += converted;
-      } else if (d.getMonth() === prevMonth && d.getFullYear() === prevYear) {
-        prevMonthIncome += converted;
+      if (d >= periodStart) {
+        curIncome += converted;
+      } else if (d >= prevPeriodStart) {
+        prevIncome += converted;
       }
     }
 
@@ -63,31 +62,42 @@ export const DashboardKpiStrip: React.FC<DashboardKpiStripProps> = ({
     }, 0);
 
     const incomeTrend =
-      prevMonthIncome > 0
-        ? ((thisMonthIncome - prevMonthIncome) / prevMonthIncome) * 100
-        : 0;
+      prevIncome > 0 ? ((curIncome - prevIncome) / prevIncome) * 100 : 0;
 
     const expenseTrend =
-      prevMonthExpenses > 0
-        ? ((thisMonthExpenses - prevMonthExpenses) / prevMonthExpenses) * 100
+      prevExpenses > 0
+        ? ((curExpenses - prevExpenses) / prevExpenses) * 100
         : 0;
 
-    const netCashFlow = thisMonthIncome - thisMonthExpenses;
+    const netCashFlow = curIncome - curExpenses;
+
+    const savingsRate =
+      curIncome > 0 ? ((curIncome - curExpenses) / curIncome) * 100 : null;
+
+    const prevSavingsRate =
+      prevIncome > 0 ? ((prevIncome - prevExpenses) / prevIncome) * 100 : null;
+
+    const savingsRateTrend =
+      savingsRate !== null && prevSavingsRate !== null
+        ? savingsRate - prevSavingsRate
+        : 0;
 
     return {
-      thisMonthIncome,
-      thisMonthExpenses,
+      curIncome,
+      curExpenses,
       netCashFlow,
       totalBalance,
       incomeTrend,
       expenseTrend,
+      savingsRate,
+      savingsRateTrend,
     };
-  }, [expenses, incomes, accounts, convertToUserCurrency]);
+  }, [expenses, incomes, accounts, convertToUserCurrency, periodMonths]);
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {Array.from({ length: 4 }).map((_, i) => (
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        {Array.from({ length: 5 }).map((_, i) => (
           <Card key={i}>
             <div className="p-4 space-y-2">
               <Skeleton variant="text" className="h-3 w-20" />
@@ -101,32 +111,50 @@ export const DashboardKpiStrip: React.FC<DashboardKpiStripProps> = ({
 
   const kpiCards = [
     {
+      id: "income",
       label: t("dashboard.kpi.totalIncome"),
-      value: formatCurrency(stats.thisMonthIncome, userCurrency),
+      value: formatCurrency(stats.curIncome, userCurrency),
       trend: stats.incomeTrend,
       trendPositiveIsGood: true,
     },
     {
+      id: "expenses",
       label: t("dashboard.kpi.totalExpenses"),
-      value: formatCurrency(stats.thisMonthExpenses, userCurrency),
+      value: formatCurrency(stats.curExpenses, userCurrency),
       trend: stats.expenseTrend,
       trendPositiveIsGood: false,
     },
     {
+      id: "cashFlow",
       label: t("dashboard.kpi.netCashFlow"),
       value: formatCurrency(stats.netCashFlow, userCurrency),
       color: stats.netCashFlow >= 0 ? "text-green-500" : "text-red-500",
     },
     {
+      id: "balance",
       label: t("dashboard.kpi.totalBalance"),
       value: formatCurrency(stats.totalBalance, userCurrency),
+    },
+    {
+      id: "savingsRate",
+      label: t("dashboard.kpi.savingsRate"),
+      value:
+        stats.savingsRate !== null ? `${stats.savingsRate.toFixed(1)}%` : "—",
+      trend: stats.savingsRateTrend,
+      trendPositiveIsGood: true,
+      color:
+        stats.savingsRate !== null
+          ? stats.savingsRate >= 0
+            ? "text-green-500"
+            : "text-red-500"
+          : undefined,
     },
   ];
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
       {kpiCards.map((card) => (
-        <Card key={card.label}>
+        <Card key={card.id}>
           <div className="p-4">
             <p className="text-xs font-medium theme-text-secondary uppercase tracking-wide">
               {card.label}

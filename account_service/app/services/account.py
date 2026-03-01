@@ -484,8 +484,8 @@ class AccountService(WorkspaceAuthorizationMixin):
             def _fetch_account_summary(account):
                 """Fetch transaction data for a single account."""
                 try:
-                    expense_response = self.expense_client.get_expenses_by_account(account.id)
-                    income_response = self.income_client.get_incomes_by_account(account.id)
+                    expense_response = self.expense_client.get_expenses_by_account(account.id, user_id)
+                    income_response = self.income_client.get_incomes_by_account(account.id, user_id)
 
                     expense_count = len(expense_response) if not isinstance(expense_response, dict) else 0
                     income_count = len(income_response) if not isinstance(income_response, dict) else 0

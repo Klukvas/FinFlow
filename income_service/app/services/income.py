@@ -186,6 +186,33 @@ class IncomeService(WorkspaceAuthorizationMixin):
         
         return [IncomeOut.model_validate(income) for income in incomes]
     
+    def get_by_date_range(self, user_id: int, workspace_id: UUID, start_date: date, end_date: date) -> List[IncomeOut]:
+        """Get incomes within a date range"""
+        try:
+            self.authorize_workspace_access(workspace_id, user_id, "viewer", "get_incomes_by_date_range")
+
+            if start_date > end_date:
+                raise IncomeValidationError(
+                    "Start date cannot be after end date",
+                    IncomeErrorCodes.INCOME_VALIDATION_FAILED,
+                )
+
+            incomes = self.db.query(Income).filter(
+                Income.workspace_id == workspace_id,
+                Income.date >= start_date,
+                Income.date <= end_date,
+            ).order_by(desc(Income.date)).limit(5000).all()
+
+            return [IncomeOut.model_validate(income) for income in incomes]
+        except IncomeValidationError:
+            raise
+        except Exception as e:
+            logger.error(f"Error retrieving incomes by date range: {e}")
+            raise IncomeValidationError(
+                "Failed to retrieve incomes by date range",
+                IncomeErrorCodes.INCOME_VALIDATION_FAILED,
+            )
+
     def get_all_paginated(self, user_id: int, workspace_id: UUID, page: int = 1, size: int = 50) -> tuple[List[Income], int]:
         """Get paginated incomes for the user in the workspace"""
         self.authorize_workspace_access(workspace_id, user_id, "viewer", "list_incomes_paginated")

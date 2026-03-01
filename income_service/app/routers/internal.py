@@ -9,7 +9,7 @@ from app.services.income import IncomeService
 from app.dependencies import verify_internal_token, get_income_service_internal
 from app.utils.logger import get_logger
 from app.models.income import Income
-from app.exceptions import IncomeErrorCodes
+from app.exceptions import IncomeErrorCodes, IncomeLimitExceededError
 
 # Create a separate router for internal endpoints
 router = APIRouter(prefix="/internal", tags=["Internal"])
@@ -23,8 +23,9 @@ logger = get_logger(__name__)
     description="Internal endpoint for other services to create incomes",
     responses={
         200: {"description": "Income created successfully"},
-        403: {"description": "Invalid internal token or unauthorized access"},
         400: {"description": "Invalid income data"},
+        403: {"description": "Invalid internal token or unauthorized access"},
+        429: {"description": "Subscription income limit exceeded"},
     }
 )
 async def internal_income_create(
@@ -47,6 +48,12 @@ async def internal_income_create(
 
         return created_income
 
+    except IncomeLimitExceededError as e:
+        logger.warning(f"Income limit exceeded for user {user_id}: {e}")
+        raise HTTPException(
+            status_code=429,
+            detail={"error_code": "INCOME_LIMIT_EXCEEDED", "message": str(e)}
+        )
     except Exception as e:
         logger.error(f"Unexpected error in internal income creation: {e}")
         raise HTTPException(

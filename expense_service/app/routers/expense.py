@@ -114,7 +114,30 @@ def read_expenses_paginated(
     )
 
 @router.get(
-    "/{expense_id}", 
+    "/current-month-count",
+    summary="Get current month expense count",
+    description="Get the number of expenses created this month and the monthly limit",
+    responses={
+        200: {"description": "Current month count and limit returned successfully"},
+        401: {"description": "Unauthorized - invalid or missing token"},
+    }
+)
+def get_current_month_count(
+    service: ExpenseService = Depends(get_expense_service),
+    user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id)
+):
+    """
+    Get current month expense count and limit.
+
+    Returns:
+        - count: Number of expenses created this month
+        - limit: Monthly limit for this user's plan (None = unlimited)
+    """
+    return service.get_current_month_count(user_id, workspace_id)
+
+@router.get(
+    "/{expense_id}",
     response_model=ExpenseResponse,
     summary="Get expense by ID",
     description="Retrieve a specific expense by its ID",
@@ -256,26 +279,3 @@ def read_expenses_by_date_range(
     Returns expenses within the specified date range, ordered by date (newest first).
     """
     return service.get_by_date_range(start_date, end_date, user_id, workspace_id)
-
-@router.get(
-    "/current-month-count",
-    summary="Get current month expense count",
-    description="Get the number of expenses created this month and the monthly limit",
-    responses={
-        200: {"description": "Current month count and limit returned successfully"},
-        401: {"description": "Unauthorized - invalid or missing token"},
-    }
-)
-def get_current_month_count(
-    service: ExpenseService = Depends(get_expense_service),
-    user_id: int = Depends(get_current_user_id),
-    workspace_id: UUID = Depends(get_workspace_id)
-):
-    """
-    Get current month expense count and limit for PDF parser frontend validation.
-
-    Returns:
-        - count: Number of expenses created this month
-        - limit: Monthly limit for this user's plan (None = unlimited)
-    """
-    return service.get_current_month_count(user_id, workspace_id)

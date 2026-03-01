@@ -24,6 +24,8 @@ from app.exceptions.user_errors import (
     RateLimitError
 )
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZIPMiddleware
+from shared.geoip import GeoIPMiddleware
 from app.database import Base, engine
 from app.config import settings
 from app.utils.logger import get_logger
@@ -152,6 +154,8 @@ app.include_router(admin.router)
 # Middleware order matters! Added LAST = runs FIRST
 # 1. RequestLoggingMiddleware (added first, runs last)
 app.add_middleware(RequestLoggingMiddleware)
+app.add_middleware(GeoIPMiddleware)
+app.add_middleware(GZIPMiddleware, minimum_size=500)
 
 # 2. CORS (added last, runs first - handles preflight OPTIONS)
 app.add_middleware(

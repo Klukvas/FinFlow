@@ -24,7 +24,8 @@ import {
   FaChevronRight,
   FaRobot,
   FaReceipt,
-  FaUniversity,
+  FaHandHoldingUsd,
+  // FaUniversity,  // Bank Sync — disabled
 } from "react-icons/fa";
 
 interface SidebarProps {
@@ -111,7 +112,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       path: "/debts",
-      icon: FaDollarSign,
+      icon: FaHandHoldingUsd,
       label: t("navigation.debts"),
       requiresWorkspace: true,
     },
@@ -139,12 +140,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: t("navigation.aiAssistant"),
       requiresWorkspace: true,
     },
-    {
-      path: "/bank-sync",
-      icon: FaUniversity,
-      label: t("navigation.bankSync"),
-      requiresWorkspace: true,
-    },
+    // Bank Sync — hidden until feature is ready for production
+    // {
+    //   path: "/bank-sync",
+    //   icon: FaUniversity,
+    //   label: t("navigation.bankSync"),
+    //   requiresWorkspace: true,
+    // },
     {
       path: "/workspaces",
       icon: FaUsers,

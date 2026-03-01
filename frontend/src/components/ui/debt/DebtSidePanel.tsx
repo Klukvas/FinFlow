@@ -239,7 +239,7 @@ export const DebtSidePanel: React.FC<DebtSidePanelProps> = ({
                 {t("debtPage.sidePanel.noPayments")}
               </p>
             ) : (
-              <div className="space-y-0 rounded-lg border theme-border overflow-hidden">
+              <div className="space-y-0 rounded-lg border theme-border overflow-x-auto">
                 <table className="w-full">
                   <thead className="theme-bg-secondary">
                     <tr>

@@ -33,10 +33,6 @@ class Settings(BaseSettings):
     CORS_ORIGINS: str = "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
     DOCS_ENABLED: bool = False
 
-    # Monthly usage quotas (total analyses per month across all prompts)
-    MONTHLY_QUOTA_PROFESSIONAL: int = 5
-    MONTHLY_QUOTA_ENTERPRISE: int = 15
-
     # Cache TTL (seconds)
     CACHE_TTL: int = 604800  # 7 days
 

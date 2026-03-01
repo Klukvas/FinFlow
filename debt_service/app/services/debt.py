@@ -361,7 +361,7 @@ class DebtService(WorkspaceAuthorizationMixin):
         # Convert and sum all debts to user's currency
         total_debt = 0.0
         for debt in active_debts:
-            debt_amount = abs(debt.current_balance)  # Use absolute value
+            debt_amount = float(abs(debt.current_balance))  # Use absolute value
             debt_currency = debt.currency or settings.DEFAULT_CURRENCY
             
             if debt_currency != user_currency:
@@ -391,7 +391,7 @@ class DebtService(WorkspaceAuthorizationMixin):
         for payment in all_payments:
             # Get the debt currency from the map
             payment_currency = debt_currency_map.get(payment.debt_id, settings.DEFAULT_CURRENCY)
-            payment_amount = payment.amount
+            payment_amount = float(payment.amount)
             
             if payment_currency != user_currency:
                 # Convert to user's currency
@@ -404,7 +404,7 @@ class DebtService(WorkspaceAuthorizationMixin):
             total_payments += payment_amount
         
         # Calculate average interest rate
-        interest_rates = [debt.interest_rate for debt in active_debts if debt.interest_rate is not None]
+        interest_rates = [float(debt.interest_rate) for debt in active_debts if debt.interest_rate is not None]
         avg_interest_rate = sum(interest_rates) / len(interest_rates) if interest_rates else None
         
         return DebtSummary(

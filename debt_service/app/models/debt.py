@@ -35,7 +35,7 @@ class Debt(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, nullable=False, index=True)
     workspace_id = Column(UUID(as_uuid=True), nullable=False, index=True)
-    contact_id = Column(Integer, ForeignKey("contacts.id"), nullable=True)
+    contact_id = Column(Integer, ForeignKey("contacts.id"), nullable=True, index=True)
     category_id = Column(Integer, nullable=True)  # Reference to category service
     
     # Debt details
@@ -77,7 +77,7 @@ class DebtPayment(Base):
     __tablename__ = "debt_payments"
     
     id = Column(Integer, primary_key=True, index=True)
-    debt_id = Column(Integer, ForeignKey("debts.id"), nullable=False)
+    debt_id = Column(Integer, ForeignKey("debts.id"), nullable=False, index=True)
     user_id = Column(Integer, nullable=False, index=True)
     
     # Payment details
@@ -96,3 +96,7 @@ class DebtPayment(Base):
     
     # Relationships
     debt = relationship("Debt", back_populates="payments")
+
+    __table_args__ = (
+        Index('idx_debt_payments_user_debt', 'user_id', 'debt_id'),
+    )

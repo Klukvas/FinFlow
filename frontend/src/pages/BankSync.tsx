@@ -4,7 +4,13 @@ import { useApiClients } from "@/hooks/useApiClients";
 import { ConnectForm } from "@/components/ui/bank-sync/ConnectForm";
 import { AccountsList } from "@/components/ui/bank-sync/AccountsList";
 import { SyncHistory } from "@/components/ui/bank-sync/SyncHistory";
-import { BankConnection, SyncStatus } from "@/types/bankSync";
+import { SyncTransactionReview } from "@/components/ui/bank-sync/SyncTransactionReview";
+import {
+  BankConnection,
+  SyncStatus,
+  SyncPreviewResponse,
+  SyncConfirmTransaction,
+} from "@/types/bankSync";
 import { AccountResponse } from "@/types";
 import {
   FaSync,
@@ -22,9 +28,14 @@ const BankSync: React.FC = () => {
   const [syncHistory, setSyncHistory] = useState<SyncStatus[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [daysBack, setDaysBack] = useState(30);
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [previewData, setPreviewData] = useState<SyncPreviewResponse | null>(
+    null,
+  );
+  const [isConfirming, setIsConfirming] = useState(false);
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -100,10 +111,39 @@ const BankSync: React.FC = () => {
     setIsSyncing(true);
     setError(null);
     try {
-      const result = await bankSync.triggerSync(connectionId);
+      const result = await bankSync.previewSync(connectionId, {
+        days_back: daysBack,
+      });
+      if ("error" in result) {
+        setError(result.error);
+      } else if (result.total_new === 0) {
+        setSuccessMsg(t("bankSync.review.noNewTransactions"));
+        setTimeout(() => setSuccessMsg(null), 5000);
+      } else {
+        setPreviewData(result);
+      }
+    } catch {
+      setError(t("bankSync.syncError"));
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleConfirmSync = async (transactions: SyncConfirmTransaction[]) => {
+    const active = connections.find((c) => c.is_active);
+    if (!active) return;
+
+    setIsConfirming(true);
+    setError(null);
+    try {
+      const result = await bankSync.confirmSync(active.id, {
+        days_back: daysBack,
+        transactions,
+      });
       if ("error" in result) {
         setError(result.error);
       } else {
+        setPreviewData(null);
         setSuccessMsg(
           t("bankSync.syncComplete", {
             imported: result.transactions_imported,
@@ -116,7 +156,7 @@ const BankSync: React.FC = () => {
     } catch {
       setError(t("bankSync.syncError"));
     } finally {
-      setIsSyncing(false);
+      setIsConfirming(false);
     }
   };
 
@@ -215,6 +255,18 @@ const BankSync: React.FC = () => {
                 )}
               </div>
               <div className="flex items-center gap-2">
+                <select
+                  value={daysBack}
+                  onChange={(e) => setDaysBack(Number(e.target.value))}
+                  disabled={isSyncing}
+                  className="px-3 py-2 md:py-2 min-h-[44px] rounded-lg text-sm theme-surface theme-border border theme-text-primary disabled:opacity-50"
+                >
+                  {[7, 14, 30].map((d) => (
+                    <option key={d} value={d}>
+                      {t("bankSync.daysBack", { count: d })}
+                    </option>
+                  ))}
+                </select>
                 <button
                   onClick={() => handleSync(activeConnection.id)}
                   disabled={isSyncing}
@@ -252,6 +304,17 @@ const BankSync: React.FC = () => {
             <SyncHistory history={syncHistory} />
           </div>
         </div>
+      )}
+
+      {previewData && (
+        <SyncTransactionReview
+          transactions={previewData.transactions}
+          totalFound={previewData.total_found}
+          totalSkipped={previewData.total_skipped}
+          onConfirm={handleConfirmSync}
+          onClose={() => setPreviewData(null)}
+          isConfirming={isConfirming}
+        />
       )}
     </div>
   );

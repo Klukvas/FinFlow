@@ -81,6 +81,16 @@ class ExternalServiceError(BankSyncException):
         )
 
 
+class TransactionLimitExceededError(BankSyncException):
+    def __init__(self, transaction_type: str, message: str = ""):
+        super().__init__(
+            message or f"Subscription limit exceeded for {transaction_type}",
+            "TRANSACTION_LIMIT_EXCEEDED",
+            {"transaction_type": transaction_type},
+        )
+        self.transaction_type = transaction_type
+
+
 class DatabaseError(BankSyncException):
     def __init__(self, message: str, operation: str = ""):
         super().__init__(

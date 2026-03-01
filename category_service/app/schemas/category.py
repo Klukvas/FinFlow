@@ -11,8 +11,8 @@ class CategoryType(str, Enum):
 class SupportedLanguage(str, Enum):
     """Supported languages for translations"""
     RU = "ru"
-    UK = "uk" 
-    en = "en"
+    UK = "uk"
+    EN = "en"
 
 class CategoryBase(BaseModel):
     name: str = Field(
@@ -47,11 +47,19 @@ class CategoryBase(BaseModel):
 
 class CategoryCreate(CategoryBase):
     """Schema for creating a new category"""
+    monthly_budget: Optional[float] = Field(
+        None,
+        ge=0,
+        description="Monthly budget amount for this category",
+        examples=[500.00, 1000.00]
+    )
+
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
                 "name": "Food & Dining",
-                "parent_id": None
+                "parent_id": None,
+                "monthly_budget": 500.00
             }
         }
     )
@@ -209,7 +217,7 @@ class CategoryUpdate(CategoryBase):
     """Schema for updating an existing category"""
     name: Optional[str] = Field(
         None,
-        min_length=3, 
+        min_length=3,
         max_length=100,
         description="Category name must be between 3 and 100 characters long"
     )
@@ -217,12 +225,19 @@ class CategoryUpdate(CategoryBase):
         None,
         description="Parent category ID for hierarchical organization"
     )
-    
+    monthly_budget: Optional[float] = Field(
+        None,
+        ge=0,
+        description="Monthly budget amount for this category",
+        examples=[500.00, 1000.00]
+    )
+
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
                 "name": "Food & Dining Updated",
-                "parent_id": 1
+                "parent_id": 1,
+                "monthly_budget": 500.00
             }
         }
     )
@@ -232,6 +247,7 @@ class CategoryOut(CategoryBase):
     id: int = Field(description="Unique category identifier", examples=[1, 2, 3])
     user_id: int = Field(description="ID of the user who owns this category", examples=[1, 2, 3])
     workspace_id: UUID = Field(description="Workspace ID this category belongs to")
+    monthly_budget: Optional[float] = Field(None, description="Monthly budget amount for this category")
     children: List['CategoryOut'] = Field(
         default_factory=list,
         description="List of child categories"

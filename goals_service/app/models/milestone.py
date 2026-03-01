@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Float, Numeric, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Float, Numeric, Boolean, ForeignKey, Index
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.database import Base
@@ -8,7 +8,7 @@ class Milestone(Base):
     __tablename__ = "milestones"
 
     id = Column(Integer, primary_key=True, index=True)
-    goal_id = Column(Integer, ForeignKey("goals.id"), nullable=False)
+    goal_id = Column(Integer, ForeignKey("goals.id"), nullable=False, index=True)
     
     # Milestone information
     title = Column(String(255), nullable=False)
@@ -29,6 +29,10 @@ class Milestone(Base):
     
     # Relationship
     goal = relationship("Goal", back_populates="milestones")
+
+    __table_args__ = (
+        Index('idx_milestones_goal_order', 'goal_id', 'order_index'),
+    )
     
     def calculate_progress(self):
         """Calculate milestone progress percentage"""

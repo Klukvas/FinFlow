@@ -1,30 +1,49 @@
-import { Category, ExpenseResponse } from '@/types';
-import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
-import React, { useMemo } from 'react';
-import { CHART_COLORS, CHART_TOOLTIP_STYLE } from './chartColors';
+import { Category, ExpenseResponse } from "@/types";
+import {
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+} from "recharts";
+import React, { useMemo } from "react";
+import { CHART_COLORS, CHART_TOOLTIP_STYLE } from "./chartColors";
 
 interface CategoryExpensesChartProps {
   expenses: ExpenseResponse[];
   categories: Category[];
 }
 
-export const CategoryExpensesChart: React.FC<CategoryExpensesChartProps> = ({ expenses, categories }) => {
+export const CategoryExpensesChart: React.FC<CategoryExpensesChartProps> = ({
+  expenses,
+  categories,
+}) => {
   const expensesByCategory = useMemo(() => {
-    return categories.map(cat => {
-      const categoryExpenses = expenses.filter(exp => exp.category_id === cat.id);
-      const total = categoryExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+    return categories
+      .map((cat) => {
+        const categoryExpenses = expenses.filter(
+          (exp) => exp.category_id === cat.id,
+        );
+        const total = categoryExpenses.reduce(
+          (sum, exp) => sum + exp.amount,
+          0,
+        );
 
-      return {
-        name: cat.name,
-        value: total
-      };
-    }).filter(item => item.value > 0);
+        return {
+          name: cat.name,
+          value: total,
+        };
+      })
+      .filter((item) => item.value > 0);
   }, [expenses, categories]);
 
   return (
     <div className="theme-surface p-4 rounded-lg theme-shadow theme-border border">
-      <h2 className="text-lg font-semibold mb-4 theme-text-primary">Расходы по категориям</h2>
-      <div className="h-[300px]">
+      <h2 className="text-lg font-semibold mb-4 theme-text-primary">
+        Расходы по категориям
+      </h2>
+      <div className="h-[250px] md:h-[300px]">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -37,14 +56,17 @@ export const CategoryExpensesChart: React.FC<CategoryExpensesChartProps> = ({ ex
               outerRadius={80}
             >
               {expensesByCategory.map((_, index) => (
-                <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                <Cell
+                  key={`cell-${index}`}
+                  fill={CHART_COLORS[index % CHART_COLORS.length]}
+                />
               ))}
             </Pie>
             <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
             <Legend
               layout="horizontal"
               verticalAlign="bottom"
-              wrapperStyle={{ color: 'var(--color-text-primary)' }}
+              wrapperStyle={{ color: "var(--color-text-primary)" }}
             />
           </PieChart>
         </ResponsiveContainer>

@@ -18,6 +18,8 @@ from app.exceptions import (
     CategoryNameConflictError
 )
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZIPMiddleware
+from shared.geoip import GeoIPMiddleware
 from app.config import settings
 from app.utils.logger import get_logger
 import time
@@ -193,6 +195,8 @@ app.add_exception_handler(Exception, general_exception_handler)  # Catch-all for
 
 # Add middleware
 app.add_middleware(RequestLoggingMiddleware)
+app.add_middleware(GeoIPMiddleware)
+app.add_middleware(GZIPMiddleware, minimum_size=500)
 
 # Include routers
 app.include_router(category.router)

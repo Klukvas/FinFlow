@@ -45,3 +45,34 @@ export interface LinkAccountRequest {
 export interface ConnectionCreate {
   token: string;
 }
+
+export interface SyncPreviewTransaction {
+  external_id: string;
+  type: "expense" | "income";
+  amount: number;
+  currency: string;
+  date: string;
+  description: string;
+  mcc: number | null;
+  category_id: number | null;
+  category_name: string | null;
+  account_id: number;
+}
+
+export interface SyncPreviewResponse {
+  transactions: SyncPreviewTransaction[];
+  total_found: number;
+  total_new: number;
+  total_skipped: number;
+}
+
+export interface SyncConfirmTransaction {
+  external_id: string;
+  type: "expense" | "income";
+  amount: number;
+  currency: string;
+  date: string;
+  description: string;
+  category_id: number | null;
+  account_id: number;
+}

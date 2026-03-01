@@ -242,7 +242,7 @@ jobs:
           [[ "$SUBSCRIPTION_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST subscription_service"
           [[ "$WORKSPACE_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST workspace_service"
           [[ "$AI_ASSISTANT_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST ai_assistant_service"
-          [[ "$BANK_SYNC_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST bank_sync_service"
+          # [[ "$BANK_SYNC_SERVICE" == "true" ]] && SERVICES_LIST="$SERVICES_LIST bank_sync_service"  # disabled until feature is ready
 
           echo "services_list=$SERVICES_LIST" >> $GITHUB_OUTPUT
           echo "Services to build/deploy:$SERVICES_LIST"
@@ -849,11 +849,11 @@ jobs:
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/ai_assistant_service:latest
           cache-to: type=inline
 
-  # Stage 18: Bank Sync Service Build
+  # Stage 18: Bank Sync Service Build — disabled until feature is ready
   stage18-bank-sync-service:
-    name: "Stage 18: Build Bank Sync Service"
+    name: "Stage 18: Build Bank Sync Service (DISABLED)"
     needs: [detect-changes, e2e-tests]
-    if: needs.detect-changes.outputs.bank_sync_service == 'true'
+    if: false  # disabled until feature is ready for production
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -1118,6 +1118,11 @@ jobs:
           docker compose logs --tail=20
           exit 1
 
+      - name: Seed test data
+        run: |
+          pip install psycopg2-binary bcrypt
+          python scripts/seed_demo_data.py --host localhost --port 5433
+
       - name: Run E2E tests
         env:
           INTERNAL_SECRET_TOKEN: ${{ env.E2E_INTERNAL_TOKEN }}
@@ -1217,7 +1222,7 @@ jobs:
           [[ "${{ needs.stage15-payment-service.result }}" == "success" ]] && echo "- ✅ Payment Service" >> $GITHUB_STEP_SUMMARY
           [[ "${{ needs.stage16-scheduler-service.result }}" == "success" ]] && echo "- ✅ Scheduler Service" >> $GITHUB_STEP_SUMMARY
           [[ "${{ needs.stage17-ai-assistant-service.result }}" == "success" ]] && echo "- ✅ AI Assistant Service" >> $GITHUB_STEP_SUMMARY
-          [[ "${{ needs.stage18-bank-sync-service.result }}" == "success" ]] && echo "- ✅ Bank Sync Service" >> $GITHUB_STEP_SUMMARY
+          # [[ "${{ needs.stage18-bank-sync-service.result }}" == "success" ]] && echo "- ✅ Bank Sync Service" >> $GITHUB_STEP_SUMMARY  # disabled
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Environment**: ${{ github.event.inputs.environment || 'production' }}" >> $GITHUB_STEP_SUMMARY
           echo "**Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY

@@ -5,7 +5,9 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZIPMiddleware
 from fastapi.responses import JSONResponse
+from shared.geoip import GeoIPMiddleware
 
 from .database import engine, SessionLocal
 from .utils.errors import service_exception_handler, unhandled_exception_handler, ServiceError
@@ -62,6 +64,9 @@ def create_app() -> FastAPI:
     app.include_router(webhooks_router, prefix="/v1", tags=["webhooks"])
     app.include_router(internal_router, prefix="/v1", tags=["internal"])
     app.include_router(admin_payments_router, prefix="/v1", tags=["admin"])
+
+    app.add_middleware(GeoIPMiddleware)
+    app.add_middleware(GZIPMiddleware, minimum_size=500)
 
     # Exception handlers
     app.add_exception_handler(ServiceError, service_exception_handler)

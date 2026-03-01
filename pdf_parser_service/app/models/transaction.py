@@ -12,6 +12,8 @@ class BankType(str, Enum):
     MONOBANK = "monobank"
     PRIVATBANK = "privatbank"
     UKRSIBBANK = "ukrsibbank"
+    ABANK = "abank"
+    DEEL = "deel"
     RAIFFEISEN = "raiffeisen"
     OTP = "otp"
     UNIVERSAL = "universal"

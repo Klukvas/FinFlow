@@ -20,16 +20,17 @@ async def run_analysis(
     """Full analysis pipeline: access check -> quota -> data -> cache -> LLM -> store."""
 
     # 1. Check subscription feature access
-    plan_code = await check_feature_access(user_id)
+    plan_code, quota = await check_feature_access(user_id)
     if plan_code is None:
         raise FeatureNotAvailableError()
 
     # 2. Check monthly quota (global, not per-prompt)
-    retry_after = await rate_limiter.check_rate_limit(
-        user_id, str(workspace_id), plan_code
-    )
-    if retry_after is not None:
-        raise QuotaExhaustedError(retry_after=retry_after)
+    if quota is not None:  # None = unlimited
+        retry_after = await rate_limiter.check_rate_limit(
+            user_id, str(workspace_id), quota
+        )
+        if retry_after is not None:
+            raise QuotaExhaustedError(retry_after=retry_after)
 
     # 3. Increment usage immediately to prevent concurrent double-spending
     await rate_limiter.increment_usage(user_id, str(workspace_id))

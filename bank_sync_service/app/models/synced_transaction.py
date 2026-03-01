@@ -11,7 +11,7 @@ class SyncedTransaction(Base):
     )
 
     id = Column(Integer, primary_key=True)
-    connection_id = Column(Integer, ForeignKey("bank_connections.id", ondelete="CASCADE"), nullable=False)
+    connection_id = Column(Integer, ForeignKey("bank_connections.id", ondelete="CASCADE"), nullable=False, index=True)
     external_transaction_id = Column(String(100), nullable=False, index=True)
     finflow_type = Column(String(10))
     finflow_id = Column(Integer)

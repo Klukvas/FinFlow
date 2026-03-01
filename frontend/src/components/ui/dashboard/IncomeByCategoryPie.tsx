@@ -11,33 +11,32 @@ import {
 import { CHART_COLORS, CHART_TOOLTIP_STYLE } from "./chartColors";
 import { IncomeOut, Category } from "@/types";
 import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
+import { getPeriodBoundaries } from "@/utils/periodUtils";
 
 interface IncomeByCategoryPieProps {
   incomes: IncomeOut[];
   categories: Category[];
+  periodMonths?: number;
 }
 
 export const IncomeByCategoryPie: React.FC<IncomeByCategoryPieProps> = ({
   incomes,
   categories,
+  periodMonths = 1,
 }) => {
   const { t } = useTranslation();
   const { convertToUserCurrency } = useCurrencyConversion();
 
   const data = useMemo(() => {
-    const now = new Date();
-    const thisMonth = now.getMonth();
-    const thisYear = now.getFullYear();
-
-    const currentMonthIncomes = incomes.filter((inc) => {
-      const d = new Date(inc.date);
-      return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
-    });
+    const { periodStart } = getPeriodBoundaries(periodMonths);
 
     return categories
       .map((cat) => {
-        const total = currentMonthIncomes
-          .filter((inc) => inc.category_id === cat.id)
+        const total = incomes
+          .filter(
+            (inc) =>
+              inc.category_id === cat.id && new Date(inc.date) >= periodStart,
+          )
           .reduce(
             (sum, inc) =>
               sum +
@@ -47,7 +46,7 @@ export const IncomeByCategoryPie: React.FC<IncomeByCategoryPieProps> = ({
         return { name: cat.name, value: total };
       })
       .filter((item) => item.value > 0);
-  }, [incomes, categories, convertToUserCurrency]);
+  }, [incomes, categories, convertToUserCurrency, periodMonths]);
 
   if (data.length === 0) {
     return (
@@ -67,7 +66,7 @@ export const IncomeByCategoryPie: React.FC<IncomeByCategoryPieProps> = ({
       <h2 className="text-lg font-semibold mb-4 theme-text-primary">
         {t("dashboard.incomeByCategory")}
       </h2>
-      <div className="h-[300px]">
+      <div className="h-[250px] md:h-[300px]">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -90,7 +89,11 @@ export const IncomeByCategoryPie: React.FC<IncomeByCategoryPieProps> = ({
             <Legend
               layout="horizontal"
               verticalAlign="bottom"
-              wrapperStyle={{ color: "var(--color-text-primary)" }}
+              wrapperStyle={{
+                color: "var(--color-text-primary)",
+                fontSize: "12px",
+                lineHeight: "1.4",
+              }}
             />
           </PieChart>
         </ResponsiveContainer>

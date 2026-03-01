@@ -11,7 +11,7 @@ class SyncLog(Base):
     id = Column(Integer, primary_key=True)
     connection_id = Column(Integer, ForeignKey("bank_connections.id", ondelete="CASCADE"))
     linked_account_id = Column(Integer, ForeignKey("linked_accounts.id", ondelete="SET NULL"), nullable=True)
-    status = Column(String(20), default="pending")
+    status = Column(String(30), default="pending")
     transactions_found = Column(Integer, default=0)
     transactions_imported = Column(Integer, default=0)
     transactions_skipped = Column(Integer, default=0)

@@ -85,7 +85,9 @@ async def get_usage(
     user_id: int = Depends(get_current_user_id),
     workspace_id: UUID = Depends(get_workspace_id),
 ) -> dict:
-    plan_code = await check_feature_access(user_id)
+    plan_code, quota = await check_feature_access(user_id)
     if plan_code is None:
         return {"used": 0, "quota": 0, "remaining": 0, "resets_in": 0}
-    return await rate_limiter.get_usage_info(user_id, str(workspace_id), plan_code)
+    # quota=None means unlimited — use a large number for display
+    effective_quota = quota if quota is not None else 999999
+    return await rate_limiter.get_usage_info(user_id, str(workspace_id), effective_quota)

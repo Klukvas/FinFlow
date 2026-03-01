@@ -21,156 +21,63 @@ The CI/CD pipeline is designed to:
 - 📊 Monitor application performance
 - 🧹 Maintain infrastructure health
 
-## 📦 Workflows
+## Workflows
 
-### 1. CI/CD Pipeline (`ci-cd.yml`)
+### Implemented
 
-**Triggers**: Push to main/develop, manual dispatch
+#### CI/CD Pipeline (`ci-cd.yml`)
 
-**Features**:
-- Detects changed services automatically
-- Builds only modified services
-- Runs tests before deployment
-- Deploys to production on main branch
-- Supports manual service selection
+**Triggers**: Push to `main`/`develop`, manual dispatch (`workflow_dispatch`)
 
-**Stages**:
-1. Detect changed services
-2. Build frontend (with linting and type checking)
-3. Test backend services (with coverage)
-4. Build and push Docker images
-5. Deploy to target environment
+**Path filters**: Changes to any of 18 services, `shared/`, or `frontend/` trigger selective builds.
 
-### 2. Pull Request Checks (`pr-checks.yml`)
+**Jobs**:
+1. `detect-changes` -- git diff to determine which services changed
+2. `unit-tests` -- pytest for category, expense, user, payment, workspace services (on change)
+3. `stage1`..`stage18` -- individual Docker build+push per service (conditional on detected changes)
+   - `stage14` (admin_panel) -- disabled
+   - `stage18` (bank_sync_service) -- disabled (`if: false`, feature not yet production-ready)
+4. `e2e-tests` -- full docker-compose up, generates random secrets, runs `tests/e2e/` via pytest-asyncio
+5. `deploy` -- uses `.github/actions/deploy` composite action, deploys to Hetzner via SSH (main branch or manual only)
 
-**Triggers**: Pull requests to main/develop
+**Services built** (18 total):
 
-**Checks**:
-- Frontend linting (ESLint)
-- Frontend type checking (TypeScript)
-- Frontend build verification
-- Backend linting (Ruff, Black, Mypy)
-- Backend tests with coverage
-- Dockerfile linting (Hadolint)
+| Stage | Service | Port |
+|-------|---------|------|
+| 1 | frontend | 3000 |
+| 2 | user_service | 8001 |
+| 3 | category_service | 8002 |
+| 4 | expense_service | 8003 |
+| 5 | income_service | 8004 |
+| 6 | currency_service | 8010 |
+| 7 | workspace_service | 8012 |
+| 8 | recurring_service | 8005 |
+| 9 | goals_service | 8006 |
+| 10 | pdf_parser_service | 8007 |
+| 11 | debt_service | 8008 |
+| 12 | account_service | 8009 |
+| 13 | subscription_service | 8011 |
+| 14 | admin_panel | -- (disabled) |
+| 15 | payment_service | 8013 |
+| 16 | scheduler_service | 8014 |
+| 17 | ai_assistant_service | 8015 |
+| 18 | bank_sync_service | 8016 (disabled) |
 
-### 3. Frontend E2E Tests (`frontend-e2e.yml`)
+### Planned (Not Yet Implemented)
 
-**Triggers**: PRs, daily schedule, manual
+The following workflows are planned but **do not yet have workflow files**:
 
-**Features**:
-- Playwright end-to-end tests
-- Visual regression testing
-- Automatic browser installation
-- Test result artifacts
-- HTML reports
-
-### 4. Backend Tests (`backend-tests.yml`)
-
-**Triggers**: PRs, push to main, manual
-
-**Features**:
-- PostgreSQL and Redis test services
-- Per-service test execution
-- Code coverage reports
-- Integration tests
-- Codecov integration
-
-### 5. Security Scanning (`security.yml`)
-
-**Triggers**: Push to main, PRs, weekly schedule
-
-**Scans**:
-- Python dependency scanning (Safety)
-- Frontend dependency audit (Yarn)
-- Container vulnerability scanning (Trivy)
-- Code security analysis (CodeQL)
-- Secret scanning (TruffleHog)
-- Python security scan (Bandit)
-
-### 6. Manual Deployment (`manual-deploy.yml`)
-
-**Triggers**: Manual dispatch only
-
-**Features**:
-- Select target environment (production/staging/development)
-- Deploy specific services or all
-- Choose image tag
-- Skip build option
-- Run migrations option
-- Automatic rollback on failure
-- Create incident issues
-
-### 7. Performance Monitoring (`performance.yml`)
-
-**Triggers**: Push to main, PRs, daily schedule
-
-**Tests**:
-- Lighthouse performance audit
-- Bundle size analysis
-- API performance tests (k6)
-- Memory profiling
-
-### 8. Security Scanning (`security.yml`)
-
-**Triggers**: Weekly schedule, PRs, manual
-
-**Features**:
-- Dependency vulnerability scanning
-- Container image scanning
-- Code quality analysis
-- Secret detection
-
-### 9. Cleanup and Maintenance (`cleanup.yml`)
-
-**Triggers**: Weekly schedule, manual
-
-**Actions**:
-- Remove old workflow artifacts
-- Delete old workflow runs
-- Prune unused Docker images
-- Clean volumes and networks
-
-### 10. Database Management (`database.yml`)
-
-**Triggers**: Manual dispatch only
-
-**Actions**:
-- Database backup
-- Run migrations
-- Rollback migrations
-- Restore from backup (manual)
-
-### 11. Docker Health Check (`docker-health.yml`)
-
-**Triggers**: Every 6 hours, manual
-
-**Checks**:
-- Running containers status
-- Container health status
-- Disk usage
-- Error logs
-- Restart counts
-- Memory usage
-- Frontend availability
-
-### 12. Notifications (`notifications.yml`)
-
-**Triggers**: After CI/CD or manual deployment completes
-
-**Features**:
-- Deployment status notifications
-- PR comments with deployment status
-- Slack notifications (optional)
-- Email notifications on failure
-- Automatic release creation
-
-### 13. Dependabot Configuration (`dependabot.yml`)
-
-**Updates**:
-- Frontend npm packages (weekly)
-- Python packages for all services (weekly)
-- Docker base images (weekly)
-- GitHub Actions (weekly)
+- **Pull Request Checks** (`pr-checks.yml`) -- Frontend linting, type checking, backend linting, Dockerfile linting
+- **Frontend E2E Tests** (`frontend-e2e.yml`) -- Playwright E2E, visual regression, HTML reports
+- **Backend Tests** (`backend-tests.yml`) -- Per-service pytest with PostgreSQL/Redis, coverage, Codecov
+- **Security Scanning** (`security.yml`) -- Safety, Trivy, CodeQL, TruffleHog, Bandit
+- **Manual Deployment** (`manual-deploy.yml`) -- Environment selection, rollback, incident issues
+- **Performance Monitoring** (`performance.yml`) -- Lighthouse, bundle size, k6, memory profiling
+- **Cleanup and Maintenance** (`cleanup.yml`) -- Artifact cleanup, Docker pruning
+- **Database Management** (`database.yml`) -- Backup, migrate, rollback
+- **Docker Health Check** (`docker-health.yml`) -- Container health, disk, memory, restarts
+- **Notifications** (`notifications.yml`) -- Slack, email, PR comments, release creation
+- **Dependabot** (`dependabot.yml`) -- npm, pip, Docker, GitHub Actions weekly updates
 
 ## 🔧 Composite Actions
 
@@ -256,75 +163,29 @@ NOTIFICATION_EMAIL      # Email for notifications
 API_URL                 # API URL for performance tests
 ```
 
-## 🚀 Usage
+## Usage
 
 ### Automatic Deployments
 
 Push to `main` branch to automatically:
-1. Run tests
-2. Build changed services
-3. Deploy to production
+1. Detect changed services
+2. Run unit tests for changed services
+3. Build and push Docker images
+4. Run E2E tests
+5. Deploy to production via SSH
 
 ### Manual Deployments
 
-Use the "Manual Deployment" workflow:
-1. Go to Actions → Manual Deployment
+Use the CI/CD workflow with `workflow_dispatch`:
+1. Go to Actions -> CI/CD Pipeline
 2. Click "Run workflow"
-3. Select environment
-4. (Optional) Specify services
-5. (Optional) Choose image tag
-6. Click "Run workflow"
-
-### Running Tests
-
-Tests run automatically on pull requests. To run manually:
-1. Go to Actions → Backend Tests or Frontend E2E Tests
-2. Click "Run workflow"
-
-### Database Operations
-
-Use the "Database Management" workflow:
-1. Go to Actions → Database Management
-2. Click "Run workflow"
-3. Select action (backup, migrate, rollback)
-4. Provide required parameters
+3. Select environment (`production` or `staging`)
+4. (Optional) Specify services to deploy
 5. Click "Run workflow"
 
-### Health Checks
-
-Health checks run automatically every 6 hours. To run manually:
-1. Go to Actions → Docker Health Check
-2. Click "Run workflow"
-
-## 📊 Workflow Status Badges
-
-Add these to your README.md:
-
-```markdown
-![CI/CD Pipeline](https://github.com/YOUR_USERNAME/accounting_app/workflows/CI%2FCD%20Pipeline/badge.svg)
-![Security Scanning](https://github.com/YOUR_USERNAME/accounting_app/workflows/Security%20Scanning/badge.svg)
-![Tests](https://github.com/YOUR_USERNAME/accounting_app/workflows/Backend%20Tests/badge.svg)
-```
-
-## 🔄 Workflow Dependencies
+## Pipeline Flow
 
 ```
-┌─────────────────┐
-│   Pull Request  │
-└────────┬────────┘
-         │
-    ┌────┴────┐
-    │         │
-┌───▼───┐ ┌──▼──────┐
-│  Lint │ │  Tests  │
-└───┬───┘ └──┬──────┘
-    │         │
-    └────┬────┘
-         │
-    ┌────▼────────┐
-    │   Summary   │
-    └─────────────┘
-
 ┌─────────────────┐
 │  Push to Main   │
 └────────┬────────┘
@@ -335,22 +196,18 @@ Add these to your README.md:
          │
     ┌────┴────┐
     │         │
-┌───▼───┐ ┌──▼──────┐
-│ Build │ │  Tests  │
-└───┬───┘ └──┬──────┘
+┌───▼───┐ ┌──▼──────────┐
+│ Tests │ │ Build & Push │
+└───┬───┘ └──┬──────────┘
     │         │
     └────┬────┘
          │
     ┌────▼────────┐
-    │Build & Push │
+    │  E2E Tests  │
     └────┬────────┘
          │
     ┌────▼────────┐
     │   Deploy    │
-    └────┬────────┘
-         │
-    ┌────▼────────┐
-    │   Notify    │
     └─────────────┘
 ```
 

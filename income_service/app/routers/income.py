@@ -113,6 +113,58 @@ def read_incomes_paginated(
     )
 
 @router.get(
+    "/current-month-count",
+    summary="Get current month income count",
+    description="Get the number of incomes created this month and the monthly limit",
+    responses={
+        200: {"description": "Current month count and limit returned successfully"},
+        401: {"description": "Unauthorized - invalid or missing token"},
+    }
+)
+async def get_current_month_count(
+    service: IncomeService = Depends(get_income_service),
+    user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id)
+):
+    """
+    Get current month income count and limit.
+
+    Returns:
+        - count: Number of incomes created this month
+        - limit: Monthly limit for this user's plan (None = unlimited)
+    """
+    return service.get_current_month_count(user_id, workspace_id)
+
+@router.get(
+    "/date-range/",
+    response_model=List[IncomeOut],
+    summary="Get incomes by date range",
+    description="Retrieve incomes within a specific date range",
+    responses={
+        200: {"description": "Incomes retrieved successfully"},
+        400: {"description": "Invalid date range"},
+        401: {"description": "Unauthorized - invalid or missing token"},
+    }
+)
+def get_incomes_by_date_range(
+    start_date: date = Query(description="Start date (YYYY-MM-DD)"),
+    end_date: date = Query(description="End date (YYYY-MM-DD)"),
+    user_id: int = Depends(get_current_user_id),
+    workspace_id: UUID = Depends(get_workspace_id),
+    service: IncomeService = Depends(get_income_service)
+) -> List[IncomeOut]:
+    """
+    Get incomes within a date range in the workspace.
+
+    - **start_date**: Start date for the range (inclusive)
+    - **end_date**: End date for the range (inclusive)
+
+    Requires 'viewer' role in the workspace.
+    Returns incomes within the specified date range, ordered by date (newest first).
+    """
+    return service.get_by_date_range(user_id, workspace_id, start_date, end_date)
+
+@router.get(
     "/{income_id}",
     response_model=IncomeOut,
     summary="Get income by ID",
@@ -259,26 +311,3 @@ async def get_incomes_by_category(
     statistics including total amount, count, and average amount, all converted to the user's base currency.
     """
     return await service.get_by_category(category_id, user_id, workspace_id)
-
-@router.get(
-    "/current-month-count",
-    summary="Get current month income count",
-    description="Get the number of incomes created this month and the monthly limit",
-    responses={
-        200: {"description": "Current month count and limit returned successfully"},
-        401: {"description": "Unauthorized - invalid or missing token"},
-    }
-)
-async def get_current_month_count(
-    service: IncomeService = Depends(get_income_service),
-    user_id: int = Depends(get_current_user_id),
-    workspace_id: UUID = Depends(get_workspace_id)
-):
-    """
-    Get current month income count and limit for PDF parser frontend validation.
-
-    Returns:
-        - count: Number of incomes created this month
-        - limit: Monthly limit for this user's plan (None = unlimited)
-    """
-    return service.get_current_month_count(user_id, workspace_id)

@@ -167,7 +167,7 @@ export const ContactTable: React.FC<ContactTableProps> = ({
 
       {/* Desktop Table View */}
       <div className="hidden lg:block">
-        <div className="overflow-hidden">
+        <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="theme-bg-secondary sticky top-0 z-10">
               <tr>

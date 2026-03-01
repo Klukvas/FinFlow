@@ -2,6 +2,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZIPMiddleware
+from shared.geoip import GeoIPMiddleware
 from app.config import settings
 from app.routers import currency
 from app.utils.logger import get_logger, set_request_context
@@ -120,6 +122,8 @@ app.add_middleware(
 
 # Add middleware
 app.add_middleware(RequestLoggingMiddleware)
+app.add_middleware(GeoIPMiddleware)
+app.add_middleware(GZIPMiddleware, minimum_size=500)
 
 # Register exception handlers
 app.add_exception_handler(CurrencyError, currency_error_handler)

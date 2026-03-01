@@ -223,7 +223,7 @@ export const CategoryList: React.FC<CategoryListProps> = ({
 
         {/* Desktop Table View */}
         <div className="hidden lg:block relative w-full">
-          <div className="overflow-hidden rounded-xl border theme-border">
+          <div className="overflow-x-auto rounded-xl border theme-border">
             <table className="w-full">
               <thead className="theme-bg-secondary">
                 <tr>

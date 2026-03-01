@@ -338,7 +338,7 @@ export const CategorySidePanel: React.FC<CategorySidePanelProps> = ({
                 {t("categoryPage.sidePanel.noTransactions")}
               </p>
             ) : (
-              <div className="rounded-lg border theme-border overflow-hidden">
+              <div className="rounded-lg border theme-border overflow-x-auto">
                 <table className="w-full">
                   <thead className="theme-bg-secondary">
                     <tr>

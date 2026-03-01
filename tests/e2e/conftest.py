@@ -20,6 +20,11 @@ from tests.e2e.clients.income_client import IncomeApiClient
 from tests.e2e.clients.account_client import AccountApiClient
 from tests.e2e.clients.subscription_client import SubscriptionApiClient
 from tests.e2e.clients.ai_assistant_client import AiAssistantApiClient
+from tests.e2e.clients.debt_client import DebtApiClient
+from tests.e2e.clients.goals_client import GoalsApiClient
+from tests.e2e.clients.recurring_client import RecurringApiClient
+from tests.e2e.clients.currency_client import CurrencyApiClient
+from tests.e2e.clients.pdf_parser_client import PdfParserApiClient
 from tests.e2e.helpers.test_data import unique_email, strong_password, workspace_name
 from tests.e2e.helpers.wait import wait_for_services
 
@@ -184,6 +189,49 @@ async def shared_account(primary_user, workspace_id):
     client.set_workspace_id(workspace_id)
     result = await client.create("E2E Shared Account", balance=1000.0)
     return result.raise_on_error()
+
+
+@pytest.fixture
+def debt_client(primary_user, workspace_id) -> DebtApiClient:
+    client = DebtApiClient()
+    client.set_token(primary_user["token"])
+    client.set_workspace_id(workspace_id)
+    return client
+
+
+@pytest.fixture
+def goals_client(primary_user, workspace_id) -> GoalsApiClient:
+    client = GoalsApiClient()
+    client.set_token(primary_user["token"])
+    client.set_workspace_id(workspace_id)
+    return client
+
+
+@pytest.fixture
+def recurring_client(primary_user, workspace_id) -> RecurringApiClient:
+    client = RecurringApiClient()
+    client.set_token(primary_user["token"])
+    client.set_workspace_id(workspace_id)
+    return client
+
+
+@pytest.fixture
+def currency_client() -> CurrencyApiClient:
+    """Currency service doesn't require auth for public endpoints."""
+    return CurrencyApiClient()
+
+
+@pytest.fixture
+def pdf_parser_client(primary_user) -> PdfParserApiClient:
+    client = PdfParserApiClient()
+    client.set_token(primary_user["token"])
+    return client
+
+
+@pytest.fixture
+def unauthenticated_pdf_client() -> PdfParserApiClient:
+    """PDF parser client without auth token for negative auth tests."""
+    return PdfParserApiClient()
 
 
 @pytest.fixture

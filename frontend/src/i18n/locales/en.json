@@ -424,7 +424,7 @@
       "basic": {
         "name": "Basic",
         "price": "Free",
-        "highlight": "10 categories, 2 accounts, 50 transactions/mo"
+        "highlight": "5 categories, 2 accounts, 50 transactions/mo"
       },
       "professional": {
         "name": "Professional",
@@ -432,7 +432,7 @@
         "highlight": "50 categories, 10 accounts, 5,000 transactions/mo"
       },
       "enterprise": {
-        "name": "Enterprise",
+        "name": "Business",
         "price": "$29.99/mo",
         "highlight": "Unlimited — full control"
       },
@@ -602,12 +602,14 @@
         "period": "forever",
         "description": "Perfect to start managing your personal finances",
         "features": [
-          "Up to 10 categories",
+          "Up to 5 categories",
           "2 bank accounts",
-          "100 transactions/month",
+          "50 transactions/month",
           "2 goals",
-          "3 recurring payments",
+          "1 recurring payment",
           "1 workspace",
+          "2 AI analyses/month",
+          "2 PDF uploads/month",
           "Basic reports",
           "Mobile version"
         ],
@@ -640,7 +642,7 @@
         "available": true
       },
       {
-        "name": "Enterprise",
+        "name": "Business",
         "code": "enterprise",
         "price": "29.99",
         "period": "per month",
@@ -1609,7 +1611,9 @@
       "forbidden": "Access denied. Please check your permissions.",
       "notFound": "Requested resource not found.",
       "internalError": "Internal server error. Please try again later.",
-      "unexpectedError": "An unexpected error occurred. Please try again."
+      "unexpectedError": "An unexpected error occurred. Please try again.",
+      "expenseLimitExceeded": "Expense limit reached. Upgrade your plan to import more transactions.",
+      "incomeLimitExceeded": "Income limit reached. Upgrade your plan to import more transactions."
     },
     "mccProcessing": {
       "retrying": "Retrying failed MCC category creations...",
@@ -1625,8 +1629,8 @@
       "title": "Upload Bank PDF",
       "bankTypeLabel": "Bank Type",
       "bankTypePlaceholder": "Select Bank Type",
-      "pdfFileLabel": "PDF File",
-      "dropOrClick": "Drop your PDF here or",
+      "pdfFileLabel": "Statement File",
+      "dropOrClick": "Drop your file here or",
       "chooseFile": "Choose File",
       "maxFileSize": "Maximum file size: 10MB",
       "cancel": "Cancel",
@@ -1634,12 +1638,13 @@
       "parsing": "Parsing...",
       "bankRequestBanner": "Don't see your bank? Send us a sample statement and we'll add support for it:",
       "errors": {
-        "selectPdf": "Please select a PDF file",
+        "selectPdf": "Please select a PDF or XLSX file",
         "fileSizeLimit": "File size must be less than 10MB",
         "selectFile": "Please select a file",
         "selectBankType": "Please select a bank type",
         "parseFailed": "Failed to parse PDF",
         "dropPdf": "Please drop a PDF file",
+        "dropFile": "Please drop a PDF or XLSX file",
         "loadBanksFailed": "Failed to load supported banks"
       }
     },
@@ -1719,10 +1724,11 @@
     "title": "Dashboard",
     "subtitle": "Your financial overview",
     "kpi": {
-      "totalIncome": "Income This Month",
-      "totalExpenses": "Expenses This Month",
+      "totalIncome": "Total Income",
+      "totalExpenses": "Total Expenses",
       "netCashFlow": "Net Cash Flow",
-      "totalBalance": "Total Balance"
+      "totalBalance": "Total Balance",
+      "savingsRate": "Savings Rate"
     },
     "cashFlow": {
       "title": "Cash Flow — Last 6 Months",
@@ -1736,6 +1742,9 @@
       "viewAll": "View All",
       "noAccounts": "No accounts yet"
     },
+    "loadError": "Failed to load dashboard data. Please try refreshing the page.",
+    "retry": "Retry",
+    "planningSection": "Planning & Tracking",
     "noData": "No data for this month",
     "debt": {
       "title": "Debt Overview",
@@ -1769,6 +1778,62 @@
       "recentGoals": "Recent Goals",
       "overdueDays": "Overdue by {{days}} days",
       "daysRemaining": "{{days}} days remaining"
+    },
+    "proSection": "Advanced Analytics",
+    "proGate": {
+      "description": "Available on Professional and Enterprise plans",
+      "upgrade": "Upgrade to Pro"
+    },
+    "monthComparison": {
+      "title": "Period Comparison",
+      "current": "Current Period",
+      "previous": "Previous Period",
+      "income": "Income",
+      "expenses": "Expenses"
+    },
+    "budget": {
+      "title": "Budget Progress",
+      "manage": "Manage",
+      "empty": "No budgets set yet",
+      "setBudgets": "Set budgets on your categories",
+      "overBudget": "{{percent}}% over budget"
+    },
+    "upcoming": {
+      "title": "Upcoming Payments",
+      "viewAll": "View All",
+      "empty": "No upcoming payments",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "inDays": "In {{days}} days",
+      "expense": "Expense",
+      "income": "Income"
+    },
+    "aiInsights": {
+      "title": "AI Insights",
+      "viewAll": "View All",
+      "empty": "No AI analysis available yet",
+      "runFirst": "Run First Analysis",
+      "usage": "{{used}}/{{quota}} analyses used this month",
+      "error": "Could not load AI insights"
+    },
+    "topSpending": {
+      "title": "Top Spending Categories",
+      "amount": "Amount"
+    },
+    "dailySpending": {
+      "title": "Daily Spending Trend",
+      "currentMonth": "Current Month",
+      "previousMonth": "Previous Month",
+      "today": "Today",
+      "multiMonthHint": "Switch to 1M view for daily chart"
+    },
+    "period": {
+      "1m": "1M",
+      "3m": "3M",
+      "6m": "6M",
+      "12m": "12M",
+      "upgrade": "Upgrade plan",
+      "upgradeTooltip": "Available on {{plan}} plan"
     }
   },
   "authPage": {
@@ -2379,6 +2444,7 @@
     "retryAfter": "Next request available in {{time}}",
     "insufficientData": "Not enough data for analysis. Add more records.",
     "error": "An error occurred. Please try again later.",
+    "featureUnavailable": "AI Assistant is temporarily unavailable. Please try again later.",
     "cachedResult": "Cached result",
     "freshResult": "Fresh analysis",
     "usage": {
@@ -2389,7 +2455,7 @@
     },
     "locked": {
       "title": "AI Assistant available on paid plans",
-      "description": "Upgrade to Professional or Enterprise plan to access AI analysis of your finances.",
+      "description": "Upgrade to Professional or Business plan to access more AI analyses.",
       "upgrade": "Upgrade plan"
     },
     "blocks": {
@@ -2465,6 +2531,7 @@
     "disconnectError": "Failed to disconnect",
     "connectedSince": "Connected since",
     "lastSync": "Last sync",
+    "daysBack": "{{count}} days",
     "syncNow": "Sync Now",
     "syncing": "Syncing...",
     "syncComplete": "Sync complete: {{imported}} of {{found}} transactions imported",
@@ -2489,6 +2556,36 @@
     "statusCompletedWithErrors": "Completed with errors",
     "statusInProgress": "In progress",
     "statusPending": "Pending",
-    "statusFailed": "Failed"
+    "statusFailed": "Failed",
+    "review": {
+      "title": "Review Transactions",
+      "subtitle": "Review and edit transactions before importing",
+      "include": "Include",
+      "exclude": "Exclude",
+      "selectCategory": "Select category...",
+      "confirm": "Import {{count}} Transaction(s)",
+      "cancel": "Cancel",
+      "confirming": "Importing...",
+      "total": "Total",
+      "selected": "Selected",
+      "expenses": "Expenses",
+      "incomes": "Incomes",
+      "skippedDuplicates": "{{count}} duplicates skipped",
+      "noNewTransactions": "No new transactions found. All transactions have already been imported.",
+      "limitWarning": "Selection exceeds your monthly limit. Please deselect some transactions.",
+      "expenseQuota": "Expense quota: {{count}}/{{limit}}",
+      "incomeQuota": "Income quota: {{count}}/{{limit}}",
+      "unlimited": "unlimited",
+      "quotaRemaining": "{{remaining}} remaining",
+      "description": "Description",
+      "amount": "Amount",
+      "date": "Date",
+      "type": "Type",
+      "category": "Category",
+      "mcc": "MCC",
+      "account": "Account",
+      "selectAll": "Select all",
+      "deselectAll": "Deselect all"
+    }
   }
 }

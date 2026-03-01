@@ -236,7 +236,7 @@ export const RecurringSidePanel: React.FC<RecurringSidePanelProps> = ({
                 {t("recurringPage.sidePanel.noExecutions")}
               </p>
             ) : (
-              <div className="space-y-0 rounded-lg border theme-border overflow-hidden">
+              <div className="space-y-0 rounded-lg border theme-border overflow-x-auto">
                 <table className="w-full">
                   <thead className="theme-bg-secondary">
                     <tr>

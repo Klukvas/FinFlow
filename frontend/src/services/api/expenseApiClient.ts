@@ -1,42 +1,54 @@
-import { CreateExpenseRequest, ErrorResponse, ExpenseResponse, ExpenseUpdate, ExpenseListResponse, ExpenseFilters, ExpensesByCategoryResponse } from '@/types';
-import { AuthHttpClient } from './AuthHttpClient';
-import { config } from '@/config/env';
+import {
+  CreateExpenseRequest,
+  ErrorResponse,
+  ExpenseResponse,
+  ExpenseUpdate,
+  ExpenseListResponse,
+  ExpenseFilters,
+  ExpensesByCategoryResponse,
+} from "@/types";
+import { AuthHttpClient } from "./AuthHttpClient";
+import { config } from "@/config/env";
 
 export class ExpenseApiClient {
   private httpClient: AuthHttpClient;
 
   constructor(
     getToken: () => string | null,
-    refreshToken: () => Promise<boolean>
+    refreshToken: () => Promise<boolean>,
   ) {
     this.httpClient = new AuthHttpClient(
       `${config.api.expenseServiceUrl}/expenses`,
       getToken,
-      refreshToken
+      refreshToken,
     );
   }
 
-  async createExpense(data: CreateExpenseRequest): Promise<ExpenseResponse | { error: string }> {
-    return this.httpClient.post<ExpenseResponse>('/', data);
+  async createExpense(
+    data: CreateExpenseRequest,
+  ): Promise<ExpenseResponse | { error: string }> {
+    return this.httpClient.post<ExpenseResponse>("/", data);
   }
 
   async getExpenses(): Promise<ExpenseResponse[] | { error: string }> {
-    return this.httpClient.get<ExpenseResponse[]>('/');
+    return this.httpClient.get<ExpenseResponse[]>("/");
   }
 
-  async getExpensesPaginated(filters: ExpenseFilters = {}): Promise<ExpenseListResponse | ErrorResponse> {
+  async getExpensesPaginated(
+    filters: ExpenseFilters = {},
+  ): Promise<ExpenseListResponse | ErrorResponse> {
     const params = new URLSearchParams();
-    
+
     if (filters.page !== undefined) {
-      params.append('page', filters.page.toString());
+      params.append("page", filters.page.toString());
     }
     if (filters.size !== undefined) {
-      params.append('size', filters.size.toString());
+      params.append("size", filters.size.toString());
     }
-    
+
     const queryString = params.toString();
-    const url = queryString ? `/paginated?${queryString}` : '/paginated';
-    
+    const url = queryString ? `/paginated?${queryString}` : "/paginated";
+
     return this.httpClient.get<ExpenseListResponse>(url);
   }
 
@@ -44,7 +56,10 @@ export class ExpenseApiClient {
     return this.httpClient.get<ExpenseResponse>(`/${id}`);
   }
 
-  async updateExpense(id: number, data: ExpenseUpdate): Promise<ExpenseResponse | ErrorResponse> {
+  async updateExpense(
+    id: number,
+    data: ExpenseUpdate,
+  ): Promise<ExpenseResponse | ErrorResponse> {
     return this.httpClient.patch<ExpenseResponse>(`/${id}`, data);
   }
 
@@ -52,11 +67,32 @@ export class ExpenseApiClient {
     return this.httpClient.delete<void>(`/${id}`);
   }
 
-  async getExpensesByCategory(category_id: number): Promise<ExpensesByCategoryResponse | ErrorResponse> {
-    return this.httpClient.get<ExpensesByCategoryResponse>(`/category/${category_id}`);
+  async getExpensesByCategory(
+    category_id: number,
+  ): Promise<ExpensesByCategoryResponse | ErrorResponse> {
+    return this.httpClient.get<ExpensesByCategoryResponse>(
+      `/category/${category_id}`,
+    );
   }
 
-  async getCurrentMonthCount(): Promise<{ count: number; limit: number | null } | ErrorResponse> {
-    return this.httpClient.get<{ count: number; limit: number | null }>('/current-month-count');
+  async getExpensesByDateRange(
+    startDate: string,
+    endDate: string,
+  ): Promise<ExpenseResponse[] | ErrorResponse> {
+    const params = new URLSearchParams({
+      start_date: startDate,
+      end_date: endDate,
+    });
+    return this.httpClient.get<ExpenseResponse[]>(
+      `/date-range/?${params.toString()}`,
+    );
+  }
+
+  async getCurrentMonthCount(): Promise<
+    { count: number; limit: number | null } | ErrorResponse
+  > {
+    return this.httpClient.get<{ count: number; limit: number | null }>(
+      "/current-month-count",
+    );
   }
 }

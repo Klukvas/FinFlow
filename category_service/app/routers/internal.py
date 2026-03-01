@@ -151,7 +151,7 @@ async def get_category_internal(
     }
 )
 async def get_mcc_codes_internal(
-    language: Annotated[SupportedLanguage, Query(description="Language code for translations (ru, uk, en)")] = SupportedLanguage.en,
+    language: Annotated[SupportedLanguage, Query(description="Language code for translations (ru, uk, en)")] = SupportedLanguage.EN,
     service: DefaultCategoryService = Depends(get_default_category_service),
     _: None = Depends(verify_internal_token)
 ) -> MCCCodeListResponse:
@@ -207,7 +207,7 @@ async def get_mcc_codes_internal(
     }
 )
 async def get_default_categories_internal(
-    language: Annotated[SupportedLanguage, Query(description="Language code for translations (ru, uk, en)")] = SupportedLanguage.en,
+    language: Annotated[SupportedLanguage, Query(description="Language code for translations (ru, uk, en)")] = SupportedLanguage.EN,
     service: DefaultCategoryService = Depends(get_default_category_service),
     _: None = Depends(verify_internal_token)
 ) -> DefaultCategoryListResponse:

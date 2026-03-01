@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Enum, DateTime, Boolean, Index
+from sqlalchemy import Column, Integer, String, ForeignKey, Enum, DateTime, Boolean, Index, Numeric
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -20,9 +20,11 @@ class Category(Base):
     name = Column(String, index=True)
     user_id = Column(Integer, index=True)
     workspace_id = Column(UUID(as_uuid=True), nullable=False, index=True)
-    parent_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
+    parent_id = Column(Integer, ForeignKey("categories.id"), nullable=True, index=True)
     type = Column(Enum(CategoryType), nullable=False, default=CategoryType.EXPENSE)
     
+    monthly_budget = Column(Numeric(12, 2), nullable=True, default=None)
+
     # MCC-related fields
     mcc_code = Column(Integer, ForeignKey("mcc_codes.mcc_code"), nullable=True)
     created_by = Column(Enum(CategoryCreatedBy), nullable=False, default=CategoryCreatedBy.USER)

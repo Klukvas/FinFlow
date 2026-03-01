@@ -25,4 +25,9 @@ markers = [
     "subscription: Subscription and feature gating tests",
     "cross_service: Cross-service isolation and authorization tests",
     "ai_assistant: AI assistant feature tests",
+    "debt: Debt CRUD and payment tests",
+    "goals: Goals CRUD and milestone tests",
+    "recurring: Recurring payment CRUD and schedule tests",
+    "currency: Currency rates and conversion tests",
+    "pdf_parser: PDF parser upload and bank detection tests",
 ]

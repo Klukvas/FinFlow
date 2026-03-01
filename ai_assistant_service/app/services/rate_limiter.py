@@ -3,15 +3,9 @@ import logging
 from datetime import datetime, timezone
 from typing import Optional
 
-from app.config import settings
 from app.services.cache_service import get_redis
 
 logger = logging.getLogger(__name__)
-
-PLAN_QUOTAS: dict[str, int] = {
-    "professional": settings.MONTHLY_QUOTA_PROFESSIONAL,
-    "enterprise": settings.MONTHLY_QUOTA_ENTERPRISE,
-}
 
 
 def _usage_key(user_id: int, workspace_id: str) -> str:
@@ -29,17 +23,12 @@ def _seconds_until_month_end() -> int:
 
 
 async def check_rate_limit(
-    user_id: int, workspace_id: str, plan_code: str
+    user_id: int, workspace_id: str, quota: int
 ) -> Optional[int]:
     """Check if user has remaining quota.
 
     Returns None if allowed, or remaining seconds until reset if quota exhausted.
     """
-    quota = PLAN_QUOTAS.get(plan_code)
-    if quota is None:
-        logger.warning(f"Unknown plan code '{plan_code}' for rate limit, denying")
-        return _seconds_until_month_end()
-
     try:
         client = await get_redis()
         key = _usage_key(user_id, workspace_id)
@@ -94,9 +83,8 @@ async def decrement_usage(user_id: int, workspace_id: str) -> None:
         logger.warning(f"Usage decrement error: {e}")
 
 
-async def get_usage_info(user_id: int, workspace_id: str, plan_code: str) -> dict:
+async def get_usage_info(user_id: int, workspace_id: str, quota: int) -> dict:
     """Get current usage info for the user."""
-    quota = PLAN_QUOTAS.get(plan_code, 0)
     try:
         client = await get_redis()
         key = _usage_key(user_id, workspace_id)

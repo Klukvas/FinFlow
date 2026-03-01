@@ -48,8 +48,13 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
-      if (selectedFile.type !== "application/pdf") {
-        setError(t("pdfParserPage.uploadModal.errors.selectPdf"));
+      const allowedTypes = [
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "text/csv",
+      ];
+      if (!allowedTypes.includes(selectedFile.type)) {
+        setError(t("pdfParserPage.uploadModal.errors.selectFile"));
         return;
       }
       if (selectedFile.size > 10 * 1024 * 1024) {
@@ -98,11 +103,20 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     const droppedFile = event.dataTransfer.files[0];
-    if (droppedFile && droppedFile.type === "application/pdf") {
+    const allowedDropTypes = [
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "text/csv",
+    ];
+    if (droppedFile && allowedDropTypes.includes(droppedFile.type)) {
+      if (droppedFile.size > 10 * 1024 * 1024) {
+        setError(t("pdfParserPage.uploadModal.errors.fileSizeLimit"));
+        return;
+      }
       setFile(droppedFile);
       setError(null);
     } else {
-      setError(t("pdfParserPage.uploadModal.errors.dropPdf"));
+      setError(t("pdfParserPage.uploadModal.errors.dropFile"));
     }
   };
 
@@ -216,7 +230,7 @@ export const PdfUploader: React.FC<PdfUploaderProps> = ({
                 id="pdf-file-input"
                 name="pdf-file"
                 type="file"
-                accept=".pdf"
+                accept=".pdf,.xlsx,.csv"
                 onChange={handleFileSelect}
                 className="hidden"
               />

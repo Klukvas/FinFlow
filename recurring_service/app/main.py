@@ -2,6 +2,8 @@ from fastapi import FastAPI, Request
 from fastapi.openapi.utils import get_openapi
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZIPMiddleware
+from shared.geoip import GeoIPMiddleware
 from contextlib import asynccontextmanager
 
 from app.config import settings
@@ -134,15 +136,6 @@ app = FastAPI(
     swagger_ui_parameters={"persistAuthorization": True}
 )
 
-# Настроить CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
-)
-
 # Добавить обработчики исключений
 app.add_exception_handler(BaseRecurringError, base_recurring_error_handler)
 app.add_exception_handler(RecurringPaymentNotFoundError, recurring_payment_not_found_handler)
@@ -153,8 +146,19 @@ app.add_exception_handler(ValidationError, validation_error_handler)
 app.add_exception_handler(HTTPException, http_exception_handler)
 app.add_exception_handler(Exception, general_exception_handler)
 
-# Подключить роутеры
+# Middleware (added LAST = runs FIRST)
 app.add_middleware(RequestLoggingMiddleware)
+app.add_middleware(GeoIPMiddleware)
+app.add_middleware(GZIPMiddleware, minimum_size=500)
+
+# CORS (outermost)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins_list,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["*"],
+)
 
 app.include_router(recurring_router)
 app.include_router(internal_router)

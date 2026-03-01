@@ -2,8 +2,10 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.openapi.utils import get_openapi
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZIPMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
+from shared.geoip import GeoIPMiddleware
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -125,7 +127,12 @@ app = FastAPI(
     swagger_ui_parameters={"persistAuthorization": True}
 )
 
-# Configure CORS
+# Add middleware (added LAST = runs FIRST)
+app.add_middleware(RequestLoggingMiddleware)
+app.add_middleware(GeoIPMiddleware)
+app.add_middleware(GZIPMiddleware, minimum_size=500)
+
+# Configure CORS (outermost)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
@@ -133,9 +140,6 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allow_headers=["*"],
 )
-
-# Add middleware
-app.add_middleware(RequestLoggingMiddleware)
 
 # Include routers
 app.include_router(debt_router, prefix="/debts", tags=["debts"])

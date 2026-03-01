@@ -2,6 +2,8 @@ from fastapi import FastAPI, Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZIPMiddleware
+from shared.geoip import GeoIPMiddleware
 from app.routers import goal, internal
 from app.exception_handlers import (
     goal_not_found_handler, goal_validation_handler, goal_ownership_handler,
@@ -140,6 +142,8 @@ app.add_exception_handler(Exception, general_exception_handler)
 
 # Add middleware
 app.add_middleware(RequestLoggingMiddleware)
+app.add_middleware(GeoIPMiddleware)
+app.add_middleware(GZIPMiddleware, minimum_size=500)
 
 # Include routers
 app.include_router(goal.router, prefix="/api/v1/goals", tags=["goals"])

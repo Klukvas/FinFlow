@@ -3,8 +3,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZIPMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
+from shared.geoip import GeoIPMiddleware
 
 from app.config import settings
 from app.exceptions import (
@@ -133,6 +135,8 @@ app.add_middleware(
 )
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RequestLoggingMiddleware)
+app.add_middleware(GeoIPMiddleware)
+app.add_middleware(GZIPMiddleware, minimum_size=500)
 
 # Router
 app.include_router(analysis.router)

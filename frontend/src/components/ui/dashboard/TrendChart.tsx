@@ -1,8 +1,18 @@
-import { CartesianGrid, Legend, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import React, { useMemo } from 'react';
-import { CHART_COLORS, CHART_TOOLTIP_STYLE } from './chartColors';
+import {
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import React, { useMemo } from "react";
+import { CHART_COLORS, CHART_TOOLTIP_STYLE } from "./chartColors";
 
-import { ExpenseResponse } from '@/types';
+import { ExpenseResponse } from "@/types";
 
 interface TrendChartProps {
   expenses: ExpenseResponse[];
@@ -16,41 +26,52 @@ export const TrendChart: React.FC<TrendChartProps> = ({ expenses }) => {
       return date;
     }).reverse();
 
-    return last6Months.map(date => {
-      const monthExpenses = expenses.filter(exp => {
+    return last6Months.map((date) => {
+      const monthExpenses = expenses.filter((exp) => {
         const expDate = new Date(exp.date);
-        return expDate.getMonth() === date.getMonth() && expDate.getFullYear() === date.getFullYear();
+        return (
+          expDate.getMonth() === date.getMonth() &&
+          expDate.getFullYear() === date.getFullYear()
+        );
       });
       const total = monthExpenses.reduce((sum, exp) => sum + exp.amount, 0);
       return {
-        month: date.toLocaleDateString('uk-UA', { month: 'long' }),
-        amount: total
+        month: date.toLocaleDateString("uk-UA", { month: "long" }),
+        amount: total,
       };
     });
   }, [expenses]);
 
   const averageAmount = useMemo(() => {
-    return trendData.reduce((sum, item) => sum + item.amount, 0) / trendData.length;
+    return (
+      trendData.reduce((sum, item) => sum + item.amount, 0) / trendData.length
+    );
   }, [trendData]);
 
   return (
     <div className="theme-surface p-4 rounded-lg theme-shadow theme-border border">
-      <h2 className="text-lg font-semibold mb-4 theme-text-primary">Тренд расходов за 6 месяцев</h2>
-      <div className="h-[300px]">
+      <h2 className="text-lg font-semibold mb-4 theme-text-primary">
+        Тренд расходов за 6 месяцев
+      </h2>
+      <div className="h-[250px] md:h-[300px]">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={trendData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" strokeOpacity={0.5} />
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="var(--color-border)"
+              strokeOpacity={0.5}
+            />
             <XAxis
               dataKey="month"
-              tick={{ fill: 'var(--color-text-primary)', fontSize: 12 }}
-              axisLine={{ stroke: 'var(--color-border)' }}
+              tick={{ fill: "var(--color-text-primary)", fontSize: 12 }}
+              axisLine={{ stroke: "var(--color-border)" }}
             />
             <YAxis
-              tick={{ fill: 'var(--color-text-primary)', fontSize: 12 }}
-              axisLine={{ stroke: 'var(--color-border)' }}
+              tick={{ fill: "var(--color-text-primary)", fontSize: 12 }}
+              axisLine={{ stroke: "var(--color-border)" }}
             />
             <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
-            <Legend wrapperStyle={{ color: 'var(--color-text-primary)' }} />
+            <Legend wrapperStyle={{ color: "var(--color-text-primary)" }} />
             <Line
               type="monotone"
               dataKey="amount"
