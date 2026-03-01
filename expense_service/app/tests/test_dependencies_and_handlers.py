@@ -50,17 +50,13 @@ class TestDecodeToken:
 
     def test_valid_token_returns_user_id(self):
         token = self._make_token({"sub": "42", "exp": datetime.utcnow() + timedelta(hours=1)})
-        with patch("app.dependencies.settings.SECRET_KEY", SECRET_KEY), \
-             patch("app.dependencies.settings.ALGORITHM", ALGORITHM):
-            result = decode_token(token)
+        result = decode_token(token)
         assert result == 42
 
     def test_expired_token_raises_401(self):
         token = self._make_token({"sub": "42", "exp": datetime.utcnow() - timedelta(hours=1)})
         with pytest.raises(HTTPException) as exc_info:
-            with patch("app.dependencies.settings.SECRET_KEY", SECRET_KEY), \
-                 patch("app.dependencies.settings.ALGORITHM", ALGORITHM):
-                decode_token(token)
+            decode_token(token)
         assert exc_info.value.status_code == 401
 
     def test_invalid_signature_raises_401(self):

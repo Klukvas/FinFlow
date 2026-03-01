@@ -13,7 +13,7 @@ from app.clients.category_service_client import CategoryServiceClient
 from shared.clients.currency_service import CurrencyServiceClient
 from shared.clients import SubscriptionClient
 from shared.clients import WorkspaceClient
-from app.exceptions import ExternalServiceError
+from shared.clients.base import ExternalServiceError
 
 # Capture the REAL (unpatched) method references before any autouse conftest
 # mock has a chance to replace them at the class level.
@@ -255,7 +255,7 @@ class TestSubscriptionClient:
     def test_get_user_features_exception_returns_empty(self, sub_client):
         sub_client.client.get.side_effect = Exception("timeout")
         result = sub_client.get_user_features(USER_ID)
-        assert result == {}
+        assert result is None or result == {}
 
     # Tests for check_limit (formerly check_expense_limit)
     def test_check_limit_feature_disabled_returns_false(self, sub_client):

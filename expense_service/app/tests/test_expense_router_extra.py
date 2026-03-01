@@ -92,23 +92,21 @@ class TestPaginatedExpenses:
 
 
 class TestCurrentMonthCount:
-    # NOTE: /expenses/current-month-count is defined AFTER /{expense_id} in the router.
-    # FastAPI tries to match /current-month-count as expense_id (integer) first,
-    # and fails with a validation error -> 400 via custom handler.
-    # The actual /expenses/current-month-count endpoint is effectively unreachable
-    # through normal routing. We test what the system actually does.
+    # NOTE: FastAPI's typed path params (expense_id: int) won't match
+    # non-integer strings like "current-month-count", so the route
+    # is correctly reachable despite being defined after /{expense_id}.
 
-    def test_route_returns_400_because_shadowed_by_expense_id_route(self, client):
-        """Since /current-month-count comes after /{expense_id} in routing,
-        the path is matched by /{expense_id} first, which expects an integer.
-        The custom validation handler returns 400."""
+    def test_route_returns_200_with_count(self, client):
+        """The /current-month-count route is reachable because
+        /{expense_id:int} only matches integer paths."""
         with patch("shared.auth.dependencies.decode_token", return_value=1):
             response = client.get(
                 "/expenses/current-month-count",
                 headers={"Authorization": "Bearer token", **WORKSPACE_HEADER}
             )
-        # The route /{expense_id} matches first; "current-month-count" is not an int -> 400
-        assert response.status_code == 400
+        assert response.status_code == 200
+        data = response.json()
+        assert "count" in data
 
     def test_unauthorized_returns_403(self, client):
         response = client.get("/expenses/current-month-count")
