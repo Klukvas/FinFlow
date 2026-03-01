@@ -17,10 +17,11 @@ echo "Database is ready!"
 
 # Run Alembic migrations
 echo "Running database migrations..."
-if alembic upgrade head; then
+if alembic upgrade head 2>&1; then
     echo "Migrations completed successfully"
 else
-    echo "Migration completed with warnings"
+    echo "ERROR: Migration failed! Check logs above for details."
+    echo "Starting application anyway — some features may not work."
 fi
 
 echo "Migrations completed - starting application..."

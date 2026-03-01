@@ -17,6 +17,7 @@ on:
       - 'deploy/**'
       - 'docker-compose.yml'
       - 'init/**'
+      - 'scripts/**'
       - 'tests/e2e/**'
       - '**/tests/**'
   workflow_dispatch:
