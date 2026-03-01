@@ -5,7 +5,7 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.gzip import GZIPMiddleware
+from starlette.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 from shared.geoip import GeoIPMiddleware
 
@@ -66,7 +66,7 @@ def create_app() -> FastAPI:
     app.include_router(admin_payments_router, prefix="/v1", tags=["admin"])
 
     app.add_middleware(GeoIPMiddleware)
-    app.add_middleware(GZIPMiddleware, minimum_size=500)
+    app.add_middleware(GZipMiddleware, minimum_size=500)
 
     # Exception handlers
     app.add_exception_handler(ServiceError, service_exception_handler)

@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from fastapi.middleware.gzip import GZIPMiddleware
+from starlette.middleware.gzip import GZipMiddleware
 from shared.geoip import GeoIPMiddleware
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -72,7 +72,7 @@ app = FastAPI(
 )
 
 app.add_middleware(GeoIPMiddleware)
-app.add_middleware(GZIPMiddleware, minimum_size=500)
+app.add_middleware(GZipMiddleware, minimum_size=500)
 
 
 @app.get("/health/live")

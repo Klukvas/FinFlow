@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.openapi.utils import get_openapi
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.gzip import GZIPMiddleware
+from starlette.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from shared.geoip import GeoIPMiddleware
@@ -130,7 +130,7 @@ app = FastAPI(
 # Add middleware (added LAST = runs FIRST)
 app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(GeoIPMiddleware)
-app.add_middleware(GZIPMiddleware, minimum_size=500)
+app.add_middleware(GZipMiddleware, minimum_size=500)
 
 # Configure CORS (outermost)
 app.add_middleware(

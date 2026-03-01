@@ -23,7 +23,7 @@ from app.exceptions import (
     IncomeErrorCodes
 )
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.gzip import GZIPMiddleware
+from starlette.middleware.gzip import GZipMiddleware
 from shared.geoip import GeoIPMiddleware
 from app.config import settings
 from app.utils.logger import get_logger
@@ -123,7 +123,7 @@ app.add_exception_handler(HTTPException, http_exception_handler)
 # Add middleware
 app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(GeoIPMiddleware)
-app.add_middleware(GZIPMiddleware, minimum_size=500)
+app.add_middleware(GZipMiddleware, minimum_size=500)
 
 # Include routers
 app.include_router(income.router)

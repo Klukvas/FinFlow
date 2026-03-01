@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.gzip import GZIPMiddleware
+from starlette.middleware.gzip import GZipMiddleware
 from shared.geoip import GeoIPMiddleware
 
 from .utils.errors import service_exception_handler, unhandled_exception_handler, ServiceError
@@ -46,7 +46,7 @@ def create_app() -> FastAPI:
     app.include_router(consent_router, prefix="/v1", tags=["consent"])
 
     app.add_middleware(GeoIPMiddleware)
-    app.add_middleware(GZIPMiddleware, minimum_size=500)
+    app.add_middleware(GZipMiddleware, minimum_size=500)
 
     app.add_exception_handler(ServiceError, service_exception_handler)
     app.add_exception_handler(Exception, unhandled_exception_handler)
