@@ -901,13 +901,22 @@ def seed_user_profile(profile: dict, conn_params: dict):
     seed_incomes(conn_params, user_id, workspace_id, category_ids, account_ids, profile)
 
     print(f"[8/10] Goals ({profile['goals_count']})...")
-    seed_goals(conn_params, user_id, workspace_id, profile["goals_count"])
+    try:
+        seed_goals(conn_params, user_id, workspace_id, profile["goals_count"])
+    except Exception as e:
+        print(f"  WARNING: Goals seeding failed ({e}), skipping.")
 
     print(f"[9/10] Debts ({profile['debts_count']})...")
-    seed_debts(conn_params, user_id, workspace_id, profile["debts_count"])
+    try:
+        seed_debts(conn_params, user_id, workspace_id, profile["debts_count"])
+    except Exception as e:
+        print(f"  WARNING: Debts seeding failed ({e}), skipping.")
 
     print(f"[10/10] Recurring ({profile['recurring_count']})...")
-    seed_recurring(conn_params, user_id, workspace_id, category_ids, profile["recurring_count"])
+    try:
+        seed_recurring(conn_params, user_id, workspace_id, category_ids, profile["recurring_count"])
+    except Exception as e:
+        print(f"  WARNING: Recurring seeding failed ({e}), skipping.")
 
     print(f"\n  Done: {email}")
 
@@ -969,14 +978,17 @@ def clean_demo_data(conn_params):
         }
 
         for db_key, queries in cleanup_queries.items():
-            conn = get_conn(DATABASES[db_key], **conn_params)
-            conn.autocommit = True
-            cur = conn.cursor()
-            for sql, params in queries:
-                cur.execute(sql, params)
-                print(f"    [{db_key}] {sql.split()[0]}...{sql.split()[2]}: {cur.rowcount} rows")
-            cur.close()
-            conn.close()
+            try:
+                conn = get_conn(DATABASES[db_key], **conn_params)
+                conn.autocommit = True
+                cur = conn.cursor()
+                for sql, params in queries:
+                    cur.execute(sql, params)
+                    print(f"    [{db_key}] {sql.split()[0]}...{sql.split()[2]}: {cur.rowcount} rows")
+                cur.close()
+                conn.close()
+            except Exception as e:
+                print(f"    [{db_key}] WARNING: cleanup failed ({e}), skipping.")
 
     print("Clean complete.\n")
 
