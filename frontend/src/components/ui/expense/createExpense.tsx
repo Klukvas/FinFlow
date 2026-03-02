@@ -1,5 +1,5 @@
 import { CreateExpenseRequest } from "@/types";
-import React, { useCallback, useState } from "react";
+import React, { useState } from "react";
 import { CurrencySelect, CategorySelect } from "@/components/ui/forms";
 import { FormattedNumberInput } from "@/components/ui/forms/FormattedNumberInput";
 import { removeSpacesFromNumber } from "@/utils/numberFormat";

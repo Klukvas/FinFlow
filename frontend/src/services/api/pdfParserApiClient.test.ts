@@ -3,10 +3,10 @@
  * This file demonstrates how to use the PDF parser API client
  */
 
-import { PDFParserApiClient } from './pdfParserApiClient';
+import { PDFParserApiClient } from "./pdfParserApiClient";
 
 // Mock token functions for testing
-const mockGetToken = () => 'mock-token';
+const mockGetToken = () => "mock-token";
 const mockRefreshToken = async () => true;
 
 // Example usage
@@ -15,25 +15,24 @@ export const exampleUsage = async () => {
 
   try {
     // Get supported banks
-    const banksResponse = await client.getSupportedBanks();
+    await client.getSupportedBanks();
 
     // Get languages for Monobank
-    const languagesResponse = await client.getBankLanguages('monobank');
+    await client.getBankLanguages("monobank");
 
     // Get all languages
-    const allLanguagesResponse = await client.getAllLanguages();
+    await client.getAllLanguages();
 
     // Check if a bank is supported
-    const isSupported = await client.isBankSupported('monobank');
+    await client.isBankSupported("monobank");
 
     // Get comprehensive bank info
-    const bankInfo = await client.getBankInfo('monobank');
+    await client.getBankInfo("monobank");
 
     // Health check
-    const healthResponse = await client.healthCheck();
-
+    await client.healthCheck();
   } catch (error) {
-    console.error('Error using PDF parser API client:', error);
+    console.error("Error using PDF parser API client:", error);
   }
 };
 
@@ -43,17 +42,17 @@ export const exampleParsePDF = async (file: File) => {
 
   try {
     // Parse PDF with language parameter
-    const response = await client.parsePDF(file, 'monobank', 'ru');
-    
-    if ('error' in response) {
-      console.error('PDF parsing error:', response.error);
+    const response = await client.parsePDF(file, "monobank", "ru");
+
+    if ("error" in response) {
+      console.error("PDF parsing error:", response.error);
       return;
     }
 
-
     return response;
   } catch (error) {
-    console.error('Error parsing PDF:', error);
+    console.error("Error parsing PDF:", error);
+    return undefined;
   }
 };
 

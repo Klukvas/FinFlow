@@ -27,7 +27,7 @@ interface RecurringTableProps {
   onPauseResume: (payment: RecurringPayment) => void;
   onEdit: (payment: RecurringPayment) => void;
   onDelete: (payment: RecurringPayment) => void;
-  emptyMessage?: string;
+  emptyMessage?: string | undefined;
 }
 
 type SortField =
@@ -188,7 +188,7 @@ export const RecurringTable: React.FC<RecurringTableProps> = ({
                     </Badge>
                   </div>
                   <div className="text-xs theme-text-tertiary mb-1">
-                    {t(PAYMENT_TYPE_I18N_MAP[payment.payment_type])} ·{" "}
+                    {t(PAYMENT_TYPE_I18N_MAP[payment.payment_type] ?? "")} ·{" "}
                     {getScheduleDescription(payment, t)}
                   </div>
                   <div className="flex items-center gap-3">
@@ -354,7 +354,7 @@ export const RecurringTable: React.FC<RecurringTableProps> = ({
                           {payment.name}
                         </span>
                         <span className="block text-xs theme-text-tertiary">
-                          {t(PAYMENT_TYPE_I18N_MAP[payment.payment_type])}
+                          {t(PAYMENT_TYPE_I18N_MAP[payment.payment_type] ?? "")}
                         </span>
                       </div>
                     </td>

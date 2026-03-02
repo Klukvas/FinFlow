@@ -2,6 +2,7 @@ export interface UserFeature {
   feature_code: string;
   enabled: boolean;
   limit_value: number | null;
+  plan_code: string;
 }
 
 export interface UserEntitlements {
@@ -12,32 +13,32 @@ export interface UserEntitlements {
     string,
     {
       enabled: number;
-      limit_value: number;
+      limit_value: number | null;
     }
   >;
 }
 
 export interface PlanResponse {
-  id: number;
   code: string;
   name: string;
   period_days: number;
   is_active: boolean;
   version: number;
-  created_at: string;
-  updated_at: string;
 }
 
 export interface SubscriptionResponse {
-  user_id: number;
+  user_id: string;
   plan_code: string;
   status: "active" | "past_due" | "canceled" | "paused";
   started_at: string;
   expires_at: string | null;
   canceled_at: string | null;
   auto_renew?: boolean;
-  paddle_subscription_id?: string;
-  paddle_price_id?: string;
+  recurring_token?: string | null;
+  next_billing_date?: string | null;
+  paddle_customer_id?: string | null;
+  paddle_subscription_id?: string | null;
+  paddle_price_id?: string | null;
 }
 
 export interface PlanFeature {

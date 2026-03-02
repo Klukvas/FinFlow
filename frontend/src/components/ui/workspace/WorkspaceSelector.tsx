@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { logger } from "@/utils/logger";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { setStoredWorkspaceId } from "@/utils/workspaceStorage";
-import { FaChevronDown, FaUsers, FaUser, FaPlus, FaCog } from "react-icons/fa";
+import { FaChevronDown, FaUsers, FaUser, FaCog } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
 interface WorkspaceSelectorProps {

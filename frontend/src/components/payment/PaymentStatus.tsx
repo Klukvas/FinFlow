@@ -97,7 +97,7 @@ export const PaymentStatusBadge: React.FC<PaymentStatusProps> = ({
       className={`inline-flex items-center gap-2 rounded-full font-medium ${config.bg} ${config.color} ${sizeClasses[size]} ${className}`}
     >
       <Icon
-        className={`${iconSizes[size]} ${config.animate ? "animate-spin" : ""}`}
+        className={`${iconSizes[size]} ${"animate" in config && config.animate ? "animate-spin" : ""}`}
       />
       {showLabel && <span>{config.label}</span>}
     </div>

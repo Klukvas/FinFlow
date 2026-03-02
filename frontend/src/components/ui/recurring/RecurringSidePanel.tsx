@@ -77,7 +77,7 @@ export const RecurringSidePanel: React.FC<RecurringSidePanelProps> = ({
     },
     {
       label: t("recurringPage.sidePanel.paymentType"),
-      value: t(PAYMENT_TYPE_I18N_MAP[payment.payment_type]),
+      value: t(PAYMENT_TYPE_I18N_MAP[payment.payment_type] ?? ""),
       valueClass: "theme-text-primary",
     },
     {

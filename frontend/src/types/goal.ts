@@ -13,6 +13,7 @@ export type GoalPriority = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 export interface Goal {
   id: number;
   user_id: number;
+  workspace_id: string;
   title: string;
   description?: string;
   goal_type: GoalType;

@@ -25,7 +25,7 @@ interface CategoryTableProps {
   onRowClick: (category: Category) => void;
   onEdit: (category: Category) => void;
   onDelete: (category: Category) => void;
-  emptyMessage?: string;
+  emptyMessage?: string | undefined;
 }
 
 type SortField = "name" | "type" | "parent" | "created";

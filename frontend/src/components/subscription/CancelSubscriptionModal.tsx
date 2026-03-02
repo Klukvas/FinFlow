@@ -60,8 +60,8 @@ export const CancelSubscriptionModal: React.FC<
 
     try {
       const result = await subscriptionApi.cancelSubscription(subscription.id, {
-        cancellation_reason: reason || undefined,
-        cancellation_comment: comment || undefined,
+        ...(reason ? { cancellation_reason: reason } : {}),
+        ...(comment ? { cancellation_comment: comment } : {}),
         cancel_immediately: cancelImmediately,
       });
 

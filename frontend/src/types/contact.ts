@@ -19,6 +19,7 @@ export interface ContactUpdate {
 export interface ContactResponse {
   id: number;
   user_id: number;
+  workspace_id: string;
   name: string;
   email?: string | null;
   phone?: string | null;

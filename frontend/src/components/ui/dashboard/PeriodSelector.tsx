@@ -39,7 +39,8 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  const allowedPeriods = PLAN_ALLOWED_PERIODS[planCode] ?? PLAN_ALLOWED_PERIODS.basic;
+  const allowedPeriods =
+    PLAN_ALLOWED_PERIODS[planCode] ?? PLAN_ALLOWED_PERIODS.basic ?? [];
 
   return (
     <div className="flex items-center gap-1">

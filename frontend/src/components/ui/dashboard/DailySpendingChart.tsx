@@ -46,9 +46,10 @@ export const DailySpendingChart: React.FC<DailySpendingChartProps> = ({
     const prevDaily: number[] = new Array(maxDays).fill(0);
 
     for (const exp of expenses) {
+      if (!exp.date) continue;
       const d = new Date(exp.date);
       const converted =
-        convertToUserCurrency(exp.amount, exp.currency) ?? exp.amount;
+        convertToUserCurrency(exp.amount, exp.currency ?? "") ?? exp.amount;
       const day = d.getDate() - 1;
 
       if (

@@ -1,6 +1,6 @@
 /**
  * Frontend Logging Utility
- * 
+ *
  * This utility provides structured logging for the frontend application,
  * collecting browser console logs and sending them to the backend logging API.
  */
@@ -30,7 +30,7 @@ class FrontendLogger {
   private flushInterval = 5000; // 5 seconds
   private apiUrl: string;
   private sessionId: string;
-  private userId?: number;
+  private userId: number | undefined;
   private flushTimer?: NodeJS.Timeout;
   private originalConsole: {
     log: typeof console.log;
@@ -40,7 +40,7 @@ class FrontendLogger {
     debug: typeof console.debug;
   };
 
-  constructor(apiUrl: string = '/api/logging') {
+  constructor(apiUrl: string = "/api/logging") {
     this.apiUrl = apiUrl;
     this.sessionId = this.generateSessionId();
     this.originalConsole = {
@@ -63,60 +63,64 @@ class FrontendLogger {
   private setupConsoleInterception(): void {
     // Intercept console methods
     console.log = (...args: any[]) => {
-      this.log('log', args.join(' '));
+      this.log("log", args.join(" "));
       this.originalConsole.log(...args);
     };
 
     console.warn = (...args: any[]) => {
-      this.log('warn', args.join(' '));
+      this.log("warn", args.join(" "));
       this.originalConsole.warn(...args);
     };
 
     console.error = (...args: any[]) => {
-      this.log('error', args.join(' '));
+      this.log("error", args.join(" "));
       this.originalConsole.error(...args);
     };
 
     console.info = (...args: any[]) => {
-      this.log('info', args.join(' '));
+      this.log("info", args.join(" "));
       this.originalConsole.info(...args);
     };
 
     console.debug = (...args: any[]) => {
-      this.log('debug', args.join(' '));
+      this.log("debug", args.join(" "));
       this.originalConsole.debug(...args);
     };
   }
 
   private setupErrorHandling(): void {
     // Global error handler
-    window.addEventListener('error', (event) => {
-      this.log('error', event.message, {
+    window.addEventListener("error", (event) => {
+      this.log("error", event.message, {
         source: `${event.filename}:${event.lineno}:${event.colno}`,
         stack: event.error?.stack,
         extra: {
-          type: 'javascript_error',
+          type: "javascript_error",
           filename: event.filename,
           lineno: event.lineno,
           colno: event.colno,
-        }
+        },
       });
     });
 
     // Unhandled promise rejection handler
-    window.addEventListener('unhandledrejection', (event) => {
-      this.log('error', `Unhandled Promise Rejection: ${event.reason}`, {
-        source: 'unhandledrejection',
+    window.addEventListener("unhandledrejection", (event) => {
+      this.log("error", `Unhandled Promise Rejection: ${event.reason}`, {
+        source: "unhandledrejection",
         stack: event.reason?.stack,
         extra: {
-          type: 'promise_rejection',
+          type: "promise_rejection",
           reason: event.reason,
-        }
+        },
       });
     });
   }
 
-  private log(level: string, message: string, options: Partial<LogEntry> = {}): void {
+  private log(
+    level: string,
+    message: string,
+    options: Partial<LogEntry> = {},
+  ): void {
     const logEntry: LogEntry = {
       level,
       message,
@@ -124,8 +128,8 @@ class FrontendLogger {
       url: window.location.href,
       user_agent: navigator.userAgent,
       session_id: this.sessionId,
-      user_id: this.userId,
-      ...options
+      ...(this.userId !== undefined ? { user_id: this.userId } : {}),
+      ...options,
     };
 
     this.logs.push(logEntry);
@@ -152,9 +156,9 @@ class FrontendLogger {
 
     try {
       const response = await fetch(`${this.apiUrl}/frontend`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           logs: logsToSend,
@@ -170,7 +174,7 @@ class FrontendLogger {
       const result = await response.json();
       console.debug(`Frontend logs flushed: ${result.processed} entries`);
     } catch (error) {
-      console.error('Failed to send frontend logs:', error);
+      console.error("Failed to send frontend logs:", error);
       // Re-add logs to queue for retry
       this.logs.unshift(...logsToSend);
     }
@@ -184,64 +188,73 @@ class FrontendLogger {
     this.userId = undefined;
   }
 
-  public logError(message: string, error?: Error, extra?: Record<string, any>): void {
-    this.log('error', message, {
-      source: error ? `${error.name}:${error.message}` : undefined,
-      stack: error?.stack,
+  public logError(
+    message: string,
+    error?: Error,
+    extra?: Record<string, any>,
+  ): void {
+    this.log("error", message, {
+      ...(error ? { source: `${error.name}:${error.message}` } : {}),
+      ...(error?.stack ? { stack: error.stack } : {}),
       extra: {
-        type: 'manual_error',
-        ...extra
-      }
+        type: "manual_error",
+        ...extra,
+      },
     });
   }
 
   public logInfo(message: string, extra?: Record<string, any>): void {
-    this.log('info', message, {
+    this.log("info", message, {
       extra: {
-        type: 'manual_info',
-        ...extra
-      }
+        type: "manual_info",
+        ...extra,
+      },
     });
   }
 
   public logWarning(message: string, extra?: Record<string, any>): void {
-    this.log('warn', message, {
+    this.log("warn", message, {
       extra: {
-        type: 'manual_warning',
-        ...extra
-      }
+        type: "manual_warning",
+        ...extra,
+      },
     });
   }
 
   public logBusinessEvent(event: string, data?: Record<string, any>): void {
-    this.log('info', `Business Event: ${event}`, {
+    this.log("info", `Business Event: ${event}`, {
       extra: {
-        type: 'business_event',
+        type: "business_event",
         event,
-        data
-      }
+        data,
+      },
     });
   }
 
   public logUserAction(action: string, data?: Record<string, any>): void {
-    this.log('info', `User Action: ${action}`, {
+    this.log("info", `User Action: ${action}`, {
       extra: {
-        type: 'user_action',
+        type: "user_action",
         action,
-        data
-      }
+        data,
+      },
     });
   }
 
-  public logApiCall(method: string, url: string, status: number, duration?: number): void {
-    this.log('info', `API Call: ${method} ${url}`, {
+  public logApiCall(
+    method: string,
+    url: string,
+    status: number,
+    duration?: number,
+  ): void {
+    this.log("info", `API Call: ${method} ${url}`, {
       extra: {
-        type: 'api_call',
+        type: "api_call",
         method,
         url,
         status,
-        duration
-      }
+        duration,
+      },
     });
   }
 
@@ -267,6 +280,6 @@ export type { LogEntry, LogBatch };
 export { FrontendLogger };
 
 // Auto-cleanup on page unload
-window.addEventListener('beforeunload', () => {
+window.addEventListener("beforeunload", () => {
   frontendLogger.destroy();
 });

@@ -50,14 +50,13 @@ const featureNames: Record<string, string> = {
 };
 
 interface Subscription {
-  id: number;
   user_id: string;
   plan_code: string;
   status: string;
-  auto_renew: boolean;
+  auto_renew?: boolean;
   expires_at: string | null;
   canceled_at: string | null;
-  paddle_subscription_id?: string;
+  paddle_subscription_id?: string | null;
 }
 
 export const SubscriptionLimits: React.FC<SubscriptionLimitsProps> = ({
@@ -457,8 +456,12 @@ export const SubscriptionLimits: React.FC<SubscriptionLimitsProps> = ({
           setIsUpgradeModalOpen(false);
           loadSubscriptionLimits();
         }}
-        currentPlanCode={subscription?.plan_code}
-        paddleSubscriptionId={subscription?.paddle_subscription_id}
+        {...(subscription?.plan_code !== undefined
+          ? { currentPlanCode: subscription.plan_code }
+          : {})}
+        {...(subscription?.paddle_subscription_id
+          ? { paddleSubscriptionId: subscription.paddle_subscription_id }
+          : {})}
       />
 
       <CancelSubscriptionModal
@@ -467,7 +470,7 @@ export const SubscriptionLimits: React.FC<SubscriptionLimitsProps> = ({
         subscription={
           subscription
             ? {
-                id: subscription.id,
+                id: Number(subscription.user_id),
                 plan_code: subscription.plan_code,
                 expires_at: subscription.expires_at,
               }

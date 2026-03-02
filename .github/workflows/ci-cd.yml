@@ -1119,6 +1119,17 @@ jobs:
           docker compose logs --tail=20
           exit 1
 
+      - name: Collect OpenAPI schemas from live services
+        run: bash scripts/collect-openapi-schemas.sh
+
+      - name: Check API contract drift
+        working-directory: frontend
+        run: node scripts/check-contract-drift.mjs
+
+      - name: Check frontend type compatibility with OpenAPI schemas
+        working-directory: frontend
+        run: yarn test:types --strict
+
       - name: Seed test data
         continue-on-error: true
         run: |

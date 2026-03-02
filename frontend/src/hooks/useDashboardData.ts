@@ -27,7 +27,7 @@ export interface DashboardData {
   retry: () => void;
 }
 
-const formatDate = (d: Date): string => d.toISOString().split("T")[0];
+const formatDate = (d: Date): string => d.toISOString().split("T")[0] ?? "";
 
 export const useDashboardData = (periodMonths: number = 1): DashboardData => {
   const { user } = useAuth();

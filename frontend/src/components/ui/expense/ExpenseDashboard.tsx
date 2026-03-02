@@ -17,7 +17,7 @@ export const ExpenseDashboard: React.FC<ExpenseDashboardProps> = ({
   expenses,
   loading,
 }) => {
-  const { t } = useTranslation();
+  useTranslation();
   const { categories } = useCategories();
 
   if (loading) {

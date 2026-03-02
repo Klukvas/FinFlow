@@ -25,7 +25,7 @@ export interface CreatePaymentRequest {
   workspace_id?: string;
   purpose: PaymentPurpose;
   plan_code?: string;
-  amount: number;
+  amount: number | string;
   currency: string;
   return_url?: string;
   metadata?: Record<string, any>;
@@ -35,10 +35,10 @@ export interface CreatePaymentResponse {
   payment_id: string;
   order_reference: string;
   provider: PaymentProvider;
-  amount: number;
+  amount: string;
   currency: string;
   status: PaymentStatus;
-  payment_url: string;
+  payment_url?: string | null;
   checkout_url?: string;
   transaction_id?: string; // Paddle transaction ID for Paddle.js overlay checkout
   provider_form_fields?: Record<string, any>;
@@ -64,7 +64,7 @@ export interface Payment {
   workspace_id?: string;
   purpose: PaymentPurpose;
   plan_code?: string;
-  amount: number;
+  amount: string;
   currency: string;
   status: PaymentStatus;
   provider_payment_url?: string;

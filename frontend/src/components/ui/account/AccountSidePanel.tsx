@@ -87,7 +87,7 @@ export const AccountSidePanel: React.FC<AccountSidePanelProps> = ({
     {
       label: t("accountPage.sidePanel.transactions"),
       value: transactionSummary
-        ? String(transactionSummary.transaction_count)
+        ? String(transactionSummary.transactions.length)
         : "\u2014",
       valueClass: "theme-text-primary",
     },
@@ -182,7 +182,7 @@ export const AccountSidePanel: React.FC<AccountSidePanelProps> = ({
           <div className="border-t theme-border" />
 
           {/* Financial Summary */}
-          {transactionSummary && transactionSummary.transaction_count > 0 && (
+          {transactionSummary && transactionSummary.transactions.length > 0 && (
             <>
               <div className="p-4 sm:p-6 space-y-3">
                 <h3 className="text-sm font-semibold theme-text-primary uppercase tracking-wide">
@@ -219,13 +219,13 @@ export const AccountSidePanel: React.FC<AccountSidePanelProps> = ({
                     </span>
                     <span
                       className={`text-sm font-semibold tabular-nums ${
-                        transactionSummary.net_balance >= 0
+                        transactionSummary.net_change >= 0
                           ? "text-green-600/80"
                           : "text-red-500/80"
                       }`}
                     >
                       {formatBalance(
-                        transactionSummary.net_balance,
+                        transactionSummary.net_change,
                         account.currency,
                       )}
                     </span>
@@ -244,10 +244,10 @@ export const AccountSidePanel: React.FC<AccountSidePanelProps> = ({
                 {t("accountPage.sidePanel.recentTransactions")}
               </h3>
               {transactionSummary &&
-                transactionSummary.recent_transactions.length > 0 && (
+                transactionSummary.transactions.length > 0 && (
                   <span className="text-xs theme-text-tertiary">
                     {t("accountPage.sidePanel.transactionsCount", {
-                      count: transactionSummary.transaction_count,
+                      count: transactionSummary.transactions.length,
                     })}
                   </span>
                 )}
@@ -258,7 +258,7 @@ export const AccountSidePanel: React.FC<AccountSidePanelProps> = ({
                 <div className="animate-spin rounded-full h-5 w-5 border-2 border-[var(--color-accent)] border-t-transparent" />
               </div>
             ) : !transactionSummary ||
-              transactionSummary.recent_transactions.length === 0 ? (
+              transactionSummary.transactions.length === 0 ? (
               <p className="text-sm theme-text-tertiary italic py-2">
                 {t("accountPage.sidePanel.noTransactions")}
               </p>
@@ -282,7 +282,7 @@ export const AccountSidePanel: React.FC<AccountSidePanelProps> = ({
                     </tr>
                   </thead>
                   <tbody className="divide-y theme-border">
-                    {transactionSummary.recent_transactions.map((tx) => (
+                    {transactionSummary.transactions.map((tx) => (
                       <tr key={tx.id}>
                         <td className="px-3 py-2 text-sm theme-text-secondary tabular-nums">
                           {formatDate(tx.date)}

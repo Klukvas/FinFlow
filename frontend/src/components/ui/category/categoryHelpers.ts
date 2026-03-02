@@ -1,13 +1,13 @@
-import { Category } from '@/types/category';
-import { ExpenseResponse } from '@/types/expense';
-import { IncomeOut } from '@/types/income';
+import { Category } from "@/types/category";
+import { ExpenseResponse } from "@/types/expense";
+import { IncomeOut } from "@/types/income";
 
 export interface CategoryPageFilters {
   page: number;
   size: number;
-  type?: 'EXPENSE' | 'INCOME' | 'all';
+  type?: "EXPENSE" | "INCOME" | "all";
   search?: string;
-  viewMode: 'tree' | 'table';
+  viewMode: "tree" | "table";
 }
 
 export interface CategoryUsageData {
@@ -20,24 +20,24 @@ export interface CategoryUsageData {
   recentIncomes: IncomeOut[];
 }
 
-export const CATEGORY_TYPES = ['EXPENSE', 'INCOME'] as const;
+export const CATEGORY_TYPES = ["EXPENSE", "INCOME"] as const;
 
 export const CATEGORY_TYPE_I18N_MAP: Record<string, string> = {
-  EXPENSE: 'category.expense',
-  INCOME: 'category.income',
+  EXPENSE: "category.expense",
+  INCOME: "category.income",
 };
 
 export const getTypeBadgeVariant = (type: string): string => {
-  return type === 'INCOME' ? 'success' : 'destructive';
+  return type === "INCOME" ? "success" : "destructive";
 };
 
 export const getCreatedByBadgeVariant = (createdBy?: string): string => {
-  return createdBy === 'SYSTEM' ? 'secondary' : 'default';
+  return createdBy === "SYSTEM" ? "secondary" : "default";
 };
 
 export const formatDate = (dateString?: string | null): string => {
-  if (!dateString) return '\u2014';
-  return new Date(dateString).toLocaleDateString('uk-UA');
+  if (!dateString) return "\u2014";
+  return new Date(dateString).toLocaleDateString("uk-UA");
 };
 
 export const getParentName = (
@@ -75,7 +75,10 @@ export const flattenTree = (
   let result: Array<Category & { parentName?: string }> = [];
 
   tree.forEach((cat) => {
-    result.push({ ...cat, parentName });
+    result.push({
+      ...cat,
+      ...(parentName !== undefined ? { parentName } : {}),
+    });
     if (cat.children && cat.children.length > 0) {
       result = result.concat(flattenTree(cat.children, cat.name));
     }

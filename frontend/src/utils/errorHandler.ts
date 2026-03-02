@@ -1,6 +1,5 @@
 import { toast } from "sonner";
-import { useTranslation } from "react-i18next";
-import { getErrorTranslationKey, BackendError } from "./errorMapping";
+
 import { logger } from "@/utils/logger";
 
 export interface ApiError {
@@ -14,7 +13,7 @@ export class ErrorHandler {
   private static getErrorMessage(
     error: unknown,
     fallbackMessage: string = "Произошла ошибка",
-    service: "category" | "expense" | "account" = "category",
+    _service: "category" | "expense" | "account" = "category",
   ): string {
     if (error && typeof error === "object") {
       const apiError = error as ApiError;

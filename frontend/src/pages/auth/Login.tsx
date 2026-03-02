@@ -1,6 +1,6 @@
 import { EmailInput, PasswordInput } from "../../components";
 import { Link, useNavigate } from "react-router-dom";
-import React from "react";
+
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../contexts/AuthContext";
 import { useAuthForm } from "../../hooks";

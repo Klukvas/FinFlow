@@ -468,7 +468,7 @@ export const PdfParser: React.FC = () => {
             const response = await income.createIncome(incomeData);
 
             if ("error" in response) {
-              if (response.status === 429) {
+              if ((response as { status?: number }).status === 429) {
                 incomeLimitHit = true;
                 errors.push(t("pdfParserPage.errors.incomeLimitExceeded"));
                 logger.warn(
@@ -506,7 +506,7 @@ export const PdfParser: React.FC = () => {
               const response = await expense.createExpense(expenseData);
 
               if ("error" in response) {
-                if (response.status === 429) {
+                if ((response as { status?: number }).status === 429) {
                   expenseLimitHit = true;
                   errors.push(t("pdfParserPage.errors.expenseLimitExceeded"));
                   logger.warn(
@@ -536,7 +536,7 @@ export const PdfParser: React.FC = () => {
             const response = await expense.createExpense(expenseData);
 
             if ("error" in response) {
-              if (response.status === 429) {
+              if ((response as { status?: number }).status === 429) {
                 expenseLimitHit = true;
                 errors.push(t("pdfParserPage.errors.expenseLimitExceeded"));
                 logger.warn(

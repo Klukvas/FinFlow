@@ -129,7 +129,10 @@ export const CategorySidePanel: React.FC<CategorySidePanelProps> = ({
           currency: i.currency,
         })),
       ]
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .sort(
+          (a, b) =>
+            new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime(),
+        )
         .slice(0, 5)
     : [];
 

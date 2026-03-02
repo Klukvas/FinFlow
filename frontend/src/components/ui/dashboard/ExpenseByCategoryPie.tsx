@@ -34,11 +34,15 @@ export const ExpenseByCategoryPie: React.FC<ExpenseByCategoryPieProps> = ({
       .map((cat) => {
         const total = expenses
           .filter(
-            (e) => e.category_id === cat.id && new Date(e.date) >= periodStart,
+            (e) =>
+              e.category_id === cat.id &&
+              e.date &&
+              new Date(e.date) >= periodStart,
           )
           .reduce(
             (sum, e) =>
-              sum + (convertToUserCurrency(e.amount, e.currency) ?? e.amount),
+              sum +
+              (convertToUserCurrency(e.amount, e.currency ?? "") ?? e.amount),
             0,
           );
         return { name: cat.name, value: total };

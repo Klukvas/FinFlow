@@ -2,7 +2,9 @@ export interface User {
   id: number;
   email: string;
   base_currency: string;
+  default_workspace_id?: string | null;
   tutorial_version: number;
+  role?: string;
 }
 
 export interface UserCreate {

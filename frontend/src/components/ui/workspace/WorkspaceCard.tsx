@@ -54,7 +54,7 @@ export const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
     };
 
     const role = workspace.current_user_role || "read";
-    const config = roleConfig[role] || roleConfig.read;
+    const config = roleConfig[role] ?? roleConfig.read!;
     return (
       <span
         className={`px-2 py-0.5 rounded-full text-xs font-medium ${config.className}`}

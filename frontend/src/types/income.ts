@@ -13,9 +13,10 @@ export interface IncomeOut {
   amount: number;
   category_id?: number | null;
   account_id?: number | null;
-  currency: string;
+  currency?: string | null;
   description?: string | null;
   date: string;
+  workspace_id: string;
   created_at: string;
   updated_at: string;
 }
@@ -81,6 +82,6 @@ export interface IncomeFilters {
   currency?: string;
   date_from?: string;
   date_to?: string;
-  sort_by?: 'date' | 'amount' | 'category';
-  sort_order?: 'asc' | 'desc';
+  sort_by?: "date" | "amount" | "category";
+  sort_order?: "asc" | "desc";
 }

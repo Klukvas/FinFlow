@@ -13,7 +13,7 @@ interface CategoryTreeProps {
   onDelete: (category: Category) => void;
   expandedNodes: Set<number>;
   onToggleExpand: (id: number) => void;
-  emptyMessage?: string;
+  emptyMessage?: string | undefined;
 }
 
 export const CategoryTree: React.FC<CategoryTreeProps> = ({

@@ -57,7 +57,7 @@ export const ChangePlanButton: React.FC<ChangePlanButtonProps> = ({
         user_id: String(user.id),
         new_plan_code: newPlanCode,
         paddle_subscription_id: paddleSubscriptionId,
-        metadata: consentData ? { ...consentData } : undefined,
+        ...(consentData ? { metadata: { ...consentData } } : {}),
       });
 
       if (result?.success) {

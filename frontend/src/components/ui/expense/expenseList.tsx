@@ -18,7 +18,7 @@ interface ExpenseListProps {
   onPageSizeChange: (size: number) => void;
   onEditExpense?: (expense: ExpenseResponse) => void;
   onDeleteRequest?: (expense: ExpenseResponse) => void;
-  emptyMessage?: string;
+  emptyMessage?: string | undefined;
 }
 
 type SortField = "date" | "amount" | "category";
@@ -47,14 +47,17 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
       let cmp = 0;
       switch (sortField) {
         case "date":
-          cmp = new Date(a.date).getTime() - new Date(b.date).getTime();
+          cmp =
+            new Date(a.date ?? 0).getTime() - new Date(b.date ?? 0).getTime();
           break;
         case "amount":
           cmp = a.amount - b.amount;
           break;
         case "category":
-          cmp = (categories[a.category_id] || "").localeCompare(
-            categories[b.category_id] || "",
+          cmp = (
+            a.category_id != null ? categories[a.category_id] || "" : ""
+          ).localeCompare(
+            b.category_id != null ? categories[b.category_id] || "" : "",
           );
           break;
       }
@@ -155,8 +158,9 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                 </div>
                 <div className="flex items-center gap-2 mb-1">
                   <Badge variant="secondary" size="sm">
-                    {categories[expense.category_id] ||
-                      t("expense.list.unknownCategory")}
+                    {(expense.category_id != null
+                      ? categories[expense.category_id]
+                      : undefined) || t("expense.list.unknownCategory")}
                   </Badge>
                 </div>
                 {expense.description && (
@@ -264,8 +268,9 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                   </td>
                   <td className="px-4 py-3">
                     <Badge variant="secondary" size="sm">
-                      {categories[expense.category_id] ||
-                        t("expense.list.unknownCategory")}
+                      {(expense.category_id != null
+                        ? categories[expense.category_id]
+                        : undefined) || t("expense.list.unknownCategory")}
                     </Badge>
                   </td>
                   <td className="px-4 py-3">

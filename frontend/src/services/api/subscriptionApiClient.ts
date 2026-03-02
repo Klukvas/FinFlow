@@ -62,6 +62,7 @@ export class SubscriptionApiClient {
       feature_code,
       enabled: Boolean(data.enabled),
       limit_value: data.limit_value,
+      plan_code: entitlements.plan_code,
     }));
 
     return features;
@@ -100,7 +101,7 @@ export class SubscriptionApiClient {
   // Methods to get current counts for each feature type
   // Optimized to use pagination metadata instead of fetching all data
   async getCurrentCounts(
-    userId: number,
+    _userId: number,
   ): Promise<Record<string, number> | ApiError> {
     try {
       const counts: Record<string, number> = {};

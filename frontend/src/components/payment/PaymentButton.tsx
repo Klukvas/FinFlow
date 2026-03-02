@@ -88,9 +88,9 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
 
       const payment = await createPayment({
         user_id: String(user.id),
-        workspace_id: user.default_workspace_id
-          ? String(user.default_workspace_id)
-          : undefined,
+        ...(user.default_workspace_id
+          ? { workspace_id: String(user.default_workspace_id) }
+          : {}),
         purpose: PaymentPurpose.SUBSCRIPTION,
         plan_code: planCode,
         amount: amount,
@@ -129,7 +129,9 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
         };
         const opened = openCheckout(payment.transaction_id, {
           email: user.email,
-          countryCode: langToCountry[i18n.language],
+          ...(langToCountry[i18n.language]
+            ? { countryCode: langToCountry[i18n.language] }
+            : {}),
           locale: i18n.language,
         });
         if (!opened) {

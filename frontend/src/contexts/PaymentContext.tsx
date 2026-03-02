@@ -42,7 +42,10 @@ export const PaymentProvider: React.FC<{ children: ReactNode }> = ({
   });
 
   const clearError = useCallback(() => {
-    setState((prev) => ({ ...prev, error: undefined }));
+    setState((prev) => {
+      const { error: _e, ...rest } = prev;
+      return rest;
+    });
   }, []);
 
   const createPayment = useCallback(
@@ -55,16 +58,19 @@ export const PaymentProvider: React.FC<{ children: ReactNode }> = ({
         return null;
       }
 
-      setState((prev) => ({ ...prev, isProcessing: true, error: undefined }));
+      setState((prev) => {
+        const { error: _e, ...rest } = prev;
+        return { ...rest, isProcessing: true };
+      });
 
       try {
         // Ensure user_id is a string
         const requestWithStringId = {
           ...request,
           user_id: String(request.user_id),
-          workspace_id: request.workspace_id
-            ? String(request.workspace_id)
-            : undefined,
+          ...(request.workspace_id
+            ? { workspace_id: String(request.workspace_id) }
+            : {}),
         };
 
         // Deterministic idempotency key: same key for same user+plan within a 5-min window
@@ -95,14 +101,26 @@ export const PaymentProvider: React.FC<{ children: ReactNode }> = ({
           amount: response.amount,
           currency: response.currency,
           status: response.status,
-          provider_payment_url: response.payment_url,
-          checkout_url: response.checkout_url,
-          transaction_id: response.transaction_id,
+          ...(response.payment_url != null
+            ? { provider_payment_url: response.payment_url }
+            : {}),
+          ...(response.checkout_url != null
+            ? { checkout_url: response.checkout_url }
+            : {}),
+          ...(response.transaction_id != null
+            ? { transaction_id: response.transaction_id }
+            : {}),
           user_id: request.user_id,
-          workspace_id: request.workspace_id,
+          ...(request.workspace_id !== undefined
+            ? { workspace_id: request.workspace_id }
+            : {}),
           purpose: request.purpose,
-          plan_code: request.plan_code,
-          extra_data: request.metadata,
+          ...(request.plan_code !== undefined
+            ? { plan_code: request.plan_code }
+            : {}),
+          ...(request.metadata !== undefined
+            ? { extra_data: request.metadata }
+            : {}),
           created_at: response.created_at,
           updated_at: response.created_at,
         };
@@ -138,7 +156,10 @@ export const PaymentProvider: React.FC<{ children: ReactNode }> = ({
         return null;
       }
 
-      setState((prev) => ({ ...prev, isProcessing: true, error: undefined }));
+      setState((prev) => {
+        const { error: _e, ...rest } = prev;
+        return { ...rest, isProcessing: true };
+      });
 
       try {
         const response = await paymentApi.changePlan(request);
@@ -170,7 +191,10 @@ export const PaymentProvider: React.FC<{ children: ReactNode }> = ({
 
   const getPayment = useCallback(
     async (paymentId: string): Promise<Payment | null> => {
-      setState((prev) => ({ ...prev, isProcessing: true, error: undefined }));
+      setState((prev) => {
+        const { error: _e, ...rest } = prev;
+        return { ...rest, isProcessing: true };
+      });
 
       try {
         const response = await paymentApi.getPayment(paymentId);
@@ -207,7 +231,10 @@ export const PaymentProvider: React.FC<{ children: ReactNode }> = ({
 
   const getPaymentByOrderRef = useCallback(
     async (orderReference: string): Promise<Payment | null> => {
-      setState((prev) => ({ ...prev, isProcessing: true, error: undefined }));
+      setState((prev) => {
+        const { error: _e, ...rest } = prev;
+        return { ...rest, isProcessing: true };
+      });
 
       try {
         const response = await paymentApi.getPaymentByOrderRef(orderReference);
@@ -244,7 +271,10 @@ export const PaymentProvider: React.FC<{ children: ReactNode }> = ({
 
   const pollPaymentStatus = useCallback(
     async (paymentId: string): Promise<Payment | null> => {
-      setState((prev) => ({ ...prev, isProcessing: true, error: undefined }));
+      setState((prev) => {
+        const { error: _e, ...rest } = prev;
+        return { ...rest, isProcessing: true };
+      });
 
       try {
         const response = await paymentApi.pollPaymentStatus(paymentId);

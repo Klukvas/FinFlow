@@ -1,4 +1,3 @@
-import { config } from "@/config/env";
 import { getStoredWorkspaceId } from "@/utils/workspaceStorage";
 import { logger } from "@/utils/logger";
 
@@ -126,7 +125,7 @@ export class AuthHttpClient {
           ? data
           : JSON.stringify(data)
         : null,
-      headers: customHeaders,
+      ...(customHeaders !== undefined ? { headers: customHeaders } : {}),
     });
   }
 

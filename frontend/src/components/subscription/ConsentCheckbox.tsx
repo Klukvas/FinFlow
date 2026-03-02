@@ -18,7 +18,7 @@ export const ConsentCheckbox: React.FC<ConsentCheckboxProps> = ({
   currency,
   nextBillingDate,
 }) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
 
   // Calculate day of month for billing
   const billingDay = new Date(nextBillingDate).getDate();

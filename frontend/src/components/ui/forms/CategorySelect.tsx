@@ -96,7 +96,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
         <SelectTrigger
           className="w-full"
           disabled={disabled || isLoading}
-          data-testid={dataTestId}
+          {...(dataTestId !== undefined ? { "data-testid": dataTestId } : {})}
         >
           <SelectValue
             placeholder={

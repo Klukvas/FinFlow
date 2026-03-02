@@ -1,10 +1,10 @@
 /**
  * API Call Logging Interceptor
- * 
+ *
  * This utility automatically logs all API calls made by the frontend application.
  */
 
-import { frontendLogger } from './logging';
+import { frontendLogger } from "./logging";
 
 interface ApiCallConfig {
   method: string;
@@ -24,25 +24,25 @@ class ApiLogger {
       method,
       url,
       startTime,
-      requestId: callId
+      requestId: callId,
     });
 
     frontendLogger.logInfo(`API Request: ${method} ${url}`, {
-      type: 'api_request',
+      type: "api_request",
       method,
       url,
       requestId: callId,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
 
     return callId;
   }
 
   public logResponse(
-    callId: string, 
-    status: number, 
-    statusText?: string, 
-    error?: Error
+    callId: string,
+    status: number,
+    statusText?: string,
+    error?: Error,
   ): void {
     const callConfig = this.activeCalls.get(callId);
     if (!callConfig) {
@@ -54,24 +54,23 @@ class ApiLogger {
     this.activeCalls.delete(callId);
 
     const isError = status >= 400 || !!error;
-    const logLevel = isError ? 'error' : 'info';
 
-    const logData = {
-      type: 'api_response',
+    const logData: Record<string, unknown> = {
+      type: "api_response",
       method: callConfig.method,
       url: callConfig.url,
       status,
       statusText,
       duration: Math.round(duration),
       requestId: callId,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
     if (error) {
       logData.error = {
         name: error.name,
         message: error.message,
-        stack: error.stack
+        stack: error.stack,
       };
     }
 
@@ -79,14 +78,14 @@ class ApiLogger {
       frontendLogger.logError(
         `API Error: ${callConfig.method} ${callConfig.url} - ${status} ${statusText}`,
         error,
-        logData
+        logData,
       );
     } else {
       frontendLogger.logApiCall(
         callConfig.method,
         callConfig.url,
         status,
-        duration
+        duration,
       );
     }
   }
@@ -105,14 +104,14 @@ class ApiLogger {
       `API Timeout: ${callConfig.method} ${callConfig.url}`,
       new Error(`Request timed out after ${timeout}ms`),
       {
-        type: 'api_timeout',
+        type: "api_timeout",
         method: callConfig.method,
         url: callConfig.url,
         timeout,
         duration: Math.round(duration),
         requestId: callId,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     );
   }
 
@@ -135,10 +134,18 @@ export const apiLogger = new ApiLogger();
 // Fetch interceptor
 const originalFetch = window.fetch;
 
-window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-  const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
-  const method = init?.method || 'GET';
-  
+window.fetch = async (
+  input: RequestInfo | URL,
+  init?: RequestInit,
+): Promise<Response> => {
+  const url =
+    typeof input === "string"
+      ? input
+      : input instanceof URL
+        ? input.toString()
+        : input.url;
+  const method = init?.method || "GET";
+
   const callId = apiLogger.logRequest(method, url);
 
   try {
@@ -146,7 +153,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Res
     apiLogger.logResponse(callId, response.status, response.statusText);
     return response;
   } catch (error) {
-    apiLogger.logResponse(callId, 0, 'Network Error', error as Error);
+    apiLogger.logResponse(callId, 0, "Network Error", error as Error);
     throw error;
   }
 };
@@ -155,31 +162,55 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Res
 const originalXHROpen = XMLHttpRequest.prototype.open;
 const originalXHRSend = XMLHttpRequest.prototype.send;
 
-XMLHttpRequest.prototype.open = function(method: string, url: string | URL, ...args: any[]) {
-  this._apiCallId = apiLogger.logRequest(method, url.toString());
-  this._apiMethod = method;
-  this._apiUrl = url.toString();
-  return originalXHROpen.call(this, method, url, ...args);
+XMLHttpRequest.prototype.open = function (
+  method: string,
+  url: string | URL,
+  async?: boolean,
+  username?: string | null,
+  password?: string | null,
+) {
+  (this as any)._apiCallId = apiLogger.logRequest(method, url.toString());
+  (this as any)._apiMethod = method;
+  (this as any)._apiUrl = url.toString();
+  return originalXHROpen.call(
+    this,
+    method,
+    url,
+    async ?? true,
+    username,
+    password,
+  );
 };
 
-XMLHttpRequest.prototype.send = function(body?: Document | XMLHttpRequestBodyInit | null) {
-  const xhr = this;
-  
+XMLHttpRequest.prototype.send = function (
+  body?: Document | XMLHttpRequestBodyInit | null,
+) {
+  const xhr = this as any;
+
   const handleLoad = () => {
-    apiLogger.logResponse(xhr._apiCallId, xhr.status, xhr.statusText);
+    apiLogger.logResponse(
+      xhr._apiCallId,
+      (this as XMLHttpRequest).status,
+      (this as XMLHttpRequest).statusText,
+    );
   };
 
   const handleError = () => {
-    apiLogger.logResponse(xhr._apiCallId, xhr.status, xhr.statusText, new Error('XHR Error'));
+    apiLogger.logResponse(
+      xhr._apiCallId,
+      (this as XMLHttpRequest).status,
+      (this as XMLHttpRequest).statusText,
+      new Error("XHR Error"),
+    );
   };
 
   const handleTimeout = () => {
-    apiLogger.logTimeout(xhr._apiCallId, xhr.timeout);
+    apiLogger.logTimeout(xhr._apiCallId, (this as XMLHttpRequest).timeout);
   };
 
-  xhr.addEventListener('load', handleLoad);
-  xhr.addEventListener('error', handleError);
-  xhr.addEventListener('timeout', handleTimeout);
+  (this as XMLHttpRequest).addEventListener("load", handleLoad);
+  (this as XMLHttpRequest).addEventListener("error", handleError);
+  (this as XMLHttpRequest).addEventListener("timeout", handleTimeout);
 
   return originalXHRSend.call(this, body);
 };

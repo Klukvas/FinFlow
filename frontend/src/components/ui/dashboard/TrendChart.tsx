@@ -28,6 +28,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({ expenses }) => {
 
     return last6Months.map((date) => {
       const monthExpenses = expenses.filter((exp) => {
+        if (!exp.date) return false;
         const expDate = new Date(exp.date);
         return (
           expDate.getMonth() === date.getMonth() &&

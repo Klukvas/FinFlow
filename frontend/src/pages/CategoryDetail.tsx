@@ -320,7 +320,9 @@ export const CategoryDetail: React.FC = () => {
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm theme-text-primary">
-                          {new Date(item.date).toLocaleDateString()}
+                          {item.date
+                            ? new Date(item.date).toLocaleDateString()
+                            : "—"}
                         </div>
                       </td>
                       <td className="px-6 py-4">

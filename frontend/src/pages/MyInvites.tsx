@@ -6,7 +6,7 @@ import { WorkspaceApiClient } from "@/services/api/workspaceApiClient";
 import { MyInvite, MyInviteListResponse } from "@/types";
 import { MyInviteCard } from "@/components/ui/workspace";
 import { FaEnvelope, FaSpinner, FaInbox, FaCheckCircle } from "react-icons/fa";
-import { Skeleton } from "@/components/ui/shared/Skeleton";
+
 import { logger } from "@/utils/logger";
 
 export const MyInvites: React.FC = () => {
@@ -130,6 +130,7 @@ export const MyInvites: React.FC = () => {
       const timer = setTimeout(() => setSuccessMessage(null), 5000);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [successMessage]);
 
   const pendingCount = invites.filter((i) => i.is_actionable).length;

@@ -29,7 +29,7 @@ interface AccountTableProps {
   onEdit: (account: AccountResponse) => void;
   onArchive: (account: AccountResponse) => void;
   groupBy?: "none" | "currency" | "type";
-  emptyMessage?: string;
+  emptyMessage?: string | undefined;
 }
 
 type SortField =

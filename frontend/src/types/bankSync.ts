@@ -49,7 +49,7 @@ export interface ConnectionCreate {
 export interface SyncPreviewTransaction {
   external_id: string;
   type: "expense" | "income";
-  amount: number;
+  amount: string;
   currency: string;
   date: string;
   description: string;
@@ -69,7 +69,7 @@ export interface SyncPreviewResponse {
 export interface SyncConfirmTransaction {
   external_id: string;
   type: "expense" | "income";
-  amount: number;
+  amount: number | string;
   currency: string;
   date: string;
   description: string;

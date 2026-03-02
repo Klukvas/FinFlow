@@ -25,7 +25,7 @@ interface DebtTableProps {
   onMakePayment: (debt: DebtResponse) => void;
   onEdit: (debt: DebtResponse) => void;
   onDelete: (debt: DebtResponse) => void;
-  emptyMessage?: string;
+  emptyMessage?: string | undefined;
 }
 
 type SortField = "name" | "balance" | "initial" | "interest" | "dueDate";

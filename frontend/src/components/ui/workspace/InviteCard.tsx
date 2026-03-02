@@ -61,7 +61,7 @@ export const InviteCard: React.FC<InviteCardProps> = ({
       },
     };
 
-    const config = statusConfig[effectiveStatus] || statusConfig.pending;
+    const config = statusConfig[effectiveStatus] ?? statusConfig.pending!;
     return (
       <span
         className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${config.className}`}

@@ -55,12 +55,13 @@ export const Expense = () => {
   }, [categoriesList]);
 
   // Determine if client-side filtering is active
-  const hasActiveFilters =
+  const hasActiveFilters: boolean = Boolean(
     filters.date_from ||
     filters.date_to ||
     (filters.category_ids && filters.category_ids.length > 0) ||
     filters.account_id ||
-    filters.currency;
+    filters.currency,
+  );
 
   // Fetch ALL expenses (for KPI, dashboard, and client-side filtering)
   const fetchAllExpenses = useCallback(async () => {
@@ -113,14 +114,20 @@ export const Expense = () => {
     let result = [...allExpenses];
 
     if (filters.date_from) {
-      result = result.filter((e) => e.date >= filters.date_from!);
+      result = result.filter(
+        (e) => e.date != null && e.date >= filters.date_from!,
+      );
     }
     if (filters.date_to) {
-      result = result.filter((e) => e.date <= filters.date_to!);
+      result = result.filter(
+        (e) => e.date != null && e.date <= filters.date_to!,
+      );
     }
     if (filters.category_ids && filters.category_ids.length > 0) {
-      result = result.filter((e) =>
-        filters.category_ids!.includes(e.category_id),
+      result = result.filter(
+        (e) =>
+          e.category_id != null &&
+          filters.category_ids!.includes(e.category_id),
       );
     }
     if (filters.account_id) {
@@ -313,7 +320,9 @@ export const Expense = () => {
                   {deleteTarget.currency}
                 </span>
                 <span className="theme-text-secondary ml-2">
-                  {categoryMap[deleteTarget.category_id] || ""}
+                  {(deleteTarget.category_id != null
+                    ? categoryMap[deleteTarget.category_id]
+                    : undefined) || ""}
                 </span>
               </div>
             )}

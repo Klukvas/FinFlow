@@ -3,6 +3,7 @@ export interface AccountCreate {
   type: string;
   currency: string;
   balance: number;
+  description?: string | null;
 }
 
 export interface AccountUpdate {
@@ -10,6 +11,8 @@ export interface AccountUpdate {
   type?: string;
   currency?: string;
   balance?: number;
+  description?: string | null;
+  is_active?: boolean | null;
 }
 
 export interface AccountResponse {
@@ -18,11 +21,15 @@ export interface AccountResponse {
   type: string;
   currency: string;
   balance: number;
+  description?: string | null;
+  owner_id: number;
   user_id: number;
-  created_at: string;
-  updated_at: string;
+  workspace_id: string;
+  is_active: boolean;
   is_archived: boolean;
   is_read_only?: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface AccountSummary {
@@ -31,23 +38,27 @@ export interface AccountSummary {
   type: string;
   currency: string;
   balance: number;
+  is_active: boolean;
   transaction_count: number;
   last_transaction_date?: string;
 }
 
+export interface AccountTransaction {
+  id: number;
+  amount: number;
+  description?: string | null;
+  date: string;
+  type: string;
+  category_id?: number | null;
+  category_name?: string | null;
+}
+
 export interface AccountTransactionSummary {
-  account: AccountResponse;
+  account: AccountSummary;
+  transactions: AccountTransaction[];
   total_income: number;
   total_expenses: number;
-  net_balance: number;
-  transaction_count: number;
-  recent_transactions: Array<{
-    id: number;
-    type: "income" | "expense";
-    amount: number;
-    description: string;
-    date: string;
-  }>;
+  net_change: number;
 }
 
 export interface CreateAccountRequest {
@@ -55,6 +66,7 @@ export interface CreateAccountRequest {
   type: string;
   currency: string;
   balance: number;
+  description?: string | null;
 }
 
 export interface AccountStatisticsResponse {

@@ -9,7 +9,6 @@ import {
   WorkspaceMembers,
 } from "@/components/ui/workspace";
 import { FaPlus, FaUsers, FaSpinner } from "react-icons/fa";
-import { Skeleton } from "@/components/ui/shared/Skeleton";
 
 // Modal Component
 interface ModalProps {

@@ -1,9 +1,9 @@
-import React from 'react';
-import { useTranslation } from 'react-i18next';
-import { Button } from '../shared/Button';
-import { useCategories } from '../../../contexts/CategoriesContext';
-import { useAccounts } from '../../../contexts/AccountsContext';
-import { ExpenseFilters } from '../../../types/expense';
+import React from "react";
+import { useTranslation } from "react-i18next";
+import { Button } from "../shared/Button";
+import { useCategories } from "../../../contexts/CategoriesContext";
+import { useAccounts } from "../../../contexts/AccountsContext";
+import { ExpenseFilters } from "../../../types/expense";
 
 interface ExpenseFilterBarProps {
   filters: ExpenseFilters;
@@ -22,15 +22,23 @@ export const ExpenseFilterBar: React.FC<ExpenseFilterBarProps> = ({
 
   if (!isVisible) return null;
 
-  const expenseCategories = categories.filter((c) => c.type === 'expense');
+  const expenseCategories = categories.filter((c) => c.type === "EXPENSE");
   const currencies = [...new Set(activeAccounts.map((a) => a.currency))].sort();
 
-  const update = (partial: Partial<ExpenseFilters>) => {
-    onFiltersChange({ ...filters, ...partial, page: 1 });
+  const update = (partial: {
+    [K in keyof ExpenseFilters]?: ExpenseFilters[K] | undefined;
+  }) => {
+    const merged = { ...filters, ...partial, page: 1 };
+    (Object.keys(merged) as (keyof typeof merged)[]).forEach((k) => {
+      if (merged[k] === undefined) delete merged[k];
+    });
+    onFiltersChange(merged as ExpenseFilters);
   };
 
   const clearAll = () => {
-    onFiltersChange({ page: 1, size: filters.size });
+    const base: ExpenseFilters = { page: 1 };
+    if (filters.size !== undefined) base.size = filters.size;
+    onFiltersChange(base);
   };
 
   const hasActiveFilters =
@@ -41,48 +49,48 @@ export const ExpenseFilterBar: React.FC<ExpenseFilterBarProps> = ({
     filters.currency;
 
   const inputClasses =
-    'py-2 px-3 text-sm rounded-lg border theme-border theme-surface theme-text-primary focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] theme-transition';
+    "py-2 px-3 text-sm rounded-lg border theme-border theme-surface theme-text-primary focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] theme-transition";
 
   return (
     <div className="theme-surface border theme-border rounded-xl p-4 animate-in fade-in slide-in-from-top-2 duration-200">
       <div className="flex flex-wrap items-end gap-3">
         <div className="flex flex-col gap-1">
           <label className="text-xs font-medium theme-text-secondary">
-            {t('expensePage.filters.dateFrom')}
+            {t("expensePage.filters.dateFrom")}
           </label>
           <input
             type="date"
             className={inputClasses}
-            value={filters.date_from || ''}
+            value={filters.date_from || ""}
             onChange={(e) => update({ date_from: e.target.value || undefined })}
           />
         </div>
 
         <div className="flex flex-col gap-1">
           <label className="text-xs font-medium theme-text-secondary">
-            {t('expensePage.filters.dateTo')}
+            {t("expensePage.filters.dateTo")}
           </label>
           <input
             type="date"
             className={inputClasses}
-            value={filters.date_to || ''}
+            value={filters.date_to || ""}
             onChange={(e) => update({ date_to: e.target.value || undefined })}
           />
         </div>
 
         <div className="flex flex-col gap-1">
           <label className="text-xs font-medium theme-text-secondary">
-            {t('expensePage.filters.category')}
+            {t("expensePage.filters.category")}
           </label>
           <select
             className={inputClasses}
-            value={filters.category_ids?.[0] ?? ''}
+            value={filters.category_ids?.[0] ?? ""}
             onChange={(e) => {
               const val = e.target.value;
               update({ category_ids: val ? [Number(val)] : undefined });
             }}
           >
-            <option value="">{t('expensePage.filters.allCategories')}</option>
+            <option value="">{t("expensePage.filters.allCategories")}</option>
             {expenseCategories.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -93,17 +101,17 @@ export const ExpenseFilterBar: React.FC<ExpenseFilterBarProps> = ({
 
         <div className="flex flex-col gap-1">
           <label className="text-xs font-medium theme-text-secondary">
-            {t('expensePage.filters.account')}
+            {t("expensePage.filters.account")}
           </label>
           <select
             className={inputClasses}
-            value={filters.account_id ?? ''}
+            value={filters.account_id ?? ""}
             onChange={(e) => {
               const val = e.target.value;
               update({ account_id: val ? Number(val) : undefined });
             }}
           >
-            <option value="">{t('expensePage.filters.allAccounts')}</option>
+            <option value="">{t("expensePage.filters.allAccounts")}</option>
             {activeAccounts.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.name}
@@ -115,14 +123,16 @@ export const ExpenseFilterBar: React.FC<ExpenseFilterBarProps> = ({
         {currencies.length > 1 && (
           <div className="flex flex-col gap-1">
             <label className="text-xs font-medium theme-text-secondary">
-              {t('expensePage.filters.currency')}
+              {t("expensePage.filters.currency")}
             </label>
             <select
               className={inputClasses}
-              value={filters.currency ?? ''}
-              onChange={(e) => update({ currency: e.target.value || undefined })}
+              value={filters.currency ?? ""}
+              onChange={(e) =>
+                update({ currency: e.target.value || undefined })
+              }
             >
-              <option value="">{t('expensePage.filters.allCurrencies')}</option>
+              <option value="">{t("expensePage.filters.allCurrencies")}</option>
               {currencies.map((c) => (
                 <option key={c} value={c}>
                   {c}
@@ -134,7 +144,7 @@ export const ExpenseFilterBar: React.FC<ExpenseFilterBarProps> = ({
 
         {hasActiveFilters && (
           <Button variant="ghost" size="sm" onClick={clearAll}>
-            {t('expensePage.filters.clearAll')}
+            {t("expensePage.filters.clearAll")}
           </Button>
         )}
       </div>

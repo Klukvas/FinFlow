@@ -1,0 +1,20 @@
+{
+  "schemas": {
+    "account_service": "dd544dcdcdda7cfbb27ad3b57b3dbc5f5bd3231ccc5f08109ad4f5b3548825b6",
+    "ai_assistant_service": "378549c033a934d61e56990ffc6c0372aa3be1dc867c012367cfc16cb40f85d7",
+    "bank_sync_service": "11cf52c262b90bc95f4fcd3ce16ac1b12b0f6d6e0062bd99b2920f10abccffb5",
+    "category_service": "69485eb16fb0a8d82e8026cb26fd7558b12e7c9aad4dafb4a5a37884dccea171",
+    "currency_service": "5239301cd9dc9486057cd89bf374e08dff6c3515590d41ee2c2e3bfd4cf8160d",
+    "debt_service": "631ae724b2e06593fbfa2ef2b72d3cc144b8c59bf9399c01d3a144c73b2a6b2f",
+    "expense_service": "621e5b3cb55fb3bf7aba82a0fe05eae1b83a0fcb698c1f88d1bd4116fa2fefb0",
+    "goals_service": "5a33abc6d38eeb958fad612777ecea485990d0b56d2e497ffb8fc9804557631e",
+    "income_service": "26413653a47455b028218f18374240e1b5ca3acd4197c11fb0329d2fce40de97",
+    "payment_service": "0757061a882719fb687e13e683efa8e3d394b533769751376915457c341da0a9",
+    "pdf_parser_service": "92efba2b2f99861bef4fd422e83a3f313f1ef79a190e4f432469bc23cf0342c8",
+    "recurring_service": "e4d2a629b9397c3309764d97145b9313abb6e9229a975e0a53221df8c375995b",
+    "scheduler_service": "c1aebe5ed36957a0dd2dacb499c3ef3bdbca9fc566bdddbd436242c31966ff56",
+    "subscription_service": "921b80d31ce78616365e68eb61c6b72b1ecfaf51772890b811d7386c573978d0",
+    "user_service": "83ca0369536805b4d94d5ef0d14fec9919c40f93a1e0bdcf36c1535116feaa74",
+    "workspace_service": "3f77e3be619ee790e17c51f3e302a54b8b9c52552470311026282309b2420eae"
+  }
+}

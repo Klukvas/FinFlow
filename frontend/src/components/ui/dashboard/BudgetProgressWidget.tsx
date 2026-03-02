@@ -47,13 +47,11 @@ export const BudgetProgressWidget: React.FC<BudgetProgressWidgetProps> = ({
 
     const spentByCategory = new Map<number, number>();
     for (const exp of expenses) {
-      if (new Date(exp.date) < periodStart) continue;
+      if (!exp.date || new Date(exp.date) < periodStart) continue;
       const converted =
-        convertToUserCurrency(exp.amount, exp.currency) ?? exp.amount;
-      spentByCategory.set(
-        exp.category_id,
-        (spentByCategory.get(exp.category_id) ?? 0) + converted,
-      );
+        convertToUserCurrency(exp.amount, exp.currency ?? "") ?? exp.amount;
+      const catId = exp.category_id ?? 0;
+      spentByCategory.set(catId, (spentByCategory.get(catId) ?? 0) + converted);
     }
 
     const items: BudgetItem[] = categoriesWithBudget.map((cat) => {

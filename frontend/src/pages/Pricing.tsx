@@ -1,7 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { FaCheck, FaCrown, FaRocket, FaInfoCircle } from "react-icons/fa";
+import { FaCheck, FaInfoCircle } from "react-icons/fa";
 import { Button } from "@/components/ui/shared/Button";
 import { PaymentButton } from "@/components/payment/PaymentButton";
 import { SEOHead, SEOConfigs } from "@/components/seo/SEOHead";

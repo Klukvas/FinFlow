@@ -34,7 +34,7 @@ interface GoalTableProps {
   onUpdateProgress: (goal: Goal) => void;
   onEdit: (goal: Goal) => void;
   onDelete: (goal: Goal) => void;
-  emptyMessage?: string;
+  emptyMessage?: string | undefined;
 }
 
 type SortField = "name" | "progress" | "targetDate";

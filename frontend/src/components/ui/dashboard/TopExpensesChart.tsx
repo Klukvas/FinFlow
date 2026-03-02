@@ -36,11 +36,11 @@ export const TopExpensesChart: React.FC<TopExpensesChartProps> = ({
     const results: Record<string, number> = {};
 
     for (const exp of expenses) {
-      if (new Date(exp.date) < periodStart) continue;
+      if (!exp.date || new Date(exp.date) < periodStart) continue;
       const category = categories.find((cat) => cat.id === exp.category_id);
       if (category?.name) {
         const converted =
-          convertToUserCurrency(exp.amount, exp.currency) ?? exp.amount;
+          convertToUserCurrency(exp.amount, exp.currency ?? "") ?? exp.amount;
         results[category.name] = (results[category.name] ?? 0) + converted;
       }
     }

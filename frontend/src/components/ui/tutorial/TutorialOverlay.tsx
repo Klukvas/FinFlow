@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useTutorial } from '@/contexts/TutorialContext';
-import { FaArrowRight, FaArrowLeft, FaTimes, FaCheck } from 'react-icons/fa';
+import React, { useEffect, useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
+import { useTutorial } from "@/contexts/TutorialContext";
+import { FaArrowRight, FaArrowLeft, FaTimes, FaCheck } from "react-icons/fa";
 
 interface TargetRect {
   top: number;
@@ -49,21 +49,21 @@ export const TutorialOverlay: React.FC = () => {
 
       // Position based on preference
       switch (currentStepData.position) {
-        case 'top':
+        case "top":
           top = rect.top - tooltipHeight - padding;
-          left = rect.left + (rect.width / 2) - (tooltipWidth / 2);
+          left = rect.left + rect.width / 2 - tooltipWidth / 2;
           break;
-        case 'bottom':
+        case "bottom":
           top = rect.bottom + padding;
-          left = rect.left + (rect.width / 2) - (tooltipWidth / 2);
+          left = rect.left + rect.width / 2 - tooltipWidth / 2;
           break;
-        case 'left':
-          top = rect.top + (rect.height / 2) - (tooltipHeight / 2);
+        case "left":
+          top = rect.top + rect.height / 2 - tooltipHeight / 2;
           left = rect.left - tooltipWidth - padding;
           break;
-        case 'right':
+        case "right":
         default:
-          top = rect.top + (rect.height / 2) - (tooltipHeight / 2);
+          top = rect.top + rect.height / 2 - tooltipHeight / 2;
           left = rect.right + padding;
           break;
       }
@@ -92,16 +92,17 @@ export const TutorialOverlay: React.FC = () => {
   useEffect(() => {
     if (isActive) {
       updateTargetPosition();
-      
+
       // Update position on resize/scroll
-      window.addEventListener('resize', updateTargetPosition);
-      window.addEventListener('scroll', updateTargetPosition);
-      
+      window.addEventListener("resize", updateTargetPosition);
+      window.addEventListener("scroll", updateTargetPosition);
+
       return () => {
-        window.removeEventListener('resize', updateTargetPosition);
-        window.removeEventListener('scroll', updateTargetPosition);
+        window.removeEventListener("resize", updateTargetPosition);
+        window.removeEventListener("scroll", updateTargetPosition);
       };
     }
+    return undefined;
   }, [isActive, currentStep, updateTargetPosition]);
 
   // Handle keyboard navigation
@@ -110,18 +111,18 @@ export const TutorialOverlay: React.FC = () => {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.key) {
-        case 'ArrowRight':
-        case 'Enter':
+        case "ArrowRight":
+        case "Enter":
           if (currentStep === totalSteps - 1) {
             completeTutorial();
           } else {
             nextStep();
           }
           break;
-        case 'ArrowLeft':
+        case "ArrowLeft":
           prevStep();
           break;
-        case 'Escape':
+        case "Escape":
           skipTutorial();
           break;
         default:
@@ -129,9 +130,17 @@ export const TutorialOverlay: React.FC = () => {
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isActive, currentStep, totalSteps, nextStep, prevStep, skipTutorial, completeTutorial]);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [
+    isActive,
+    currentStep,
+    totalSteps,
+    nextStep,
+    prevStep,
+    skipTutorial,
+    completeTutorial,
+  ]);
 
   if (!isActive || !currentStepData) return null;
 
@@ -142,7 +151,7 @@ export const TutorialOverlay: React.FC = () => {
     <div className="fixed inset-0 z-[9999]" role="dialog" aria-modal="true">
       {/* Dark overlay with spotlight effect */}
       <div className="absolute inset-0 bg-black/60 transition-opacity duration-300" />
-      
+
       {/* Spotlight cutout */}
       {targetRect && (
         <div
@@ -152,9 +161,9 @@ export const TutorialOverlay: React.FC = () => {
             left: targetRect.left - 8,
             width: targetRect.width + 16,
             height: targetRect.height + 16,
-            boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.6)',
-            borderRadius: '12px',
-            pointerEvents: 'none',
+            boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.6)",
+            borderRadius: "12px",
+            pointerEvents: "none",
           }}
         />
       )}
@@ -168,7 +177,7 @@ export const TutorialOverlay: React.FC = () => {
             left: targetRect.left - 8,
             width: targetRect.width + 16,
             height: targetRect.height + 16,
-            pointerEvents: 'none',
+            pointerEvents: "none",
           }}
         />
       )}
@@ -186,13 +195,13 @@ export const TutorialOverlay: React.FC = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-blue-400">
-                {t('tutorial.step')} {currentStep + 1} / {totalSteps}
+                {t("tutorial.step")} {currentStep + 1} / {totalSteps}
               </span>
             </div>
             <button
               onClick={skipTutorial}
               className="text-slate-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-slate-700/50"
-              aria-label={t('tutorial.skip')}
+              aria-label={t("tutorial.skip")}
             >
               <FaTimes className="w-4 h-4" />
             </button>
@@ -223,12 +232,12 @@ export const TutorialOverlay: React.FC = () => {
             disabled={isFirstStep}
             className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
               isFirstStep
-                ? 'text-slate-500 cursor-not-allowed'
-                : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+                ? "text-slate-500 cursor-not-allowed"
+                : "text-slate-300 hover:text-white hover:bg-slate-700/50"
             }`}
           >
             <FaArrowLeft className="w-3 h-3" />
-            {t('tutorial.back')}
+            {t("tutorial.back")}
           </button>
 
           {isLastStep ? (
@@ -237,14 +246,14 @@ export const TutorialOverlay: React.FC = () => {
               className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-lg text-sm font-medium transition-all shadow-lg shadow-green-500/25"
             >
               <FaCheck className="w-3 h-3" />
-              {t('tutorial.complete')}
+              {t("tutorial.complete")}
             </button>
           ) : (
             <button
               onClick={nextStep}
               className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg text-sm font-medium transition-all shadow-lg shadow-blue-500/25"
             >
-              {t('tutorial.next')}
+              {t("tutorial.next")}
               <FaArrowRight className="w-3 h-3" />
             </button>
           )}
@@ -253,7 +262,7 @@ export const TutorialOverlay: React.FC = () => {
 
       {/* Skip hint */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-slate-400 text-xs">
-        {t('tutorial.pressEscToSkip')}
+        {t("tutorial.pressEscToSkip")}
       </div>
     </div>
   );

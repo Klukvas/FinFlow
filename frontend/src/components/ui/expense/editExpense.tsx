@@ -25,7 +25,7 @@ export const EditExpense: React.FC<EditExpenseProps> = ({
     useAccounts();
   const { handleExpenseError } = useErrorHandler();
 
-  const getDateValue = (dateStr: string | undefined): string => {
+  const getDateValue = (dateStr: string | null | undefined): string => {
     if (dateStr) {
       const datePart = dateStr.split("T")[0];
       if (datePart) return datePart;
@@ -36,7 +36,9 @@ export const EditExpense: React.FC<EditExpenseProps> = ({
 
   const [formData, setFormData] = useState<ExpenseUpdate>({
     amount: expense.amount,
-    category_id: expense.category_id,
+    ...(expense.category_id !== undefined
+      ? { category_id: expense.category_id }
+      : {}),
     description: expense.description || null,
     date: getDateValue(expense.date),
     account_id: expense.account_id ?? null,
@@ -55,7 +57,9 @@ export const EditExpense: React.FC<EditExpenseProps> = ({
   useEffect(() => {
     setFormData({
       amount: expense.amount,
-      category_id: expense.category_id,
+      ...(expense.category_id !== undefined
+        ? { category_id: expense.category_id }
+        : {}),
       description: expense.description || null,
       date: getDateValue(expense.date),
       account_id: expense.account_id ?? null,

@@ -1,4 +1,4 @@
-import { CurrencyHttpClient } from './currencyHttpClient';
+import { CurrencyHttpClient, ApiError } from "./currencyHttpClient";
 
 export interface CurrencyInfo {
   code: string;
@@ -41,19 +41,37 @@ export class CurrencyApiClient {
     this.httpClient = new CurrencyHttpClient();
   }
 
-  async getSupportedCurrencies(): Promise<SupportedCurrenciesResponse> {
-    return this.httpClient.get<SupportedCurrenciesResponse>('/api/v1/currencies');
+  async getSupportedCurrencies(): Promise<
+    SupportedCurrenciesResponse | ApiError
+  > {
+    return this.httpClient.get<SupportedCurrenciesResponse>(
+      "/api/v1/currencies",
+    );
   }
 
-  async getCurrencyRates(baseCurrency: string = 'USD'): Promise<CurrencyRatesResponse> {
-    return this.httpClient.get<CurrencyRatesResponse>(`/api/v1/rates?base_currency=${baseCurrency}`);
+  async getCurrencyRates(
+    baseCurrency: string = "USD",
+  ): Promise<CurrencyRatesResponse | ApiError> {
+    return this.httpClient.get<CurrencyRatesResponse>(
+      `/api/v1/rates?base_currency=${baseCurrency}`,
+    );
   }
 
-  async convertCurrency(request: ConversionRequest): Promise<ConversionResponse> {
-    return this.httpClient.post<ConversionResponse>('/api/v1/convert', request);
+  async convertCurrency(
+    request: ConversionRequest,
+  ): Promise<ConversionResponse | ApiError> {
+    return this.httpClient.post<ConversionResponse>("/api/v1/convert", request);
   }
 
-  async healthCheck(): Promise<{ status: string; timestamp: string; redis_connected: boolean; api_accessible: boolean }> {
-    return this.httpClient.get('/api/v1/health');
+  async healthCheck(): Promise<
+    | {
+        status: string;
+        timestamp: string;
+        redis_connected: boolean;
+        api_accessible: boolean;
+      }
+    | ApiError
+  > {
+    return this.httpClient.get("/api/v1/health");
   }
 }

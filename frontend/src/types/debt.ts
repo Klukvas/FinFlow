@@ -50,11 +50,12 @@ export interface DebtUpdate {
 export interface DebtResponse {
   id: number;
   user_id: number;
+  workspace_id: string;
   name: string;
   description?: string | null;
   debt_type: DebtType;
   contact_id?: number | null;
-  category_id: number;
+  category_id?: number | null;
   currency: string;
   initial_amount: number;
   current_balance: number;

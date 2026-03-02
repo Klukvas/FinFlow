@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { usePaymentHistory } from "@/hooks/usePayment";
 import { Card } from "@/components/ui/shared/Card";
 import { Skeleton } from "@/components/ui/shared/Skeleton";
 import { PaymentStatusBadge } from "./PaymentStatus";
-import { Payment, PaymentStatus } from "@/types/payment";
-import { FaReceipt, FaExternalLinkAlt } from "react-icons/fa";
+import { PaymentStatus } from "@/types/payment";
+import { FaReceipt } from "react-icons/fa";
 
 interface PaymentHistoryListProps {
   className?: string;
@@ -33,11 +33,11 @@ export const PaymentHistoryList: React.FC<PaymentHistoryListProps> = ({
     });
   };
 
-  const formatAmount = (amount: number, currency: string) => {
+  const formatAmount = (amount: number | string, currency: string) => {
     return new Intl.NumberFormat(undefined, {
       style: "currency",
       currency: currency,
-    }).format(amount);
+    }).format(Number(amount));
   };
 
   if (loading && payments.length === 0) {

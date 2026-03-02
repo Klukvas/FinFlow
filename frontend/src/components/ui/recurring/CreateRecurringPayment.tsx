@@ -63,7 +63,9 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
         schedule_type: initialData.schedule_type,
         schedule_config: { ...initialData.schedule_config },
         start_date: initialData.start_date?.split("T")[0] || "",
-        end_date: initialData.end_date?.split("T")[0] || undefined,
+        ...(initialData.end_date
+          ? { end_date: initialData.end_date.split("T")[0] }
+          : {}),
       });
       setAmountDisplay(formatNumberWithSpaces(initialData.amount.toString()));
     }

@@ -11,7 +11,7 @@ function parseFrontmatter(raw: string): {
 } {
   const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---/);
   if (!match) return { data: {}, content: raw };
-  const data = (yaml.load(match[1]) ?? {}) as Record<string, unknown>;
+  const data = (yaml.load(match[1] ?? "") ?? {}) as Record<string, unknown>;
   const content = raw.slice(match[0].length).trim();
   return { data, content };
 }

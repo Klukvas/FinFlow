@@ -39,9 +39,10 @@ export const MonthComparisonChart: React.FC<MonthComparisonChartProps> = ({
     let prevInc = 0;
 
     for (const exp of expenses) {
+      if (!exp.date) continue;
       const d = new Date(exp.date);
       const converted =
-        convertToUserCurrency(exp.amount, exp.currency) ?? exp.amount;
+        convertToUserCurrency(exp.amount, exp.currency ?? "") ?? exp.amount;
       if (d >= periodStart) {
         curExp += converted;
       } else if (d >= prevPeriodStart) {
@@ -52,7 +53,7 @@ export const MonthComparisonChart: React.FC<MonthComparisonChartProps> = ({
     for (const inc of incomes) {
       const d = new Date(inc.date);
       const converted =
-        convertToUserCurrency(inc.amount, inc.currency) ?? inc.amount;
+        convertToUserCurrency(inc.amount, inc.currency ?? "") ?? inc.amount;
       if (d >= periodStart) {
         curInc += converted;
       } else if (d >= prevPeriodStart) {

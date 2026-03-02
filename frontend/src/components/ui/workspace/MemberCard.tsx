@@ -55,7 +55,7 @@ export const MemberCard: React.FC<MemberCardProps> = ({
       },
     };
 
-    const config = roleConfig[member.role] || roleConfig.read;
+    const config = roleConfig[member.role] ?? roleConfig.read!;
     return (
       <span
         className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${config.className}`}

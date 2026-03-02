@@ -40,7 +40,8 @@ export const IncomeByCategoryPie: React.FC<IncomeByCategoryPieProps> = ({
           .reduce(
             (sum, inc) =>
               sum +
-              (convertToUserCurrency(inc.amount, inc.currency) ?? inc.amount),
+              (convertToUserCurrency(inc.amount, inc.currency ?? "") ??
+                inc.amount),
             0,
           );
         return { name: cat.name, value: total };

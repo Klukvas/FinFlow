@@ -145,6 +145,7 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({
       }, 1000);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [shouldShowTutorial, isActive]);
 
   const startTutorial = useCallback(() => {
@@ -184,7 +185,9 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({
     completeTutorial();
   }, [completeTutorial]);
 
-  const currentStepData = isActive ? TUTORIAL_STEPS[currentStep] : null;
+  const currentStepData = isActive
+    ? (TUTORIAL_STEPS[currentStep] ?? null)
+    : null;
 
   const value: TutorialContextType = {
     isActive,

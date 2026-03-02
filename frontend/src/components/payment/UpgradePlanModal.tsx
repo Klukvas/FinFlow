@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { FaCheck, FaTimes, FaSpinner, FaArrowLeft } from "react-icons/fa";
+import { FaCheck, FaSpinner, FaArrowLeft } from "react-icons/fa";
 import { Modal } from "@/components/ui/shared/Modal";
 import { Button } from "@/components/ui/shared/Button";
 import { PaymentButton } from "@/components/payment/PaymentButton";
@@ -74,11 +74,11 @@ export const UpgradePlanModal: React.FC<UpgradePlanModalProps> = ({
     const today = new Date();
     const next = new Date(today);
     next.setMonth(next.getMonth() + 1);
-    return next.toISOString().split("T")[0];
+    return next.toISOString().split("T")[0] ?? "";
   };
 
   const handlePlanSelect = (plan: PlanWithFeatures) => {
-    if (PLAN_PRICING[plan.code].price === 0) {
+    if ((PLAN_PRICING[plan.code]?.price ?? -1) === 0) {
       return; // Free plan, no selection needed
     }
     setSelectedPlan(plan);
@@ -312,7 +312,7 @@ export const UpgradePlanModal: React.FC<UpgradePlanModalProps> = ({
                 checked={consentGiven}
                 onChange={setConsentGiven}
                 planName={selectedPlan.name}
-                amount={PLAN_PRICING[selectedPlan.code].price}
+                amount={PLAN_PRICING[selectedPlan.code]?.price ?? 0}
                 currency="USD"
                 nextBillingDate={calculateNextBillingDate()}
               />
@@ -347,7 +347,7 @@ export const UpgradePlanModal: React.FC<UpgradePlanModalProps> = ({
                   <PaymentButton
                     planCode={selectedPlan.code}
                     planName={selectedPlan.name}
-                    amount={PLAN_PRICING[selectedPlan.code].price}
+                    amount={PLAN_PRICING[selectedPlan.code]?.price ?? 0}
                     currency="USD"
                     disabled={!consentGiven}
                     variant="primary"

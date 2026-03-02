@@ -4,6 +4,7 @@ export interface Category {
   id: number;
   name: string;
   user_id: number;
+  workspace_id: string;
   parent_id?: number;
   type: CategoryType;
   monthly_budget?: number | null;
@@ -19,6 +20,7 @@ export interface CreateCategoryRequest {
   name: string;
   parent_id?: number;
   type: CategoryType;
+  monthly_budget?: number | null;
 }
 
 export interface CreateCategoryResponse {

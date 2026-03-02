@@ -17,7 +17,7 @@ interface IncomeListProps {
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
   onDeleteRequest?: (income: IncomeOut) => void;
-  emptyMessage?: string;
+  emptyMessage?: string | undefined;
 }
 
 type SortField = "date" | "amount" | "category";

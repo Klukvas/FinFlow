@@ -1,9 +1,9 @@
-import React, { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Card } from '../shared/Card';
-import { Skeleton } from '../shared/Skeleton';
-import { ExpenseResponse } from '../../../types/expense';
-import { useCurrencyConversion } from '../../../hooks/useCurrencyConversion';
+import React, { useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { Card } from "../shared/Card";
+import { Skeleton } from "../shared/Skeleton";
+import { ExpenseResponse } from "../../../types/expense";
+import { useCurrencyConversion } from "../../../hooks/useCurrencyConversion";
 
 interface ExpenseSummaryStripProps {
   expenses: ExpenseResponse[];
@@ -15,7 +15,8 @@ export const ExpenseSummaryStrip: React.FC<ExpenseSummaryStripProps> = ({
   loading,
 }) => {
   const { t } = useTranslation();
-  const { formatCurrency, convertToUserCurrency, userCurrency } = useCurrencyConversion();
+  const { formatCurrency, convertToUserCurrency, userCurrency } =
+    useCurrencyConversion();
 
   const stats = useMemo(() => {
     const now = new Date();
@@ -30,15 +31,18 @@ export const ExpenseSummaryStrip: React.FC<ExpenseSummaryStripProps> = ({
     let thisMonthCount = 0;
 
     for (const expense of expenses) {
+      if (!expense.date) continue;
       const d = new Date(expense.date);
       const m = d.getMonth();
       const y = d.getFullYear();
-      const converted = convertToUserCurrency(expense.amount, expense.currency) ?? expense.amount;
+      const converted =
+        convertToUserCurrency(expense.amount, expense.currency ?? "") ??
+        expense.amount;
 
       if (m === thisMonth && y === thisYear) {
         thisMonthTotal += converted;
         thisMonthCount++;
-        categorySet.add(expense.category_id);
+        if (expense.category_id != null) categorySet.add(expense.category_id);
       } else if (m === prevMonth && y === prevYear) {
         prevMonthTotal += converted;
       }
@@ -48,9 +52,10 @@ export const ExpenseSummaryStrip: React.FC<ExpenseSummaryStripProps> = ({
     const currentDay = Math.min(now.getDate(), daysInMonth);
     const avgPerDay = currentDay > 0 ? thisMonthTotal / currentDay : 0;
 
-    const trend = prevMonthTotal > 0
-      ? ((thisMonthTotal - prevMonthTotal) / prevMonthTotal) * 100
-      : 0;
+    const trend =
+      prevMonthTotal > 0
+        ? ((thisMonthTotal - prevMonthTotal) / prevMonthTotal) * 100
+        : 0;
 
     return {
       thisMonthTotal,
@@ -78,20 +83,20 @@ export const ExpenseSummaryStrip: React.FC<ExpenseSummaryStripProps> = ({
 
   const kpiCards = [
     {
-      label: t('expensePage.kpi.thisMonth'),
+      label: t("expensePage.kpi.thisMonth"),
       value: formatCurrency(stats.thisMonthTotal, userCurrency),
       trend: stats.trend,
     },
     {
-      label: t('expensePage.kpi.prevMonth'),
+      label: t("expensePage.kpi.prevMonth"),
       value: formatCurrency(stats.prevMonthTotal, userCurrency),
     },
     {
-      label: t('expensePage.kpi.avgPerDay'),
+      label: t("expensePage.kpi.avgPerDay"),
       value: formatCurrency(stats.avgPerDay, userCurrency),
     },
     {
-      label: t('expensePage.kpi.categories'),
+      label: t("expensePage.kpi.categories"),
       value: String(stats.categories),
     },
   ];
@@ -105,14 +110,16 @@ export const ExpenseSummaryStrip: React.FC<ExpenseSummaryStripProps> = ({
               {card.label}
             </p>
             <div className="flex items-baseline gap-2 mt-1">
-              <p className="text-xl font-semibold theme-text-primary">{card.value}</p>
+              <p className="text-xl font-semibold theme-text-primary">
+                {card.value}
+              </p>
               {card.trend !== undefined && card.trend !== 0 && (
                 <span
                   className={`text-xs font-medium ${
-                    card.trend > 0 ? 'text-red-500' : 'text-green-500'
+                    card.trend > 0 ? "text-red-500" : "text-green-500"
                   }`}
                 >
-                  {card.trend > 0 ? '+' : ''}
+                  {card.trend > 0 ? "+" : ""}
                   {card.trend.toFixed(1)}%
                 </span>
               )}

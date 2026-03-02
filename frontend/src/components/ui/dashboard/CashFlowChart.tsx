@@ -39,12 +39,14 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({
 
       const monthExpenses = expenses
         .filter((e) => {
+          if (!e.date) return false;
           const d = new Date(e.date);
           return d.getMonth() === month && d.getFullYear() === year;
         })
         .reduce(
           (sum, e) =>
-            sum + (convertToUserCurrency(e.amount, e.currency) ?? e.amount),
+            sum +
+            (convertToUserCurrency(e.amount, e.currency ?? "") ?? e.amount),
           0,
         );
 
@@ -56,7 +58,8 @@ export const CashFlowChart: React.FC<CashFlowChartProps> = ({
         .reduce(
           (sum, inc) =>
             sum +
-            (convertToUserCurrency(inc.amount, inc.currency) ?? inc.amount),
+            (convertToUserCurrency(inc.amount, inc.currency ?? "") ??
+              inc.amount),
           0,
         );
 

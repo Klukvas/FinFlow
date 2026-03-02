@@ -1,9 +1,8 @@
-import React from 'react';
-import { CreateCategoryRequest, Category } from '@/types';
-import { useApiClients } from '@hooks';
-import { useCategories } from '@/contexts/CategoriesContext';
-import CategoryForm from './CategoryForm';
-import { useErrorHandler } from '@/hooks/useErrorHandler';
+import React from "react";
+import { CreateCategoryRequest, Category } from "@/types";
+import { useApiClients } from "@hooks";
+import { useCategories } from "@/contexts/CategoriesContext";
+import CategoryForm from "./CategoryForm";
 
 interface EditCategoryProps {
   category: Category;
@@ -11,18 +10,18 @@ interface EditCategoryProps {
   onCancel: () => void;
 }
 
-export const EditCategory: React.FC<EditCategoryProps> = ({ 
-  category, 
-  onCategoryUpdated, 
-  onCancel 
+export const EditCategory: React.FC<EditCategoryProps> = ({
+  category,
+  onCategoryUpdated,
+  onCancel,
 }) => {
   const { category: categoryApi } = useApiClients();
-  const { handleCategoryError } = useErrorHandler();
+
   const { refreshCategories } = useCategories();
 
   const handleSubmit = async (formData: CreateCategoryRequest) => {
     const response = await categoryApi.updateCategory(category.id, formData);
-    if ('error' in response) {
+    if ("error" in response) {
       // Throw the error to prevent form closing - CategoryForm will handle the toast and form error
       throw response;
     }

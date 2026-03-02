@@ -293,7 +293,8 @@ export const PaymentReturn: React.FC = () => {
   if (!payment) return null;
 
   const config =
-    STATUS_CONFIG[payment.status] || STATUS_CONFIG[PaymentStatus.CREATED];
+    STATUS_CONFIG[payment.status as keyof typeof STATUS_CONFIG] ||
+    STATUS_CONFIG[PaymentStatus.CREATED];
   const StatusIcon = config.icon;
   const isPaid = payment.status === PaymentStatus.PAID;
 
@@ -355,7 +356,7 @@ export const PaymentReturn: React.FC = () => {
                 {new Intl.NumberFormat(displayLocale, {
                   style: "currency",
                   currency: payment.currency,
-                }).format(payment.amount)}
+                }).format(Number(payment.amount))}
               </p>
             </div>
 

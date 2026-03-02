@@ -49,6 +49,7 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({
     try {
       const currencyClient = new CurrencyApiClient();
       const response = await currencyClient.getSupportedCurrencies();
+      if ("error" in response) throw new Error(response.error);
       setCurrencies(response.currencies ?? []);
     } catch (err) {
       const errorMessage =
@@ -141,6 +142,7 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({
       const response = await currencyClient.getCurrencyRates(
         user.base_currency,
       );
+      if ("error" in response) throw new Error(response.error);
       setExchangeRates(response.rates);
     } catch (err) {
       logger.error("Failed to fetch exchange rates:", err);

@@ -28,6 +28,7 @@ export const CategoryComparisonChart: React.FC<
     const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
 
     const currentMonthExpenses = expenses.filter((exp) => {
+      if (!exp.date) return false;
       const date = new Date(exp.date);
       return (
         date.getMonth() === currentMonth && date.getFullYear() === currentYear
@@ -35,6 +36,7 @@ export const CategoryComparisonChart: React.FC<
     });
 
     const prevMonthExpenses = expenses.filter((exp) => {
+      if (!exp.date) return false;
       const date = new Date(exp.date);
       return date.getMonth() === prevMonth && date.getFullYear() === prevYear;
     });

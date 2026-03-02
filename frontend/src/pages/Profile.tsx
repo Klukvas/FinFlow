@@ -20,7 +20,6 @@ import {
   FaCrown,
   FaGraduationCap,
   FaReceipt,
-  FaArrowRight,
 } from "react-icons/fa";
 import { Skeleton } from "@/components/ui/shared/Skeleton";
 import { config } from "@/config/env";

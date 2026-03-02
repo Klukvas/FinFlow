@@ -23,6 +23,7 @@ export const WeekdayExpensesChart: React.FC<WeekdayExpensesChartProps> = ({
   const weekdayData = useMemo(() => {
     const weekdayExpenses = expenses.reduce(
       (acc, exp) => {
+        if (!exp.date) return acc;
         const date = new Date(exp.date);
         const weekday = date.toLocaleDateString("uk-UA", { weekday: "long" });
         if (!acc[weekday]) {

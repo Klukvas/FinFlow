@@ -132,9 +132,11 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({
         const personalWorkspace = workspaceList.find(
           (w) => w.type === "personal",
         );
-        const defaultWorkspace = personalWorkspace || workspaceList[0];
-        setCurrentWorkspaceId(defaultWorkspace.id);
-        setStoredWorkspaceId(defaultWorkspace.id);
+        const defaultWorkspace = personalWorkspace ?? workspaceList[0];
+        if (defaultWorkspace) {
+          setCurrentWorkspaceId(defaultWorkspace.id);
+          setStoredWorkspaceId(defaultWorkspace.id);
+        }
       }
     } catch (err) {
       logger.error("Failed to fetch workspaces:", err);
@@ -226,8 +228,8 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({
             const personalWorkspace = remaining.find(
               (w) => w.type === "personal",
             );
-            const newCurrent = personalWorkspace || remaining[0];
-            setCurrentWorkspace(newCurrent.id);
+            const newCurrent = personalWorkspace ?? remaining[0];
+            if (newCurrent) setCurrentWorkspace(newCurrent.id);
           } else {
             setCurrentWorkspaceId(null);
             setStoredWorkspaceId(null);
@@ -289,8 +291,8 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({
             const personalWorkspace = remaining.find(
               (w) => w.type === "personal",
             );
-            const newCurrent = personalWorkspace || remaining[0];
-            setCurrentWorkspace(newCurrent.id);
+            const newCurrent = personalWorkspace ?? remaining[0];
+            if (newCurrent) setCurrentWorkspace(newCurrent.id);
           }
         }
 

@@ -15,14 +15,7 @@ import {
 import { MemberCard } from "./MemberCard";
 import { InviteCard } from "./InviteCard";
 import { InviteForm } from "./InviteForm";
-import {
-  FaUsers,
-  FaEnvelope,
-  FaPlus,
-  FaSpinner,
-  FaTimes,
-  FaUserPlus,
-} from "react-icons/fa";
+import { FaUsers, FaEnvelope, FaTimes, FaUserPlus } from "react-icons/fa";
 import { Skeleton } from "@/components/ui/shared/Skeleton";
 
 interface WorkspaceMembersProps {
@@ -293,8 +286,8 @@ export const WorkspaceMembers: React.FC<WorkspaceMembersProps> = ({
                     member={member}
                     isOwner={isOwner}
                     isCurrentUser={member.user_id === user?.id}
-                    onChangeRole={isOwner ? handleRoleChange : undefined}
-                    onRemove={isOwner ? handleRemoveMember : undefined}
+                    {...(isOwner ? { onChangeRole: handleRoleChange } : {})}
+                    {...(isOwner ? { onRemove: handleRemoveMember } : {})}
                   />
                 ))
               )}

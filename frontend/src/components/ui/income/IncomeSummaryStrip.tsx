@@ -1,9 +1,9 @@
-import React, { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Card } from '../shared/Card';
-import { Skeleton } from '../shared/Skeleton';
-import { IncomeOut } from '../../../types/income';
-import { useCurrencyConversion } from '../../../hooks/useCurrencyConversion';
+import React, { useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { Card } from "../shared/Card";
+import { Skeleton } from "../shared/Skeleton";
+import { IncomeOut } from "../../../types/income";
+import { useCurrencyConversion } from "../../../hooks/useCurrencyConversion";
 
 interface IncomeSummaryStripProps {
   incomes: IncomeOut[];
@@ -15,7 +15,8 @@ export const IncomeSummaryStrip: React.FC<IncomeSummaryStripProps> = ({
   loading,
 }) => {
   const { t } = useTranslation();
-  const { formatCurrency, convertToUserCurrency, userCurrency } = useCurrencyConversion();
+  const { formatCurrency, convertToUserCurrency, userCurrency } =
+    useCurrencyConversion();
 
   const stats = useMemo(() => {
     const now = new Date();
@@ -33,7 +34,9 @@ export const IncomeSummaryStrip: React.FC<IncomeSummaryStripProps> = ({
       const d = new Date(income.date);
       const m = d.getMonth();
       const y = d.getFullYear();
-      const converted = convertToUserCurrency(income.amount, income.currency) ?? income.amount;
+      const converted =
+        convertToUserCurrency(income.amount, income.currency ?? "") ??
+        income.amount;
 
       if (m === thisMonth && y === thisYear) {
         thisMonthTotal += converted;
@@ -50,9 +53,10 @@ export const IncomeSummaryStrip: React.FC<IncomeSummaryStripProps> = ({
     const currentDay = Math.min(now.getDate(), daysInMonth);
     const avgPerDay = currentDay > 0 ? thisMonthTotal / currentDay : 0;
 
-    const trend = prevMonthTotal > 0
-      ? ((thisMonthTotal - prevMonthTotal) / prevMonthTotal) * 100
-      : 0;
+    const trend =
+      prevMonthTotal > 0
+        ? ((thisMonthTotal - prevMonthTotal) / prevMonthTotal) * 100
+        : 0;
 
     return {
       thisMonthTotal,
@@ -80,20 +84,20 @@ export const IncomeSummaryStrip: React.FC<IncomeSummaryStripProps> = ({
 
   const kpiCards = [
     {
-      label: t('incomePage.kpi.thisMonth'),
+      label: t("incomePage.kpi.thisMonth"),
       value: formatCurrency(stats.thisMonthTotal, userCurrency),
       trend: stats.trend,
     },
     {
-      label: t('incomePage.kpi.prevMonth'),
+      label: t("incomePage.kpi.prevMonth"),
       value: formatCurrency(stats.prevMonthTotal, userCurrency),
     },
     {
-      label: t('incomePage.kpi.avgPerDay'),
+      label: t("incomePage.kpi.avgPerDay"),
       value: formatCurrency(stats.avgPerDay, userCurrency),
     },
     {
-      label: t('incomePage.kpi.sources'),
+      label: t("incomePage.kpi.sources"),
       value: String(stats.sources),
     },
   ];
@@ -107,14 +111,16 @@ export const IncomeSummaryStrip: React.FC<IncomeSummaryStripProps> = ({
               {card.label}
             </p>
             <div className="flex items-baseline gap-2 mt-1">
-              <p className="text-xl font-semibold theme-text-primary">{card.value}</p>
+              <p className="text-xl font-semibold theme-text-primary">
+                {card.value}
+              </p>
               {card.trend !== undefined && card.trend !== 0 && (
                 <span
                   className={`text-xs font-medium ${
-                    card.trend > 0 ? 'text-green-500' : 'text-red-500'
+                    card.trend > 0 ? "text-green-500" : "text-red-500"
                   }`}
                 >
-                  {card.trend > 0 ? '+' : ''}
+                  {card.trend > 0 ? "+" : ""}
                   {card.trend.toFixed(1)}%
                 </span>
               )}
