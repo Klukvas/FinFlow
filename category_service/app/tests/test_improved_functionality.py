@@ -208,7 +208,7 @@ class TestImprovedCategoryService:
 
         # Test hierarchical retrieval - response is now paginated
         response = client.get(
-            "/categories/",
+            "/categories/?size=1000",
             headers={
                 "Authorization": "Bearer valid_token",
                 "X-Workspace-Id": TEST_WORKSPACE_ID_HEADER,
@@ -228,7 +228,7 @@ class TestImprovedCategoryService:
 
         # Test flat retrieval
         response = client.get(
-            "/categories/?flat=true",
+            "/categories/?flat=true&size=1000",
             headers={
                 "Authorization": "Bearer valid_token",
                 "X-Workspace-Id": TEST_WORKSPACE_ID_HEADER,
