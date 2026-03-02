@@ -5,6 +5,7 @@ Replaces 8 identical per-service app/clients/workspace.py files.
 """
 
 import os
+import time
 import traceback
 from typing import Optional
 from uuid import UUID
@@ -15,15 +16,27 @@ from shared.logging import get_logger
 
 logger = get_logger(__name__)
 
+_instance: Optional["WorkspaceClient"] = None
+
 
 class WorkspaceClient:
     """Client for communicating with workspace_service for authorization."""
+
+    @classmethod
+    def get_instance(cls) -> "WorkspaceClient":
+        global _instance
+        if _instance is None:
+            _instance = cls()
+        return _instance
+
+    _AUTH_CACHE_TTL = 30  # seconds
 
     def __init__(self):
         self.base_url = os.environ.get("WORKSPACE_SERVICE_URL", "http://workspace_service:8000")
         self.internal_token = os.environ.get("INTERNAL_SECRET_TOKEN", "")
         self.timeout = 5.0
         self.client = httpx.Client(timeout=self.timeout)
+        self._auth_cache: dict[tuple, tuple] = {}  # (ws_id, user_id, role) -> (authorized, role, expires_at)
 
     def _get_headers(self) -> dict:
         headers = {"Content-Type": "application/json"}
@@ -43,6 +56,14 @@ class WorkspaceClient:
         Returns:
             Tuple of (authorized: bool, user_role: Optional[str])
         """
+        # Check cache first
+        cache_key = (str(workspace_id), user_id, required_role)
+        cached = self._auth_cache.get(cache_key)
+        if cached is not None:
+            cached_authorized, cached_role, expires_at = cached
+            if time.monotonic() < expires_at:
+                return cached_authorized, cached_role
+
         try:
             url = f"{self.base_url}/internal/workspaces/{workspace_id}/authorize"
             payload = {
@@ -80,6 +101,8 @@ class WorkspaceClient:
                         "role": role,
                     },
                 )
+                # Cache the result
+                self._auth_cache[cache_key] = (authorized, role, time.monotonic() + self._AUTH_CACHE_TTL)
                 return authorized, role
             elif response.status_code == 403:
                 logger.warning(

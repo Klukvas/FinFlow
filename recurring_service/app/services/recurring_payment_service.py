@@ -50,7 +50,7 @@ class RecurringPaymentService(WorkspaceAuthorizationMixin):
         self.expense_client = ExpenseServiceClient()
         self.income_client = IncomeServiceClient()
         self.category_client = CategoryServiceClient()
-        self.subscription_client = SubscriptionClient()
+        self.subscription_client = SubscriptionClient.get_instance()
     
     async def create_recurring_payment(
         self, 
@@ -65,11 +65,9 @@ class RecurringPaymentService(WorkspaceAuthorizationMixin):
 
         # Check subscription limits before creating
         current_count = db.query(RecurringPayment).filter(RecurringPayment.workspace_id == workspace_id).count()
-        if not self.subscription_client.check_limit(user_id, current_count, "recurring"):
-            features = self.subscription_client.get_user_features(user_id) or {}
-            recurring_feature = features.get("recurring", {})
-            limit = recurring_feature.get("limit_value", 0)
-            raise RecurringLimitExceededError(current_count, limit)
+        can_create, limit = self.subscription_client.check_limit(user_id, current_count, "recurring")
+        if not can_create:
+            raise RecurringLimitExceededError(current_count, limit or 0)
         
         # Валидировать существование категории
         if not await self.category_client.validate_category_exists(payment_data.category_id, user_id, workspace_id):

@@ -107,7 +107,7 @@ class AuthService:
                     "Creating personal workspace",
                     extra={"operation": "workspace_create", "user_id": user.id}
                 )
-                workspace_id = WorkspaceClient().create_personal_workspace(user.id)
+                workspace_id = WorkspaceClient.get_instance().create_personal_workspace(user.id)
                 if workspace_id:
                     user.default_workspace_id = workspace_id
                     self.db.commit()
@@ -133,7 +133,7 @@ class AuthService:
                     "Bootstrapping basic subscription",
                     extra={"operation": "subscription_bootstrap", "user_id": user.id, "plan_code": "basic"}
                 )
-                SubscriptionClient().set_basic_plan(user.id, "basic")
+                SubscriptionClient.get_instance().set_basic_plan(user.id, "basic")
                 self.logger.info(
                     "Subscription bootstrap request sent",
                     extra={"operation": "subscription_bootstrap", "user_id": user.id, "plan_code": "basic"}

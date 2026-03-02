@@ -6,7 +6,7 @@ Provides both sync and async interfaces.
 """
 
 import os
-from typing import Optional
+from typing import Dict, Optional
 
 import httpx
 
@@ -14,9 +14,19 @@ from shared.logging import get_logger
 
 logger = get_logger(__name__)
 
+_sync_instance: Optional["CurrencyServiceClient"] = None
+_async_instance: Optional["AsyncCurrencyServiceClient"] = None
+
 
 class CurrencyServiceClient:
     """Synchronous client for currency_service conversion API."""
+
+    @classmethod
+    def get_instance(cls) -> "CurrencyServiceClient":
+        global _sync_instance
+        if _sync_instance is None:
+            _sync_instance = cls()
+        return _sync_instance
 
     def __init__(self, base_url: Optional[str] = None):
         self.base_url = base_url or os.environ.get("CURRENCY_SERVICE_URL", "http://currency_service:8000")
@@ -68,12 +78,47 @@ class CurrencyServiceClient:
             logger.error(f"Error calling currency service: {e}")
             return None
 
+    def get_rates(self, base_currency: str) -> Optional[Dict[str, float]]:
+        """Fetch all exchange rates for a base currency in one call."""
+        try:
+            response = self.client.get(
+                f"{self.base_url}/api/v1/rates",
+                params={"base_currency": base_currency},
+            )
+            if response.status_code == 200:
+                return response.json().get("rates", {})
+            logger.error(f"Rates fetch failed: {response.status_code} - {response.text}")
+            return None
+        except Exception as e:
+            logger.error(f"Error fetching rates: {e}")
+            return None
+
+    @staticmethod
+    def convert_with_rates(
+        amount: float, from_currency: str, to_currency: str, rates: Dict[str, float]
+    ) -> Optional[float]:
+        """Convert amount using a pre-fetched rates dict (base_currency-relative)."""
+        if from_currency == to_currency:
+            return amount
+        from_rate = rates.get(from_currency)
+        to_rate = rates.get(to_currency)
+        if from_rate and to_rate:
+            return round(amount * (to_rate / from_rate), 2)
+        return None
+
     def close(self):
         self.client.close()
 
 
 class AsyncCurrencyServiceClient:
     """Async client for currency_service conversion API."""
+
+    @classmethod
+    def get_instance(cls) -> "AsyncCurrencyServiceClient":
+        global _async_instance
+        if _async_instance is None:
+            _async_instance = cls()
+        return _async_instance
 
     def __init__(self):
         self.base_url = os.environ.get("CURRENCY_SERVICE_URL", "http://currency_service:8000")
@@ -124,6 +169,34 @@ class AsyncCurrencyServiceClient:
         except Exception as e:
             logger.error(f"Error calling currency service: {e}")
             return None
+
+    async def get_rates(self, base_currency: str) -> Optional[Dict[str, float]]:
+        """Fetch all exchange rates for a base currency in one call."""
+        try:
+            response = await self.client.get(
+                f"{self.base_url}/api/v1/rates",
+                params={"base_currency": base_currency},
+            )
+            if response.status_code == 200:
+                return response.json().get("rates", {})
+            logger.error(f"Rates fetch failed: {response.status_code} - {response.text}")
+            return None
+        except Exception as e:
+            logger.error(f"Error fetching rates: {e}")
+            return None
+
+    @staticmethod
+    def convert_with_rates(
+        amount: float, from_currency: str, to_currency: str, rates: Dict[str, float]
+    ) -> Optional[float]:
+        """Convert amount using a pre-fetched rates dict (base_currency-relative)."""
+        if from_currency == to_currency:
+            return amount
+        from_rate = rates.get(from_currency)
+        to_rate = rates.get(to_currency)
+        if from_rate and to_rate:
+            return round(amount * (to_rate / from_rate), 2)
+        return None
 
     async def close(self):
         await self.client.aclose()

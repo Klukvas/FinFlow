@@ -34,9 +34,9 @@ class GoalService(WorkspaceAuthorizationMixin):
             workspace_mismatch_error=GoalValidationError,
         )
         self.db = db
-        self.subscription_client = SubscriptionClient()
-        self.user_client = UserServiceClient()
-        self.currency_client = CurrencyServiceClient()
+        self.subscription_client = SubscriptionClient.get_instance()
+        self.user_client = UserServiceClient.get_instance()
+        self.currency_client = CurrencyServiceClient.get_instance()
 
     def create_goal(self, user_id: int, workspace_id: UUID, goal_data: GoalCreate) -> Goal:
         """Create a new financial goal"""
@@ -49,11 +49,9 @@ class GoalService(WorkspaceAuthorizationMixin):
                 Goal.user_id == user_id,
                 Goal.workspace_id == workspace_id
             ).count()
-            if not self.subscription_client.check_limit(user_id, current_count, "goals"):
-                features = self.subscription_client.get_user_features(user_id) or {}
-                goal_feature = features.get("goals", {})
-                limit = goal_feature.get("limit_value", 0)
-                raise GoalLimitExceededError(current_count, limit)
+            can_create, limit = self.subscription_client.check_limit(user_id, current_count, "goals")
+            if not can_create:
+                raise GoalLimitExceededError(current_count, limit or 0)
             
             goal = Goal(
                 user_id=user_id,

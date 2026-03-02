@@ -47,9 +47,9 @@ class DebtService(WorkspaceAuthorizationMixin):
         self.db = db
         self.logger = get_logger(__name__)
         self.contact_service = ContactService(db)
-        self.subscription_client = SubscriptionClient()
-        self.user_client = UserServiceClient()
-        self.currency_client = CurrencyServiceClient()
+        self.subscription_client = SubscriptionClient.get_instance()
+        self.user_client = UserServiceClient.get_instance()
+        self.currency_client = CurrencyServiceClient.get_instance()
 
     # Debt Management
     def create_debt(self, debt: DebtCreate, user_id: int, workspace_id: UUID) -> DebtResponse:
@@ -62,11 +62,9 @@ class DebtService(WorkspaceAuthorizationMixin):
                 Debt.user_id == user_id,
                 Debt.workspace_id == workspace_id
             ).count()
-            if not self.subscription_client.check_limit(user_id, current_count, "debts"):
-                features = self.subscription_client.get_user_features(user_id) or {}
-                debt_feature = features.get("debts", {})
-                limit = debt_feature.get("limit_value", 0)
-                raise DebtLimitExceededError(current_count, limit)
+            can_create, limit = self.subscription_client.check_limit(user_id, current_count, "debts")
+            if not can_create:
+                raise DebtLimitExceededError(current_count, limit or 0)
             
             # Validate contact if provided
             if debt.contact_id:
@@ -362,49 +360,48 @@ class DebtService(WorkspaceAuthorizationMixin):
             and_(Debt.workspace_id == workspace_id, Debt.is_paid_off == True)
         ).count()
         
+        # Fetch rates once for batch conversion
+        rates = self.currency_client.get_rates(user_currency)
+
         # Convert and sum all debts to user's currency
         total_debt = 0.0
         for debt in active_debts:
             debt_amount = float(abs(debt.current_balance))  # Use absolute value
             debt_currency = debt.currency or settings.DEFAULT_CURRENCY
-            
-            if debt_currency != user_currency:
-                # Convert to user's currency
-                converted_amount = self.currency_client.convert_amount(
-                    debt_amount, debt_currency, user_currency
+
+            if debt_currency != user_currency and rates:
+                converted_amount = CurrencyServiceClient.convert_with_rates(
+                    debt_amount, debt_currency, user_currency, rates
                 )
                 if converted_amount is not None:
                     debt_amount = converted_amount
-            
+
             total_debt += debt_amount
-        
+
         # Calculate total payments with currency conversion
-        # Get all debts (not just active ones) to get payment currencies
-        # 2. Get all debts in workspace
+        # Get all debts in workspace
         all_debts = self.db.query(Debt).filter(Debt.workspace_id == workspace_id).all()
         debt_currency_map = {debt.id: debt.currency or settings.DEFAULT_CURRENCY for debt in all_debts}
-        
+
         all_payments = self.db.query(DebtPayment).join(
             Debt, DebtPayment.debt_id == Debt.id
         ).filter(
             DebtPayment.user_id == user_id,
             Debt.workspace_id == workspace_id
         ).all()
-        
+
         total_payments = 0.0
         for payment in all_payments:
-            # Get the debt currency from the map
             payment_currency = debt_currency_map.get(payment.debt_id, settings.DEFAULT_CURRENCY)
             payment_amount = float(payment.amount)
-            
-            if payment_currency != user_currency:
-                # Convert to user's currency
-                converted_amount = self.currency_client.convert_amount(
-                    payment_amount, payment_currency, user_currency
+
+            if payment_currency != user_currency and rates:
+                converted_amount = CurrencyServiceClient.convert_with_rates(
+                    payment_amount, payment_currency, user_currency, rates
                 )
                 if converted_amount is not None:
                     payment_amount = converted_amount
-            
+
             total_payments += payment_amount
         
         # Calculate average interest rate

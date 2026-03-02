@@ -15,9 +15,18 @@ logger = get_logger(__name__)
 
 DEFAULT_CURRENCY = "USD"
 
+_instance: Optional["UserServiceClient"] = None
+
 
 class UserServiceClient:
     """Client for user_service internal API."""
+
+    @classmethod
+    def get_instance(cls) -> "UserServiceClient":
+        global _instance
+        if _instance is None:
+            _instance = cls()
+        return _instance
 
     def __init__(self):
         self.base_url = os.environ.get("USER_SERVICE_URL", "http://user_service:8000")

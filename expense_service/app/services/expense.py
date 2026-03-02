@@ -35,10 +35,10 @@ class ExpenseService(WorkspaceAuthorizationMixin):
         self.db = db
         self.category_client = category_client
         self.account_client = account_client
-        self.currency_client = CurrencyServiceClient()
-        self.user_client = UserServiceClient()
+        self.currency_client = CurrencyServiceClient.get_instance()
+        self.user_client = UserServiceClient.get_instance()
         self.logger = get_logger(__name__)
-        self.subscription_client = SubscriptionClient()
+        self.subscription_client = SubscriptionClient.get_instance()
 
     def _validate_expense_ownership(self, expense_id: int, user_id: int, workspace_id: UUID) -> Expense:
         """Validate that expense exists and belongs to user and workspace"""
@@ -176,11 +176,9 @@ class ExpenseService(WorkspaceAuthorizationMixin):
                 Expense.workspace_id == workspace_id,
                 Expense.created_at >= current_month_start
             ).count()
-            if not self.subscription_client.check_limit(user_id, current_count, "expenses"):
-                features = self.subscription_client.get_user_features(user_id) or {}
-                expense_feature = features.get("expenses", {})
-                limit = expense_feature.get("limit_value", 0)
-                raise ExpenseLimitExceededError(current_count, limit)
+            can_create, limit = self.subscription_client.check_limit(user_id, current_count, "expenses")
+            if not can_create:
+                raise ExpenseLimitExceededError(current_count, limit or 0)
             
             # Validate amount
             validated_amount = self._validate_amount(data.amount)
@@ -491,6 +489,9 @@ class ExpenseService(WorkspaceAuthorizationMixin):
                 self.logger.warning(f"Could not fetch user currency for user {user_id}: {str(e)}, defaulting to USD")
                 user_currency = settings.DEFAULT_CURRENCY
 
+            # Fetch rates once for batch conversion
+            rates = self.currency_client.get_rates(user_currency)
+
             # Calculate statistics with currency conversion
             total_amount = 0.0
             count = 0
@@ -498,15 +499,15 @@ class ExpenseService(WorkspaceAuthorizationMixin):
             for expense in expenses:
                 expense_amount = float(expense.amount)
                 expense_currency = expense.currency or settings.DEFAULT_CURRENCY
-                
+
                 # Convert to user's currency if needed
-                if expense_currency != user_currency:
-                    converted_amount = self.currency_client.convert_amount(
-                        expense_amount, expense_currency, user_currency
+                if expense_currency != user_currency and rates:
+                    converted = CurrencyServiceClient.convert_with_rates(
+                        expense_amount, expense_currency, user_currency, rates
                     )
-                    if converted_amount is not None:
-                        expense_amount = converted_amount
-                
+                    if converted is not None:
+                        expense_amount = converted
+
                 total_amount += expense_amount
                 count += 1
             

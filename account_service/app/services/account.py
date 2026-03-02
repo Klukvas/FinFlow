@@ -38,9 +38,9 @@ class AccountService(WorkspaceAuthorizationMixin):
         self.logger = get_logger(__name__)
         self.expense_client = expense_client or ExpenseServiceClient()
         self.income_client = income_client or IncomeServiceClient()
-        self.currency_client = currency_client or CurrencyServiceClient()
-        self.subscription_client = SubscriptionClient()
-        self.user_client = UserServiceClient()
+        self.currency_client = currency_client or CurrencyServiceClient.get_instance()
+        self.subscription_client = SubscriptionClient.get_instance()
+        self.user_client = UserServiceClient.get_instance()
 
     def create_account(self, account_data: AccountCreate, user_id: int, workspace_id: UUID) -> Account:
         """Create a new account for a user in a workspace"""
@@ -53,11 +53,9 @@ class AccountService(WorkspaceAuthorizationMixin):
                 Account.owner_id == user_id,
                 Account.workspace_id == workspace_id
             ).count()
-            if not self.subscription_client.check_limit(user_id, current_count, "accounts"):
-                features = self.subscription_client.get_user_features(user_id) or {}
-                account_feature = features.get("accounts", {})
-                limit = account_feature.get("limit_value", 0)
-                raise AccountLimitExceededError(current_count, limit)
+            can_create, limit = self.subscription_client.check_limit(user_id, current_count, "accounts")
+            if not can_create:
+                raise AccountLimitExceededError(current_count, limit or 0)
             
             # Validate input
             if not validate_account_name(account_data.name):
@@ -562,28 +560,38 @@ class AccountService(WorkspaceAuthorizationMixin):
             total_accounts = len(accounts)
             active_accounts = sum(1 for account in accounts if account.balance > 0)
             
+            # Fetch rates once for batch conversion
+            rates = None
+            try:
+                if hasattr(self.currency_client, 'get_rates'):
+                    rates_result = self.currency_client.get_rates(user_currency)
+                    # Handle both sync and async
+                    if hasattr(rates_result, '__await__'):
+                        rates = await rates_result
+                    else:
+                        rates = rates_result
+            except Exception as e:
+                self.logger.warning(f"Could not fetch rates for {user_currency}: {e}")
+
             # Calculate total balance with currency conversion
             total_balance = 0.0
             unconvertible_count = 0
-            
+
             for account in accounts:
                 account_balance = float(abs(account.balance))
                 account_currency = account.currency or settings.DEFAULT_CURRENCY
-                
+
                 if account_currency != user_currency:
-                    # Convert to user's currency
-                    try:
-                        converted_amount = await self.currency_client.convert_amount(
-                            account_balance, account_currency, user_currency
+                    converted_amount = None
+                    if rates:
+                        converted_amount = CurrencyServiceClient.convert_with_rates(
+                            account_balance, account_currency, user_currency, rates
                         )
-                        if converted_amount is not None:
-                            total_balance += converted_amount
-                        else:
-                            unconvertible_count += 1
-                            self.logger.warning(f"Could not convert account {account.id} from {account_currency} to {user_currency}")
-                    except Exception as e:
-                        self.logger.error(f"Error converting currency for account {account.id}: {e}")
+                    if converted_amount is not None:
+                        total_balance += converted_amount
+                    else:
                         unconvertible_count += 1
+                        self.logger.warning(f"Could not convert account {account.id} from {account_currency} to {user_currency}")
                 else:
                     total_balance += account_balance
             

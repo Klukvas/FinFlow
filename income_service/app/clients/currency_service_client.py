@@ -1,7 +1,7 @@
 from app.clients.base import BaseHttpClient
 from app.config import settings
 from app.utils.logger import get_logger
-from typing import Optional
+from typing import Dict, Optional
 
 logger = get_logger(__name__)
 
@@ -45,6 +45,32 @@ class CurrencyServiceClient(BaseHttpClient):
         except Exception as e:
             logger.error(f"Currency conversion exception: {e}")
             return None
+
+    async def get_rates(self, base_currency: str) -> Optional[Dict[str, float]]:
+        """Fetch all exchange rates for a base currency in one call."""
+        try:
+            url = f"{self.base_url}/api/v1/rates"
+            response = await self.get(url, params={"base_currency": base_currency})
+            if response.status_code == 200:
+                return response.json().get("rates", {})
+            logger.error(f"Rates fetch failed: {response.status_code}")
+            return None
+        except Exception as e:
+            logger.error(f"Error fetching rates: {e}")
+            return None
+
+    @staticmethod
+    def convert_with_rates(
+        amount: float, from_currency: str, to_currency: str, rates: Dict[str, float]
+    ) -> Optional[float]:
+        """Convert amount using a pre-fetched rates dict."""
+        if from_currency == to_currency:
+            return amount
+        from_rate = rates.get(from_currency)
+        to_rate = rates.get(to_currency)
+        if from_rate and to_rate:
+            return round(amount * (to_rate / from_rate), 2)
+        return None
 
     def get_user_base_currency(self, user_id: int) -> str:
         """

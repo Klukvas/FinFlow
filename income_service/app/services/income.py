@@ -37,7 +37,7 @@ class IncomeService(WorkspaceAuthorizationMixin):
         self.category_client = CategoryServiceClient()
         self.account_client = account_client or AccountServiceClient()
         self.currency_client = CurrencyServiceClient()
-        self.subscription_client = SubscriptionClient()
+        self.subscription_client = SubscriptionClient.get_instance()
     
     async def _validate_category(self, category_id: int, user_id: int, workspace_id: UUID) -> dict:
         """Validate category exists and belongs to user in the workspace"""
@@ -90,11 +90,9 @@ class IncomeService(WorkspaceAuthorizationMixin):
                 Income.workspace_id == workspace_id,
                 Income.created_at >= current_month_start
             ).count()
-            if not self.subscription_client.check_limit(user_id, current_count, "incomes"):
-                features = self.subscription_client.get_user_features(user_id) or {}
-                income_feature = features.get("incomes", {})
-                limit = income_feature.get("limit_value", 0)
-                raise IncomeLimitExceededError(current_count, limit)
+            can_create, limit = self.subscription_client.check_limit(user_id, current_count, "incomes")
+            if not can_create:
+                raise IncomeLimitExceededError(current_count, limit or 0)
 
             # Validate amount
             if income.amount <= 0:
@@ -244,6 +242,9 @@ class IncomeService(WorkspaceAuthorizationMixin):
             logger.warning(f"Could not fetch user currency for user {user_id}: {str(e)}, defaulting to USD")
             user_currency = settings.DEFAULT_CURRENCY
 
+        # Fetch rates once for batch conversion
+        rates = await self.currency_client.get_rates(user_currency)
+
         # Calculate statistics with currency conversion
         total_amount = 0.0
         count = 0
@@ -251,15 +252,15 @@ class IncomeService(WorkspaceAuthorizationMixin):
         for income in incomes:
             income_amount = float(income.amount)
             income_currency = income.currency or settings.DEFAULT_CURRENCY
-            
+
             # Convert to user's currency if needed
-            if income_currency != user_currency:
-                converted_amount = await self.currency_client.convert_amount(
-                    income_amount, income_currency, user_currency
+            if income_currency != user_currency and rates:
+                converted = self.currency_client.convert_with_rates(
+                    income_amount, income_currency, user_currency, rates
                 )
-                if converted_amount is not None:
-                    income_amount = converted_amount
-            
+                if converted is not None:
+                    income_amount = converted
+
             total_amount += income_amount
             count += 1
         

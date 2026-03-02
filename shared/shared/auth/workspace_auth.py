@@ -32,7 +32,7 @@ class WorkspaceAuthorizationMixin:
         access_denied_error: Callable[[str], Exception],
         workspace_mismatch_error: Callable[[str], Exception],
     ):
-        self.workspace_client = WorkspaceClient()
+        self.workspace_client = WorkspaceClient.get_instance()
         self._access_denied_error = access_denied_error
         self._workspace_mismatch_error = workspace_mismatch_error
 

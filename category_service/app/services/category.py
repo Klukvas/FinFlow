@@ -31,7 +31,7 @@ class CategoryService(WorkspaceAuthorizationMixin):
         self.db = db
         self.logger = get_logger(__name__)
         self.serializer = CategorySerializer()
-        self.subscription_client = SubscriptionClient()
+        self.subscription_client = SubscriptionClient.get_instance()
 
     # Validation methods are now handled directly by the serializer
     # No need for wrapper methods
@@ -76,11 +76,9 @@ class CategoryService(WorkspaceAuthorizationMixin):
             ).count()
 
             try:
-                if not self.subscription_client.check_limit(user_id, current_count, "categories"):
-                    features = self.subscription_client.get_user_features(user_id) or {}
-                    category_feature = features.get("categories", {})
-                    limit = category_feature.get("limit_value", 0)
-                    raise CategoryLimitExceededError(current_count, limit)
+                can_create, limit = self.subscription_client.check_limit(user_id, current_count, "categories")
+                if not can_create:
+                    raise CategoryLimitExceededError(current_count, limit or 0)
             except (CategoryLimitExceededError, CategoryValidationError):
                 raise
             except Exception as e:
@@ -249,11 +247,9 @@ class CategoryService(WorkspaceAuthorizationMixin):
             current_count = self.db.query(Category).filter(
                 Category.workspace_id == workspace_id
             ).count()
-            if not self.subscription_client.check_limit(user_id, current_count, "categories"):
-                features = self.subscription_client.get_user_features(user_id) or {}
-                category_feature = features.get("categories", {})
-                limit = category_feature.get("limit_value", 0)
-                raise CategoryLimitExceededError(current_count, limit)
+            can_create, limit = self.subscription_client.check_limit(user_id, current_count, "categories")
+            if not can_create:
+                raise CategoryLimitExceededError(current_count, limit or 0)
             
             # Determine category name
             category_name = data.custom_name

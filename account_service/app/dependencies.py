@@ -32,8 +32,8 @@ def get_income_client() -> IncomeServiceClient:
     return IncomeServiceClient()
 
 def get_currency_client() -> CurrencyServiceClient:
-    """Get currency service client instance"""
-    return CurrencyServiceClient()
+    """Get currency service client singleton"""
+    return CurrencyServiceClient.get_instance()
 
 def get_account_service(
     db: Session = Depends(get_db),

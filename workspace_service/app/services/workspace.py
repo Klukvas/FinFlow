@@ -40,7 +40,7 @@ ROLE_HIERARCHY = {
 class WorkspaceService:
     def __init__(self, db: Session):
         self.db = db
-        self.subscription_client = SubscriptionClient()
+        self.subscription_client = SubscriptionClient.get_instance()
         self.user_client = UserClient()
 
     # ==================== Workspace Operations ====================
@@ -61,8 +61,8 @@ class WorkspaceService:
         try:
             # Check workspace limit
             current_count = self._get_user_workspace_count(user_id)
-            if not self.subscription_client.check_limit(user_id, current_count, "workspaces"):
-                limit = self.subscription_client.get_feature_limit(user_id, "workspaces")
+            can_create, limit = self.subscription_client.check_limit(user_id, current_count, "workspaces")
+            if not can_create:
                 raise WorkspaceLimitExceededError(current_count, limit or 1)
 
             workspace = Workspace(
