@@ -61,8 +61,8 @@ PROFILES = [
         "plan": "basic",
         "currency": "USD",
         "accounts": [
-            ("Cash Wallet", "cash", "USD", 312.40),
-            ("Main Bank Account", "bank", "USD", 1580.25),
+            ("Cash Wallet", "CASH", "USD", 312.40),
+            ("Main Bank Account", "BANK", "USD", 1580.25),
         ],
         "expense_categories": ["Food & Groceries", "Transport", "Housing & Utilities"],
         "income_types": ["salary", "rare_freelance"],
@@ -77,9 +77,9 @@ PROFILES = [
         "plan": "professional",
         "currency": "USD",
         "accounts": [
-            ("Cash Wallet", "cash", "USD", 487.50),
-            ("Main Bank Account", "bank", "USD", 3215.80),
-            ("Savings Account", "bank", "USD", 8450.00),
+            ("Cash Wallet", "CASH", "USD", 487.50),
+            ("Main Bank Account", "BANK", "USD", 3215.80),
+            ("Savings Account", "BANK", "USD", 8450.00),
         ],
         "expense_categories": [
             "Food & Groceries", "Transport", "Housing & Utilities",
@@ -101,11 +101,11 @@ PROFILES = [
         "plan": "enterprise",
         "currency": "USD",
         "accounts": [
-            ("Cash Wallet", "cash", "USD", 725.00),
-            ("Main Bank Account", "bank", "USD", 12450.30),
-            ("Savings Account", "bank", "USD", 25000.00),
-            ("Credit Card", "credit", "USD", -1280.50),
-            ("EUR Account", "bank", "EUR", 3500.00),
+            ("Cash Wallet", "CASH", "USD", 725.00),
+            ("Main Bank Account", "BANK", "USD", 12450.30),
+            ("Savings Account", "BANK", "USD", 25000.00),
+            ("Credit Card", "CREDIT", "USD", -1280.50),
+            ("EUR Account", "BANK", "EUR", 3500.00),
         ],
         "expense_categories": [
             "Food & Groceries", "Transport", "Housing & Utilities",

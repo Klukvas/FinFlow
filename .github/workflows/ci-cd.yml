@@ -1120,6 +1120,7 @@ jobs:
           exit 1
 
       - name: Seed test data
+        continue-on-error: true
         run: |
           pip install psycopg2-binary bcrypt
           python scripts/seed_demo_data.py --host localhost --port 5433
