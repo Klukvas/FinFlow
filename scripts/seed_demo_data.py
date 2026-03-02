@@ -345,6 +345,15 @@ def seed_accounts(conn_params, user_id: int, workspace_id: str, account_defs: li
     conn.autocommit = True
     cur = conn.cursor()
 
+    # Check if accounts already exist for this user
+    cur.execute("SELECT id, name FROM accounts WHERE owner_id = %s AND workspace_id = %s", (user_id, workspace_id))
+    existing = {row[1]: row[0] for row in cur.fetchall()}
+    if existing:
+        print(f"  Accounts already exist ({len(existing)}), skipping.")
+        cur.close()
+        conn.close()
+        return existing
+
     account_ids = {}
     for name, acc_type, currency, balance in account_defs:
         cur.execute(
@@ -365,6 +374,15 @@ def seed_categories(conn_params, user_id: int, workspace_id: str,
     conn = get_conn(DATABASES["category"], **conn_params)
     conn.autocommit = True
     cur = conn.cursor()
+
+    # Check if categories already exist for this user
+    cur.execute("SELECT id, name FROM categories WHERE user_id = %s AND workspace_id = %s", (user_id, workspace_id))
+    existing = {row[1]: row[0] for row in cur.fetchall()}
+    if existing:
+        print(f"  Categories already exist ({len(existing)}), skipping.")
+        cur.close()
+        conn.close()
+        return existing
 
     all_categories = [(c, "EXPENSE") for c in expense_cats] + [
         ("Salary", "INCOME"),
@@ -394,6 +412,13 @@ def seed_expenses(conn_params, user_id: int, workspace_id: str,
     conn = get_conn(DATABASES["expense"], **conn_params)
     conn.autocommit = True
     cur = conn.cursor()
+
+    cur.execute("SELECT COUNT(*) FROM expenses WHERE user_id = %s AND workspace_id = %s", (user_id, workspace_id))
+    if cur.fetchone()[0] > 0:
+        print("  Expenses already exist, skipping.")
+        cur.close()
+        conn.close()
+        return
 
     multiplier = profile["expense_freq_multiplier"]
     allowed_cats = profile["expense_categories"]
@@ -460,6 +485,13 @@ def seed_incomes(conn_params, user_id: int, workspace_id: str,
     conn = get_conn(DATABASES["income"], **conn_params)
     conn.autocommit = True
     cur = conn.cursor()
+
+    cur.execute("SELECT COUNT(*) FROM incomes WHERE user_id = %s AND workspace_id = %s", (user_id, workspace_id))
+    if cur.fetchone()[0] > 0:
+        print("  Incomes already exist, skipping.")
+        cur.close()
+        conn.close()
+        return
 
     income_types = profile["income_types"]
     bank_id = account_ids["Main Bank Account"]
@@ -614,6 +646,13 @@ def seed_goals(conn_params, user_id: int, workspace_id: str, count: int):
     conn.autocommit = True
     cur = conn.cursor()
 
+    cur.execute("SELECT COUNT(*) FROM goals WHERE user_id = %s AND workspace_id = %s", (user_id, workspace_id))
+    if cur.fetchone()[0] > 0:
+        print("  Goals already exist, skipping.")
+        cur.close()
+        conn.close()
+        return
+
     goals = GOAL_POOL[:count]
 
     for g in goals:
@@ -699,6 +738,13 @@ def seed_debts(conn_params, user_id: int, workspace_id: str, count: int):
     conn = get_conn(DATABASES["debt"], **conn_params)
     conn.autocommit = True
     cur = conn.cursor()
+
+    cur.execute("SELECT COUNT(*) FROM debts WHERE user_id = %s AND workspace_id = %s", (user_id, workspace_id))
+    if cur.fetchone()[0] > 0:
+        print("  Debts already exist, skipping.")
+        cur.close()
+        conn.close()
+        return
 
     debts = DEBT_POOL[:count]
 
@@ -834,6 +880,13 @@ def seed_recurring(conn_params, user_id: int, workspace_id: str,
     conn = get_conn(DATABASES["recurring"], **conn_params)
     conn.autocommit = True
     cur = conn.cursor()
+
+    cur.execute("SELECT COUNT(*) FROM recurring_payments WHERE user_id = %s AND workspace_id = %s", (user_id, workspace_id))
+    if cur.fetchone()[0] > 0:
+        print("  Recurring payments already exist, skipping.")
+        cur.close()
+        conn.close()
+        return
 
     items = RECURRING_POOL[:count]
     today = NOW.date()

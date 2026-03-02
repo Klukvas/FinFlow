@@ -1123,7 +1123,7 @@ jobs:
         continue-on-error: true
         run: |
           pip install psycopg2-binary bcrypt
-          python scripts/seed_demo_data.py --host localhost --port 5433
+          python scripts/seed_demo_data.py --clean --host localhost --port 5433
 
       - name: Run E2E tests
         env:
