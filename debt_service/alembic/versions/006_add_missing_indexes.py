@@ -6,7 +6,7 @@ Revises: 005
 from alembic import op
 
 revision = "006"
-down_revision = "005"
+down_revision = "005_float_to_numeric"
 
 
 def upgrade() -> None:

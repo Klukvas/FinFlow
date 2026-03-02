@@ -38,7 +38,7 @@ class Milestone(Base):
         """Calculate milestone progress percentage"""
         if self.target_amount <= 0:
             return 0.0
-        progress = (self.current_amount / self.target_amount) * 100
+        progress = float(self.current_amount / self.target_amount) * 100
         return min(progress, 100.0)
     
     def update_progress(self):

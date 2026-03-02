@@ -86,11 +86,13 @@ class TestPromptsListing:
 
 class TestSubscriptionGating:
 
-    async def test_analyze_insufficient_data_for_basic_plan(self, ai_assistant_client):
-        """Basic-plan user now has access (quota=2) but no data → 422 INSUFFICIENT_DATA."""
+    async def test_basic_plan_has_ai_access(self, ai_assistant_client):
+        """Basic-plan user now has AI access (quota=2). Should not be blocked (402)."""
         result = await ai_assistant_client.analyze("expenses_reduce_spending")
-        assert result.status_code == 422, f"Expected 422, got {result.status_code}: {result.error}"
-        assert result.raw.get("errorCode") == "INSUFFICIENT_DATA", f"raw={result.raw}"
+        # Basic plan has access since migration 0015 — must NOT get 402
+        assert result.status_code != 402, (
+            f"Basic plan should have AI access, got 402: {result.error}"
+        )
 
     async def test_usage_returns_basic_quota(self, ai_assistant_client):
         """Basic-plan user should see quota=2."""
