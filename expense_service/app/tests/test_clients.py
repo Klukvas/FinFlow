@@ -263,33 +263,33 @@ class TestSubscriptionClient:
             "expenses": {"enabled": False, "limit_value": 100}
         })
         result = _REAL_CHECK_LIMIT(sub_client, USER_ID, 5, "expenses")
-        assert result is False
+        assert result == (False, 0)
 
     def test_check_limit_unlimited_returns_true(self, sub_client):
         sub_client.get_user_features = MagicMock(return_value={
             "expenses": {"enabled": True, "limit_value": None}
         })
         result = _REAL_CHECK_LIMIT(sub_client, USER_ID, 999, "expenses")
-        assert result is True
+        assert result == (True, None)
 
     def test_check_limit_under_limit_returns_true(self, sub_client):
         sub_client.get_user_features = MagicMock(return_value={
             "expenses": {"enabled": True, "limit_value": 50}
         })
         result = _REAL_CHECK_LIMIT(sub_client, USER_ID, 49, "expenses")
-        assert result is True
+        assert result == (True, 50)
 
     def test_check_limit_at_limit_returns_false(self, sub_client):
         sub_client.get_user_features = MagicMock(return_value={
             "expenses": {"enabled": True, "limit_value": 50}
         })
         result = _REAL_CHECK_LIMIT(sub_client, USER_ID, 50, "expenses")
-        assert result is False
+        assert result == (False, 50)
 
     def test_check_limit_no_expense_feature_returns_false(self, sub_client):
         sub_client.get_user_features = MagicMock(return_value={})
         result = _REAL_CHECK_LIMIT(sub_client, USER_ID, 0, "expenses")
-        assert result is False
+        assert result == (False, 0)
 
 
 # ---------------------------------------------------------------------------

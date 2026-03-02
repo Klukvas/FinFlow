@@ -174,7 +174,7 @@ def mock_user_client(owner_user, member_user, other_user):
 def mock_subscription_client():
     """Create a mock SubscriptionClient"""
     mock = Mock()
-    mock.check_workspace_limit.return_value = True
+    mock.check_limit.return_value = (True, None)
     mock.get_workspace_limit.return_value = 10
     return mock
 

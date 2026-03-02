@@ -64,7 +64,7 @@ def mock_subscription_check():
     """Auto-mock subscription check so expense creation is not blocked."""
     with patch(
         "shared.clients.subscription.SubscriptionClient.check_limit",
-        return_value=True
+        return_value=(True, None)
     ):
         yield
 

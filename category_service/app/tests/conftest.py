@@ -69,7 +69,7 @@ def mock_subscription_client():
     """Automatically mock subscription client for all tests."""
     with patch(
         "shared.clients.subscription.SubscriptionClient.check_limit",
-        return_value=True,
+        return_value=(True, None),
     ), patch(
         "shared.clients.subscription.SubscriptionClient.get_user_features",
         return_value={"categories": {"limit_value": 100}},

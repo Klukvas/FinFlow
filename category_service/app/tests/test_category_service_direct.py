@@ -203,7 +203,7 @@ class TestCategoryServiceCreateErrors:
 
         with patch(
             "shared.clients.subscription.SubscriptionClient.check_limit",
-            return_value=False,
+            return_value=(False, 10),
         ), patch(
             "shared.clients.subscription.SubscriptionClient.get_user_features",
             return_value={"categories": {"limit_value": 10}},

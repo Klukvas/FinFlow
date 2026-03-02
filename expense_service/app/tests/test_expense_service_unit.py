@@ -57,7 +57,7 @@ def service(db_session, category_client, account_client):
     svc.currency_client = MagicMock()
     svc.user_client = MagicMock()
     svc.subscription_client = MagicMock()
-    svc.subscription_client.check_limit.return_value = True
+    svc.subscription_client.check_limit.return_value = (True, None)
     return svc
 
 
@@ -466,7 +466,7 @@ class TestCreate:
         return ExpenseCreate(**defaults)
 
     def test_create_subscription_limit_exceeded_raises(self, service, db_session):
-        service.subscription_client.check_limit.return_value = False
+        service.subscription_client.check_limit.return_value = (False, 10)
         service.subscription_client.get_user_features.return_value = {
             "expenses": {"enabled": True, "limit_value": 10}
         }
@@ -476,7 +476,7 @@ class TestCreate:
                 service.create(self._make_data(), USER_ID, WORKSPACE_ID)
 
     def test_create_with_account_deducts_balance(self, service, db_session, account_client):
-        service.subscription_client.check_limit.return_value = True
+        service.subscription_client.check_limit.return_value = (True, None)
         db_session.query.return_value.filter.return_value.count.return_value = 0
         account_client.validate_account.return_value = {"account": {"currency": "USD"}}
         account_client.update_account_balance.return_value = {}
@@ -497,7 +497,7 @@ class TestCreate:
         assert args[2] < 0
 
     def test_create_with_currency_conversion(self, service, db_session, account_client):
-        service.subscription_client.check_limit.return_value = True
+        service.subscription_client.check_limit.return_value = (True, None)
         db_session.query.return_value.filter.return_value.count.return_value = 0
         account_client.validate_account.return_value = {"account": {"currency": "EUR"}}
         account_client.update_account_balance.return_value = {}
@@ -511,7 +511,7 @@ class TestCreate:
 
     def test_create_currency_conversion_none_uses_original(self, service, db_session, account_client):
         """When conversion returns None, use original amount."""
-        service.subscription_client.check_limit.return_value = True
+        service.subscription_client.check_limit.return_value = (True, None)
         db_session.query.return_value.filter.return_value.count.return_value = 0
         account_client.validate_account.return_value = {"account": {"currency": "EUR"}}
         account_client.update_account_balance.return_value = {}
@@ -525,7 +525,7 @@ class TestCreate:
         account_client.update_account_balance.assert_called_once()
 
     def test_create_db_error_rollback(self, service, db_session):
-        service.subscription_client.check_limit.return_value = True
+        service.subscription_client.check_limit.return_value = (True, None)
         db_session.query.return_value.filter.return_value.count.return_value = 0
         db_session.add = MagicMock()
         db_session.commit.side_effect = Exception("db error")
@@ -604,7 +604,7 @@ class TestGetByCategory:
         db_session.query.return_value.filter.return_value.order_by.return_value.all.return_value = [expense]
         category_client.validate_category.return_value = {"id": 1}
         service.user_client.get_user_base_currency.return_value = "EUR"
-        service.currency_client.convert_amount.return_value = 90.0
+        service.currency_client.get_rates.return_value = {"USD": 10, "EUR": 9}
 
         with patch.object(service, "authorize_workspace_access", return_value="owner"):
             result = service.get_by_category(1, USER_ID, WORKSPACE_ID)
@@ -615,7 +615,7 @@ class TestGetByCategory:
         db_session.query.return_value.filter.return_value.order_by.return_value.all.return_value = [expense]
         category_client.validate_category.return_value = {"id": 1}
         service.user_client.get_user_base_currency.return_value = "EUR"
-        service.currency_client.convert_amount.return_value = None  # Conversion fails
+        service.currency_client.get_rates.return_value = None  # Rates unavailable
 
         with patch.object(service, "authorize_workspace_access", return_value="owner"):
             result = service.get_by_category(1, USER_ID, WORKSPACE_ID)
