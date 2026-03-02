@@ -29,6 +29,7 @@ from app.exceptions import (
     DebtLimitExceededError,
     DebtReadOnlyExcessError
 )
+from fastapi import HTTPException
 from app.utils.logger import get_logger, log_operation
 from app.config import settings
 
@@ -106,7 +107,7 @@ class DebtService(WorkspaceAuthorizationMixin):
             debt_dict['payment_count'] = 0
             return DebtResponse.model_validate(debt_dict)
             
-        except (DebtLimitExceededError, DebtNotFoundError, DebtValidationError, ContactNotFoundError):
+        except (HTTPException, DebtLimitExceededError, DebtNotFoundError, DebtValidationError, ContactNotFoundError):
             self.db.rollback()
             raise
         except Exception as e:

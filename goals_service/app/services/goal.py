@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, func
 from typing import List, Optional, Dict, Any
@@ -278,8 +280,8 @@ class GoalService(WorkspaceAuthorizationMixin):
             completed_goals = len([g for g in goals if g.status == GoalStatus.COMPLETED])
             
             # Convert and sum amounts to user's base currency
-            total_target_amount = 0.0
-            total_current_amount = 0.0
+            total_target_amount = Decimal('0.0')
+            total_current_amount = Decimal('0.0')
             
             for goal in goals:
                 # Convert target amount if needed

@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, HTTPException, status, Depends
 from typing import List
 from app.services.currency import CurrencyService
@@ -128,14 +130,14 @@ async def health_check(
         
         return HealthResponse(
             status=overall_status,
-            timestamp=health_status.get("timestamp", "unknown"),
+            timestamp=health_status.get("timestamp", datetime.now(timezone.utc)),
             redis_connected=health_status["redis_connected"],
             api_accessible=health_status["api_accessible"]
         )
     except Exception as e:
         return HealthResponse(
             status="unhealthy",
-            timestamp="unknown",
+            timestamp=datetime.now(timezone.utc),
             redis_connected=False,
             api_accessible=False
         )

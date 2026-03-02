@@ -16,6 +16,7 @@ from app.exceptions import (
     ContactDeletionFailedError,
     ContactHasAssociatedDebtsError
 )
+from fastapi import HTTPException
 from app.utils.logger import get_logger, log_operation
 
 logger = get_logger(__name__)
@@ -37,7 +38,7 @@ class ContactService(WorkspaceAuthorizationMixin):
         try:
             # Authorize workspace access
             self.authorize_workspace_access(workspace_id, user_id, "member", "create_contact")
-            
+
             db_contact = Contact(
                 user_id=user_id,
                 workspace_id=workspace_id,
@@ -48,14 +49,17 @@ class ContactService(WorkspaceAuthorizationMixin):
                 address=contact.address,
                 notes=contact.notes
             )
-            
+
             self.db.add(db_contact)
             self.db.commit()
             self.db.refresh(db_contact)
-            
+
             log_operation(self.logger, "Contact created", user_id, f"Contact ID: {db_contact.id}, Name: {contact.name}")
             return ContactResponse.model_validate(db_contact)
-            
+
+        except (HTTPException, ContactValidationError):
+            self.db.rollback()
+            raise
         except Exception as e:
             self.db.rollback()
             self.logger.error(f"Error creating contact: {e}")
@@ -101,13 +105,16 @@ class ContactService(WorkspaceAuthorizationMixin):
             update_data = contact_update.model_dump(exclude_unset=True)
             for field, value in update_data.items():
                 setattr(contact, field, value)
-            
+
             self.db.commit()
             self.db.refresh(contact)
-            
+
             log_operation(self.logger, "Contact updated", user_id, f"Contact ID: {contact.id}, Fields: {list(update_data.keys())}")
             return ContactResponse.model_validate(contact)
-            
+
+        except (HTTPException, ContactValidationError):
+            self.db.rollback()
+            raise
         except Exception as e:
             self.db.rollback()
             self.logger.error(f"Error updating contact: {e}")
@@ -134,10 +141,13 @@ class ContactService(WorkspaceAuthorizationMixin):
         try:
             self.db.delete(contact)
             self.db.commit()
-            
+
             log_operation(self.logger, "Contact deleted", user_id, f"Contact ID: {contact_id}, Name: {contact.name}")
             return True
-            
+
+        except HTTPException:
+            self.db.rollback()
+            raise
         except Exception as e:
             self.db.rollback()
             self.logger.error(f"Error deleting contact: {e}")

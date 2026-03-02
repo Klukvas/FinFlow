@@ -86,18 +86,18 @@ class TestPromptsListing:
 
 class TestSubscriptionGating:
 
-    async def test_analyze_blocked_for_basic_plan(self, ai_assistant_client):
-        """Basic-plan user should get 402 FEATURE_NOT_AVAILABLE."""
+    async def test_analyze_insufficient_data_for_basic_plan(self, ai_assistant_client):
+        """Basic-plan user now has access (quota=2) but no data → 422 INSUFFICIENT_DATA."""
         result = await ai_assistant_client.analyze("expenses_reduce_spending")
-        assert result.status_code == 402, f"Expected 402, got {result.status_code}: {result.error}"
-        assert result.raw.get("errorCode") == "FEATURE_NOT_AVAILABLE", f"raw={result.raw}"
+        assert result.status_code == 422, f"Expected 422, got {result.status_code}: {result.error}"
+        assert result.raw.get("errorCode") == "INSUFFICIENT_DATA", f"raw={result.raw}"
 
-    async def test_usage_returns_zero_quota_for_basic(self, ai_assistant_client):
-        """Basic-plan user should see quota=0."""
+    async def test_usage_returns_basic_quota(self, ai_assistant_client):
+        """Basic-plan user should see quota=2."""
         result = await ai_assistant_client.get_usage()
         data = result.raise_on_error()
-        assert data["quota"] == 0
-        assert data["remaining"] == 0
+        assert data["quota"] == 2
+        assert data["remaining"] == 2
 
 
 # ---------------------------------------------------------------------------
@@ -144,10 +144,10 @@ class TestCachedResults:
 
 class TestUsageStats:
 
-    async def test_professional_quota_is_five(self, pro_ai_client):
+    async def test_professional_quota_is_ten(self, pro_ai_client):
         result = await pro_ai_client.get_usage()
         data = result.raise_on_error()
-        assert data["quota"] == 5
+        assert data["quota"] == 10
 
     async def test_fresh_user_has_zero_used(self, pro_ai_client):
         result = await pro_ai_client.get_usage()

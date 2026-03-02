@@ -338,3 +338,65 @@ def pro_ai_client(professional_user, professional_workspace_id) -> AiAssistantAp
     client.set_token(professional_user["token"])
     client.set_workspace_id(professional_workspace_id)
     return client
+
+
+# ---------------------------------------------------------------------------
+# Pro-plan shared categories & account (for debt/goals/recurring tests)
+# ---------------------------------------------------------------------------
+
+@pytest.fixture(scope="session")
+async def pro_shared_expense_category(professional_user, professional_workspace_id):
+    """Shared expense category in the professional workspace."""
+    client = CategoryApiClient()
+    client.set_token(professional_user["token"])
+    client.set_workspace_id(professional_workspace_id)
+    result = await client.create("Pro E2E Expense Cat")
+    return result.raise_on_error()
+
+
+@pytest.fixture(scope="session")
+async def pro_shared_income_category(professional_user, professional_workspace_id):
+    """Shared income category in the professional workspace."""
+    client = CategoryApiClient()
+    client.set_token(professional_user["token"])
+    client.set_workspace_id(professional_workspace_id)
+    result = await client.create("Pro E2E Income Cat", cat_type="INCOME")
+    return result.raise_on_error()
+
+
+@pytest.fixture(scope="session")
+async def pro_shared_account(professional_user, professional_workspace_id):
+    """Shared account in the professional workspace."""
+    client = AccountApiClient()
+    client.set_token(professional_user["token"])
+    client.set_workspace_id(professional_workspace_id)
+    result = await client.create("Pro E2E Account", balance=5000.0)
+    return result.raise_on_error()
+
+
+# ---------------------------------------------------------------------------
+# Pro-plan service clients (for debt/goals/recurring that need higher limits)
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def pro_debt_client(professional_user, professional_workspace_id) -> DebtApiClient:
+    client = DebtApiClient()
+    client.set_token(professional_user["token"])
+    client.set_workspace_id(professional_workspace_id)
+    return client
+
+
+@pytest.fixture
+def pro_goals_client(professional_user, professional_workspace_id) -> GoalsApiClient:
+    client = GoalsApiClient()
+    client.set_token(professional_user["token"])
+    client.set_workspace_id(professional_workspace_id)
+    return client
+
+
+@pytest.fixture
+def pro_recurring_client(professional_user, professional_workspace_id) -> RecurringApiClient:
+    client = RecurringApiClient()
+    client.set_token(professional_user["token"])
+    client.set_workspace_id(professional_workspace_id)
+    return client
