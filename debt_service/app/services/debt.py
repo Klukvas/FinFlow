@@ -70,7 +70,7 @@ class DebtService(WorkspaceAuthorizationMixin):
             
             # Validate contact if provided
             if debt.contact_id:
-                self.contact_service.get_contact(debt.contact_id, user_id)  # This will raise if not found
+                self.contact_service.get_contact(debt.contact_id, user_id, workspace_id)  # This will raise if not found
             
             # TODO: Validate category with category service
             # await self._validate_category(debt.category_id, user_id)
@@ -311,8 +311,8 @@ class DebtService(WorkspaceAuthorizationMixin):
             self.db.add(db_payment)
             
             # Update debt balance
-            principal_amount = payment.principal_amount or payment.amount
-            debt.current_balance = max(0, debt.current_balance - principal_amount)
+            principal_amount = Decimal(str(payment.principal_amount or payment.amount))
+            debt.current_balance = max(Decimal('0'), debt.current_balance - principal_amount)
             debt.last_payment_date = payment.payment_date
             
             # Check if debt is paid off
@@ -326,6 +326,9 @@ class DebtService(WorkspaceAuthorizationMixin):
             log_operation(self.logger, "Payment created", user_id, f"Payment ID: {db_payment.id}, Amount: {payment.amount}, Debt: {debt.name}")
             return DebtPaymentResponse.model_validate(db_payment)
             
+        except (HTTPException, DebtNotFoundError, PaymentValidationError):
+            self.db.rollback()
+            raise
         except Exception as e:
             self.db.rollback()
             self.logger.error(f"Error creating payment: {e}")
