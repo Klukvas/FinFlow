@@ -61,8 +61,8 @@ PROFILES = [
         "plan": "basic",
         "currency": "USD",
         "accounts": [
-            ("Cash Wallet", "CASH", "USD", 312.40),
-            ("Main Bank Account", "BANK", "USD", 1580.25),
+            ("Cash Wallet", "cash", "USD", 312.40),
+            ("Main Bank Account", "bank", "USD", 1580.25),
         ],
         "expense_categories": ["Food & Groceries", "Transport", "Housing & Utilities"],
         "income_types": ["salary", "rare_freelance"],
@@ -77,9 +77,9 @@ PROFILES = [
         "plan": "professional",
         "currency": "USD",
         "accounts": [
-            ("Cash Wallet", "CASH", "USD", 487.50),
-            ("Main Bank Account", "BANK", "USD", 3215.80),
-            ("Savings Account", "BANK", "USD", 8450.00),
+            ("Cash Wallet", "cash", "USD", 487.50),
+            ("Main Bank Account", "bank", "USD", 3215.80),
+            ("Savings Account", "bank", "USD", 8450.00),
         ],
         "expense_categories": [
             "Food & Groceries", "Transport", "Housing & Utilities",
@@ -101,11 +101,11 @@ PROFILES = [
         "plan": "enterprise",
         "currency": "USD",
         "accounts": [
-            ("Cash Wallet", "CASH", "USD", 725.00),
-            ("Main Bank Account", "BANK", "USD", 12450.30),
-            ("Savings Account", "BANK", "USD", 25000.00),
-            ("Credit Card", "CREDIT", "USD", -1280.50),
-            ("EUR Account", "BANK", "EUR", 3500.00),
+            ("Cash Wallet", "cash", "USD", 725.00),
+            ("Main Bank Account", "bank", "USD", 12450.30),
+            ("Savings Account", "bank", "USD", 25000.00),
+            ("Credit Card", "credit", "USD", -1280.50),
+            ("EUR Account", "bank", "EUR", 3500.00),
         ],
         "expense_categories": [
             "Food & Groceries", "Transport", "Housing & Utilities",
@@ -656,7 +656,7 @@ DEBT_POOL = [
         "contact_notes": "Student loan servicer",
         "debt_name": "Student Loan",
         "debt_desc": "Federal student loan for education",
-        "debt_type": "loan",
+        "debt_type": "LOAN",
         "initial_amount": 10000.0,
         "current_balance": 7600.0,
         "interest_rate": 4.5,
@@ -670,7 +670,7 @@ DEBT_POOL = [
         "contact_notes": "Friend",
         "debt_name": "Loan from Alex",
         "debt_desc": "Borrowed for emergency car repair",
-        "debt_type": "personal",
+        "debt_type": "PERSONAL_LOAN",
         "initial_amount": 500.0,
         "current_balance": 200.0,
         "interest_rate": None,
@@ -684,7 +684,7 @@ DEBT_POOL = [
         "contact_notes": "Auto loan provider",
         "debt_name": "Car Loan",
         "debt_desc": "Auto financing for company car",
-        "debt_type": "loan",
+        "debt_type": "LOAN",
         "initial_amount": 15000.0,
         "current_balance": 11200.0,
         "interest_rate": 3.9,
@@ -761,7 +761,7 @@ def seed_debts(conn_params, user_id: int, workspace_id: str, count: int):
                        payment_date, description, payment_method, created_at, updated_at)
                        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
                     (debt_id, user_id, payment_amt, principal, interest, pay_date,
-                     "Monthly payment", "bank_transfer",
+                     "Monthly payment", "TRANSFER",
                      datetime(pay_date.year, pay_date.month, pay_date.day, 10, 0, 0, tzinfo=timezone.utc),
                      datetime(pay_date.year, pay_date.month, pay_date.day, 10, 0, 0, tzinfo=timezone.utc)),
                 )
@@ -771,7 +771,7 @@ def seed_debts(conn_params, user_id: int, workspace_id: str, count: int):
                        description, payment_method, created_at, updated_at)
                        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
                     (debt_id, user_id, payment_amt, payment_amt, pay_date,
-                     "Repayment", "cash",
+                     "Repayment", "CASH",
                      datetime(pay_date.year, pay_date.month, pay_date.day, 14, 0, 0, tzinfo=timezone.utc),
                      datetime(pay_date.year, pay_date.month, pay_date.day, 14, 0, 0, tzinfo=timezone.utc)),
                 )
