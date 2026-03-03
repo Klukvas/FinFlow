@@ -565,6 +565,7 @@ services:
     container_name: pdf_parser_service
     restart: unless-stopped
     environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD_ENCODED}@postgres:5432/pdf_parser_db
       - SECRET_KEY=${SECRET_KEY}
       - ALGORITHM=${ALGORITHM}
       - internal_service_token=${INTERNAL_SECRET_TOKEN}
