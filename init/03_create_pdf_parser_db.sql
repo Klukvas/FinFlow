@@ -1,4 +1,3 @@
--- Create database for PDF parser service
--- This database stores upload history for enforcing monthly upload limits
-
-CREATE DATABASE pdf_parser_db;
+-- Kept for backwards compatibility; pdf_parser_db is now created in init.sql
+-- This file intentionally left as a no-op to avoid "database already exists" errors
+SELECT 1;
