@@ -2587,5 +2587,24 @@
       "selectAll": "Select all",
       "deselectAll": "Deselect all"
     }
+  },
+  "pwa": {
+    "installTitle": "Install FinFlow",
+    "installDescription": "Install FinFlow on your device for a faster, native-like experience.",
+    "installButton": "Install App",
+    "installBenefits": {
+      "offline": "Works offline — access your data anytime",
+      "fast": "Lightning-fast loading and performance",
+      "homescreen": "Launch from your home screen like a native app"
+    },
+    "iosInstructions": {
+      "title": "How to install on iOS:",
+      "step1": "Tap the Share button",
+      "step2": "Tap \"Add to Home Screen\"",
+      "step3": "Tap \"Add\" to confirm"
+    },
+    "dismissButton": "Not now",
+    "dontShowAgain": "Don't show again",
+    "headerButton": "Install"
   }
 }
