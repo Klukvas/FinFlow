@@ -3,110 +3,110 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 export type Theme = 'light' | 'dark' | 'system';
 
 interface ThemeContextType {
-  theme: Theme;
-  actualTheme: 'light' | 'dark';
-  setTheme: (theme: Theme) => void;
-  toggleTheme: () => void;
+ theme: Theme;
+ actualTheme: 'light' | 'dark';
+ setTheme: (theme: Theme) => void;
+ toggleTheme: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 interface ThemeProviderProps {
-  children: ReactNode;
+ children: ReactNode;
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    // Check if we're in a browser environment
-    if (typeof window === 'undefined') return 'dark';
-    const stored = localStorage.getItem('theme') as Theme;
-    return stored || 'dark';
-  });
+ const [theme, setThemeState] = useState<Theme>(() => {
+ // Check if we're in a browser environment
+ if (typeof window === 'undefined') return 'dark';
+ const stored = localStorage.getItem('theme') as Theme;
+ return stored || 'dark';
+ });
 
-  const [actualTheme, setActualTheme] = useState<'light' | 'dark'>('dark');
+ const [actualTheme, setActualTheme] = useState<'light' | 'dark'>('dark');
 
-  // Update actual theme based on system preference or selected theme
-  useEffect(() => {
-    // Check if we're in a browser environment
-    if (typeof window === 'undefined') return;
-    
-    const updateActualTheme = () => {
-      if (theme === 'system') {
-        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        setActualTheme(systemPrefersDark ? 'dark' : 'light');
-      } else {
-        setActualTheme(theme);
-      }
-    };
+ // Update actual theme based on system preference or selected theme
+ useEffect(() => {
+ // Check if we're in a browser environment
+ if (typeof window === 'undefined') return;
+ 
+ const updateActualTheme = () => {
+ if (theme === 'system') {
+ const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+ setActualTheme(systemPrefersDark ? 'dark' : 'light');
+ } else {
+ setActualTheme(theme);
+ }
+ };
 
-    updateActualTheme();
+ updateActualTheme();
 
-    // Listen for system theme changes
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = () => {
-      if (theme === 'system') {
-        updateActualTheme();
-      }
-    };
+ // Listen for system theme changes
+ const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+ const handleChange = () => {
+ if (theme === 'system') {
+ updateActualTheme();
+ }
+ };
 
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, [theme]);
+ mediaQuery.addEventListener('change', handleChange);
+ return () => mediaQuery.removeEventListener('change', handleChange);
+ }, [theme]);
 
-  // Apply theme to document
-  useEffect(() => {
-    // Check if we're in a browser environment
-    if (typeof window === 'undefined') return;
-    
-    const root = document.documentElement;
-    
-    // Check if classList exists before using it
-    if (root && root.classList) {
-      root.classList.remove('light', 'dark');
-      root.classList.add(actualTheme);
-    }
-    
-    // Update meta theme-color for mobile browsers
-    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-    if (metaThemeColor) {
-      metaThemeColor.setAttribute('content', actualTheme === 'dark' ? '#0B1020' : '#F9FAFB');
-    }
-  }, [actualTheme]);
+ // Apply theme to document
+ useEffect(() => {
+ // Check if we're in a browser environment
+ if (typeof window === 'undefined') return;
+ 
+ const root = document.documentElement;
+ 
+ // Check if classList exists before using it
+ if (root && root.classList) {
+ root.classList.remove('light', 'dark');
+ root.classList.add(actualTheme);
+ }
+ 
+ // Update meta theme-color for mobile browsers
+ const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+ if (metaThemeColor) {
+ metaThemeColor.setAttribute('content', actualTheme === 'dark' ? '#0B1020' : '#F9FAFB');
+ }
+ }, [actualTheme]);
 
-  const setTheme = (newTheme: Theme) => {
-    setThemeState(newTheme);
-    // Check if we're in a browser environment before accessing localStorage
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('theme', newTheme);
-    }
-  };
+ const setTheme = (newTheme: Theme) => {
+ setThemeState(newTheme);
+ // Check if we're in a browser environment before accessing localStorage
+ if (typeof window !== 'undefined') {
+ localStorage.setItem('theme', newTheme);
+ }
+ };
 
-  const toggleTheme = () => {
-    if (actualTheme === 'light') {
-      setTheme('dark');
-    } else {
-      setTheme('light');
-    }
-  };
+ const toggleTheme = () => {
+ if (actualTheme === 'light') {
+ setTheme('dark');
+ } else {
+ setTheme('light');
+ }
+ };
 
-  const value: ThemeContextType = {
-    theme,
-    actualTheme,
-    setTheme,
-    toggleTheme,
-  };
+ const value: ThemeContextType = {
+ theme,
+ actualTheme,
+ setTheme,
+ toggleTheme,
+ };
 
-  return (
-    <ThemeContext.Provider value={value}>
-      {children}
-    </ThemeContext.Provider>
-  );
+ return (
+ <ThemeContext.Provider value={value}>
+ {children}
+ </ThemeContext.Provider>
+ );
 };
 
 export const useTheme = (): ThemeContextType => {
-  const context = useContext(ThemeContext);
-  if (context === undefined) {
-    throw new Error('useTheme must be used within a ThemeProvider');
-  }
-  return context;
+ const context = useContext(ThemeContext);
+ if (context === undefined) {
+ throw new Error('useTheme must be used within a ThemeProvider');
+ }
+ return context;
 };

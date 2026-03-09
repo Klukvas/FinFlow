@@ -5,9 +5,16 @@ WORKDIR /app
 ARG VITE_PAYMENTS_ENABLED=false
 
 # Install dependencies first (better cache)
-COPY frontend/package.json frontend/yarn.lock ./
-# Install dependencies (regenerate lockfile if needed)
-RUN yarn install
+COPY frontend/package.json frontend/yarn.lock frontend/.npmrc ./
+# Install dependencies using BuildKit secret mount for GitHub token
+# The token never touches a layer — invisible to `docker history`
+RUN --mount=type=secret,id=github_token \
+    if [ -f /run/secrets/github_token ]; then \
+      echo "//npm.pkg.github.com/:_authToken=$(cat /run/secrets/github_token)" >> .npmrc; \
+    fi && \
+    yarn install && \
+    git_line=$(grep -n '_authToken' .npmrc | tail -1 | cut -d: -f1) && \
+    if [ -n "$git_line" ]; then sed -i "${git_line}d" .npmrc; fi
 
 # Copy source and build
 COPY frontend/ .

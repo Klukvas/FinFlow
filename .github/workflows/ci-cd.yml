@@ -332,6 +332,8 @@ jobs:
           push: true
           build-args: |
             VITE_PAYMENTS_ENABLED=${{ secrets.PAYMENTS_ENABLED || 'false' }}
+          secrets: |
+            github_token=${{ secrets.GITHUB_TOKEN }}
           tags: |
             ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/frontend:latest
             ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/frontend:${{ github.sha }}

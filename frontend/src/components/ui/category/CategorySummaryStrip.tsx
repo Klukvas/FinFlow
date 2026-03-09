@@ -5,81 +5,81 @@ import { Skeleton } from "../shared/Skeleton";
 import { CategoryStatisticsResponse } from "../../../types/category";
 
 interface CategorySummaryStripProps {
-  stats: CategoryStatisticsResponse | null;
-  loading: boolean;
+ stats: CategoryStatisticsResponse | null;
+ loading: boolean;
 }
 
 export const CategorySummaryStrip: React.FC<CategorySummaryStripProps> = ({
-  stats,
-  loading,
+ stats,
+ loading,
 }) => {
-  const { t } = useTranslation();
+ const { t } = useTranslation();
 
-  if (loading) {
-    return (
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Card key={i}>
-            <div className="p-4 space-y-2">
-              <Skeleton variant="text" className="h-3 w-20" />
-              <Skeleton variant="text" className="h-6 w-16" />
-            </div>
-          </Card>
-        ))}
-      </div>
-    );
-  }
+ if (loading) {
+ return (
+ <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+ {Array.from({ length: 4 }).map((_, i) => (
+ <Card key={i}>
+ <div className="p-4 space-y-2">
+ <Skeleton variant="text" className="h-3 w-20" />
+ <Skeleton variant="text" className="h-6 w-16" />
+ </div>
+ </Card>
+ ))}
+ </div>
+ );
+ }
 
-  const kpiCards = [
-    {
-      testId: "total-categories-stat",
-      label: t("categoryPage.kpi.totalCategories"),
-      value: String(stats?.total_categories ?? 0),
-      valueClass: "theme-text-primary",
-    },
-    {
-      testId: "expense-categories-stat",
-      label: t("categoryPage.kpi.expenseCategories"),
-      value: String(stats?.expense_categories ?? 0),
-      valueClass: "text-red-500/80",
-    },
-    {
-      testId: "income-categories-stat",
-      label: t("categoryPage.kpi.incomeCategories"),
-      value: String(stats?.income_categories ?? 0),
-      valueClass: "text-green-600/80",
-    },
-    {
-      testId: "parent-categories-stat",
-      label: t("categoryPage.kpi.withChildren"),
-      value: String(stats?.parent_categories ?? 0),
-      valueClass: "theme-text-primary",
-    },
-    {
-      testId: "child-categories-stat",
-      label: t("categoryPage.kpi.childCategories", "With Parents"),
-      value: String(stats?.child_categories ?? 0),
-      valueClass: "theme-text-primary",
-    },
-  ];
+ const kpiCards = [
+ {
+ testId: "total-categories-stat",
+ label: t("categoryPage.kpi.totalCategories"),
+ value: String(stats?.total_categories ?? 0),
+ valueClass: "text-content",
+ },
+ {
+ testId: "expense-categories-stat",
+ label: t("categoryPage.kpi.expenseCategories"),
+ value: String(stats?.expense_categories ?? 0),
+ valueClass: "text-danger-base/80",
+ },
+ {
+ testId: "income-categories-stat",
+ label: t("categoryPage.kpi.incomeCategories"),
+ value: String(stats?.income_categories ?? 0),
+ valueClass: "text-success-base/80",
+ },
+ {
+ testId: "parent-categories-stat",
+ label: t("categoryPage.kpi.withChildren"),
+ value: String(stats?.parent_categories ?? 0),
+ valueClass: "text-content",
+ },
+ {
+ testId: "child-categories-stat",
+ label: t("categoryPage.kpi.childCategories", "With Parents"),
+ value: String(stats?.child_categories ?? 0),
+ valueClass: "text-content",
+ },
+ ];
 
-  return (
-    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-      {kpiCards.map((card) => (
-        <Card key={card.testId}>
-          <div className="p-4" data-testid={card.testId}>
-            <p className="text-xs font-medium theme-text-secondary uppercase tracking-wide">
-              {card.label}
-            </p>
-            <p
-              className={`text-xl font-semibold mt-1 ${card.valueClass}`}
-              data-testid={`${card.testId}-value`}
-            >
-              {card.value}
-            </p>
-          </div>
-        </Card>
-      ))}
-    </div>
-  );
+ return (
+ <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+ {kpiCards.map((card) => (
+ <Card key={card.testId}>
+ <div className="p-4" data-testid={card.testId}>
+ <p className="text-xs font-medium text-content-secondary uppercase tracking-wide">
+ {card.label}
+ </p>
+ <p
+ className={`text-xl font-semibold mt-1 ${card.valueClass}`}
+ data-testid={`${card.testId}-value`}
+ >
+ {card.value}
+ </p>
+ </div>
+ </Card>
+ ))}
+ </div>
+ );
 };

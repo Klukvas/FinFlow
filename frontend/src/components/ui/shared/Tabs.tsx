@@ -1,4 +1,10 @@
-import React from 'react';
+import React from "react";
+import {
+  Tabs as BaseTabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "@klukvas/flux-b2c-ui";
 
 interface Tab {
   id: string;
@@ -11,38 +17,25 @@ interface TabsProps {
   activeTab: string;
   onTabChange: (tabId: string) => void;
   className?: string;
+  children?: React.ReactNode;
 }
 
 export const Tabs: React.FC<TabsProps> = ({
   tabs,
   activeTab,
   onTabChange,
-  className = ''
-}) => {
-  return (
-    <div className={`theme-border border-b ${className}`}>
-      <nav className="-mb-px flex space-x-6" aria-label="Tabs">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => onTabChange(tab.id)}
-            className={`
-              group inline-flex items-center py-3 px-1 border-b-2 font-medium text-sm theme-transition
-              ${
-                activeTab === tab.id
-                  ? 'border-[var(--color-accent)] theme-accent'
-                  : 'border-transparent theme-text-secondary hover:theme-text-primary hover:border-[var(--color-border-hover)]'
-              }
-            `}
-            aria-current={activeTab === tab.id ? 'page' : undefined}
-          >
-            {tab.icon && (
-              <span className="mr-2">{tab.icon}</span>
-            )}
-            {tab.label}
-          </button>
-        ))}
-      </nav>
-    </div>
-  );
-};
+  className = "",
+  children,
+}) => (
+  <BaseTabs value={activeTab} onValueChange={onTabChange} className={className}>
+    <TabsList>
+      {tabs.map((tab) => (
+        <TabsTrigger key={tab.id} value={tab.id}>
+          {tab.icon && <span className="mr-2">{tab.icon}</span>}
+          {tab.label}
+        </TabsTrigger>
+      ))}
+    </TabsList>
+    {children}
+  </BaseTabs>
+);

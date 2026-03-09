@@ -16,36 +16,36 @@ import { TutorialOverlay } from '@/components/ui/tutorial';
 import '@/i18n';
 
 interface AppProvidersProps {
-  children?: React.ReactNode;
+ children?: React.ReactNode;
 }
 
 export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
-  return (
-    <ErrorBoundary>
-      <HelmetProvider>
-        <ThemeProvider>
-          <ModalProvider>
-            <AuthProvider>
-              <PaymentProvider>
-                <WorkspaceProvider>
-                  <CategoriesProvider>
-                    <AccountsProvider>
-                      <CurrencyProvider>
-                        <TutorialProvider>
-                          <Router>
-                            {children || <AppRoutes />}
-                            <TutorialOverlay />
-                          </Router>
-                        </TutorialProvider>
-                      </CurrencyProvider>
-                    </AccountsProvider>
-                  </CategoriesProvider>
-                </WorkspaceProvider>
-              </PaymentProvider>
-            </AuthProvider>
-          </ModalProvider>
-        </ThemeProvider>
-      </HelmetProvider>
-    </ErrorBoundary>
-  );
+ return (
+ <ErrorBoundary>
+ <HelmetProvider>
+ <ThemeProvider>
+ <ModalProvider>
+ <AuthProvider>
+ <PaymentProvider>
+ <WorkspaceProvider>
+ <CategoriesProvider>
+ <AccountsProvider>
+ <CurrencyProvider>
+ <TutorialProvider>
+ <Router>
+ {children || <AppRoutes />}
+ <TutorialOverlay />
+ </Router>
+ </TutorialProvider>
+ </CurrencyProvider>
+ </AccountsProvider>
+ </CategoriesProvider>
+ </WorkspaceProvider>
+ </PaymentProvider>
+ </AuthProvider>
+ </ModalProvider>
+ </ThemeProvider>
+ </HelmetProvider>
+ </ErrorBoundary>
+ );
 };

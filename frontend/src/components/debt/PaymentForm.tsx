@@ -5,351 +5,351 @@ import { Input } from "@/components/ui/forms/Input";
 import { Label } from "@/components/ui/forms/Label";
 import { FormattedNumberInput } from "@/components/ui/forms/FormattedNumberInput";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+ Select,
+ SelectContent,
+ SelectItem,
+ SelectTrigger,
+ SelectValue,
 } from "@/components/ui/forms/Select";
 import { Textarea } from "@/components/ui/forms/Textarea";
 import { removeSpacesFromNumber } from "@/utils/numberFormat";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
+ Card,
+ CardContent,
+ CardHeader,
+ CardTitle,
 } from "@/components/ui/shared/Card";
 import {
-  Calendar,
-  DollarSign,
-  CreditCard,
-  Wallet,
-  Banknote,
+ Calendar,
+ DollarSign,
+ CreditCard,
+ Wallet,
+ Banknote,
 } from "lucide-react";
 import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
 
 interface PaymentFormProps {
-  debtId: number;
-  currentBalance: number;
-  currency: string;
-  onSubmit: (payment: DebtPaymentCreate) => void;
-  onCancel: () => void;
-  isLoading?: boolean;
-  showCard?: boolean;
+ debtId: number;
+ currentBalance: number;
+ currency: string;
+ onSubmit: (payment: DebtPaymentCreate) => void;
+ onCancel: () => void;
+ isLoading?: boolean;
+ showCard?: boolean;
 }
 
 const paymentMethods: {
-  value: PaymentMethod;
-  label: string;
-  icon: React.ReactNode;
+ value: PaymentMethod;
+ label: string;
+ icon: React.ReactNode;
 }[] = [
-  { value: "CASH", label: "Cash", icon: <Banknote className="w-4 h-4" /> },
-  {
-    value: "CARD",
-    label: "Credit/Debit Card",
-    icon: <CreditCard className="w-4 h-4" />,
-  },
-  {
-    value: "TRANSFER",
-    label: "Bank Transfer",
-    icon: <Wallet className="w-4 h-4" />,
-  },
-  { value: "CHECK", label: "Check", icon: <DollarSign className="w-4 h-4" /> },
-  {
-    value: "AUTOMATIC",
-    label: "Automatic Payment",
-    icon: <CreditCard className="w-4 h-4" />,
-  },
-  { value: "OTHER", label: "Other", icon: <DollarSign className="w-4 h-4" /> },
+ { value: "CASH", label: "Cash", icon: <Banknote className="w-4 h-4" /> },
+ {
+ value: "CARD",
+ label: "Credit/Debit Card",
+ icon: <CreditCard className="w-4 h-4" />,
+ },
+ {
+ value: "TRANSFER",
+ label: "Bank Transfer",
+ icon: <Wallet className="w-4 h-4" />,
+ },
+ { value: "CHECK", label: "Check", icon: <DollarSign className="w-4 h-4" /> },
+ {
+ value: "AUTOMATIC",
+ label: "Automatic Payment",
+ icon: <CreditCard className="w-4 h-4" />,
+ },
+ { value: "OTHER", label: "Other", icon: <DollarSign className="w-4 h-4" /> },
 ];
 
 export const PaymentForm: React.FC<PaymentFormProps> = ({
-  currentBalance,
-  currency,
-  onSubmit,
-  onCancel,
-  isLoading = false,
-  showCard = true,
+ currentBalance,
+ currency,
+ onSubmit,
+ onCancel,
+ isLoading = false,
+ showCard = true,
 }) => {
-  const { formatCurrency } = useCurrencyConversion();
+ const { formatCurrency } = useCurrencyConversion();
 
-  const [formData, setFormData] = useState<DebtPaymentCreate>({
-    amount: 0,
-    principal_amount: null,
-    interest_amount: null,
-    payment_date: (new Date().toISOString().split("T")[0] || "") as string,
-    description: null,
-    payment_method: "CASH",
-  });
+ const [formData, setFormData] = useState<DebtPaymentCreate>({
+ amount: 0,
+ principal_amount: null,
+ interest_amount: null,
+ payment_date: (new Date().toISOString().split("T")[0] || "") as string,
+ description: null,
+ payment_method: "CASH",
+ });
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [amountDisplay, setAmountDisplay] = useState("");
-  const [principalAmountDisplay, setPrincipalAmountDisplay] = useState("");
-  const [interestAmountDisplay, setInterestAmountDisplay] = useState("");
+ const [errors, setErrors] = useState<Record<string, string>>({});
+ const [amountDisplay, setAmountDisplay] = useState("");
+ const [principalAmountDisplay, setPrincipalAmountDisplay] = useState("");
+ const [interestAmountDisplay, setInterestAmountDisplay] = useState("");
 
-  const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
+ const validateForm = (): boolean => {
+ const newErrors: Record<string, string> = {};
 
-    if (!formData.amount || formData.amount <= 0) {
-      newErrors.amount = "Payment amount must be greater than 0";
-    }
+ if (!formData.amount || formData.amount <= 0) {
+ newErrors.amount = "Payment amount must be greater than 0";
+ }
 
-    if (formData.amount > currentBalance) {
-      newErrors.amount = "Payment amount cannot exceed current balance";
-    }
+ if (formData.amount > currentBalance) {
+ newErrors.amount = "Payment amount cannot exceed current balance";
+ }
 
-    if (
-      formData.principal_amount !== null &&
-      formData.principal_amount !== undefined &&
-      formData.principal_amount < 0
-    ) {
-      newErrors.principal_amount = "Principal amount cannot be negative";
-    }
+ if (
+ formData.principal_amount !== null &&
+ formData.principal_amount !== undefined &&
+ formData.principal_amount < 0
+ ) {
+ newErrors.principal_amount = "Principal amount cannot be negative";
+ }
 
-    if (
-      formData.interest_amount !== null &&
-      formData.interest_amount !== undefined &&
-      formData.interest_amount < 0
-    ) {
-      newErrors.interest_amount = "Interest amount cannot be negative";
-    }
+ if (
+ formData.interest_amount !== null &&
+ formData.interest_amount !== undefined &&
+ formData.interest_amount < 0
+ ) {
+ newErrors.interest_amount = "Interest amount cannot be negative";
+ }
 
-    if (
-      formData.principal_amount !== null &&
-      formData.principal_amount !== undefined &&
-      formData.interest_amount !== null &&
-      formData.interest_amount !== undefined
-    ) {
-      const total =
-        (formData.principal_amount || 0) + (formData.interest_amount || 0);
-      if (Math.abs(total - formData.amount) > 0.01) {
-        newErrors.interest_amount =
-          "Principal + Interest must equal total payment amount";
-      }
-    }
+ if (
+ formData.principal_amount !== null &&
+ formData.principal_amount !== undefined &&
+ formData.interest_amount !== null &&
+ formData.interest_amount !== undefined
+ ) {
+ const total =
+ (formData.principal_amount || 0) + (formData.interest_amount || 0);
+ if (Math.abs(total - formData.amount) > 0.01) {
+ newErrors.interest_amount =
+ "Principal + Interest must equal total payment amount";
+ }
+ }
 
-    if (!formData.payment_date) {
-      newErrors.payment_date = "Payment date is required";
-    }
+ if (!formData.payment_date) {
+ newErrors.payment_date = "Payment date is required";
+ }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+ setErrors(newErrors);
+ return Object.keys(newErrors).length === 0;
+ };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (validateForm()) {
-      onSubmit(formData);
-    }
-  };
+ const handleSubmit = (e: React.FormEvent) => {
+ e.preventDefault();
+ if (validateForm()) {
+ onSubmit(formData);
+ }
+ };
 
-  const handleInputChange = (field: keyof DebtPaymentCreate, value: any) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }));
-    }
-  };
+ const handleInputChange = (field: keyof DebtPaymentCreate, value: any) => {
+ setFormData((prev) => ({ ...prev, [field]: value }));
+ // Clear error when user starts typing
+ if (errors[field]) {
+ setErrors((prev) => ({ ...prev, [field]: "" }));
+ }
+ };
 
-  const calculateRemainingBalance = () => {
-    return currentBalance - formData.amount;
-  };
+ const calculateRemainingBalance = () => {
+ return currentBalance - formData.amount;
+ };
 
-  const content = (
-    <>
-      <CardContent>
-        {/* Current Balance Info */}
-        <div className="p-4 rounded-lg mb-6 theme-accent-light">
-          <div className="flex justify-between items-center">
-            <span className="text-sm font-medium theme-text-secondary">
-              Current Balance
-            </span>
-            <span className="text-lg font-bold theme-text-primary">
-              {formatCurrency(currentBalance, currency)}
-            </span>
-          </div>
-          {formData.amount > 0 && (
-            <div className="flex justify-between items-center mt-2 pt-2 theme-border border-t">
-              <span className="text-sm font-medium theme-text-secondary">
-                After Payment
-              </span>
-              <span className="text-lg font-bold theme-success">
-                {formatCurrency(calculateRemainingBalance(), currency)}
-              </span>
-            </div>
-          )}
-        </div>
+ const content = (
+ <>
+ <CardContent>
+ {/* Current Balance Info */}
+ <div className="p-4 rounded-lg mb-6 bg-[var(--color-accent-light)]">
+ <div className="flex justify-between items-center">
+ <span className="text-sm font-medium text-content-secondary">
+ Current Balance
+ </span>
+ <span className="text-lg font-bold text-content">
+ {formatCurrency(currentBalance, currency)}
+ </span>
+ </div>
+ {formData.amount > 0 && (
+ <div className="flex justify-between items-center mt-2 pt-2 border-[var(--color-border)] border-t">
+ <span className="text-sm font-medium text-content-secondary">
+ After Payment
+ </span>
+ <span className="text-lg font-bold text-success-base">
+ {formatCurrency(calculateRemainingBalance(), currency)}
+ </span>
+ </div>
+ )}
+ </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Payment Amount */}
-          <FormattedNumberInput
-            label="Payment Amount"
-            value={amountDisplay}
-            onChange={(value) => {
-              setAmountDisplay(value);
-              const cleanedValue = removeSpacesFromNumber(value);
-              const numValue = cleanedValue
-                ? Math.round(parseFloat(cleanedValue) * 100) / 100
-                : 0;
-              handleInputChange("amount", numValue);
-            }}
-            placeholder="0.00"
-            required
-            error={errors.amount || ""}
-            className="w-full"
-          />
+ <form onSubmit={handleSubmit} className="space-y-6">
+ {/* Payment Amount */}
+ <FormattedNumberInput
+ label="Payment Amount"
+ value={amountDisplay}
+ onChange={(value) => {
+ setAmountDisplay(value);
+ const cleanedValue = removeSpacesFromNumber(value);
+ const numValue = cleanedValue
+ ? Math.round(parseFloat(cleanedValue) * 100) / 100
+ : 0;
+ handleInputChange("amount", numValue);
+ }}
+ placeholder="0.00"
+ required
+ error={errors.amount || ""}
+ className="w-full"
+ />
 
-          {/* Payment Date */}
-          <div className="space-y-2">
-            <Label htmlFor="payment_date" className="theme-text-secondary">
-              Payment Date *
-            </Label>
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 theme-text-tertiary" />
-              <Input
-                id="payment_date"
-                type="date"
-                value={formData.payment_date}
-                onChange={(e) =>
-                  handleInputChange("payment_date", e.target.value)
-                }
-                className={`pl-10 theme-surface theme-border border theme-text-primary ${errors.payment_date ? "border-red-500" : ""}`}
-              />
-            </div>
-            {errors.payment_date && (
-              <p className="text-sm text-red-500">{errors.payment_date}</p>
-            )}
-          </div>
+ {/* Payment Date */}
+ <div className="space-y-2">
+ <Label htmlFor="payment_date" className="text-content-secondary">
+ Payment Date *
+ </Label>
+ <div className="relative">
+ <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-content-tertiary" />
+ <Input
+ id="payment_date"
+ type="date"
+ value={formData.payment_date}
+ onChange={(e) =>
+ handleInputChange("payment_date", e.target.value)
+ }
+ className={`pl-10 bg-elevated border-[var(--color-border)] border text-content ${errors.payment_date ? "border-danger-base" : ""}`}
+ />
+ </div>
+ {errors.payment_date && (
+ <p className="text-sm text-danger-base">{errors.payment_date}</p>
+ )}
+ </div>
 
-          {/* Payment Method */}
-          <div className="space-y-2">
-            <Label className="theme-text-secondary">Payment Method</Label>
-            <Select
-              value={formData.payment_method || ""}
-              onValueChange={(value) =>
-                handleInputChange("payment_method", value || null)
-              }
-            >
-              <SelectTrigger className="theme-surface theme-border border theme-text-primary">
-                <SelectValue placeholder="Select payment method (optional)" />
-              </SelectTrigger>
-              <SelectContent className="theme-surface theme-border border">
-                <SelectItem
-                  value=""
-                  className="theme-text-primary hover:theme-surface-hover"
-                >
-                  No method specified
-                </SelectItem>
-                {paymentMethods.map((method) => (
-                  <SelectItem
-                    key={method.value}
-                    value={method.value}
-                    className="theme-text-primary hover:theme-surface-hover"
-                  >
-                    <span className="flex items-center space-x-2">
-                      {method.icon}
-                      <span>{method.label}</span>
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+ {/* Payment Method */}
+ <div className="space-y-2">
+ <Label className="text-content-secondary">Payment Method</Label>
+ <Select
+ value={formData.payment_method || ""}
+ onValueChange={(value) =>
+ handleInputChange("payment_method", value || null)
+ }
+ >
+ <SelectTrigger className="bg-elevated border-[var(--color-border)] border text-content">
+ <SelectValue placeholder="Select payment method (optional)" />
+ </SelectTrigger>
+ <SelectContent className="bg-elevated border-[var(--color-border)] border">
+ <SelectItem
+ value=""
+ className="text-content hover:bg-surface-alt"
+ >
+ No method specified
+ </SelectItem>
+ {paymentMethods.map((method) => (
+ <SelectItem
+ key={method.value}
+ value={method.value}
+ className="text-content hover:bg-surface-alt"
+ >
+ <span className="flex items-center space-x-2">
+ {method.icon}
+ <span>{method.label}</span>
+ </span>
+ </SelectItem>
+ ))}
+ </SelectContent>
+ </Select>
+ </div>
 
-          {/* Breakdown (Optional) */}
-          <div className="space-y-4">
-            <div className="p-3 rounded-lg theme-accent-light">
-              <Label className="text-sm font-medium theme-text-secondary">
-                Payment Breakdown (Optional)
-              </Label>
-              <p className="text-xs mt-1 theme-text-tertiary">
-                Specify how much goes to principal vs interest
-              </p>
-            </div>
+ {/* Breakdown (Optional) */}
+ <div className="space-y-4">
+ <div className="p-3 rounded-lg bg-[var(--color-accent-light)]">
+ <Label className="text-sm font-medium text-content-secondary">
+ Payment Breakdown (Optional)
+ </Label>
+ <p className="text-xs mt-1 text-content-tertiary">
+ Specify how much goes to principal vs interest
+ </p>
+ </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormattedNumberInput
-                label="Principal Amount"
-                value={principalAmountDisplay}
-                onChange={(value) => {
-                  setPrincipalAmountDisplay(value);
-                  const cleanedValue = removeSpacesFromNumber(value);
-                  const numValue = cleanedValue
-                    ? Math.round(parseFloat(cleanedValue) * 100) / 100
-                    : null;
-                  handleInputChange("principal_amount", numValue);
-                }}
-                placeholder="0.00"
-                error={errors.principal_amount || ""}
-                className="w-full"
-              />
+ <div className="grid grid-cols-2 gap-4">
+ <FormattedNumberInput
+ label="Principal Amount"
+ value={principalAmountDisplay}
+ onChange={(value) => {
+ setPrincipalAmountDisplay(value);
+ const cleanedValue = removeSpacesFromNumber(value);
+ const numValue = cleanedValue
+ ? Math.round(parseFloat(cleanedValue) * 100) / 100
+ : null;
+ handleInputChange("principal_amount", numValue);
+ }}
+ placeholder="0.00"
+ error={errors.principal_amount || ""}
+ className="w-full"
+ />
 
-              <FormattedNumberInput
-                label="Interest Amount"
-                value={interestAmountDisplay}
-                onChange={(value) => {
-                  setInterestAmountDisplay(value);
-                  const cleanedValue = removeSpacesFromNumber(value);
-                  const numValue = cleanedValue
-                    ? Math.round(parseFloat(cleanedValue) * 100) / 100
-                    : null;
-                  handleInputChange("interest_amount", numValue);
-                }}
-                placeholder="0.00"
-                error={errors.interest_amount || ""}
-                className="w-full"
-              />
-            </div>
-          </div>
+ <FormattedNumberInput
+ label="Interest Amount"
+ value={interestAmountDisplay}
+ onChange={(value) => {
+ setInterestAmountDisplay(value);
+ const cleanedValue = removeSpacesFromNumber(value);
+ const numValue = cleanedValue
+ ? Math.round(parseFloat(cleanedValue) * 100) / 100
+ : null;
+ handleInputChange("interest_amount", numValue);
+ }}
+ placeholder="0.00"
+ error={errors.interest_amount || ""}
+ className="w-full"
+ />
+ </div>
+ </div>
 
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description" className="theme-text-secondary">
-              Description
-            </Label>
-            <Textarea
-              id="description"
-              value={formData.description || ""}
-              onChange={(e) => handleInputChange("description", e.target.value)}
-              placeholder="Payment notes or reference..."
-              rows={3}
-              className="theme-surface theme-border border theme-text-primary placeholder:theme-text-tertiary"
-            />
-          </div>
+ {/* Description */}
+ <div className="space-y-2">
+ <Label htmlFor="description" className="text-content-secondary">
+ Description
+ </Label>
+ <Textarea
+ id="description"
+ value={formData.description || ""}
+ onChange={(e) => handleInputChange("description", e.target.value)}
+ placeholder="Payment notes or reference..."
+ rows={3}
+ className="bg-elevated border-[var(--color-border)] border text-content placeholder:text-content-tertiary"
+ />
+ </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-6">
-            <Button type="submit" disabled={isLoading} className="flex-1">
-              {isLoading ? "Processing..." : "Record Payment"}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onCancel}
-              disabled={isLoading}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </>
-  );
+ {/* Action Buttons */}
+ <div className="flex flex-col sm:flex-row gap-3 pt-6">
+ <Button type="submit" disabled={isLoading} className="flex-1">
+ {isLoading ? "Processing..." : "Record Payment"}
+ </Button>
+ <Button
+ type="button"
+ variant="outline"
+ onClick={onCancel}
+ disabled={isLoading}
+ className="flex-1"
+ >
+ Cancel
+ </Button>
+ </div>
+ </form>
+ </CardContent>
+ </>
+ );
 
-  if (!showCard) {
-    return <div className="space-y-4">{content}</div>;
-  }
+ if (!showCard) {
+ return <div className="space-y-4">{content}</div>;
+ }
 
-  return (
-    <Card className="max-w-lg mx-auto theme-surface theme-border border">
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2 theme-text-primary">
-          <DollarSign className="w-5 h-5" />
-          <span>Make Payment</span>
-        </CardTitle>
-      </CardHeader>
-      {content}
-    </Card>
-  );
+ return (
+ <Card className="max-w-lg mx-auto bg-elevated border-[var(--color-border)] border">
+ <CardHeader>
+ <CardTitle className="flex items-center space-x-2 text-content">
+ <DollarSign className="w-5 h-5" />
+ <span>Make Payment</span>
+ </CardTitle>
+ </CardHeader>
+ {content}
+ </Card>
+ );
 };

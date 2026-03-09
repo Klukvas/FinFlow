@@ -1,44 +1,56 @@
-import React from 'react';
+import React from "react";
+import {
+  Badge as BaseBadge,
+  cn,
+  type BadgeProps as BaseBadgeProps,
+} from "@klukvas/flux-b2c-ui";
 
-interface BadgeProps {
-  children: React.ReactNode;
-  variant?: 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning' | 'info';
-  size?: 'sm' | 'md' | 'lg';
-  className?: string;
-  'data-testid'?: string;
+type Variant =
+  | "default"
+  | "secondary"
+  | "destructive"
+  | "outline"
+  | "success"
+  | "warning"
+  | "info";
+
+interface BadgeProps extends Omit<BaseBadgeProps, "variant"> {
+  variant?: Variant;
+  "data-testid"?: string;
 }
 
-export const Badge: React.FC<BadgeProps> = ({ 
-  children, 
-  variant = 'default', 
-  size = 'md',
-  className = '',
-  'data-testid': testId
-}) => {
-  const baseClasses = 'inline-flex items-center justify-center rounded-full font-medium theme-transition';
-  
-  const sizeClasses = {
-    sm: 'px-2 py-0.5 text-xs',
-    md: 'px-2.5 py-1 text-xs',
-    lg: 'px-3 py-1.5 text-sm'
-  };
-  
-  const variantClasses = {
-    default: 'theme-accent-light theme-accent',
-    secondary: 'theme-bg-tertiary theme-text-secondary',
-    destructive: 'theme-error-light theme-error',
-    outline: 'theme-border border theme-text-primary hover:theme-surface-hover',
-    success: 'theme-success-light theme-success',
-    warning: 'theme-warning-light theme-warning',
-    info: 'theme-accent-light theme-accent'
-  };
-
-  return (
-    <span 
-      className={`${baseClasses} ${sizeClasses[size]} ${variantClasses[variant]} ${className}`}
-      data-testid={testId || `badge-${variant}`}
-    >
-      {children}
-    </span>
-  );
+const variantMap: Record<
+  Variant,
+  "secondary" | "destructive" | "outline" | "success"
+> = {
+  default: "secondary",
+  secondary: "secondary",
+  destructive: "destructive",
+  outline: "outline",
+  success: "success",
+  warning: "secondary",
+  info: "secondary",
 };
+
+const extraClasses: Partial<Record<Variant, string>> = {
+  warning: "bg-[var(--color-warning-light)] text-[var(--color-warning)]",
+  info: "bg-[var(--color-accent-light)] text-[var(--color-accent)]",
+  default: "bg-[var(--color-accent-light)] text-[var(--color-accent)]",
+};
+
+export const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
+  (
+    { variant = "default", className = "", "data-testid": testId, ...props },
+    ref,
+  ) => (
+    <BaseBadge
+      ref={ref}
+      variant={variantMap[variant]}
+      className={cn(extraClasses[variant], className)}
+      data-testid={testId}
+      {...props}
+    />
+  ),
+);
+
+Badge.displayName = "Badge";

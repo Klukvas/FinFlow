@@ -26,6 +26,7 @@
     "test:types": "node scripts/check-type-compat.mjs"
   },
   "dependencies": {
+    "@klukvas/flux-b2c-ui": "^0.1.0",
     "@tailwindcss/vite": "^4.1.3",
     "dompurify": "^3.3.1",
     "gray-matter": "^4.0.3",
@@ -42,7 +43,8 @@
     "recharts": "^2.15.3",
     "remark-gfm": "^4.0.1",
     "sonner": "^2.0.7",
-    "tailwindcss": "^4.1.3"
+    "tailwindcss": "^4.1.3",
+    "workbox-window": "^7.4.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
@@ -64,7 +66,9 @@
     "typescript": "^5.6.3",
     "typescript-eslint": "^8.26.0",
     "vite": "^6.2.0",
-    "vite-tsconfig-paths": "^5.1.4"
+    "vite-plugin-pwa": "^0.21.1",
+    "vite-tsconfig-paths": "^5.1.4",
+    "workbox-build": "^7.4.0"
   },
   "engines": {
     "node": ">=20.0.0",
