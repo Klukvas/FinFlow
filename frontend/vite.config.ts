@@ -10,7 +10,7 @@ export default defineConfig({
     tailwindcss(),
     tsconfigPaths(),
     VitePWA({
-      registerType: "prompt",
+      registerType: "autoUpdate",
       includeAssets: ["favicon.png", "apple-touch-icon-180x180.png"],
       manifest: {
         name: "FinFlow - Smart Finance Management",
