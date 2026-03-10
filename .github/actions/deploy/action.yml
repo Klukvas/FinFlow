@@ -167,7 +167,7 @@ runs:
 
         # Recreate services
         echo "Recreating services: ${SERVICES}"
-        if docker compose up -d --remove-orphans ${SERVICES}; then
+        if docker compose up -d --force-recreate --remove-orphans ${SERVICES}; then
           echo "Services started successfully"
         else
           echo "Deployment failed - attempting rollback..."
