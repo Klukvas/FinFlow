@@ -66,7 +66,7 @@ export const RecurringTable: React.FC<RecurringTableProps> = ({
           cmp = a.name.localeCompare(b.name);
           break;
         case "amount":
-          cmp = a.amount - b.amount;
+          cmp = Number(a.amount) - Number(b.amount);
           break;
         case "schedule":
           cmp = a.schedule_type.localeCompare(b.schedule_type);

@@ -2,14 +2,14 @@ export interface ParsedTransaction {
   amount: number;
   description: string;
   transaction_date: string;
-  transaction_type: 'income' | 'expense';
+  transaction_type: "income" | "expense";
   bank_type: string;
   raw_text?: string;
   confidence_score: number;
   mcc_code?: number;
   mcc_category_name?: string;
   mcc_category_translation?: string;
-  category_exists: boolean;
+  category_exists: boolean | null;
   category_id?: number;
 }
 
@@ -27,11 +27,7 @@ export interface PDFParseResponse {
   total_transactions: number;
   successful_parses: number;
   failed_parses: number;
-  parsing_metadata: {
-    file_size: number;
-    parsing_method: string;
-    confidence_threshold: number;
-  };
+  parsing_metadata: Record<string, unknown> | null;
   limit_info?: PDFLimitInfo;
 }
 
@@ -40,7 +36,7 @@ export interface TransactionValidation {
   amount: number;
   description: string;
   transaction_date: string;
-  transaction_type: 'income' | 'expense';
+  transaction_type: "income" | "expense";
   category_id?: number;
   is_valid: boolean;
 }
@@ -70,9 +66,12 @@ export interface BankLanguagesResponse {
 }
 
 export interface AllLanguagesResponse {
-  banks: Record<string, {
-    available_languages: LanguageInfo[];
-    total_languages: number;
-  }>;
+  banks: Record<
+    string,
+    {
+      available_languages: LanguageInfo[];
+      total_languages: number;
+    }
+  >;
   total_banks: number;
 }

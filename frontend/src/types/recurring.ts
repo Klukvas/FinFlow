@@ -1,18 +1,19 @@
 export interface RecurringPayment {
   id: string;
-  user_id: string;
+  user_id: number;
+  workspace_id: string;
   name: string;
   description?: string;
-  amount: number;
+  amount: string;
   currency: string;
-  category_id: string;
-  payment_type: "expense" | "income";
-  schedule_type: "daily" | "weekly" | "monthly" | "yearly";
+  category_id: number;
+  payment_type: string;
+  schedule_type: string;
   schedule_config: Record<string, any>;
   start_date: string;
-  end_date?: string;
-  status: "active" | "paused" | "completed" | "cancelled";
-  last_executed?: string;
+  end_date?: string | null;
+  status: string;
+  last_executed?: string | null;
   next_execution: string;
   created_at: string;
   updated_at: string;
@@ -24,8 +25,8 @@ export interface PaymentSchedule {
   recurring_payment_id: string;
   execution_date: string;
   status: "pending" | "executed" | "failed";
-  created_expense_id?: string;
-  created_income_id?: string;
+  created_expense_id: number | null;
+  created_income_id: number | null;
   error_message?: string;
   executed_at?: string;
   created_at: string;
@@ -35,28 +36,28 @@ export interface PaymentSchedule {
 export interface CreateRecurringPaymentRequest {
   name: string;
   description?: string;
-  amount: number;
+  amount: number | string;
   currency: string;
   category_id: number;
   payment_type: "EXPENSE" | "INCOME";
   schedule_type: "daily" | "weekly" | "monthly" | "yearly";
   schedule_config: Record<string, any>;
   start_date: string;
-  end_date?: string;
+  end_date?: string | null;
 }
 
 export interface UpdateRecurringPaymentRequest {
-  name?: string;
-  description?: string;
-  amount?: number;
-  currency?: string;
-  category_id?: number;
-  payment_type?: "EXPENSE" | "INCOME";
-  schedule_type?: "daily" | "weekly" | "monthly" | "yearly";
-  schedule_config?: Record<string, any>;
-  start_date?: string;
-  end_date?: string;
-  status?: "active" | "paused" | "completed" | "cancelled";
+  name?: string | null;
+  description?: string | null;
+  amount?: number | string | null;
+  currency?: string | null;
+  category_id?: number | null;
+  payment_type?: string | null;
+  schedule_type?: string | null;
+  schedule_config?: Record<string, any> | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  status?: string | null;
 }
 
 export interface RecurringPaymentListResponse {
