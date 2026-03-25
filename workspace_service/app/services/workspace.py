@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, func
+from sqlalchemy.exc import IntegrityError
 from typing import Optional, List
 from uuid import UUID
 from datetime import datetime, timezone
@@ -95,8 +96,25 @@ class WorkspaceService:
             raise WorkspaceValidationError(f"Failed to create workspace: {str(e)}")
 
     def create_personal_workspace(self, user_id: int) -> Workspace:
-        """Create a personal workspace for a new user (called during registration)"""
+        """Create a personal workspace for a new user (called during registration).
+        Idempotent: returns existing workspace if user already has one."""
         try:
+            # Check if user already has a workspace (idempotent)
+            existing_member = (
+                self.db.query(WorkspaceMember)
+                .filter(WorkspaceMember.user_id == user_id)
+                .first()
+            )
+            if existing_member:
+                existing_workspace = (
+                    self.db.query(Workspace)
+                    .filter(Workspace.id == existing_member.workspace_id)
+                    .first()
+                )
+                if existing_workspace:
+                    log_operation(logger, "personal_workspace_exists", user_id, f"Workspace: {existing_workspace.id}")
+                    return existing_workspace
+
             workspace = Workspace(
                 name="Personal",
                 type=WorkspaceType.PERSONAL,
@@ -117,6 +135,24 @@ class WorkspaceService:
 
             log_operation(logger, "personal_workspace_created", user_id, f"Workspace: {workspace.id}")
             return workspace
+
+        except IntegrityError:
+            self.db.rollback()
+            logger.warning(f"IntegrityError creating personal workspace for user {user_id}, returning existing")
+            existing_member = (
+                self.db.query(WorkspaceMember)
+                .filter(WorkspaceMember.user_id == user_id)
+                .first()
+            )
+            if existing_member:
+                existing_workspace = (
+                    self.db.query(Workspace)
+                    .filter(Workspace.id == existing_member.workspace_id)
+                    .first()
+                )
+                if existing_workspace:
+                    return existing_workspace
+            raise WorkspaceValidationError("Failed to create personal workspace: duplicate detected but existing workspace not found")
 
         except Exception as e:
             self.db.rollback()
