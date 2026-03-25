@@ -89,5 +89,9 @@ class TestIncomeQueries:
 
     async def test_income_summary_stats(self, income_client):
         """Income summary endpoint returns aggregated statistics."""
-        result = await income_client.summary_stats()
+        from datetime import date, timedelta
+        today = date.today()
+        start = (today - timedelta(days=30)).isoformat()
+        end = today.isoformat()
+        result = await income_client.summary_stats(start, end)
         assert result.ok
