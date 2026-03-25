@@ -1,111 +1,121 @@
 import {
- Bar,
- BarChart,
- CartesianGrid,
- Legend,
- ResponsiveContainer,
- Tooltip,
- XAxis,
- YAxis,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from "recharts";
 import { Category, ExpenseResponse } from "@/types";
 import React, { useMemo } from "react";
 import { CHART_COLORS, CHART_TOOLTIP_STYLE } from "./chartColors";
 
 interface CategoryComparisonChartProps {
- expenses: ExpenseResponse[];
- categories: Category[];
+  expenses: ExpenseResponse[];
+  categories: Category[];
 }
 
 export const CategoryComparisonChart: React.FC<
- CategoryComparisonChartProps
+  CategoryComparisonChartProps
 > = ({ expenses, categories }) => {
- const categoryComparisonData = useMemo(() => {
- const currentDate = new Date();
- const currentMonth = currentDate.getMonth();
- const currentYear = currentDate.getFullYear();
- const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
- const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+  const categoryComparisonData = useMemo(() => {
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+    const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+    const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
 
- const currentMonthExpenses = expenses.filter((exp) => {
- if (!exp.date) return false;
- const date = new Date(exp.date);
- return (
- date.getMonth() === currentMonth && date.getFullYear() === currentYear
- );
- });
+    const currentMonthExpenses = expenses.filter((exp) => {
+      if (!exp.date) return false;
+      const date = new Date(exp.date);
+      return (
+        date.getMonth() === currentMonth && date.getFullYear() === currentYear
+      );
+    });
 
- const prevMonthExpenses = expenses.filter((exp) => {
- if (!exp.date) return false;
- const date = new Date(exp.date);
- return date.getMonth() === prevMonth && date.getFullYear() === prevYear;
- });
+    const prevMonthExpenses = expenses.filter((exp) => {
+      if (!exp.date) return false;
+      const date = new Date(exp.date);
+      return date.getMonth() === prevMonth && date.getFullYear() === prevYear;
+    });
 
- return categories
- .map((cat) => {
- const currentMonthCategoryExpenses = currentMonthExpenses.filter(
- (exp) => exp.category_id === cat.id,
- );
- const prevMonthCategoryExpenses = prevMonthExpenses.filter(
- (exp) => exp.category_id === cat.id,
- );
+    return categories
+      .map((cat) => {
+        const currentMonthCategoryExpenses = currentMonthExpenses.filter(
+          (exp) => exp.category_id === cat.id,
+        );
+        const prevMonthCategoryExpenses = prevMonthExpenses.filter(
+          (exp) => exp.category_id === cat.id,
+        );
 
- const currentTotal = currentMonthCategoryExpenses.reduce(
- (sum, exp) => sum + exp.amount,
- 0,
- );
- const prevTotal = prevMonthCategoryExpenses.reduce(
- (sum, exp) => sum + exp.amount,
- 0,
- );
+        const currentTotal = currentMonthCategoryExpenses.reduce(
+          (sum, exp) => sum + exp.amount,
+          0,
+        );
+        const prevTotal = prevMonthCategoryExpenses.reduce(
+          (sum, exp) => sum + exp.amount,
+          0,
+        );
 
- return {
- name: cat.name,
- current: currentTotal,
- previous: prevTotal,
- };
- })
- .filter((item) => item.current > 0 || item.previous > 0); // Показываем только категории с расходами
- }, [expenses, categories]);
+        return {
+          name: cat.name,
+          current: currentTotal,
+          previous: prevTotal,
+        };
+      })
+      .filter((item) => item.current > 0 || item.previous > 0); // Показываем только категории с расходами
+  }, [expenses, categories]);
 
- return (
- <div className="bg-elevated p-4 rounded-lg theme-shadow border-[var(--color-border)] border">
- <h2 className="text-lg font-semibold mb-4 text-content">
- Сравнение категорий по месяцам
- </h2>
- <div className="h-[250px] md:h-[300px]">
- <ResponsiveContainer width="100%" height="100%">
- <BarChart data={categoryComparisonData}>
- <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
- <XAxis
- dataKey="name"
- angle={-45}
- textAnchor="end"
- height={70}
- tick={{ fill: "var(--color-text)" }}
- axisLine={{ stroke: "var(--color-border)" }}
- />
- <YAxis
- tick={{ fill: "var(--color-text)" }}
- axisLine={{ stroke: "var(--color-border)" }}
- />
- <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
- <Legend wrapperStyle={{ color: "var(--color-text)" }} />
- <Bar
- dataKey="current"
- name="Текущий месяц"
- fill={CHART_COLORS[0]}
- radius={[4, 4, 0, 0]}
- />
- <Bar
- dataKey="previous"
- name="Предыдущий месяц"
- fill={CHART_COLORS[4]}
- radius={[4, 4, 0, 0]}
- />
- </BarChart>
- </ResponsiveContainer>
- </div>
- </div>
- );
+  return (
+    <div className="bg-elevated p-4 rounded-lg theme-shadow border-[var(--border)] border overflow-hidden">
+      <h2 className="text-lg font-semibold mb-4 text-content">
+        Сравнение категорий по месяцам
+      </h2>
+      <div className="h-[280px] md:h-[320px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={categoryComparisonData}
+            margin={{ left: -10, right: 8, top: 5, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+            <XAxis
+              dataKey="name"
+              angle={-35}
+              textAnchor="end"
+              height={70}
+              tick={{ fill: "var(--text-primary)", fontSize: 10 }}
+              axisLine={{ stroke: "var(--border)" }}
+              interval={0}
+            />
+            <YAxis
+              tick={{ fill: "var(--text-primary)", fontSize: 10 }}
+              axisLine={{ stroke: "var(--border)" }}
+              width={45}
+              tickFormatter={(v: number) =>
+                v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)
+              }
+            />
+            <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
+            <Legend
+              wrapperStyle={{ color: "var(--text-primary)", fontSize: "12px" }}
+            />
+            <Bar
+              dataKey="current"
+              name="Текущий месяц"
+              fill={CHART_COLORS[0]}
+              radius={[4, 4, 0, 0]}
+            />
+            <Bar
+              dataKey="previous"
+              name="Предыдущий месяц"
+              fill={CHART_COLORS[4]}
+              radius={[4, 4, 0, 0]}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
 };

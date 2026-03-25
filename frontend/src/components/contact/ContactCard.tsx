@@ -47,11 +47,11 @@ export const ContactCard: React.FC<ContactCardProps> = ({
  };
 
  return (
- <Card className="bg-elevated border-[var(--color-border)] border transition-all duration-200 hover:shadow-lg hover:border-[var(--color-border)]">
+ <Card className="bg-elevated border-[var(--border)] border transition-all duration-200 hover:shadow-lg hover:border-[var(--border)]">
  <CardHeader className="pb-3">
  <div className="flex items-start justify-between">
  <div className="flex items-center space-x-3">
- <div className="p-3 rounded-full bg-[var(--color-accent-light)]">
+ <div className="p-3 rounded-full bg-[var(--accent-dim)]">
  <User className="w-6 h-6 text-accent-base" />
  </div>
  <div>
@@ -117,7 +117,7 @@ export const ContactCard: React.FC<ContactCardProps> = ({
 
  {/* Notes */}
  {contact.notes && (
- <div className="p-3 rounded-lg bg-[var(--color-accent-light)]">
+ <div className="p-3 rounded-lg bg-[var(--accent-dim)]">
  <div className="flex items-start space-x-2">
  <FileText className="w-4 h-4 mt-0.5 text-content-secondary" />
  <div>
@@ -134,7 +134,7 @@ export const ContactCard: React.FC<ContactCardProps> = ({
 
  {/* Debt Information */}
  {debtsCount > 0 && (
- <div className="p-3 rounded-lg bg-[var(--color-accent-light)] border-[var(--color-border)] border">
+ <div className="p-3 rounded-lg bg-[var(--accent-dim)] border-[var(--border)] border">
  <div className="flex items-center justify-between mb-2">
  <div className="flex items-center space-x-2">
  <DollarSign className="w-4 h-4 text-accent-base" />
@@ -156,7 +156,7 @@ export const ContactCard: React.FC<ContactCardProps> = ({
  )}
 
  {/* Created Date */}
- <div className="flex items-center space-x-2 pt-2 border-t border-[var(--color-border)]">
+ <div className="flex items-center space-x-2 pt-2 border-t border-[var(--border)]">
  <Calendar className="w-3 h-3 text-content-secondary" />
  <span className="text-xs text-content-secondary">
  Created {formatDate(contact.created_at)}

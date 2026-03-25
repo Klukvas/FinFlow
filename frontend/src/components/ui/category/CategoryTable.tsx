@@ -251,7 +251,7 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
  return (
  <div
  key={category.id}
- className="bg-surface-alt rounded-lg border border-[var(--color-border)] p-3 transition-colors cursor-pointer hover:bg-surface-alt"
+ className="bg-surface-alt rounded-lg border border-[var(--border)] p-3 transition-colors cursor-pointer hover:bg-surface-alt"
  onClick={() => onRowClick(category)}
  >
  <div className="flex items-start justify-between">
@@ -325,12 +325,12 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
  return (
  <div className="w-full">
  {/* Mobile Cards View */}
- <div className="block lg:hidden space-y-2 p-4">
+ <div className="block md:hidden space-y-2 p-4">
  {sortedCategories.map(renderMobileCard)}
  </div>
 
  {/* Desktop Table View */}
- <div className="hidden lg:block">
+ <div className="hidden md:block">
  <div className="overflow-x-auto">
  <table className="w-full">
  <thead className="bg-surface-alt">
@@ -371,7 +371,7 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
  </th>
  </tr>
  </thead>
- <tbody className="bg-elevated divide-y border-[var(--color-border)]">
+ <tbody className="bg-elevated divide-y border-[var(--border)]">
  {sortedCategories.map(renderRow)}
  </tbody>
  </table>
@@ -379,7 +379,7 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
  </div>
 
  {totalPages > 1 && (
- <div className="p-4 border-t border-[var(--color-border)]">
+ <div className="p-4 border-t border-[var(--border)]">
  <Pagination
  currentPage={currentPage}
  totalPages={totalPages}

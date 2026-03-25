@@ -1,59 +1,58 @@
 import React from "react";
-import { useTheme } from "@/contexts/ThemeContext";
-import { MdLightMode, MdDarkMode } from "react-icons/md";
+import { useTheme, type Theme } from "@/contexts/ThemeContext";
+import { Sun, Moon, Monitor } from "lucide-react";
 
 interface ThemeToggleProps {
- className?: string;
- showLabel?: boolean;
- compact?: boolean;
+  className?: string;
+  showLabel?: boolean;
+  compact?: boolean;
 }
 
+const THEME_CYCLE: Theme[] = ["dark", "light", "system"];
+
+const THEME_CONFIG: Record<Theme, { icon: typeof Sun; label: string; tooltip: string }> = {
+  dark: { icon: Moon, label: "Dark", tooltip: "Dark theme" },
+  light: { icon: Sun, label: "Light", tooltip: "Light theme" },
+  system: { icon: Monitor, label: "System", tooltip: "System theme" },
+};
+
 export const ThemeToggle: React.FC<ThemeToggleProps> = ({
- className = "",
- showLabel = false,
- compact = false,
+  className = "",
+  showLabel = false,
+  compact = false,
 }) => {
- const { actualTheme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
- const getIcon = () => {
- return actualTheme === "dark" ? (
- <MdDarkMode className={compact ? "w-4 h-4" : "w-5 h-5"} />
- ) : (
- <MdLightMode className={compact ? "w-4 h-4" : "w-5 h-5"} />
- );
- };
+  const cycleTheme = () => {
+    const currentIndex = THEME_CYCLE.indexOf(theme);
+    const nextIndex = (currentIndex + 1) % THEME_CYCLE.length;
+    setTheme(THEME_CYCLE[nextIndex]);
+  };
 
- const getLabel = () => {
- return actualTheme === "dark" ? "Dark" : "Light";
- };
+  const config = THEME_CONFIG[theme];
+  const Icon = config.icon;
 
- const getTooltip = () => {
- return actualTheme === "dark"
- ? "Switch to light theme"
- : "Switch to dark mode";
- };
-
- return (
- <button
- onClick={toggleTheme}
- className={`
- flex items-center gap-2 ${compact ? "px-2 py-2" : "px-3 py-2"} rounded-lg
- bg-elevated border-[var(--color-border)] border
- hover:bg-surface-alt transition-colors
- focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-ring)]
- ${className}
- `}
- title={getTooltip()}
- aria-label={getTooltip()}
- >
- {getIcon()}
- {showLabel && (
- <span className="text-content text-sm font-medium">
- {getLabel()}
- </span>
- )}
- </button>
- );
+  return (
+    <button
+      onClick={cycleTheme}
+      className={`
+        flex items-center gap-2 rounded-[var(--radius-md)]
+        bg-transparent border border-[var(--border)]
+        text-[var(--text-secondary)]
+        hover:border-[var(--border-hover)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-raised)]
+        transition-all duration-150
+        ${compact ? "p-2" : "px-3 py-2"}
+        ${className}
+      `}
+      title={config.tooltip}
+      aria-label={config.tooltip}
+    >
+      <Icon className="w-4 h-4" strokeWidth={1.5} />
+      {showLabel && (
+        <span className="text-sm font-medium">{config.label}</span>
+      )}
+    </button>
+  );
 };
 
 export default ThemeToggle;

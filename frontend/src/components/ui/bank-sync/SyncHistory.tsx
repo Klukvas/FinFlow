@@ -10,11 +10,11 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
  const { t } = useTranslation();
 
  const colorMap: Record<string, string> = {
- completed: "bg-[var(--color-success-light)] text-success-base",
- completed_with_errors: "bg-[var(--color-warning-light)] text-warning-base",
- in_progress: "bg-[var(--color-accent-light)] text-accent-base",
- pending: "bg-[var(--color-warning-light)] text-warning-base",
- failed: "bg-[var(--color-danger-light)] text-danger-base",
+ completed: "bg-[var(--success-dim)] text-success-base",
+ completed_with_errors: "bg-[var(--warning-dim)] text-warning-base",
+ in_progress: "bg-[var(--accent-dim)] text-accent-base",
+ pending: "bg-[var(--warning-dim)] text-warning-base",
+ failed: "bg-[var(--danger-dim)] text-danger-base",
  };
 
  const labelMap: Record<string, string> = {
@@ -49,7 +49,7 @@ export const SyncHistory: React.FC<SyncHistoryProps> = ({ history }) => {
  <div className="overflow-x-auto">
  <table className="w-full text-sm">
  <thead>
- <tr className="border-[var(--color-border)] border-b">
+ <tr className="border-[var(--border)] border-b">
  <th className="text-left py-2 px-3 text-content-secondary font-medium">
  {t("bankSync.syncDate")}
  </th>
@@ -69,7 +69,7 @@ export const SyncHistory: React.FC<SyncHistoryProps> = ({ history }) => {
  </thead>
  <tbody>
  {history.map((item) => (
- <tr key={item.id} className="border-[var(--color-border)] border-b last:border-0">
+ <tr key={item.id} className="border-[var(--border)] border-b last:border-0">
  <td className="py-2 px-3 text-content">
  {item.started_at
  ? new Date(item.started_at).toLocaleString()

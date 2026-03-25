@@ -7,17 +7,18 @@ import { AuthModals } from "../auth/AuthModals";
 import { useModal } from "@/contexts/ModalContext";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  FaHome,
-  FaFolder,
-  FaDollarSign,
-  FaSignInAlt,
-  FaUserPlus,
-  FaBars,
-  FaTimes,
-  FaBookOpen,
-  FaChartLine,
-} from "react-icons/fa";
+  Home,
+  Folder,
+  DollarSign,
+  LogIn,
+  UserPlus,
+  Menu,
+  X,
+  BookOpen,
+  LineChart,
+} from "lucide-react";
 import { InstallPWAButton } from "../pwa/InstallPWAButton";
+import { FinFlowLogo, FinFlowWordmark } from "./FinFlowLogo";
 
 export const PublicHeader: React.FC = () => {
   const location = useLocation();
@@ -32,14 +33,14 @@ export const PublicHeader: React.FC = () => {
   }, [location.pathname]);
 
   const navigationItems = [
-    { path: "/", icon: FaHome, label: t("publicNav.howItWorks") },
-    { path: "/features", icon: FaFolder, label: t("publicNav.features") },
-    { path: "/pricing", icon: FaDollarSign, label: t("publicNav.pricing") },
-    { path: "/blog", icon: FaBookOpen, label: t("publicNav.blog") },
+    { path: "/", icon: Home, label: t("publicNav.howItWorks") },
+    { path: "/features", icon: Folder, label: t("publicNav.features") },
+    { path: "/pricing", icon: DollarSign, label: t("publicNav.pricing") },
+    { path: "/blog", icon: BookOpen, label: t("publicNav.blog") },
   ];
 
   const toggleMobileMenu = () => {
-    setMobileMenuOpen(!mobileMenuOpen);
+    setMobileMenuOpen((prev) => !prev);
   };
 
   const closeMobileMenu = () => {
@@ -50,7 +51,7 @@ export const PublicHeader: React.FC = () => {
     <>
       {/* Mobile Header */}
       <header
-        className="bg-elevated border-[var(--color-border)] border-b transition-colors lg:hidden"
+        className="bg-elevated border-[var(--border)] border-b transition-colors md:hidden"
         data-testid="mobile-header"
       >
         <div className="px-4 py-3">
@@ -61,15 +62,17 @@ export const PublicHeader: React.FC = () => {
               className="p-2 rounded-md hover:bg-surface-alt transition-colors"
               aria-label={t("common.openMenu")}
             >
-              <FaBars className="w-5 h-5 text-content" />
+              <Menu className="w-5 h-5 text-content" />
             </button>
 
-            <h1
-              className="text-lg font-bold text-content"
+            <Link
+              to="/"
+              className="flex items-center gap-2"
               data-testid="app-title"
             >
-              {t("header.appTitle")}
-            </h1>
+              <FinFlowLogo size={24} />
+              <FinFlowWordmark className="text-base" />
+            </Link>
 
             <div className="flex items-center space-x-2">
               <InstallPWAButton />
@@ -82,7 +85,7 @@ export const PublicHeader: React.FC = () => {
                   className="p-2 text-accent-base hover:bg-accent-base-hover rounded-lg transition-colors"
                   title={t("header.goToDashboard")}
                 >
-                  <FaChartLine className="w-4 h-4" />
+                  <LineChart className="w-4 h-4" />
                 </Link>
               ) : (
                 <button
@@ -91,7 +94,7 @@ export const PublicHeader: React.FC = () => {
                   className="p-2 text-content hover:bg-surface-alt rounded-lg transition-colors"
                   title={t("navigation.login")}
                 >
-                  <FaSignInAlt className="w-4 h-4" />
+                  <LogIn className="w-4 h-4" />
                 </button>
               )}
             </div>
@@ -101,19 +104,21 @@ export const PublicHeader: React.FC = () => {
 
       {/* Desktop Header */}
       <header
-        className="bg-elevated border-[var(--color-border)] border-b transition-colors hidden lg:block"
+        className="bg-elevated border-[var(--border)] border-b transition-colors hidden md:block"
         data-testid="desktop-header"
       >
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             {/* Logo and Page Title */}
             <div className="flex items-center space-x-6">
-              <h1
-                className="text-2xl font-bold text-content"
+              <Link
+                to="/"
+                className="flex items-center gap-2.5"
                 data-testid="app-title"
               >
-                {t("header.appTitle")}
-              </h1>
+                <FinFlowLogo size={32} />
+                <FinFlowWordmark className="text-xl" />
+              </Link>
 
               {/* Navigation Tabs */}
               <nav className="flex space-x-1" data-testid="desktop-navigation">
@@ -128,7 +133,7 @@ export const PublicHeader: React.FC = () => {
                       data-testid={`header-${item.path.split("/")[1]}-link`}
                       className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                         isActive
-                          ? "bg-[var(--color-accent-light)] text-accent-base"
+                          ? "bg-[var(--accent-dim)] text-accent-base"
                           : "text-content-secondary hover:bg-surface-alt hover:text-content"
                       }`}
                     >
@@ -155,7 +160,7 @@ export const PublicHeader: React.FC = () => {
                   data-testid="go-to-dashboard"
                   className="flex items-center px-4 py-2 text-sm bg-accent-base text-content-inverse hover:bg-accent-base-hover rounded-lg transition-colors"
                 >
-                  <FaChartLine className="w-4 h-4 mr-2" />
+                  <LineChart className="w-4 h-4 mr-2" />
                   {t("header.goToDashboard")}
                 </Link>
               ) : (
@@ -166,7 +171,7 @@ export const PublicHeader: React.FC = () => {
                     className="flex items-center px-4 py-2 text-sm text-content hover:bg-surface-alt rounded-lg transition-colors"
                     title={t("navigation.login")}
                   >
-                    <FaSignInAlt className="w-4 h-4 mr-2" />
+                    <LogIn className="w-4 h-4 mr-2" />
                     {t("navigation.login")}
                   </button>
 
@@ -176,7 +181,7 @@ export const PublicHeader: React.FC = () => {
                     className="flex items-center px-4 py-2 text-sm bg-accent-base text-content-inverse hover:bg-accent-base-hover rounded-lg transition-colors"
                     title={t("navigation.register")}
                   >
-                    <FaUserPlus className="w-4 h-4 mr-2" />
+                    <UserPlus className="w-4 h-4 mr-2" />
                     {t("navigation.register")}
                   </button>
                 </>
@@ -200,14 +205,14 @@ export const PublicHeader: React.FC = () => {
         className={`mobile-menu bg-elevated theme-shadow ${mobileMenuOpen ? "open" : ""}`}
         data-testid="mobile-menu"
       >
-        <div className="flex items-center justify-between p-4 border-[var(--color-border)] border-b">
+        <div className="flex items-center justify-between p-4 border-[var(--border)] border-b">
           <h2 className="text-lg font-bold text-content">{t("common.menu")}</h2>
           <button
             onClick={closeMobileMenu}
             data-testid="mobile-menu-close"
             className="p-2 rounded-md hover:bg-surface-alt transition-colors"
           >
-            <FaTimes className="w-5 h-5 text-content" />
+            <X className="w-5 h-5 text-content" />
           </button>
         </div>
 
@@ -224,7 +229,7 @@ export const PublicHeader: React.FC = () => {
                 data-testid={`mobile-${item.path.split("/")[1]}-link`}
                 className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
                   isActive
-                    ? "bg-[var(--color-accent-light)] text-accent-base font-medium"
+                    ? "bg-[var(--accent-dim)] text-accent-base font-medium"
                     : "text-content-secondary hover:bg-surface-alt hover:text-content"
                 }`}
               >
@@ -236,7 +241,7 @@ export const PublicHeader: React.FC = () => {
         </nav>
 
         <div
-          className="p-4 border-[var(--color-border)] border-t space-y-2"
+          className="p-4 border-[var(--border)] border-t space-y-2"
           data-testid="mobile-auth-section"
         >
           {/* Language Selector and Theme Toggle */}
@@ -252,7 +257,7 @@ export const PublicHeader: React.FC = () => {
               data-testid="mobile-go-to-dashboard"
               className="w-full flex items-center justify-center px-4 py-3 text-sm bg-accent-base text-content-inverse hover:bg-accent-base-hover rounded-lg transition-colors"
             >
-              <FaChartLine className="w-4 h-4 mr-2" />
+              <LineChart className="w-4 h-4 mr-2" />
               {t("header.goToDashboard")}
             </Link>
           ) : (
@@ -263,9 +268,9 @@ export const PublicHeader: React.FC = () => {
                   closeMobileMenu();
                 }}
                 data-testid="mobile-login-button"
-                className="w-full flex items-center justify-center px-4 py-3 text-sm text-content hover:bg-surface-alt rounded-lg transition-colors border-[var(--color-border)] border"
+                className="w-full flex items-center justify-center px-4 py-3 text-sm text-content hover:bg-surface-alt rounded-lg transition-colors border-[var(--border)] border"
               >
-                <FaSignInAlt className="w-4 h-4 mr-2" />
+                <LogIn className="w-4 h-4 mr-2" />
                 {t("navigation.login")}
               </button>
               <button
@@ -276,7 +281,7 @@ export const PublicHeader: React.FC = () => {
                 data-testid="mobile-register-button"
                 className="w-full flex items-center justify-center px-4 py-3 text-sm bg-accent-base text-content-inverse hover:bg-accent-base-hover rounded-lg transition-colors"
               >
-                <FaUserPlus className="w-4 h-4 mr-2" />
+                <UserPlus className="w-4 h-4 mr-2" />
                 {t("navigation.register")}
               </button>
             </>

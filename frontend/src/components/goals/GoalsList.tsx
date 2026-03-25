@@ -68,7 +68,7 @@ export const GoalsList = React.memo<GoalsListProps>(({
  <button
  onClick={() => onPageChange(currentPage - 1)}
  disabled={currentPage === 1}
- className="px-3 py-2 bg-elevated border border-[var(--color-border)] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-alt transition-colors"
+ className="px-3 py-2 bg-elevated border border-[var(--border)] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-alt transition-colors"
  data-testid="goals-prev-page"
  >
  {t('goalsPage.pagination.previous')}
@@ -81,7 +81,7 @@ export const GoalsList = React.memo<GoalsListProps>(({
  <button
  onClick={() => onPageChange(currentPage + 1)}
  disabled={currentPage === totalPages}
- className="px-3 py-2 bg-elevated border border-[var(--color-border)] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-alt transition-colors"
+ className="px-3 py-2 bg-elevated border border-[var(--border)] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-alt transition-colors"
  data-testid="goals-next-page"
  >
  {t('goalsPage.pagination.next')}

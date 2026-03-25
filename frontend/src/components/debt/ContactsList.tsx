@@ -21,7 +21,7 @@ export const ContactsList: React.FC<ContactsListProps> = ({
 
  if (contacts.length === 0) {
  return (
- <Card className="bg-elevated border-[var(--color-border)]">
+ <Card className="bg-elevated border-[var(--border)]">
  <CardContent className="p-12 text-center">
  <Users className="w-12 h-12 mx-auto mb-4 text-content-tertiary" />
  <h3 className="text-lg font-medium mb-2 text-content">

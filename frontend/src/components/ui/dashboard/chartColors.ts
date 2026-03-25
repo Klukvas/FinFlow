@@ -1,18 +1,20 @@
 export const CHART_COLORS = [
-  "#3B82F6",
-  "#6366F1",
-  "#8B5CF6",
-  "#06B6D4",
-  "#10B981",
-  "#F59E0B",
-  "#EF4444",
-  "#64748B",
+  "#22D9A0", // accent/emerald
+  "#60A5FA", // info/blue
+  "#A78BFA", // purple
+  "#F9C74F", // warning/yellow
+  "#F87171", // danger/red
+  "#06B6D4", // cyan
+  "#8B5CF6", // violet
+  "#64748B", // slate
 ];
 
-export const CHART_TOOLTIP_STYLE: React.CSSProperties = {
-  backgroundColor: "var(--color-bg-elevated)",
-  border: "1px solid var(--color-border)",
-  borderRadius: "8px",
-  color: "var(--color-text)",
+export const CHART_TOOLTIP_STYLE: import("react").CSSProperties = {
+  backgroundColor: "var(--bg-surface)",
+  border: "1px solid var(--border)",
+  borderRadius: "var(--radius-md)",
+  color: "var(--text-primary)",
   fontSize: "13px",
+  fontFamily: "'DM Sans', sans-serif",
+  boxShadow: "var(--shadow-md)",
 };

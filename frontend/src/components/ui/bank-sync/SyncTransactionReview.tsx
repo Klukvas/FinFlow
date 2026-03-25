@@ -23,7 +23,7 @@ interface EditableTransaction extends SyncPreviewTransaction {
 }
 
 const TransactionRowSkeleton: React.FC = () => (
- <div className="border-[var(--color-border)] border rounded-lg p-4">
+ <div className="border-[var(--border)] border rounded-lg p-4">
  <div className="flex items-start gap-3">
  <Skeleton
  variant="rectangular"
@@ -200,7 +200,7 @@ export const SyncTransactionReview: React.FC<SyncTransactionReviewProps> = ({
  <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 overflow-y-auto p-2 sm:p-4">
  <div className="bg-elevated rounded-xl theme-shadow-hover w-full max-w-6xl max-h-[95vh] overflow-hidden flex flex-col mx-auto">
  {/* Header */}
- <div className="flex justify-between items-center p-4 sm:p-6 border-[var(--color-border)] border-b bg-surface-alt">
+ <div className="flex justify-between items-center p-4 sm:p-6 border-[var(--border)] border-b bg-surface-alt">
  <div className="flex-1 min-w-0">
  <h2 className="text-xl sm:text-2xl font-bold text-content">
  {t("bankSync.review.title")}
@@ -234,7 +234,7 @@ export const SyncTransactionReview: React.FC<SyncTransactionReviewProps> = ({
  /* Skeleton loading state */
  <>
  {/* Stats skeleton */}
- <div className="p-4 sm:p-6 bg-surface-alt border-[var(--color-border)] border-b">
+ <div className="p-4 sm:p-6 bg-surface-alt border-[var(--border)] border-b">
  <div className="flex flex-wrap items-center gap-4 sm:gap-6">
  <Skeleton variant="text" className="h-5 w-20" />
  <Skeleton variant="text" className="h-5 w-24" />
@@ -255,7 +255,7 @@ export const SyncTransactionReview: React.FC<SyncTransactionReviewProps> = ({
  </div>
 
  {/* Footer skeleton */}
- <div className="flex justify-between items-center p-4 sm:p-6 border-[var(--color-border)] border-t bg-surface-alt">
+ <div className="flex justify-between items-center p-4 sm:p-6 border-[var(--border)] border-t bg-surface-alt">
  <Skeleton variant="text" className="h-5 w-32" />
  <div className="flex gap-3">
  <Skeleton
@@ -278,7 +278,7 @@ export const SyncTransactionReview: React.FC<SyncTransactionReviewProps> = ({
  {limitWarnings.map((warning, idx) => (
  <div
  key={idx}
- className="p-3 bg-[var(--color-warning-light)] border-l-4 border-warning-base rounded-r-lg"
+ className="p-3 bg-[var(--warning-dim)] border-l-4 border-warning-base rounded-r-lg"
  >
  <p className="text-sm text-warning-base">{warning}</p>
  </div>
@@ -287,7 +287,7 @@ export const SyncTransactionReview: React.FC<SyncTransactionReviewProps> = ({
  )}
 
  {/* Stats bar */}
- <div className="p-4 sm:p-6 bg-surface-alt border-[var(--color-border)] border-b">
+ <div className="p-4 sm:p-6 bg-surface-alt border-[var(--border)] border-b">
  <div className="flex flex-wrap items-center gap-4 sm:gap-6">
  <div className="flex items-center space-x-2">
  <div className="w-3 h-3 bg-accent-base rounded-full" />
@@ -324,7 +324,7 @@ export const SyncTransactionReview: React.FC<SyncTransactionReviewProps> = ({
 
  {/* Quota info */}
  {(expenseLimit !== null || incomeLimit !== null) && (
- <div className="flex flex-wrap gap-4 mt-3 pt-3 border-t border-[var(--color-border)]">
+ <div className="flex flex-wrap gap-4 mt-3 pt-3 border-t border-[var(--border)]">
  {expenseLimit !== null && (
  <span className="text-xs text-content-secondary">
  {t("bankSync.review.expenseQuota", {
@@ -377,7 +377,7 @@ export const SyncTransactionReview: React.FC<SyncTransactionReviewProps> = ({
  {editableTransactions.map((txn, index) => (
  <div
  key={txn.external_id}
- className={`border-[var(--color-border)] border rounded-lg p-4 transition-colors ${
+ className={`border-[var(--border)] border rounded-lg p-4 transition-colors ${
  txn.included
  ? "bg-elevated"
  : "opacity-50 bg-surface-alt"
@@ -394,7 +394,7 @@ export const SyncTransactionReview: React.FC<SyncTransactionReviewProps> = ({
  included: !txn.included,
  })
  }
- className="w-4 h-4 text-accent-base rounded focus:ring-[var(--color-ring)]"
+ className="w-4 h-4 text-accent-base rounded focus:ring-[var(--accent)]"
  />
  </label>
 
@@ -405,8 +405,8 @@ export const SyncTransactionReview: React.FC<SyncTransactionReviewProps> = ({
  <span
  className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
  txn.type === "income"
- ? "bg-[var(--color-success-light)] text-success-base"
- : "bg-[var(--color-danger-light)] text-danger-base"
+ ? "bg-[var(--success-dim)] text-success-base"
+ : "bg-[var(--danger-dim)] text-danger-base"
  }`}
  >
  {txn.type === "income" ? "+" : "-"}{" "}
@@ -447,7 +447,7 @@ export const SyncTransactionReview: React.FC<SyncTransactionReviewProps> = ({
  })
  }
  disabled={!txn.included}
- className="w-full px-2 py-1.5 text-sm border-[var(--color-border)] border rounded-md bg-elevated text-content disabled:opacity-50"
+ className="w-full px-2 py-1.5 text-sm border-[var(--border)] border rounded-md bg-elevated text-content disabled:opacity-50"
  />
  </div>
 
@@ -471,7 +471,7 @@ export const SyncTransactionReview: React.FC<SyncTransactionReviewProps> = ({
  })
  }
  disabled={!txn.included}
- className="w-full px-2 py-1.5 text-sm border-[var(--color-border)] border rounded-md bg-elevated text-content disabled:opacity-50"
+ className="w-full px-2 py-1.5 text-sm border-[var(--border)] border rounded-md bg-elevated text-content disabled:opacity-50"
  >
  <option value="">
  {txn.category_name
@@ -494,7 +494,7 @@ export const SyncTransactionReview: React.FC<SyncTransactionReviewProps> = ({
  </div>
 
  {/* Footer */}
- <div className="flex justify-between items-center p-4 sm:p-6 border-[var(--color-border)] border-t bg-surface-alt">
+ <div className="flex justify-between items-center p-4 sm:p-6 border-[var(--border)] border-t bg-surface-alt">
  <div className="text-sm text-content-secondary">
  {t("bankSync.found")}: {totalFound} |{" "}
  {t("bankSync.review.selected")}: {stats.selected}
@@ -503,7 +503,7 @@ export const SyncTransactionReview: React.FC<SyncTransactionReviewProps> = ({
  <button
  onClick={onClose}
  disabled={isConfirming}
- className="px-4 py-2 border-[var(--color-border)] border text-content rounded-lg hover:bg-surface-alt transition-colors font-medium text-sm"
+ className="px-4 py-2 border-[var(--border)] border text-content rounded-lg hover:bg-surface-alt transition-colors font-medium text-sm"
  >
  {t("bankSync.review.cancel")}
  </button>

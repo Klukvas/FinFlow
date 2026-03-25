@@ -1,17 +1,12 @@
-import React from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  cn,
-} from "@klukvas/flux-b2c-ui";
-import { FaTimes } from "react-icons/fa";
+import React, { useEffect, useCallback, useRef, useId } from "react";
+import { cn } from "@/utils/cn";
+import { X } from "lucide-react";
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
+  subtitle?: string;
   children: React.ReactNode;
   size?: "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "5xl" | "full";
   showCloseButton?: boolean;
@@ -36,65 +31,137 @@ export const Modal = React.memo<ModalProps>(
     isOpen,
     onClose,
     title,
+    subtitle,
     children,
     size = "md",
     showCloseButton = true,
     showHeader = true,
     "data-testid": testId,
-  }) => (
-    <Dialog
-      open={isOpen}
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
-    >
-      <DialogContent
-        className={cn(
-          "rounded-2xl border-[var(--color-border)]",
-          sizeClasses[size],
-        )}
-        data-testid={testId || "modal"}
+  }) => {
+    const modalRef = useRef<HTMLDivElement>(null);
+    const titleId = useId();
+
+    const handleKeyDown = useCallback(
+      (e: KeyboardEvent) => {
+        if (e.key === "Escape") onClose();
+      },
+      [onClose],
+    );
+
+    useEffect(() => {
+      if (!isOpen) return;
+      document.addEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "hidden";
+
+      // Focus trap: move focus into modal on open
+      const previouslyFocused = document.activeElement as HTMLElement | null;
+      requestAnimationFrame(() => {
+        modalRef.current?.focus();
+      });
+
+      return () => {
+        document.removeEventListener("keydown", handleKeyDown);
+        document.body.style.overflow = "";
+        // Restore focus on close
+        previouslyFocused?.focus();
+      };
+    }, [isOpen, handleKeyDown]);
+
+    if (!isOpen) return null;
+
+    return (
+      <div
+        className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4"
+        style={{
+          backdropFilter: "blur(4px)",
+          WebkitBackdropFilter: "blur(4px)",
+        }}
       >
-        {showHeader && (
-          <DialogHeader className="flex-row items-center justify-between pb-0">
-            <DialogTitle
-              className="truncate pr-2 text-xl"
-              data-testid={testId ? `${testId}-title` : "modal-title"}
+        {/* Overlay */}
+        <div
+          className="absolute inset-0 bg-[var(--bg-overlay)] animate-[fadeIn_0.15s_ease]"
+          onClick={onClose}
+          data-testid="modal-overlay"
+        />
+
+        {/* Modal body */}
+        <div
+          ref={modalRef}
+          tabIndex={-1}
+          className={cn(
+            "relative w-full bg-[var(--bg-surface)] border border-[var(--border)] rounded-[var(--radius-xl)] p-7 animate-[slideUp_0.2s_ease] outline-none",
+            "shadow-[var(--shadow-modal)]",
+            sizeClasses[size],
+          )}
+          data-testid={testId || "modal"}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={showHeader ? titleId : undefined}
+        >
+          {/* Close button */}
+          {showCloseButton && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="absolute top-5 right-5 w-7 h-7 rounded-[var(--radius-sm)] bg-transparent border-0 text-[var(--text-tertiary)] cursor-pointer flex items-center justify-center transition-all duration-100 hover:bg-[var(--bg-raised)] hover:text-[var(--text-primary)] min-h-[44px] min-w-[44px] touch-manipulation"
+              aria-label="Close"
+              data-testid="modal-close-button"
             >
-              {title}
-            </DialogTitle>
-            {showCloseButton && (
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-lg p-2 text-[var(--color-text-tertiary)] transition-colors hover:bg-[var(--color-surface-alt)] hover:text-[var(--color-text-secondary)] touch-manipulation"
-                aria-label="Close"
-                data-testid="modal-close-button"
+              <X className="w-4 h-4" />
+            </button>
+          )}
+
+          {/* Header */}
+          {showHeader && (
+            <div className="mb-6">
+              <h2
+                id={titleId}
+                className="text-lg font-bold tracking-[-0.02em] text-[var(--text-primary)] pr-8"
+                data-testid={testId ? `${testId}-title` : "modal-title"}
               >
-                <FaTimes className="h-4 w-4" />
-              </button>
-            )}
-          </DialogHeader>
-        )}
+                {title}
+              </h2>
+              {subtitle && (
+                <p className="text-[13px] text-[var(--text-secondary)] mt-1">
+                  {subtitle}
+                </p>
+              )}
+            </div>
+          )}
 
-        {!showHeader && showCloseButton && (
-          <button
-            type="button"
-            onClick={onClose}
-            className="absolute right-4 top-4 z-10 flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg p-2 text-[var(--color-text-tertiary)] transition-colors hover:bg-[var(--color-surface-alt)] hover:text-[var(--color-text-secondary)] touch-manipulation"
-            aria-label="Close"
-            data-testid="modal-close-button"
-          >
-            <FaTimes className="w-4 h-4" />
-          </button>
-        )}
-
-        <div data-testid={testId ? `${testId}-content` : "modal-content"}>
-          {children}
+          {/* Content */}
+          <div data-testid={testId ? `${testId}-content` : "modal-content"}>
+            {children}
+          </div>
         </div>
-      </DialogContent>
-    </Dialog>
-  ),
+      </div>
+    );
+  },
 );
 
 Modal.displayName = "Modal";
+
+/* Utility sub-components for consistent modal layouts */
+interface ModalSectionProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export const ModalBody: React.FC<ModalSectionProps> = ({
+  children,
+  className,
+}) => <div className={cn("flex flex-col gap-4", className)}>{children}</div>;
+
+export const ModalFooter: React.FC<ModalSectionProps> = ({
+  children,
+  className,
+}) => (
+  <div
+    className={cn(
+      "flex items-center justify-end gap-2.5 mt-6 pt-5 border-t border-[var(--border)]",
+      className,
+    )}
+  >
+    {children}
+  </div>
+);

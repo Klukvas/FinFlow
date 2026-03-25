@@ -24,9 +24,9 @@ export const Input: React.FC<InputProps> = ({
  lg: "h-14 px-4 py-4 text-lg",
  };
 
- const baseClasses = `w-full ${sizeClasses[size]} bg-surface border border-[var(--color-border)] rounded-lg text-content placeholder:text-content-tertiary hover:border-[var(--color-border-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] focus-visible:ring-offset-2 transition-colors`;
+ const baseClasses = `w-full ${sizeClasses[size]} bg-surface border border-[var(--border)] rounded-lg text-content placeholder:text-content-tertiary hover:border-[var(--border-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 transition-colors`;
  const errorClasses = error
- ? "border-danger-base/70 focus-visible:border-danger-base/70 focus-visible:ring-[var(--color-danger)]/40"
+ ? "border-danger-base/70 focus-visible:border-danger-base/70 focus-visible:ring-[var(--danger)]/40"
  : "";
  const iconClasses = icon ? "pl-10" : "";
 

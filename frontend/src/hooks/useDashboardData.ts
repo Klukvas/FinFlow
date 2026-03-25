@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useApiClients } from "@/hooks/useApiClients";
 import { logger } from "@/utils/logger";
 import {
@@ -31,6 +32,7 @@ const formatDate = (d: Date): string => d.toISOString().split("T")[0] ?? "";
 
 export const useDashboardData = (periodMonths: number = 1): DashboardData => {
   const { user } = useAuth();
+  const { currentWorkspaceId } = useWorkspace();
   const { expense, income, account, debt, recurring, subscription } =
     useApiClients();
 
@@ -59,7 +61,7 @@ export const useDashboardData = (periodMonths: number = 1): DashboardData => {
   }, [periodMonths]);
 
   const fetchAll = useCallback(async () => {
-    if (!user?.id) return;
+    if (!user?.id || !currentWorkspaceId) return;
 
     setLoading(true);
     setError(null);
@@ -75,12 +77,36 @@ export const useDashboardData = (periodMonths: number = 1): DashboardData => {
           subscription.getUserSubscription(user.id),
         ]);
 
-      if (!("error" in expRes)) setExpenses(expRes);
-      if (!("error" in incRes)) setIncomes(incRes);
-      if (!("error" in accRes)) setAccounts(accRes);
-      if (!("error" in debtRes)) setDebtSummary(debtRes);
-      if (!("error" in recRes)) setRecurringStats(recRes);
-      if (!("error" in recPayRes)) setRecurringPayments(recPayRes.items);
+      if (!("error" in expRes)) {
+        setExpenses(expRes);
+      } else {
+        logger.warn("Failed to fetch expenses:", expRes.error);
+      }
+      if (!("error" in incRes)) {
+        setIncomes(incRes);
+      } else {
+        logger.warn("Failed to fetch incomes:", incRes.error);
+      }
+      if (!("error" in accRes)) {
+        setAccounts(accRes);
+      } else {
+        logger.warn("Failed to fetch accounts:", accRes.error);
+      }
+      if (!("error" in debtRes)) {
+        setDebtSummary(debtRes);
+      } else {
+        logger.warn("Failed to fetch debt summary:", debtRes.error);
+      }
+      if (!("error" in recRes)) {
+        setRecurringStats(recRes);
+      } else {
+        logger.warn("Failed to fetch recurring stats:", recRes.error);
+      }
+      if (!("error" in recPayRes)) {
+        setRecurringPayments(recPayRes.items);
+      } else {
+        logger.warn("Failed to fetch recurring payments:", recPayRes.error);
+      }
       if ("error" in subRes) {
         logger.warn("Subscription check failed, defaulting to basic plan");
         setPlanCode("basic");
@@ -97,6 +123,7 @@ export const useDashboardData = (periodMonths: number = 1): DashboardData => {
     }
   }, [
     user?.id,
+    currentWorkspaceId,
     expense,
     income,
     account,

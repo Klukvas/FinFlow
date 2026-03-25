@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FaDownload } from "react-icons/fa";
+import { Download } from "lucide-react";
 import { usePWAInstallContext } from "@/contexts/PWAInstallContext";
 import { InstallPWAModal } from "./InstallPWAModal";
 
@@ -29,7 +29,7 @@ export const InstallPWAButton: React.FC = () => {
         aria-label={t("pwa.headerButton")}
         className="flex items-center px-3 py-2 text-sm text-accent-base hover:bg-surface-alt rounded-lg transition-colors"
       >
-        <FaDownload className="w-4 h-4 mr-1.5" />
+        <Download className="w-4 h-4 mr-1.5" />
         <span className="hidden sm:inline">{t("pwa.headerButton")}</span>
       </button>
 

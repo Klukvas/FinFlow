@@ -11,7 +11,11 @@ export default defineConfig({
     tsconfigPaths(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.png", "apple-touch-icon-180x180.png"],
+      includeAssets: [
+        "favicon.svg",
+        "favicon.png",
+        "apple-touch-icon-180x180.png",
+      ],
       manifest: {
         name: "FinFlow - Smart Finance Management",
         short_name: "FinFlow",
@@ -19,8 +23,8 @@ export default defineConfig({
           "Smart personal finance management with AI-powered bank statement parsing and automatic categorization",
         start_url: "/",
         display: "standalone",
-        background_color: "#ffffff",
-        theme_color: "#2563eb",
+        background_color: "#080C12",
+        theme_color: "#22D9A0",
         categories: ["finance", "productivity"],
         lang: "ru",
         dir: "ltr",
@@ -116,7 +120,6 @@ export default defineConfig({
         manualChunks: {
           vendor: ["react", "react-dom"],
           router: ["react-router-dom"],
-          icons: ["react-icons"],
           seo: ["react-helmet-async"],
         },
       },

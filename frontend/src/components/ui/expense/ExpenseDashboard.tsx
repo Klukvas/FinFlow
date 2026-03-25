@@ -26,7 +26,7 @@ export const ExpenseDashboard: React.FC<ExpenseDashboardProps> = ({
  {Array.from({ length: 3 }).map((_, i) => (
  <div
  key={i}
- className="bg-elevated rounded-lg border-[var(--color-border)] border p-6 space-y-4"
+ className="bg-elevated rounded-lg border-[var(--border)] border p-6 space-y-4"
  >
  <Skeleton className="h-5 w-32" />
  <Skeleton className="h-48 w-full rounded-lg" />

@@ -143,7 +143,7 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
  parseInt(e.target.value),
  )
  }
- className="w-full px-3 py-2 border-[var(--color-border)] border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)] bg-surface text-content"
+ className="w-full px-3 py-2 border-[var(--border)] border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-surface text-content"
  >
  <option value={0}>{t("common.weekDays.sunday")}</option>
  <option value={1}>{t("common.weekDays.monday")}</option>
@@ -172,7 +172,7 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
  parseInt(e.target.value),
  )
  }
- className="w-full px-3 py-2 border-[var(--color-border)] border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)] bg-surface text-content"
+ className="w-full px-3 py-2 border-[var(--border)] border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-surface text-content"
  />
  </div>
  );
@@ -188,7 +188,7 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
  onChange={(e) =>
  handleScheduleConfigChange("month", parseInt(e.target.value))
  }
- className="w-full px-3 py-2 border-[var(--color-border)] border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)] bg-surface text-content"
+ className="w-full px-3 py-2 border-[var(--border)] border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-surface text-content"
  >
  {Array.from({ length: 12 }, (_, i) => (
  <option key={i + 1} value={i + 1}>
@@ -209,7 +209,7 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
  onChange={(e) =>
  handleScheduleConfigChange("day", parseInt(e.target.value))
  }
- className="w-full px-3 py-2 border-[var(--color-border)] border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)] bg-surface text-content"
+ className="w-full px-3 py-2 border-[var(--border)] border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-surface text-content"
  />
  </div>
  </div>
@@ -271,7 +271,7 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
  onChange={(e) =>
  setFormData((prev) => ({ ...prev, name: e.target.value }))
  }
- className="w-full px-3 py-2 border-[var(--color-border)] border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)] bg-surface text-content"
+ className="w-full px-3 py-2 border-[var(--border)] border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-surface text-content"
  required
  />
  </div>
@@ -285,7 +285,7 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
  onChange={(e) =>
  setFormData((prev) => ({ ...prev, description: e.target.value }))
  }
- className="w-full px-3 py-2 border-[var(--color-border)] border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)] bg-surface text-content"
+ className="w-full px-3 py-2 border-[var(--border)] border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-surface text-content"
  rows={3}
  />
  </div>
@@ -338,7 +338,7 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
  category_id: 0,
  }));
  }}
- className="w-full px-3 py-2 border-[var(--color-border)] border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)] bg-surface text-content"
+ className="w-full px-3 py-2 border-[var(--border)] border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-surface text-content"
  >
  <option value="EXPENSE">
  {t("recurringPage.createModal.expense")}
@@ -383,7 +383,7 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
  schedule_config: defaultConfig,
  }));
  }}
- className="w-full px-3 py-2 border-[var(--color-border)] border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)] bg-surface text-content"
+ className="w-full px-3 py-2 border-[var(--border)] border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-surface text-content"
  >
  <option value="daily">
  {t("recurringPage.createModal.daily")}
@@ -412,7 +412,7 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
  onChange={(e) =>
  setFormData((prev) => ({ ...prev, start_date: e.target.value }))
  }
- className="w-full px-3 py-2 border-[var(--color-border)] border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)] bg-surface text-content"
+ className="w-full px-3 py-2 border-[var(--border)] border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-surface text-content"
  required
  />
  </div>
@@ -433,7 +433,7 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
  }) as CreateRecurringPaymentRequest,
  )
  }
- className="w-full px-3 py-2 border-[var(--color-border)] border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)] bg-surface text-content"
+ className="w-full px-3 py-2 border-[var(--border)] border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-surface text-content"
  />
  </div>
 
@@ -472,7 +472,7 @@ export const CreateRecurringPayment: React.FC<CreateRecurringPaymentProps> = ({
  }
  }}
  >
- <div className="bg-elevated rounded-lg p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto border-[var(--color-border)] border">
+ <div className="bg-elevated rounded-lg p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto border-[var(--border)] border">
  {formContent}
  </div>
  </div>

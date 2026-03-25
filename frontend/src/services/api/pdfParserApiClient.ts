@@ -1,84 +1,23 @@
-import { AuthHttpClient, ApiError } from './AuthHttpClient';
-import { config } from '@/config/env';
+import { AuthHttpClient, ApiError } from "./AuthHttpClient";
+import { config } from "@/config/env";
 
-export interface ParsedTransaction {
-  amount: number;
-  description: string;
-  transaction_date: string;
-  transaction_type: 'income' | 'expense';
-  bank_type: string;
-  raw_text?: string;
-  confidence_score: number;
-  mcc_code?: number;
-  mcc_category_name?: string;
-  mcc_category_translation?: string;
-  category_exists: boolean;
-  category_id?: number;
-}
+export type {
+  ParsedTransaction,
+  PDFLimitInfo,
+  PDFParseResponse,
+  TransactionValidation,
+  BatchCreateRequest,
+  BatchCreateResponse,
+  LanguageInfo,
+  BankLanguagesResponse,
+  AllLanguagesResponse,
+} from "@/types/pdfParser";
 
-export interface PDFLimitInfo {
-  uploads_per_month: number | null; // null = unlimited
-  records_per_upload: number | null; // null = unlimited
-  uploads_used_this_month: number;
-  uploads_remaining: number | null; // null = unlimited
-  plan_code: string;
-}
-
-export interface PDFParseResponse {
-  transactions: ParsedTransaction[];
-  bank_detected: string;
-  total_transactions: number;
-  successful_parses: number;
-  failed_parses: number;
-  parsing_metadata: {
-    file_size: number;
-    parsing_method: string;
-    confidence_threshold: number;
-  };
-  limit_info?: PDFLimitInfo;
-}
-
-export interface TransactionValidation {
-  transaction_id: string;
-  amount: number;
-  description: string;
-  transaction_date: string;
-  transaction_type: 'income' | 'expense';
-  category_id?: number;
-  is_valid: boolean;
-}
-
-export interface BatchCreateRequest {
-  transactions: TransactionValidation[];
-  user_id: number;
-}
-
-export interface BatchCreateResponse {
-  created_income_count: number;
-  created_expense_count: number;
-  failed_transactions: any[];
-  success: boolean;
-}
-
-export interface LanguageInfo {
-  code: string;
-  name: string;
-  headers_count: number;
-}
-
-export interface BankLanguagesResponse {
-  bank: string;
-  available_languages: LanguageInfo[];
-  total_languages: number;
-}
-
-export interface AllLanguagesResponse {
-  banks: Record<string, {
-    available_languages: LanguageInfo[];
-    total_languages: number;
-  }>;
-  total_banks: number;
-}
+import type {
+  PDFParseResponse,
+  BankLanguagesResponse,
+  AllLanguagesResponse,
+} from "@/types/pdfParser";
 
 export type ApiResponse<T> = T | ApiError;
 
@@ -87,66 +26,83 @@ export class PDFParserApiClient {
 
   constructor(
     getToken: () => string | null,
-    refreshToken: () => Promise<boolean>
+    refreshToken: () => Promise<boolean>,
   ) {
     this.httpClient = new AuthHttpClient(
       `${config.api.pdfParserServiceUrl}/pdf`,
       getToken,
-      refreshToken
+      refreshToken,
     );
   }
 
   async parsePDF(
     file: File,
     bankType?: string,
-    language?: string
+    language?: string,
   ): Promise<ApiResponse<PDFParseResponse>> {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append("file", file);
     if (bankType) {
-      formData.append('bank_type', bankType);
+      formData.append("bank_type", bankType);
     }
     if (language) {
-      formData.append('language', language);
+      formData.append("language", language);
     }
 
-    return this.httpClient.post<PDFParseResponse>('/parse', formData);
+    return this.httpClient.post<PDFParseResponse>("/parse", formData);
   }
 
-  async getSupportedBanks(): Promise<ApiResponse<{ supported_banks: string[]; total_count: number }>> {
-    return this.httpClient.get<{ supported_banks: string[]; total_count: number }>('/supported-banks');
+  async getSupportedBanks(): Promise<
+    ApiResponse<{ supported_banks: string[]; total_count: number }>
+  > {
+    return this.httpClient.get<{
+      supported_banks: string[];
+      total_count: number;
+    }>("/supported-banks");
   }
 
-  async getBankLanguages(bankName: string): Promise<ApiResponse<BankLanguagesResponse>> {
+  async getBankLanguages(
+    bankName: string,
+  ): Promise<ApiResponse<BankLanguagesResponse>> {
     return this.httpClient.get<BankLanguagesResponse>(`/languages/${bankName}`);
   }
 
   async getAllLanguages(): Promise<ApiResponse<AllLanguagesResponse>> {
-    return this.httpClient.get<AllLanguagesResponse>('/languages');
+    return this.httpClient.get<AllLanguagesResponse>("/languages");
   }
 
-  async healthCheck(): Promise<ApiResponse<{ status: string; service: string; supported_banks: number }>> {
-    return this.httpClient.get<{ status: string; service: string; supported_banks: number }>('/health');
+  async healthCheck(): Promise<
+    ApiResponse<{ status: string; service: string; supported_banks: number }>
+  > {
+    return this.httpClient.get<{
+      status: string;
+      service: string;
+      supported_banks: number;
+    }>("/health");
   }
 
   // Utility methods
-  async getBankInfo(bankName: string): Promise<ApiResponse<BankLanguagesResponse & { supported_banks: string[] }>> {
+  async getBankInfo(
+    bankName: string,
+  ): Promise<
+    ApiResponse<BankLanguagesResponse & { supported_banks: string[] }>
+  > {
     const [languagesResponse, banksResponse] = await Promise.all([
       this.getBankLanguages(bankName),
-      this.getSupportedBanks()
+      this.getSupportedBanks(),
     ]);
 
-    if ('error' in languagesResponse) {
+    if ("error" in languagesResponse) {
       return languagesResponse;
     }
 
-    if ('error' in banksResponse) {
+    if ("error" in banksResponse) {
       return banksResponse;
     }
 
     return {
       ...languagesResponse,
-      supported_banks: banksResponse.supported_banks
+      supported_banks: banksResponse.supported_banks,
     };
   }
 
@@ -154,11 +110,11 @@ export class PDFParserApiClient {
   async isBankSupported(bankName: string): Promise<boolean> {
     try {
       const response = await this.getSupportedBanks();
-      if ('error' in response) {
+      if ("error" in response) {
         return false;
       }
       return response.supported_banks
-        .map(bank => bank.toLowerCase())
+        .map((bank) => bank.toLowerCase())
         .includes(bankName.toLowerCase());
     } catch {
       return false;

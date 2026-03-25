@@ -6,127 +6,127 @@ import { ExpenseResponse } from "../../../types/expense";
 import { useCurrencyConversion } from "../../../hooks/useCurrencyConversion";
 
 interface ExpenseSummaryStripProps {
- expenses: ExpenseResponse[];
- loading: boolean;
+  expenses: ExpenseResponse[];
+  loading: boolean;
 }
 
 export const ExpenseSummaryStrip: React.FC<ExpenseSummaryStripProps> = ({
- expenses,
- loading,
+  expenses,
+  loading,
 }) => {
- const { t } = useTranslation();
- const { formatCurrency, convertToUserCurrency, userCurrency } =
- useCurrencyConversion();
+  const { t } = useTranslation();
+  const { formatCurrency, convertToUserCurrency, userCurrency } =
+    useCurrencyConversion();
 
- const stats = useMemo(() => {
- const now = new Date();
- const thisMonth = now.getMonth();
- const thisYear = now.getFullYear();
- const prevMonth = thisMonth === 0 ? 11 : thisMonth - 1;
- const prevYear = thisMonth === 0 ? thisYear - 1 : thisYear;
+  const stats = useMemo(() => {
+    const now = new Date();
+    const thisMonth = now.getMonth();
+    const thisYear = now.getFullYear();
+    const prevMonth = thisMonth === 0 ? 11 : thisMonth - 1;
+    const prevYear = thisMonth === 0 ? thisYear - 1 : thisYear;
 
- let thisMonthTotal = 0;
- let prevMonthTotal = 0;
- const categorySet = new Set<number>();
- let thisMonthCount = 0;
+    let thisMonthTotal = 0;
+    let prevMonthTotal = 0;
+    const categorySet = new Set<number>();
+    let thisMonthCount = 0;
 
- for (const expense of expenses) {
- if (!expense.date) continue;
- const d = new Date(expense.date);
- const m = d.getMonth();
- const y = d.getFullYear();
- const converted =
- convertToUserCurrency(expense.amount, expense.currency ?? "") ??
- expense.amount;
+    for (const expense of expenses) {
+      if (!expense.date) continue;
+      const d = new Date(expense.date);
+      const m = d.getMonth();
+      const y = d.getFullYear();
+      const converted =
+        convertToUserCurrency(expense.amount, expense.currency ?? "") ??
+        expense.amount;
 
- if (m === thisMonth && y === thisYear) {
- thisMonthTotal += converted;
- thisMonthCount++;
- if (expense.category_id != null) categorySet.add(expense.category_id);
- } else if (m === prevMonth && y === prevYear) {
- prevMonthTotal += converted;
- }
- }
+      if (m === thisMonth && y === thisYear) {
+        thisMonthTotal += converted;
+        thisMonthCount++;
+        if (expense.category_id != null) categorySet.add(expense.category_id);
+      } else if (m === prevMonth && y === prevYear) {
+        prevMonthTotal += converted;
+      }
+    }
 
- const daysInMonth = new Date(thisYear, thisMonth + 1, 0).getDate();
- const currentDay = Math.min(now.getDate(), daysInMonth);
- const avgPerDay = currentDay > 0 ? thisMonthTotal / currentDay : 0;
+    const daysInMonth = new Date(thisYear, thisMonth + 1, 0).getDate();
+    const currentDay = Math.min(now.getDate(), daysInMonth);
+    const avgPerDay = currentDay > 0 ? thisMonthTotal / currentDay : 0;
 
- const trend =
- prevMonthTotal > 0
- ? ((thisMonthTotal - prevMonthTotal) / prevMonthTotal) * 100
- : 0;
+    const trend =
+      prevMonthTotal > 0
+        ? ((thisMonthTotal - prevMonthTotal) / prevMonthTotal) * 100
+        : 0;
 
- return {
- thisMonthTotal,
- prevMonthTotal,
- avgPerDay,
- categories: categorySet.size,
- trend,
- };
- }, [expenses, convertToUserCurrency]);
+    return {
+      thisMonthTotal,
+      prevMonthTotal,
+      avgPerDay,
+      categories: categorySet.size,
+      trend,
+    };
+  }, [expenses, convertToUserCurrency]);
 
- if (loading) {
- return (
- <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
- {Array.from({ length: 4 }).map((_, i) => (
- <Card key={i}>
- <div className="p-4 space-y-2">
- <Skeleton variant="text" className="h-3 w-20" />
- <Skeleton variant="text" className="h-6 w-24" />
- </div>
- </Card>
- ))}
- </div>
- );
- }
+  if (loading) {
+    return (
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Card key={i}>
+            <div className="p-4 space-y-2">
+              <Skeleton variant="text" className="h-3 w-20" />
+              <Skeleton variant="text" className="h-6 w-24" />
+            </div>
+          </Card>
+        ))}
+      </div>
+    );
+  }
 
- const kpiCards = [
- {
- label: t("expensePage.kpi.thisMonth"),
- value: formatCurrency(stats.thisMonthTotal, userCurrency),
- trend: stats.trend,
- },
- {
- label: t("expensePage.kpi.prevMonth"),
- value: formatCurrency(stats.prevMonthTotal, userCurrency),
- },
- {
- label: t("expensePage.kpi.avgPerDay"),
- value: formatCurrency(stats.avgPerDay, userCurrency),
- },
- {
- label: t("expensePage.kpi.categories"),
- value: String(stats.categories),
- },
- ];
+  const kpiCards = [
+    {
+      label: t("expensePage.kpi.thisMonth"),
+      value: formatCurrency(stats.thisMonthTotal, userCurrency),
+      trend: stats.trend,
+    },
+    {
+      label: t("expensePage.kpi.prevMonth"),
+      value: formatCurrency(stats.prevMonthTotal, userCurrency),
+    },
+    {
+      label: t("expensePage.kpi.avgPerDay"),
+      value: formatCurrency(stats.avgPerDay, userCurrency),
+    },
+    {
+      label: t("expensePage.kpi.categories"),
+      value: String(stats.categories),
+    },
+  ];
 
- return (
- <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
- {kpiCards.map((card) => (
- <Card key={card.label}>
- <div className="p-4">
- <p className="text-xs font-medium text-content-secondary uppercase tracking-wide">
- {card.label}
- </p>
- <div className="flex items-baseline gap-2 mt-1">
- <p className="text-xl font-semibold text-content">
- {card.value}
- </p>
- {card.trend !== undefined && card.trend !== 0 && (
- <span
- className={`text-xs font-medium ${
- card.trend > 0 ? "text-danger-base" : "text-success-base"
- }`}
- >
- {card.trend > 0 ? "+" : ""}
- {card.trend.toFixed(1)}%
- </span>
- )}
- </div>
- </div>
- </Card>
- ))}
- </div>
- );
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {kpiCards.map((card) => (
+        <Card key={card.label}>
+          <div className="p-4">
+            <p className="text-xs font-medium text-content-secondary uppercase tracking-wide">
+              {card.label}
+            </p>
+            <div className="flex items-baseline gap-2 mt-1">
+              <p className="text-xl font-mono font-semibold text-content">
+                {card.value}
+              </p>
+              {card.trend !== undefined && card.trend !== 0 && (
+                <span
+                  className={`text-xs font-mono font-medium ${
+                    card.trend > 0 ? "text-danger-base" : "text-success-base"
+                  }`}
+                >
+                  {card.trend > 0 ? "+" : ""}
+                  {card.trend.toFixed(1)}%
+                </span>
+              )}
+            </div>
+          </div>
+        </Card>
+      ))}
+    </div>
+  );
 };

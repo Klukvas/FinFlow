@@ -65,7 +65,7 @@ export const BlogPost: React.FC = () => {
  {post.tags.map((tag) => (
  <span
  key={tag}
- className="text-xs px-2 py-1 rounded-full bg-[var(--color-accent-light)] text-accent-base font-medium"
+ className="text-xs px-2 py-1 rounded-full bg-[var(--accent-dim)] text-accent-base font-medium"
  >
  {tag}
  </span>
@@ -96,7 +96,7 @@ export const BlogPost: React.FC = () => {
  </div>
 
  {/* CTA Section */}
- <div className="mt-16 p-8 rounded-xl bg-[var(--color-accent-light)] text-center">
+ <div className="mt-16 p-8 rounded-xl bg-[var(--accent-dim)] text-center">
  <h3 className="text-xl font-bold text-content mb-3">
  {t("blogPage.cta.title")}
  </h3>

@@ -156,7 +156,7 @@ const UsageIndicator: React.FC<{ usage: AiUsageInfo }> = ({ usage }) => {
  const daysUntilReset = Math.ceil(usage.resets_in / 86400);
 
  return (
- <div className="mb-6 p-4 rounded-xl bg-elevated border-[var(--color-border)] border">
+ <div className="mb-6 p-4 rounded-xl bg-elevated border-[var(--border)] border">
  <div className="flex items-center justify-between mb-2">
  <span className="text-sm font-medium text-content-secondary">
  {t("aiAssistant.usage.title", "Monthly usage")}

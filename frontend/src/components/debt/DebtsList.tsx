@@ -27,7 +27,7 @@ export const DebtsList: React.FC<DebtsListProps> = ({
 
  if (debts.length === 0) {
  return (
- <Card className="bg-elevated border-[var(--color-border)] border">
+ <Card className="bg-elevated border-[var(--border)] border">
  <CardContent className="p-12 text-center">
  <AlertCircle className="w-12 h-12 mx-auto mb-4 text-content-tertiary" />
  <h3 className="text-lg font-medium mb-2 text-content-secondary">

@@ -4,9 +4,9 @@ import DOMPurify from "dompurify";
 import { AnalysisSection as AnalysisSectionType } from "@/types";
 
 const PRIORITY_STYLES: Record<string, string> = {
- high: "bg-[var(--color-danger-light)] text-danger-base",
- medium: "bg-[var(--color-warning-light)] text-warning-base",
- low: "bg-[var(--color-success-light)] text-success-base",
+ high: "bg-[var(--danger-dim)] text-danger-base",
+ medium: "bg-[var(--warning-dim)] text-warning-base",
+ low: "bg-[var(--success-dim)] text-success-base",
 };
 
 interface AnalysisSectionProps {
@@ -26,7 +26,7 @@ export const AnalysisSectionCard: React.FC<AnalysisSectionProps> = ({
  });
 
  return (
- <div className="p-4 rounded-lg border-[var(--color-border)] border">
+ <div className="p-4 rounded-lg border-[var(--border)] border">
  <div className="flex items-center gap-2 mb-3">
  <h3 className="text-sm font-semibold text-content">
  {section.title}

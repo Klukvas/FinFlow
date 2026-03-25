@@ -152,7 +152,7 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({
  onChange={(value) =>
  handleChange({ target: { name: "currency", value } } as any)
  }
- className="w-full px-3 sm:px-4 py-3 bg-elevated border-[var(--color-border)] border rounded-lg sm:rounded-xl text-content focus:ring-2 focus:ring-[var(--color-ring)] focus:border-transparent transition-colors shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px]"
+ className="w-full px-3 sm:px-4 py-3 bg-elevated border-[var(--border)] border rounded-lg sm:rounded-xl text-content focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-colors shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px]"
  showFlags={true}
  />
  </div>
@@ -182,7 +182,7 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({
  name="account_id"
  value={formData.account_id || ""}
  onChange={handleChange}
- className="w-full px-3 sm:px-4 py-3 bg-elevated border-[var(--color-border)] border rounded-lg sm:rounded-xl text-content focus:ring-2 focus:ring-[var(--color-ring)] focus:border-transparent transition-colors shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px] disabled:opacity-50"
+ className="w-full px-3 sm:px-4 py-3 bg-elevated border-[var(--border)] border rounded-lg sm:rounded-xl text-content focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-colors shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px] disabled:opacity-50"
  disabled={isLoadingAccounts}
  >
  <option value="">Без аккаунта</option>
@@ -215,7 +215,7 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({
  name="date"
  value={formData.date}
  onChange={handleChange}
- className="w-full px-3 sm:px-4 py-3 bg-elevated border-[var(--color-border)] border rounded-lg sm:rounded-xl text-content focus:ring-2 focus:ring-[var(--color-ring)] focus:border-transparent transition-colors shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px]"
+ className="w-full px-3 sm:px-4 py-3 bg-elevated border-[var(--border)] border rounded-lg sm:rounded-xl text-content focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-colors shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px]"
  required
  />
  </div>
@@ -237,13 +237,13 @@ export const CreateExpense: React.FC<CreateExpenseProps> = ({
  value={formData.description}
  onChange={handleChange}
  placeholder="Добавьте описание расхода..."
- className="w-full px-3 sm:px-4 py-3 bg-elevated border-[var(--color-border)] border rounded-lg sm:rounded-xl text-content placeholder:text-content-tertiary focus:ring-2 focus:ring-[var(--color-ring)] focus:border-transparent transition-colors shadow-sm hover:shadow-md focus:shadow-lg resize-none text-sm sm:text-base min-h-[88px]"
+ className="w-full px-3 sm:px-4 py-3 bg-elevated border-[var(--border)] border rounded-lg sm:rounded-xl text-content placeholder:text-content-tertiary focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-colors shadow-sm hover:shadow-md focus:shadow-lg resize-none text-sm sm:text-base min-h-[88px]"
  rows={3}
  />
  </div>
 
  {error && (
- <div className="bg-[var(--color-danger-light)] border-[var(--color-border)] border rounded-lg sm:rounded-xl p-3 sm:p-4">
+ <div className="bg-[var(--danger-dim)] border-[var(--border)] border rounded-lg sm:rounded-xl p-3 sm:p-4">
  <div className="flex items-center gap-2 sm:gap-3">
  <div className="w-4 h-4 sm:w-5 sm:h-5 text-danger-base flex-shrink-0">
  <svg fill="currentColor" viewBox="0 0 20 20">

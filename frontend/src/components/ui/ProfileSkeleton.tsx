@@ -14,7 +14,7 @@ export const ProfileSkeleton = () => {
  </div>
 
  {/* Profile Information */}
- <div className="bg-elevated rounded-lg theme-shadow border-[var(--color-border)] border p-6">
+ <div className="bg-elevated rounded-lg theme-shadow border-[var(--border)] border p-6">
  <div className="flex items-start space-x-6">
  {/* Avatar */}
  <div className="flex-shrink-0">
@@ -88,7 +88,7 @@ export const ProfileSkeleton = () => {
  {[1, 2, 3].map((index) => (
  <div 
  key={index} 
- className="bg-elevated rounded-lg theme-shadow border-[var(--color-border)] border p-6"
+ className="bg-elevated rounded-lg theme-shadow border-[var(--border)] border p-6"
  data-testid={`profile-skeleton-stat-card-${index}`}
  >
  <div className="flex items-center">

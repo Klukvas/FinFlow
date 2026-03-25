@@ -146,7 +146,7 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({
  onChange={(value) =>
  handleInputChange({ target: { name: "currency", value } } as any)
  }
- className="w-full px-3 sm:px-4 py-3 bg-elevated border-[var(--color-border)] border rounded-lg sm:rounded-xl text-content focus:ring-2 focus:ring-[var(--color-success)] focus:border-transparent transition-colors shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px]"
+ className="w-full px-3 sm:px-4 py-3 bg-elevated border-[var(--border)] border rounded-lg sm:rounded-xl text-content focus:ring-2 focus:ring-[var(--success)] focus:border-transparent transition-colors shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px]"
  showFlags={true}
  />
  </div>
@@ -176,7 +176,7 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({
  name="account_id"
  value={formData.account_id || ""}
  onChange={handleInputChange}
- className="w-full px-3 sm:px-4 py-3 bg-elevated border-[var(--color-border)] border rounded-lg sm:rounded-xl text-content focus:ring-2 focus:ring-[var(--color-success)] focus:border-transparent transition-colors shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px]"
+ className="w-full px-3 sm:px-4 py-3 bg-elevated border-[var(--border)] border rounded-lg sm:rounded-xl text-content focus:ring-2 focus:ring-[var(--success)] focus:border-transparent transition-colors shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px]"
  >
  <option value="">{t("income.form.noAccount")}</option>
  {accounts.map((account) => (
@@ -204,7 +204,7 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({
  value={formData.description || ""}
  onChange={handleInputChange}
  placeholder={t("income.form.descriptionPlaceholder")}
- className="w-full px-3 sm:px-4 py-3 bg-elevated border-[var(--color-border)] border rounded-lg sm:rounded-xl text-content placeholder:text-content-tertiary focus:ring-2 focus:ring-[var(--color-success)] focus:border-transparent transition-colors shadow-sm hover:shadow-md focus:shadow-lg resize-none text-sm sm:text-base min-h-[88px]"
+ className="w-full px-3 sm:px-4 py-3 bg-elevated border-[var(--border)] border rounded-lg sm:rounded-xl text-content placeholder:text-content-tertiary focus:ring-2 focus:ring-[var(--success)] focus:border-transparent transition-colors shadow-sm hover:shadow-md focus:shadow-lg resize-none text-sm sm:text-base min-h-[88px]"
  rows={3}
  maxLength={500}
  />
@@ -225,13 +225,13 @@ export const CreateIncome: React.FC<CreateIncomeProps> = ({
  name="date"
  value={formData.date || ""}
  onChange={handleInputChange}
- className="w-full px-3 sm:px-4 py-3 bg-elevated border-[var(--color-border)] border rounded-lg sm:rounded-xl text-content focus:ring-2 focus:ring-[var(--color-success)] focus:border-transparent transition-colors shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px]"
+ className="w-full px-3 sm:px-4 py-3 bg-elevated border-[var(--border)] border rounded-lg sm:rounded-xl text-content focus:ring-2 focus:ring-[var(--success)] focus:border-transparent transition-colors shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px]"
  required
  />
  </div>
 
  {error && (
- <div className="bg-[var(--color-danger-light)] border-[var(--color-border)] border rounded-lg sm:rounded-xl p-3 sm:p-4">
+ <div className="bg-[var(--danger-dim)] border-[var(--border)] border rounded-lg sm:rounded-xl p-3 sm:p-4">
  <div className="flex items-center gap-2 sm:gap-3">
  <div className="w-4 h-4 sm:w-5 sm:h-5 text-danger-base flex-shrink-0">
  <svg fill="currentColor" viewBox="0 0 20 20">

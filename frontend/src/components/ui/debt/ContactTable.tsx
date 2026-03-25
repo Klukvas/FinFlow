@@ -37,7 +37,7 @@ export const ContactTable: React.FC<ContactTableProps> = ({
  if (loading) {
  return (
  <div className="flex justify-center items-center py-12">
- <div className="animate-spin rounded-full h-6 w-6 border-2 border-[var(--color-accent)] border-t-transparent" />
+ <div className="animate-spin rounded-full h-6 w-6 border-2 border-[var(--accent)] border-t-transparent" />
  <span className="ml-3 text-content-secondary text-sm">
  {t("debtPage.contactsTable.loading")}
  </span>
@@ -82,11 +82,11 @@ export const ContactTable: React.FC<ContactTableProps> = ({
  return (
  <div className="w-full">
  {/* Mobile Cards View */}
- <div className="block lg:hidden space-y-2 p-4">
+ <div className="block md:hidden space-y-2 p-4">
  {enrichedContacts.map((contact) => (
  <div
  key={contact.id}
- className="bg-surface-alt rounded-lg border border-[var(--color-border)] p-3 transition-colors"
+ className="bg-surface-alt rounded-lg border border-[var(--border)] p-3 transition-colors"
  >
  <div className="flex items-start justify-between">
  <div className="flex-1 min-w-0">
@@ -166,7 +166,7 @@ export const ContactTable: React.FC<ContactTableProps> = ({
  </div>
 
  {/* Desktop Table View */}
- <div className="hidden lg:block">
+ <div className="hidden md:block">
  <div className="overflow-x-auto">
  <table className="w-full">
  <thead className="bg-surface-alt sticky top-0 z-10">
@@ -191,7 +191,7 @@ export const ContactTable: React.FC<ContactTableProps> = ({
  </th>
  </tr>
  </thead>
- <tbody className="bg-elevated divide-y border-[var(--color-border)]">
+ <tbody className="bg-elevated divide-y border-[var(--border)]">
  {enrichedContacts.map((contact) => (
  <tr
  key={contact.id}

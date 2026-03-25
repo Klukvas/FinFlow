@@ -117,4 +117,24 @@ export const TYPE_MAPPINGS = [
   { manual: "AnalysisSection",          manualFile: "aiAssistant.ts",   generated: "AnalysisSection",          service: "ai_assistant_service" },
   { manual: "PromptMetadata",           manualFile: "aiAssistant.ts",   generated: "PromptMetadata",           service: "ai_assistant_service" },
   { manual: "PromptBlockMetadata",      manualFile: "aiAssistant.ts",   generated: "PromptBlockMetadata",      service: "ai_assistant_service" },
+
+  // ── recurring_service ──────────────────────────────────────────
+  { manual: "RecurringPayment",                manualFile: "recurring.ts",   generated: "RecurringPaymentResponse",       service: "recurring_service" },
+  { manual: "CreateRecurringPaymentRequest",   manualFile: "recurring.ts",   generated: "RecurringPaymentCreate",         service: "recurring_service" },
+  { manual: "UpdateRecurringPaymentRequest",   manualFile: "recurring.ts",   generated: "RecurringPaymentUpdate",         service: "recurring_service" },
+  { manual: "RecurringPaymentListResponse",    manualFile: "recurring.ts",   generated: "RecurringPaymentListResponse",   service: "recurring_service" },
+  { manual: "PaymentSchedule",                 manualFile: "recurring.ts",   generated: "PaymentScheduleResponse",        service: "recurring_service" },
+  { manual: "PaymentScheduleListResponse",     manualFile: "recurring.ts",   generated: "PaymentScheduleListResponse",    service: "recurring_service" },
+
+  // ── pdf_parser_service ─────────────────────────────────────────
+  { manual: "ParsedTransaction",        manualFile: "pdfParser.ts",     generated: "ParsedTransaction",         service: "pdf_parser_service" },
+  { manual: "PDFParseResponse",         manualFile: "pdfParser.ts",     generated: "PDFParseResponse",          service: "pdf_parser_service" },
+  { manual: "PDFLimitInfo",             manualFile: "pdfParser.ts",     generated: "PDFLimitInfo",              service: "pdf_parser_service" },
+
+  // ── currency_service ───────────────────────────────────────────
+  { manual: "CurrencyInfo",             manualFile: "currency.ts",      generated: "CurrencyInfo",              service: "currency_service" },
+  { manual: "ConversionRequest",        manualFile: "currency.ts",      generated: "ConversionRequest",         service: "currency_service" },
+  { manual: "ConversionResponse",       manualFile: "currency.ts",      generated: "ConversionResponse",        service: "currency_service" },
+  { manual: "CurrencyRatesResponse",    manualFile: "currency.ts",      generated: "CurrencyRatesResponse",     service: "currency_service" },
+  { manual: "SupportedCurrenciesResponse", manualFile: "currency.ts",   generated: "SupportedCurrenciesResponse", service: "currency_service" },
 ];

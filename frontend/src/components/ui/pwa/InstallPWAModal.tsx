@@ -1,12 +1,6 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  FaBolt,
-  FaWifi,
-  FaMobileAlt,
-  FaShareAlt,
-  FaPlusSquare,
-} from "react-icons/fa";
+import { Zap, Wifi, Smartphone, Share2, SquarePlus } from "lucide-react";
 import { Modal } from "@/components/ui/shared/Modal";
 import { Button } from "@/components/ui/shared/Button";
 import { setPWADismissed, InstallOutcome } from "@/hooks/usePWAInstall";
@@ -43,9 +37,9 @@ export const InstallPWAModal: React.FC<InstallPWAModalProps> = ({
   };
 
   const benefits = [
-    { icon: FaWifi, text: t("pwa.installBenefits.offline") },
-    { icon: FaBolt, text: t("pwa.installBenefits.fast") },
-    { icon: FaMobileAlt, text: t("pwa.installBenefits.homescreen") },
+    { icon: Wifi, text: t("pwa.installBenefits.offline") },
+    { icon: Zap, text: t("pwa.installBenefits.fast") },
+    { icon: Smartphone, text: t("pwa.installBenefits.homescreen") },
   ];
 
   return (
@@ -65,7 +59,7 @@ export const InstallPWAModal: React.FC<InstallPWAModalProps> = ({
         <ul className="space-y-3">
           {benefits.map(({ icon: Icon, text }) => (
             <li key={text} className="flex items-center gap-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--color-accent-light)]">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--accent-dim)]">
                 <Icon className="h-4 w-4 text-accent-base" />
               </div>
               <span className="text-sm text-content">{text}</span>
@@ -84,14 +78,14 @@ export const InstallPWAModal: React.FC<InstallPWAModalProps> = ({
                 <span className="font-medium text-accent-base">1.</span>
                 <span className="flex items-center gap-1.5">
                   {t("pwa.iosInstructions.step1")}
-                  <FaShareAlt className="inline h-3.5 w-3.5 text-accent-base" />
+                  <Share2 className="inline h-3.5 w-3.5 text-accent-base" />
                 </span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="font-medium text-accent-base">2.</span>
                 <span className="flex items-center gap-1.5">
                   {t("pwa.iosInstructions.step2")}
-                  <FaPlusSquare className="inline h-3.5 w-3.5 text-accent-base" />
+                  <SquarePlus className="inline h-3.5 w-3.5 text-accent-base" />
                 </span>
               </li>
               <li className="flex items-start gap-2">
@@ -112,7 +106,7 @@ export const InstallPWAModal: React.FC<InstallPWAModalProps> = ({
         )}
 
         {/* Don't show again + dismiss */}
-        <div className="flex items-center justify-between border-t border-[var(--color-border)] pt-3">
+        <div className="flex items-center justify-between border-t border-[var(--border)] pt-3">
           <label className="flex cursor-pointer items-center gap-2 text-xs text-content-secondary">
             <input
               type="checkbox"

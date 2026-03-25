@@ -120,7 +120,7 @@ export const SelectTrigger: React.FC<SelectTriggerProps> = ({
  onClick={() => {
  setIsOpen(!isOpen);
  }}
- className={`flex h-12 w-full items-center justify-between rounded-lg border-[var(--color-border)] border bg-surface px-3 py-3 text-base text-content focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)] focus:border-transparent transition-colors hover:border-[var(--color-border-hover)] disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation overflow-hidden ${className}`}
+ className={`flex h-12 w-full items-center justify-between rounded-lg border-[var(--border)] border bg-surface px-3 py-3 text-base text-content focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-colors hover:border-[var(--border-hover)] disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation overflow-hidden ${className}`}
  disabled={disabled}
  data-testid={testId || 'select-trigger'}
  >
@@ -153,7 +153,7 @@ export const SelectContent: React.FC<SelectContentProps> = ({
  return (
  <div 
  ref={contentRef}
- className={`absolute top-full left-0 z-50 mt-1 w-full max-w-full overflow-hidden rounded-lg border-[var(--color-border)] border bg-elevated theme-shadow animate-in fade-in-0 zoom-in-95 max-h-60 overflow-y-auto box-border ${className}`}
+ className={`absolute top-full left-0 z-50 mt-1 w-full max-w-full overflow-hidden rounded-lg border-[var(--border)] border bg-elevated theme-shadow animate-in fade-in-0 zoom-in-95 max-h-60 overflow-y-auto box-border ${className}`}
  data-testid={testId || 'select-content'}
  >
  <div className="p-1 w-full box-border">

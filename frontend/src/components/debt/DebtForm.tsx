@@ -204,7 +204,7 @@ export const DebtForm: React.FC<DebtFormProps> = ({
  value={formData.name}
  onChange={(e) => handleInputChange("name", e.target.value)}
  placeholder={t("debtPage.form.namePlaceholder")}
- className={`bg-elevated border-[var(--color-border)] border text-content placeholder:text-content-tertiary ${errors.name ? "border-danger-base" : ""}`}
+ className={`bg-elevated border-[var(--border)] border text-content placeholder:text-content-tertiary ${errors.name ? "border-danger-base" : ""}`}
  />
  {errors.name && <p className="text-sm text-danger-base">{errors.name}</p>}
  </div>
@@ -220,7 +220,7 @@ export const DebtForm: React.FC<DebtFormProps> = ({
  handleInputChange("debt_type", value as DebtType)
  }
  >
- <SelectTrigger className="bg-elevated border-[var(--color-border)] border text-content">
+ <SelectTrigger className="bg-elevated border-[var(--border)] border text-content">
  <SelectValue>
  {selectedDebtType && (
  <span className="flex items-center space-x-2">
@@ -230,7 +230,7 @@ export const DebtForm: React.FC<DebtFormProps> = ({
  )}
  </SelectValue>
  </SelectTrigger>
- <SelectContent className="bg-elevated border-[var(--color-border)] border">
+ <SelectContent className="bg-elevated border-[var(--border)] border">
  {debtTypes.map((type) => (
  <SelectItem
  key={type.value}
@@ -260,7 +260,7 @@ export const DebtForm: React.FC<DebtFormProps> = ({
  }
  placeholder={t("debtPage.form.descriptionPlaceholder")}
  rows={3}
- className="bg-elevated border-[var(--color-border)] border text-content placeholder:text-content-tertiary"
+ className="bg-elevated border-[var(--border)] border text-content placeholder:text-content-tertiary"
  />
  </div>
 
@@ -279,7 +279,7 @@ export const DebtForm: React.FC<DebtFormProps> = ({
  handleInputChange("currency", value);
  }}
  disabled={mode === "edit" && paymentCount > 0}
- className={`bg-elevated border-[var(--color-border)] border text-content ${mode === "edit" && paymentCount > 0 ? "opacity-50 cursor-not-allowed" : ""}`}
+ className={`bg-elevated border-[var(--border)] border text-content ${mode === "edit" && paymentCount > 0 ? "opacity-50 cursor-not-allowed" : ""}`}
  placeholder={t("debtPage.form.selectCurrency")}
  showFlags={true}
  />
@@ -339,7 +339,7 @@ export const DebtForm: React.FC<DebtFormProps> = ({
  handleInputChange("interest_rate", numValue);
  }}
  placeholder="0.00"
- className={`bg-elevated border-[var(--color-border)] border text-content placeholder:text-content-tertiary ${errors.interest_rate ? "border-danger-base" : ""}`}
+ className={`bg-elevated border-[var(--border)] border text-content placeholder:text-content-tertiary ${errors.interest_rate ? "border-danger-base" : ""}`}
  />
  {errors.interest_rate && (
  <p className="text-sm text-danger-base">{errors.interest_rate}</p>
@@ -379,7 +379,7 @@ export const DebtForm: React.FC<DebtFormProps> = ({
  )
  }
  >
- <SelectTrigger className="bg-elevated border-[var(--color-border)] border text-content">
+ <SelectTrigger className="bg-elevated border-[var(--border)] border text-content">
  <SelectValue>
  {formData.category_id
  ? categories.find((c) => c.id === formData.category_id)
@@ -387,7 +387,7 @@ export const DebtForm: React.FC<DebtFormProps> = ({
  : t("debtPage.form.noCategory")}
  </SelectValue>
  </SelectTrigger>
- <SelectContent className="bg-elevated border-[var(--color-border)] border">
+ <SelectContent className="bg-elevated border-[var(--border)] border">
  <SelectItem
  value="none"
  className="text-content hover:bg-surface-alt"
@@ -424,7 +424,7 @@ export const DebtForm: React.FC<DebtFormProps> = ({
  onChange={(e) =>
  handleInputChange("start_date", e.target.value)
  }
- className={`pl-10 bg-elevated border-[var(--color-border)] border text-content ${errors.start_date ? "border-danger-base" : ""}`}
+ className={`pl-10 bg-elevated border-[var(--border)] border text-content ${errors.start_date ? "border-danger-base" : ""}`}
  />
  </div>
  {errors.start_date && (
@@ -445,7 +445,7 @@ export const DebtForm: React.FC<DebtFormProps> = ({
  onChange={(e) =>
  handleInputChange("due_date", e.target.value || null)
  }
- className="pl-10 bg-elevated border-[var(--color-border)] border text-content"
+ className="pl-10 bg-elevated border-[var(--border)] border text-content"
  />
  </div>
  </div>
@@ -457,12 +457,12 @@ export const DebtForm: React.FC<DebtFormProps> = ({
  <User className="w-4 h-4 inline mr-2" />
  {t("debtPage.form.contactInformation")}
  </Label>
- <div className="p-4 rounded-lg bg-elevated border-[var(--color-border)] border">
+ <div className="p-4 rounded-lg bg-elevated border-[var(--border)] border">
  <p className="text-sm mb-3 text-content-secondary">
  {t("debtPage.form.selectContact")}
  </p>
  {contacts.length === 0 ? (
- <div className="p-3 rounded-lg border bg-[var(--color-warning-light)] border-[var(--color-border)]">
+ <div className="p-3 rounded-lg border bg-[var(--warning-dim)] border-[var(--border)]">
  <p className="text-sm text-warning-base">
  ⚠️ {t("debtPage.form.noContactsAvailable")}
  </p>
@@ -478,7 +478,7 @@ export const DebtForm: React.FC<DebtFormProps> = ({
  );
  }}
  >
- <SelectTrigger className="bg-elevated border-[var(--color-border)] border text-content">
+ <SelectTrigger className="bg-elevated border-[var(--border)] border text-content">
  <SelectValue placeholder={t("debtPage.form.chooseContact")}>
  {formData.contact_id
  ? (() => {
@@ -503,7 +503,7 @@ export const DebtForm: React.FC<DebtFormProps> = ({
  : null}
  </SelectValue>
  </SelectTrigger>
- <SelectContent className="bg-elevated border-[var(--color-border)] border">
+ <SelectContent className="bg-elevated border-[var(--border)] border">
  <SelectItem
  value=""
  className="text-content hover:bg-surface-alt"
@@ -576,7 +576,7 @@ export const DebtForm: React.FC<DebtFormProps> = ({
  }
 
  return (
- <Card className="max-w-2xl mx-auto bg-elevated border-[var(--color-border)] border">
+ <Card className="max-w-2xl mx-auto bg-elevated border-[var(--border)] border">
  <CardHeader>
  <CardTitle className="flex items-center space-x-2 text-content">
  <DollarSign className="w-5 h-5" />

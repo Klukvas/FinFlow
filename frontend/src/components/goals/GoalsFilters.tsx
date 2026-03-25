@@ -95,7 +95,7 @@ export const GoalsFilters = React.memo<GoalsFiltersProps>(({
  value={filters.search || ''}
  onChange={(e) => handleFilterChange('search', e.target.value)}
  placeholder={t('goalsPage.filters.searchPlaceholder')}
- className="w-full px-3 py-2 text-base sm:text-sm bg-elevated border border-[var(--color-border)] rounded-lg focus:ring-2 focus:ring-[var(--color-ring)] focus:border-transparent transition-colors touch-manipulation"
+ className="w-full px-3 py-2 text-base sm:text-sm bg-elevated border border-[var(--border)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-colors touch-manipulation"
  data-testid="goals-search-filter"
  />
  </div>

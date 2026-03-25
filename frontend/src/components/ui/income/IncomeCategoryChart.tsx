@@ -24,7 +24,7 @@ export const IncomeCategoryChart: React.FC<IncomeCategoryChartProps> = ({ income
  }, [incomes, categories]);
 
  return (
- <div className="bg-elevated p-4 rounded-lg theme-shadow border-[var(--color-border)] border">
+ <div className="bg-elevated p-4 rounded-lg theme-shadow border-[var(--border)] border">
  <h2 className="text-lg font-semibold mb-4 text-content">{t('incomePage.dashboard.categoryTitle')}</h2>
  <div className="h-[300px]">
  <ResponsiveContainer width="100%" height="100%">
@@ -46,7 +46,7 @@ export const IncomeCategoryChart: React.FC<IncomeCategoryChartProps> = ({ income
  <Legend
  layout="horizontal"
  verticalAlign="bottom"
- wrapperStyle={{ color: 'var(--color-text)' }}
+ wrapperStyle={{ color: 'var(--text-primary)' }}
  />
  </PieChart>
  </ResponsiveContainer>

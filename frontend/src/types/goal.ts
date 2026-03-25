@@ -148,15 +148,15 @@ export interface MilestoneFormData {
 // Example: t('goalsPage.filters.savings') instead of hardcoded strings
 
 export const GOAL_PRIORITY_COLORS: Record<GoalPriority, string> = {
-  LOW: "theme-text-secondary",
-  MEDIUM: "text-blue-500",
-  HIGH: "text-orange-500",
-  CRITICAL: "text-red-500",
+  LOW: "text-[var(--text-secondary)]",
+  MEDIUM: "text-[var(--info)]",
+  HIGH: "text-[var(--warning)]",
+  CRITICAL: "text-[var(--danger)]",
 };
 
 export const GOAL_STATUS_COLORS: Record<GoalStatus, string> = {
-  ACTIVE: "text-green-500",
-  COMPLETED: "text-blue-500",
-  PAUSED: "text-yellow-500",
-  CANCELLED: "theme-text-secondary",
+  ACTIVE: "text-[var(--success)]",
+  COMPLETED: "text-[var(--info)]",
+  PAUSED: "text-[var(--warning)]",
+  CANCELLED: "text-[var(--text-secondary)]",
 };

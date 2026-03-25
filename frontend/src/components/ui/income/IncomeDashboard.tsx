@@ -19,7 +19,7 @@ export const IncomeDashboard: React.FC<IncomeDashboardProps> = ({ incomes, loadi
  if (loading) {
  return (
  <div className="flex justify-center items-center py-8 sm:py-12">
- <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-2 border-[var(--color-accent)] border-t-transparent" />
+ <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-2 border-[var(--accent)] border-t-transparent" />
  <span className="ml-3 text-content-secondary text-sm sm:text-base">{t('incomePage.dashboard.loading')}</span>
  </div>
  );

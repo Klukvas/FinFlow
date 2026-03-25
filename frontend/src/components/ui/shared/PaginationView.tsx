@@ -132,7 +132,7 @@ export function PaginationView<T>({
  <div className={`w-full ${className}`} data-testid={dataTestId}>
  {/* Error state */}
  {error && (
- <div className="bg-[var(--color-danger-light)] border border-[var(--color-border)] rounded-lg sm:rounded-xl p-3 sm:p-4 mb-4 sm:mb-6">
+ <div className="bg-[var(--danger-dim)] border border-[var(--border)] rounded-lg sm:rounded-xl p-3 sm:p-4 mb-4 sm:mb-6">
  <div className="flex items-center gap-2 sm:gap-3">
  <div className="w-4 h-4 sm:w-5 sm:h-5 text-danger-base flex-shrink-0">
  <svg fill="currentColor" viewBox="0 0 20 20">

@@ -15,7 +15,7 @@ import {
 import { MemberCard } from "./MemberCard";
 import { InviteCard } from "./InviteCard";
 import { InviteForm } from "./InviteForm";
-import { FaUsers, FaEnvelope, FaTimes, FaUserPlus } from "react-icons/fa";
+import { Users, Mail, X, UserPlus } from "lucide-react";
 import { Skeleton } from "@/components/ui/shared/Skeleton";
 
 interface WorkspaceMembersProps {
@@ -191,7 +191,7 @@ export const WorkspaceMembers: React.FC<WorkspaceMembersProps> = ({
  <div className="fixed inset-0 bg-black/50" onClick={onClose} />
  <div className="relative w-full max-w-2xl max-h-[90vh] mx-4 bg-elevated rounded-2xl shadow-2xl flex flex-col">
  {/* Header */}
- <div className="flex items-center justify-between p-6 border-b border-[var(--color-border)]">
+ <div className="flex items-center justify-between p-6 border-b border-[var(--border)]">
  <div>
  <h2 className="text-xl font-semibold text-content">
  {workspace.name}
@@ -207,12 +207,12 @@ export const WorkspaceMembers: React.FC<WorkspaceMembersProps> = ({
  onClick={onClose}
  className="p-2 rounded-lg hover:bg-surface-alt transition-colors"
  >
- <FaTimes className="w-5 h-5 text-content-secondary" />
+ <X className="w-5 h-5 text-content-secondary" />
  </button>
  </div>
 
  {/* Tabs */}
- <div className="flex border-b border-[var(--color-border)]">
+ <div className="flex border-b border-[var(--border)]">
  <button
  onClick={() => setActiveTab("members")}
  className={`flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors border-b-2 ${
@@ -221,7 +221,7 @@ export const WorkspaceMembers: React.FC<WorkspaceMembersProps> = ({
  : "border-transparent text-content-secondary hover:text-content"
  }`}
  >
- <FaUsers className="w-4 h-4" />
+ <Users className="w-4 h-4" />
  {t("workspace.tabs.members", "Members")} ({members.length})
  </button>
  {isOwner && (
@@ -233,10 +233,10 @@ export const WorkspaceMembers: React.FC<WorkspaceMembersProps> = ({
  : "border-transparent text-content-secondary hover:text-content"
  }`}
  >
- <FaEnvelope className="w-4 h-4" />
+ <Mail className="w-4 h-4" />
  {t("workspace.tabs.invites", "Invitations")}
  {pendingInvitesCount > 0 && (
- <span className="px-1.5 py-0.5 text-xs rounded-full bg-[var(--color-accent-light)] text-accent-base">
+ <span className="px-1.5 py-0.5 text-xs rounded-full bg-[var(--accent-dim)] text-accent-base">
  {pendingInvitesCount}
  </span>
  )}
@@ -248,7 +248,7 @@ export const WorkspaceMembers: React.FC<WorkspaceMembersProps> = ({
  <div className="flex-1 overflow-y-auto p-6">
  {/* Error message */}
  {error && (
- <div className="mb-4 p-3 rounded-lg bg-[var(--color-danger-light)] text-danger-base text-sm">
+ <div className="mb-4 p-3 rounded-lg bg-[var(--danger-dim)] text-danger-base text-sm">
  {error}
  </div>
  )}
@@ -259,7 +259,7 @@ export const WorkspaceMembers: React.FC<WorkspaceMembersProps> = ({
  {Array.from({ length: 4 }).map((_, i) => (
  <div
  key={i}
- className="flex items-center gap-3 p-3 rounded-lg border border-[var(--color-border)]"
+ className="flex items-center gap-3 p-3 rounded-lg border border-[var(--border)]"
  >
  <Skeleton className="w-10 h-10 rounded-full" />
  <div className="space-y-2 flex-1">
@@ -299,7 +299,7 @@ export const WorkspaceMembers: React.FC<WorkspaceMembersProps> = ({
  <div className="space-y-4">
  {/* Invite Form or Button */}
  {showInviteForm ? (
- <div className="p-4 rounded-xl border border-[var(--color-border)]">
+ <div className="p-4 rounded-xl border border-[var(--border)]">
  <h3 className="font-medium text-content mb-4">
  {t("workspace.invite.newTitle", "Invite a Team Member")}
  </h3>
@@ -316,9 +316,9 @@ export const WorkspaceMembers: React.FC<WorkspaceMembersProps> = ({
  ) : (
  <button
  onClick={() => setShowInviteForm(true)}
- className="w-full flex items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed border-[var(--color-border)] hover:border-accent-base hover:bg-surface-alt text-content-secondary hover:text-accent-base transition-colors"
+ className="w-full flex items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed border-[var(--border)] hover:border-accent-base hover:bg-surface-alt text-content-secondary hover:text-accent-base transition-colors"
  >
- <FaUserPlus className="w-5 h-5" />
+ <UserPlus className="w-5 h-5" />
  <span className="font-medium">
  {t("workspace.invite.addButton", "Invite Someone")}
  </span>

@@ -1,12 +1,5 @@
 import React from "react";
-import {
-  Card as BaseCard,
-  CardHeader as BaseCardHeader,
-  CardTitle as BaseCardTitle,
-  CardContent as BaseCardContent,
-  CardFooter as BaseCardFooter,
-  cn,
-} from "@klukvas/flux-b2c-ui";
+import { cn } from "@/utils/cn";
 
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   hover?: boolean;
@@ -15,12 +8,11 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export const Card = React.forwardRef<HTMLDivElement, CardProps>(
   ({ className = "", hover = false, "data-testid": testId, ...props }, ref) => (
-    <BaseCard
+    <div
       ref={ref}
       className={cn(
-        "rounded-xl",
-        hover &&
-          "hover:border-[var(--color-border-hover)] hover:bg-[var(--color-surface-alt)]",
+        "bg-[var(--bg-surface)] border border-[var(--border)] rounded-[var(--radius-lg)] transition-[border-color] duration-150",
+        hover && "hover:border-[var(--border-hover)]",
         className,
       )}
       data-testid={testId || "card"}
@@ -36,9 +28,9 @@ interface SubComponentProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export const CardHeader = React.forwardRef<HTMLDivElement, SubComponentProps>(
   ({ className = "", "data-testid": testId, ...props }, ref) => (
-    <BaseCardHeader
+    <div
       ref={ref}
-      className={cn("p-4 pb-0 sm:p-6 sm:pb-0", className)}
+      className={cn("p-5 pb-0 sm:p-6 sm:pb-0", className)}
       data-testid={testId || "card-header"}
       {...props}
     />
@@ -50,9 +42,12 @@ export const CardTitle = React.forwardRef<
   HTMLHeadingElement,
   React.HTMLAttributes<HTMLHeadingElement> & { "data-testid"?: string }
 >(({ className = "", "data-testid": testId, ...props }, ref) => (
-  <BaseCardTitle
+  <h3
     ref={ref}
-    className={cn("text-lg", className)}
+    className={cn(
+      "text-base font-semibold tracking-[-0.01em] text-[var(--text-primary)]",
+      className,
+    )}
     data-testid={testId || "card-title"}
     {...props}
   />
@@ -61,9 +56,9 @@ CardTitle.displayName = "CardTitle";
 
 export const CardContent = React.forwardRef<HTMLDivElement, SubComponentProps>(
   ({ className = "", "data-testid": testId, ...props }, ref) => (
-    <BaseCardContent
+    <div
       ref={ref}
-      className={cn("p-4 sm:p-6", className)}
+      className={cn("p-5 sm:p-6", className)}
       data-testid={testId || "card-content"}
       {...props}
     />
@@ -73,10 +68,10 @@ CardContent.displayName = "CardContent";
 
 export const CardFooter = React.forwardRef<HTMLDivElement, SubComponentProps>(
   ({ className = "", "data-testid": testId, ...props }, ref) => (
-    <BaseCardFooter
+    <div
       ref={ref}
       className={cn(
-        "border-t border-[var(--color-border)] p-4 pt-0 sm:p-6 sm:pt-0",
+        "border-t border-[var(--border)] p-5 sm:p-6",
         className,
       )}
       data-testid={testId || "card-footer"}

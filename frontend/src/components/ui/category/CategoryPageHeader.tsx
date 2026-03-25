@@ -42,7 +42,7 @@ export const CategoryPageHeader: React.FC<CategoryPageHeaderProps> = ({
  variant="outline"
  size="sm"
  onClick={onToggleFilters}
- className={filtersActive ? "bg-[var(--color-accent-light)] text-accent-base" : ""}
+ className={filtersActive ? "bg-[var(--accent-dim)] text-accent-base" : ""}
  >
  <svg
  className="w-4 h-4 mr-1.5"

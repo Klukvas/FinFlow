@@ -98,7 +98,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
  value={formData.name}
  onChange={(e) => handleInputChange('name', e.target.value)}
  placeholder={t('debtPage.contacts.form.namePlaceholder')}
- className={`bg-elevated border-[var(--color-border)] border text-content placeholder:text-content-tertiary ${errors.name ? 'border-danger-base' : ''}`}
+ className={`bg-elevated border-[var(--border)] border text-content placeholder:text-content-tertiary ${errors.name ? 'border-danger-base' : ''}`}
  />
  {errors.name && (
  <p className="text-sm text-danger-base">{errors.name}</p>
@@ -118,7 +118,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
  value={formData.email || ''}
  onChange={(e) => handleInputChange('email', e.target.value || null)}
  placeholder={t('debtPage.contacts.form.emailPlaceholder')}
- className={`bg-elevated border-[var(--color-border)] border text-content placeholder:text-content-tertiary ${errors.email ? 'border-danger-base' : ''}`}
+ className={`bg-elevated border-[var(--border)] border text-content placeholder:text-content-tertiary ${errors.email ? 'border-danger-base' : ''}`}
  />
  {errors.email && (
  <p className="text-sm text-danger-base">{errors.email}</p>
@@ -136,7 +136,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
  value={formData.phone || ''}
  onChange={(e) => handleInputChange('phone', e.target.value || null)}
  placeholder={t('debtPage.contacts.form.phonePlaceholder')}
- className="bg-elevated border-[var(--color-border)] border text-content placeholder:text-content-tertiary"
+ className="bg-elevated border-[var(--border)] border text-content placeholder:text-content-tertiary"
  />
  </div>
  </div>
@@ -152,7 +152,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
  value={formData.company || ''}
  onChange={(e) => handleInputChange('company', e.target.value || null)}
  placeholder={t('debtPage.contacts.form.companyPlaceholder')}
- className="bg-elevated border-[var(--color-border)] border text-content placeholder:text-content-tertiary"
+ className="bg-elevated border-[var(--border)] border text-content placeholder:text-content-tertiary"
  />
  </div>
 
@@ -168,7 +168,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
  onChange={(e) => handleInputChange('address', e.target.value || null)}
  placeholder={t('debtPage.contacts.form.addressPlaceholder')}
  rows={3}
- className="bg-elevated border-[var(--color-border)] border text-content placeholder:text-content-tertiary"
+ className="bg-elevated border-[var(--border)] border text-content placeholder:text-content-tertiary"
  />
  </div>
 
@@ -184,7 +184,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
  onChange={(e) => handleInputChange('notes', e.target.value || null)}
  placeholder={t('debtPage.contacts.form.notesPlaceholder')}
  rows={4}
- className="bg-elevated border-[var(--color-border)] border text-content placeholder:text-content-tertiary"
+ className="bg-elevated border-[var(--border)] border text-content placeholder:text-content-tertiary"
  />
  </div>
 
@@ -216,7 +216,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({
  }
 
  return (
- <Card className="max-w-2xl mx-auto bg-elevated border-[var(--color-border)] border">
+ <Card className="max-w-2xl mx-auto bg-elevated border-[var(--border)] border">
  <CardHeader>
  <CardTitle className="flex items-center space-x-2 text-content">
  <User className="w-5 h-5" />

@@ -1,9 +1,5 @@
 import React from "react";
-import {
-  Skeleton as BaseSkeleton,
-  SkeletonText as BaseSkeletonText,
-  SkeletonCard as BaseSkeletonCard,
-} from "@klukvas/flux-b2c-ui";
+import { cn } from "@/utils/cn";
 
 interface SkeletonProps {
   className?: string;
@@ -14,15 +10,29 @@ interface SkeletonProps {
   "data-testid"?: string;
 }
 
+const variantStyles: Record<string, string> = {
+  text: "h-3.5 w-3/5 rounded-[var(--radius-sm)]",
+  circular: "rounded-full",
+  rectangular: "rounded-[var(--radius-md)]",
+};
+
 export const Skeleton: React.FC<SkeletonProps> = ({
+  className = "",
+  variant = "rectangular",
+  width,
+  height,
   animation = "pulse",
   "data-testid": testId,
-  ...props
 }) => (
-  <BaseSkeleton
-    animation={animation}
-    data-testid={testId || `skeleton-${props.variant || "rectangular"}`}
-    {...props}
+  <div
+    className={cn(
+      "skeleton-shimmer",
+      animation === "none" && "!animation-none",
+      variantStyles[variant],
+      className,
+    )}
+    style={{ width, height }}
+    data-testid={testId || `skeleton-${variant}`}
   />
 );
 
@@ -30,15 +40,37 @@ export const SkeletonText: React.FC<{
   lines?: number;
   className?: string;
   "data-testid"?: string;
-}> = ({ "data-testid": testId, ...props }) => (
-  <BaseSkeletonText data-testid={testId || "skeleton-text"} {...props} />
+}> = ({ lines = 3, className = "", "data-testid": testId }) => (
+  <div
+    className={cn("space-y-2.5", className)}
+    data-testid={testId || "skeleton-text"}
+  >
+    {Array.from({ length: lines }).map((_, i) => (
+      <div
+        key={i}
+        className={cn(
+          "skeleton-shimmer h-3.5 rounded-[var(--radius-sm)]",
+          i === lines - 1 ? "w-2/5" : "w-full",
+        )}
+      />
+    ))}
+  </div>
 );
 
 export const SkeletonCard: React.FC<{
   className?: string;
   "data-testid"?: string;
-}> = ({ "data-testid": testId, ...props }) => (
-  <BaseSkeletonCard data-testid={testId || "skeleton-card"} {...props} />
+}> = ({ className = "", "data-testid": testId }) => (
+  <div
+    className={cn(
+      "bg-[var(--bg-surface)] border border-[var(--border)] rounded-[var(--radius-lg)] p-5",
+      className,
+    )}
+    data-testid={testId || "skeleton-card"}
+  >
+    <Skeleton variant="text" className="h-5 w-2/5 mb-4" />
+    <SkeletonText lines={3} />
+  </div>
 );
 
 export const SkeletonTable: React.FC<{
@@ -48,7 +80,7 @@ export const SkeletonTable: React.FC<{
   "data-testid"?: string;
 }> = ({ rows = 5, columns = 4, className = "", "data-testid": testId }) => (
   <div
-    className={`space-y-3 ${className}`}
+    className={cn("space-y-3", className)}
     data-testid={testId || "skeleton-table"}
   >
     <div
@@ -56,7 +88,7 @@ export const SkeletonTable: React.FC<{
       style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
     >
       {Array.from({ length: columns }).map((_, i) => (
-        <BaseSkeleton key={`header-${i}`} variant="text" className="h-5" />
+        <Skeleton key={`header-${i}`} variant="text" className="h-5 w-full" />
       ))}
     </div>
     {Array.from({ length: rows }).map((_, rowIndex) => (
@@ -66,10 +98,10 @@ export const SkeletonTable: React.FC<{
         style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
       >
         {Array.from({ length: columns }).map((_, colIndex) => (
-          <BaseSkeleton
+          <Skeleton
             key={`row-${rowIndex}-col-${colIndex}`}
             variant="text"
-            className="h-4"
+            className="h-4 w-full"
           />
         ))}
       </div>

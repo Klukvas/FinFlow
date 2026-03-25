@@ -28,7 +28,7 @@ export const CurrencySelect: React.FC<CurrencySelectProps> = (props) => {
  const { currencies = [], isLoading, error } = useCurrency();
 
  const defaultClassName =
- "w-full px-3 py-3 border-[var(--color-border)] border rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)] focus:border-transparent transition-colors bg-surface text-content disabled:opacity-50 text-base";
+ "w-full px-3 py-3 border-[var(--border)] border rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-colors bg-surface text-content disabled:opacity-50 text-base";
  const combinedClassName = `${defaultClassName} ${className}`;
 
  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {

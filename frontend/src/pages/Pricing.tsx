@@ -1,7 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { FaCheck, FaInfoCircle } from "react-icons/fa";
+import { Check, Info } from "lucide-react";
 import { Button } from "@/components/ui/shared/Button";
 import { PaymentButton } from "@/components/payment/PaymentButton";
 import { SEOHead, SEOConfigs } from "@/components/seo/SEOHead";
@@ -9,178 +9,176 @@ import { useAuth } from "@/contexts/AuthContext";
 import { config } from "@/config/env";
 
 export const Pricing: React.FC = () => {
- const { t } = useTranslation();
- const navigate = useNavigate();
- const { user } = useAuth();
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
- const plans = t("pricingPage.plans", { returnObjects: true }) as Array<{
- name: string;
- price: string;
- period: string;
- description: string;
- features: string[];
- limitations: string[];
- popular?: boolean;
- icon?: React.ComponentType<{ className?: string }>;
- available?: boolean;
- code?: string;
- }>;
+  const plans = t("pricingPage.plans", { returnObjects: true }) as Array<{
+    name: string;
+    price: string;
+    period: string;
+    description: string;
+    features: string[];
+    limitations: string[];
+    popular?: boolean;
+    icon?: React.ComponentType<{ className?: string }>;
+    available?: boolean;
+    code?: string;
+  }>;
 
- return (
- <>
- <SEOHead {...SEOConfigs.pricing} url="https://finflow.ltd/pricing" />
- <div className="py-20 px-6">
- <div className="max-w-7xl mx-auto">
- <div className="text-center mb-16">
- <h1 className="text-4xl font-bold text-content mb-6">
- {t("pricingPage.title")}
- </h1>
- <p className="text-xl text-content-secondary max-w-3xl mx-auto">
- {t("pricingPage.subtitle")}
- </p>
+  return (
+    <>
+      <SEOHead {...SEOConfigs.pricing} url="https://finflow.ltd/pricing" />
+      <div className="py-20 px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h1 className="text-4xl font-bold text-content mb-6">
+              {t("pricingPage.title")}
+            </h1>
+            <p className="text-xl text-content-secondary max-w-3xl mx-auto">
+              {t("pricingPage.subtitle")}
+            </p>
 
- {/* Payment Disabled Notice */}
- {!config.features.paymentsEnabled && (
- <div className="mt-8 max-w-2xl mx-auto">
- <div className="bg-[var(--color-warning-light)] border-[var(--color-border)] border-2 rounded-lg p-6">
- <div className="flex items-start gap-3">
- <FaInfoCircle className="w-6 h-6 text-warning-base mt-1 flex-shrink-0" />
- <div className="text-left">
- <h3 className="font-bold text-content mb-2">
- {t("payment.disabledNotice.title", {
- defaultValue:
- "Payment Processing Temporarily Unavailable",
- })}
- </h3>
- <p className="text-sm text-content-secondary">
- {t("payment.disabledNotice.message", {
- defaultValue:
- "We are currently awaiting final approval from our payment provider. Payment functionality will be enabled soon. Thank you for your patience!",
- })}
- </p>
- </div>
- </div>
- </div>
- </div>
- )}
- </div>
+            {/* Payment Disabled Notice */}
+            {!config.features.paymentsEnabled && (
+              <div className="mt-8 max-w-2xl mx-auto">
+                <div className="bg-[var(--warning-dim)] border-[var(--border)] border-2 rounded-lg p-6">
+                  <div className="flex items-start gap-3">
+                    <Info className="w-6 h-6 text-warning-base mt-1 flex-shrink-0" />
+                    <div className="text-left">
+                      <h3 className="font-bold text-content mb-2">
+                        {t("payment.disabledNotice.title", {
+                          defaultValue:
+                            "Payment Processing Temporarily Unavailable",
+                        })}
+                      </h3>
+                      <p className="text-sm text-content-secondary">
+                        {t("payment.disabledNotice.message", {
+                          defaultValue:
+                            "We are currently awaiting final approval from our payment provider. Payment functionality will be enabled soon. Thank you for your patience!",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
 
- <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
- {plans.map((plan, index) => (
- <div
- key={index}
- className={`relative bg-elevated border-[var(--color-border)] border rounded-lg p-8 theme-shadow hover:theme-shadow-hover transition-colors ${
- plan.popular ? "ring-2 ring-[var(--color-ring)] scale-105" : ""
- } ${!plan.available ? "opacity-50 cursor-not-allowed" : ""}`}
- >
- {!plan.available && (
- <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
- <span className="bg-surface-alt text-content-inverse px-4 py-1 rounded-full text-sm font-medium">
- {t("pricingPage.inDevelopment")}
- </span>
- </div>
- )}
- {plan.available &&
- plan.name === t("pricingPage.plans.0.name") && (
- <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
- <span className="bg-accent-base text-content-inverse px-4 py-1 rounded-full text-sm font-medium">
- {t("pricingPage.popular")}
- </span>
- </div>
- )}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {plans.map((plan, index) => (
+              <div
+                key={index}
+                className={`relative bg-elevated border-[var(--border)] border rounded-lg p-8 theme-shadow hover:theme-shadow-hover transition-colors ${
+                  plan.popular ? "ring-2 ring-[var(--accent)] scale-105" : ""
+                } ${!plan.available ? "opacity-50 cursor-not-allowed" : ""}`}
+              >
+                {!plan.available && (
+                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                    <span className="bg-surface-alt text-content-inverse px-4 py-1 rounded-full text-sm font-medium">
+                      {t("pricingPage.inDevelopment")}
+                    </span>
+                  </div>
+                )}
+                {plan.available &&
+                  plan.name === t("pricingPage.plans.0.name") && (
+                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                      <span className="bg-accent-base text-content-inverse px-4 py-1 rounded-full text-sm font-medium">
+                        {t("pricingPage.popular")}
+                      </span>
+                    </div>
+                  )}
 
- <div className="text-center mb-8">
- {plan.icon && (
- <div className="bg-accent-base w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
- <plan.icon className="w-6 h-6 text-content-inverse" />
- </div>
- )}
- <h3 className="text-2xl font-bold text-content mb-2">
- {plan.name}
- </h3>
- <p className="text-content-secondary mb-4">
- {plan.description}
- </p>
- <div className="mb-6">
- <span className="text-4xl font-bold text-content">
- ${plan.price}
- </span>
- <span className="text-content-secondary ml-2">
- {plan.period}
- </span>
- </div>
- </div>
+                <div className="text-center mb-8">
+                  {plan.icon && (
+                    <div className="bg-accent-base w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
+                      <plan.icon className="w-6 h-6 text-content-inverse" />
+                    </div>
+                  )}
+                  <h3 className="text-2xl font-bold text-content mb-2">
+                    {plan.name}
+                  </h3>
+                  <p className="text-content-secondary mb-4">
+                    {plan.description}
+                  </p>
+                  <div className="mb-6">
+                    <span className="text-4xl font-mono font-bold text-content">
+                      ${plan.price}
+                    </span>
+                    <span className="text-content-secondary ml-2">
+                      {plan.period}
+                    </span>
+                  </div>
+                </div>
 
- <div className="space-y-4 mb-8">
- {plan.features.map((feature, featureIndex) => (
- <div key={featureIndex} className="flex items-start">
- <FaCheck className="w-5 h-5 text-success-base mr-3 mt-0.5 flex-shrink-0" />
- <span className="text-content text-sm">
- {feature}
- </span>
- </div>
- ))}
- {plan.limitations.map((limitation, limitationIndex) => (
- <div key={limitationIndex} className="flex items-start">
- <span className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0 text-content-tertiary">
- ✕
- </span>
- <span className="text-content-tertiary text-sm line-through">
- {limitation}
- </span>
- </div>
- ))}
- </div>
+                <div className="space-y-4 mb-8">
+                  {plan.features.map((feature, featureIndex) => (
+                    <div key={featureIndex} className="flex items-start">
+                      <Check className="w-5 h-5 text-success-base mr-3 mt-0.5 flex-shrink-0" />
+                      <span className="text-content text-sm">{feature}</span>
+                    </div>
+                  ))}
+                  {plan.limitations.map((limitation, limitationIndex) => (
+                    <div key={limitationIndex} className="flex items-start">
+                      <span className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0 text-content-tertiary">
+                        ✕
+                      </span>
+                      <span className="text-content-tertiary text-sm line-through">
+                        {limitation}
+                      </span>
+                    </div>
+                  ))}
+                </div>
 
- {plan.price === "0" ? (
- <Button
- variant="outline"
- fullWidth
- size="lg"
- onClick={() =>
- user ? navigate("/") : navigate("/register")
- }
- >
- {t("pricingPage.ctaFree")}
- </Button>
- ) : plan.available ? (
- <PaymentButton
- planCode={
- plan.code || plan.name.toLowerCase().replace(/\s+/g, "-")
- }
- planName={plan.name}
- amount={parseFloat(plan.price)}
- currency="UAH"
- variant={
- plan.name === t("pricingPage.plans.0.name")
- ? "primary"
- : "outline"
- }
- size="lg"
- fullWidth
- />
- ) : (
- <Button variant="outline" fullWidth size="lg" disabled>
- {t("pricingPage.inDevelopment")}
- </Button>
- )}
- </div>
- ))}
- </div>
+                {plan.price === "0" ? (
+                  <Button
+                    variant="outline"
+                    fullWidth
+                    size="lg"
+                    onClick={() =>
+                      user ? navigate("/") : navigate("/register")
+                    }
+                  >
+                    {t("pricingPage.ctaFree")}
+                  </Button>
+                ) : plan.available ? (
+                  <PaymentButton
+                    planCode={
+                      plan.code || plan.name.toLowerCase().replace(/\s+/g, "-")
+                    }
+                    planName={plan.name}
+                    amount={parseFloat(plan.price)}
+                    currency="UAH"
+                    variant={
+                      plan.name === t("pricingPage.plans.0.name")
+                        ? "primary"
+                        : "outline"
+                    }
+                    size="lg"
+                    fullWidth
+                  />
+                ) : (
+                  <Button variant="outline" fullWidth size="lg" disabled>
+                    {t("pricingPage.inDevelopment")}
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
 
- <div className="mt-16 text-center">
- <h2 className="text-2xl font-bold text-content mb-4">
- {t("pricingPage.faqTitle")}
- </h2>
- <p className="text-content-secondary mb-6">
- {t("pricingPage.faqSubtitle")}
- </p>
- <Button variant="outline" size="lg">
- {t("pricingPage.faqCta")}
- </Button>
- </div>
- </div>
- </div>
- </>
- );
+          <div className="mt-16 text-center">
+            <h2 className="text-2xl font-bold text-content mb-4">
+              {t("pricingPage.faqTitle")}
+            </h2>
+            <p className="text-content-secondary mb-6">
+              {t("pricingPage.faqSubtitle")}
+            </p>
+            <Button variant="outline" size="lg">
+              {t("pricingPage.faqCta")}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
 };

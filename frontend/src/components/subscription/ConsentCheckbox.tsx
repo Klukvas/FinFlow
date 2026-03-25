@@ -25,13 +25,13 @@ export const ConsentCheckbox: React.FC<ConsentCheckboxProps> = ({
  const today = new Date().toISOString().split("T")[0];
 
  return (
- <div className="space-y-3 p-4 rounded-lg border border-[var(--color-border)] bg-surface-alt">
+ <div className="space-y-3 p-4 rounded-lg border border-[var(--border)] bg-surface-alt">
  <label className="flex items-start gap-3 cursor-pointer group">
  <input
  type="checkbox"
  checked={checked}
  onChange={(e) => onChange(e.target.checked)}
- className="mt-1 w-5 h-5 rounded border-[var(--color-border)] border-accent-base text-accent-base focus:ring-[var(--color-ring)] focus:ring-2 cursor-pointer"
+ className="mt-1 w-5 h-5 rounded border-[var(--border)] border-accent-base text-accent-base focus:ring-[var(--accent)] focus:ring-2 cursor-pointer"
  aria-label={t(
  "subscription.consent.ariaLabel",
  "Agree to subscription terms",

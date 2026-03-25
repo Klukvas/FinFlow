@@ -141,7 +141,7 @@ export default function Register() {
  return (
  <div className="flex items-center justify-center px-4 py-12">
  <div className="w-full max-w-md">
- <div className="bg-elevated border-[var(--color-border)] border rounded-lg theme-shadow p-6 md:p-8 transition-colors">
+ <div className="bg-elevated border-[var(--border)] border rounded-lg theme-shadow p-6 md:p-8 transition-colors">
  <div className="text-center mb-8">
  <h2 className="text-2xl font-bold text-content mb-2">
  {t("authPage.register.title")}
@@ -226,7 +226,7 @@ export default function Register() {
  </div>
 
  {error && (
- <div className="bg-[var(--color-danger-light)] border-[var(--color-border)] border rounded-lg p-4">
+ <div className="bg-[var(--danger-dim)] border-[var(--border)] border rounded-lg p-4">
  <p className="text-danger-base text-sm">{error}</p>
  </div>
  )}

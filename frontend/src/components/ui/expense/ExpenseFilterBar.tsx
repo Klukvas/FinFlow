@@ -49,10 +49,10 @@ export const ExpenseFilterBar: React.FC<ExpenseFilterBarProps> = ({
  filters.currency;
 
  const inputClasses =
- "py-2 px-3 text-sm rounded-lg border border-[var(--color-border)] bg-elevated text-content focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-colors";
+ "py-2 px-3 text-sm rounded-lg border border-[var(--border)] bg-elevated text-content focus:outline-none focus:ring-2 focus:ring-[var(--accent)] transition-colors";
 
  return (
- <div className="bg-elevated border border-[var(--color-border)] rounded-xl p-4 animate-in fade-in slide-in-from-top-2 duration-200">
+ <div className="bg-elevated border border-[var(--border)] rounded-xl p-4 animate-in fade-in slide-in-from-top-2 duration-200">
  <div className="flex flex-wrap items-end gap-3">
  <div className="flex flex-col gap-1">
  <label className="text-xs font-medium text-content-secondary">

@@ -2,15 +2,15 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { WorkspaceInvite, InviteStatus } from "@/types";
 import {
- FaEnvelope,
- FaClock,
- FaTimes,
- FaCheck,
- FaBan,
- FaHourglass,
- FaEye,
- FaEdit,
-} from "react-icons/fa";
+  Mail,
+  Clock,
+  X,
+  Check,
+  Ban,
+  Hourglass,
+  Eye,
+  Pencil,
+} from "lucide-react";
 
 interface InviteCardProps {
  invite: WorkspaceInvite;
@@ -35,27 +35,27 @@ export const InviteCard: React.FC<InviteCardProps> = ({
  { icon: React.ReactNode; className: string; label: string }
  > = {
  pending: {
- icon: <FaHourglass className="w-3 h-3" />,
- className: "bg-[var(--color-warning-light)] text-warning-base",
+ icon: <Hourglass className="w-3 h-3" />,
+ className: "bg-[var(--warning-dim)] text-warning-base",
  label: t("workspace.invite.status.pending", "Pending"),
  },
  accepted: {
- icon: <FaCheck className="w-3 h-3" />,
- className: "bg-[var(--color-success-light)] text-success-base",
+ icon: <Check className="w-3 h-3" />,
+ className: "bg-[var(--success-dim)] text-success-base",
  label: t("workspace.invite.status.accepted", "Accepted"),
  },
  rejected: {
- icon: <FaBan className="w-3 h-3" />,
- className: "bg-[var(--color-danger-light)] text-danger-base",
+ icon: <Ban className="w-3 h-3" />,
+ className: "bg-[var(--danger-dim)] text-danger-base",
  label: t("workspace.invite.status.rejected", "Rejected"),
  },
  expired: {
- icon: <FaClock className="w-3 h-3" />,
+ icon: <Clock className="w-3 h-3" />,
  className: "bg-surface-alt text-content-secondary",
  label: t("workspace.invite.status.expired", "Expired"),
  },
  canceled: {
- icon: <FaTimes className="w-3 h-3" />,
+ icon: <X className="w-3 h-3" />,
  className: "bg-surface-alt text-content-secondary",
  label: t("workspace.invite.status.canceled", "Canceled"),
  },
@@ -75,13 +75,13 @@ export const InviteCard: React.FC<InviteCardProps> = ({
  const getRoleBadge = () => {
  const roleConfig = {
  read: {
- icon: <FaEye className="w-3 h-3" />,
- className: "bg-[var(--color-accent-light)] text-accent-base",
+ icon: <Eye className="w-3 h-3" />,
+ className: "bg-[var(--accent-dim)] text-accent-base",
  label: t("workspace.roles.read", "View Only"),
  },
  full: {
- icon: <FaEdit className="w-3 h-3" />,
- className: "bg-[var(--color-success-light)] text-success-base",
+ icon: <Pencil className="w-3 h-3" />,
+ className: "bg-[var(--success-dim)] text-success-base",
  label: t("workspace.roles.full", "Full Access"),
  },
  };
@@ -109,10 +109,10 @@ export const InviteCard: React.FC<InviteCardProps> = ({
  const canCancel = invite.status === "pending" && !invite.is_expired;
 
  return (
- <div className="flex items-center justify-between p-4 rounded-lg bg-surface-alt border border-[var(--color-border)]">
+ <div className="flex items-center justify-between p-4 rounded-lg bg-surface-alt border border-[var(--border)]">
  <div className="flex items-center gap-3 min-w-0 flex-1">
  <div className="p-2 rounded-lg bg-surface-alt text-content-secondary">
- <FaEnvelope className="w-4 h-4" />
+ <Mail className="w-4 h-4" />
  </div>
  <div className="min-w-0 flex-1">
  <div className="flex items-center gap-2 flex-wrap">
@@ -152,7 +152,7 @@ export const InviteCard: React.FC<InviteCardProps> = ({
  title={t("workspace.invite.cancel", "Cancel Invite")}
  disabled={isLoading}
  >
- <FaTimes className="w-4 h-4" />
+ <X className="w-4 h-4" />
  </button>
  )}
  </div>

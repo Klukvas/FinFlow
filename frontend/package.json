@@ -26,7 +26,6 @@
     "test:types": "node scripts/check-type-compat.mjs"
   },
   "dependencies": {
-    "@klukvas/flux-b2c-ui": "^0.1.0",
     "@tailwindcss/vite": "^4.1.3",
     "dompurify": "^3.3.1",
     "gray-matter": "^4.0.3",
@@ -37,7 +36,6 @@
     "react-dom": "^19.0.0",
     "react-helmet-async": "^2.0.5",
     "react-i18next": "^16.0.0",
-    "react-icons": "^5.5.0",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.5.0",
     "recharts": "^2.15.3",

@@ -181,7 +181,7 @@ export const EditExpense: React.FC<EditExpenseProps> = ({
  onChange={(value) =>
  handleChange({ target: { name: "currency", value } } as any)
  }
- className="w-full px-3 sm:px-4 py-3 bg-elevated border-[var(--color-border)] border rounded-lg sm:rounded-xl text-content focus:ring-2 focus:ring-[var(--color-ring)] focus:border-transparent transition-colors shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px]"
+ className="w-full px-3 sm:px-4 py-3 bg-elevated border-[var(--border)] border rounded-lg sm:rounded-xl text-content focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-colors shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px]"
  showFlags={true}
  />
  </div>
@@ -211,7 +211,7 @@ export const EditExpense: React.FC<EditExpenseProps> = ({
  name="account_id"
  value={formData.account_id ?? ""}
  onChange={handleChange}
- className="w-full px-3 sm:px-4 py-3 bg-elevated border-[var(--color-border)] border rounded-lg sm:rounded-xl text-content focus:ring-2 focus:ring-[var(--color-ring)] focus:border-transparent transition-colors shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px] disabled:opacity-50"
+ className="w-full px-3 sm:px-4 py-3 bg-elevated border-[var(--border)] border rounded-lg sm:rounded-xl text-content focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-colors shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px] disabled:opacity-50"
  disabled={isLoadingAccounts}
  data-testid="expense-account-select"
  >
@@ -245,7 +245,7 @@ export const EditExpense: React.FC<EditExpenseProps> = ({
  name="date"
  value={formData.date ?? ""}
  onChange={handleChange}
- className="w-full px-3 sm:px-4 py-3 bg-elevated border-[var(--color-border)] border rounded-lg sm:rounded-xl text-content focus:ring-2 focus:ring-[var(--color-ring)] focus:border-transparent transition-colors shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px]"
+ className="w-full px-3 sm:px-4 py-3 bg-elevated border-[var(--border)] border rounded-lg sm:rounded-xl text-content focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-colors shadow-sm hover:shadow-md focus:shadow-lg text-sm sm:text-base min-h-[44px]"
  required
  data-testid="expense-date-input"
  />
@@ -268,7 +268,7 @@ export const EditExpense: React.FC<EditExpenseProps> = ({
  value={formData.description ?? ""}
  onChange={handleChange}
  placeholder="Добавьте описание расхода..."
- className="w-full px-3 sm:px-4 py-3 bg-elevated border-[var(--color-border)] border rounded-lg sm:rounded-xl text-content placeholder:text-content-tertiary focus:ring-2 focus:ring-[var(--color-ring)] focus:border-transparent transition-colors shadow-sm hover:shadow-md focus:shadow-lg resize-none text-sm sm:text-base min-h-[88px]"
+ className="w-full px-3 sm:px-4 py-3 bg-elevated border-[var(--border)] border rounded-lg sm:rounded-xl text-content placeholder:text-content-tertiary focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-colors shadow-sm hover:shadow-md focus:shadow-lg resize-none text-sm sm:text-base min-h-[88px]"
  rows={3}
  data-testid="expense-description-input"
  />
@@ -276,7 +276,7 @@ export const EditExpense: React.FC<EditExpenseProps> = ({
 
  {error && (
  <div
- className="bg-[var(--color-danger-light)] border-[var(--color-border)] border rounded-lg sm:rounded-xl p-3 sm:p-4"
+ className="bg-[var(--danger-dim)] border-[var(--border)] border rounded-lg sm:rounded-xl p-3 sm:p-4"
  data-testid="edit-expense-error"
  >
  <div className="flex items-center gap-2 sm:gap-3">

@@ -3,7 +3,6 @@ import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Sidebar } from "./Sidebar";
 import { AppHeader } from "./MobileHeader";
-import { PublicFooter } from "./PublicFooter";
 import { AnimatedBackground } from "./AnimatedBackground";
 import { useTutorial } from "@/contexts/TutorialContext";
 import { usePWAInstallContext } from "@/contexts/PWAInstallContext";
@@ -17,6 +16,8 @@ import {
 interface LayoutProps {
   children: React.ReactNode;
 }
+
+const MOBILE_BREAKPOINT = 768;
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -42,18 +43,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   useLayoutEffect(() => {
     const checkMobile = () => {
-      const width = window.innerWidth;
-      const mobile = width < 1024;
+      const mobile = window.innerWidth < MOBILE_BREAKPOINT;
       setIsMobile(mobile);
       if (!mobile) {
-        setSidebarOpen(true); // Show sidebar on desktop by default
+        setSidebarOpen(true);
       }
     };
 
-    // Check immediately on mount
     checkMobile();
-
-    // Add event listener for resize
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
@@ -67,8 +64,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   // Update document title when location or language changes
   useEffect(() => {
-    const pageTitle = getPageTitle();
-    document.title = pageTitle;
+    document.title = getPageTitle();
   }, [location.pathname, t]);
 
   const getPageTitle = () => {
@@ -92,45 +88,38 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
   };
 
-  const handleSidebarToggle = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
-  const handleSidebarClose = () => {
-    setSidebarOpen(false);
-  };
+  const handleSidebarToggle = () => setSidebarOpen(!sidebarOpen);
+  const handleSidebarClose = () => setSidebarOpen(false);
 
   return (
-    <div className="min-h-screen bg-surface transition-colors relative">
+    <div className="min-h-screen bg-[var(--bg-base)] transition-colors relative">
       {/* Animated background layers */}
       <AnimatedBackground />
 
+      {/* App shell */}
       <div className="flex min-h-screen relative" style={{ zIndex: 10 }}>
-        {/* Sidebar - Full height, starts from top */}
+        {/* Sidebar */}
         <Sidebar
           isOpen={sidebarOpen}
           onClose={handleSidebarClose}
           onToggle={handleSidebarToggle}
         />
 
-        {/* Main Content Area with Header */}
-        <div className="flex-1 flex flex-col min-h-screen">
-          {/* App Header - Only above content, not sidebar */}
+        {/* Main content area */}
+        <div className="flex-1 flex flex-col min-h-screen overflow-x-hidden">
+          {/* Header */}
           <AppHeader
             onMenuClick={handleSidebarToggle}
             title={getPageTitle()}
             isMobile={isMobile}
           />
 
-          {/* Page Content */}
+          {/* Page content */}
           <main className="flex-1">
-            <div className="p-4 sm:p-6 lg:p-6 min-h-[calc(100vh-8rem)] main-content">
+            <div className="p-4 sm:p-6 lg:p-8 max-w-[1280px] w-full mx-auto min-h-[calc(100vh-var(--header-height)-4rem)]">
               {children}
             </div>
           </main>
-
-          {/* Footer */}
-          <PublicFooter />
         </div>
       </div>
 

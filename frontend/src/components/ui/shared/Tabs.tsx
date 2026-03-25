@@ -1,10 +1,5 @@
 import React from "react";
-import {
-  Tabs as BaseTabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from "@klukvas/flux-b2c-ui";
+import { cn } from "@/utils/cn";
 
 interface Tab {
   id: string;
@@ -27,15 +22,51 @@ export const Tabs: React.FC<TabsProps> = ({
   className = "",
   children,
 }) => (
-  <BaseTabs value={activeTab} onValueChange={onTabChange} className={className}>
-    <TabsList>
+  <div className={className}>
+    <div
+      className="flex gap-1 p-1 bg-[var(--bg-raised)] rounded-[var(--radius-md)] border border-[var(--border)]"
+      role="tablist"
+    >
       {tabs.map((tab) => (
-        <TabsTrigger key={tab.id} value={tab.id}>
-          {tab.icon && <span className="mr-2">{tab.icon}</span>}
+        <button
+          key={tab.id}
+          role="tab"
+          aria-selected={activeTab === tab.id}
+          onClick={() => onTabChange(tab.id)}
+          className={cn(
+            "flex items-center gap-2 px-3 py-1.5 text-[13px] font-medium rounded-[var(--radius-sm)] transition-all duration-150 cursor-pointer border-0 whitespace-nowrap touch-manipulation",
+            activeTab === tab.id
+              ? "bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-[var(--shadow-sm)]"
+              : "bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]",
+          )}
+        >
+          {tab.icon && <span className="flex-shrink-0">{tab.icon}</span>}
           {tab.label}
-        </TabsTrigger>
+        </button>
       ))}
-    </TabsList>
+    </div>
     {children}
-  </BaseTabs>
+  </div>
 );
+
+/* Tab content wrapper */
+interface TabsContentProps {
+  value: string;
+  activeTab: string;
+  children: React.ReactNode;
+  className?: string;
+}
+
+export const TabsContent: React.FC<TabsContentProps> = ({
+  value,
+  activeTab,
+  children,
+  className = "",
+}) => {
+  if (value !== activeTab) return null;
+  return (
+    <div role="tabpanel" className={cn("mt-4", className)}>
+      {children}
+    </div>
+  );
+};

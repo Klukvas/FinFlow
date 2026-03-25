@@ -1,38 +1,19 @@
 import { CurrencyHttpClient, ApiError } from "./currencyHttpClient";
 
-export interface CurrencyInfo {
-  code: string;
-  name: string;
-  symbol: string;
-  flag: string;
-  locale: string;
-}
+export type {
+  CurrencyInfo,
+  ConversionRequest,
+  ConversionResponse,
+  CurrencyRatesResponse,
+  SupportedCurrenciesResponse,
+} from "@/types/currency";
 
-export interface ConversionRequest {
-  amount: number;
-  from_currency: string;
-  to_currency: string;
-}
-
-export interface ConversionResponse {
-  amount: number;
-  converted_amount: number;
-  from_currency: string;
-  to_currency: string;
-  rate: number;
-  timestamp: string;
-}
-
-export interface CurrencyRatesResponse {
-  base_currency: string;
-  rates: Record<string, number>;
-  timestamp: string;
-}
-
-export interface SupportedCurrenciesResponse {
-  currencies: CurrencyInfo[];
-  total_count: number;
-}
+import type {
+  ConversionRequest,
+  ConversionResponse,
+  CurrencyRatesResponse,
+  SupportedCurrenciesResponse,
+} from "@/types/currency";
 
 export class CurrencyApiClient {
   private httpClient: CurrencyHttpClient;

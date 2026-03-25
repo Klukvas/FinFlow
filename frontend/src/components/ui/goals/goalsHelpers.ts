@@ -97,35 +97,35 @@ export const getTrackStatus = (goal: Goal): TrackStatus => {
 export const getTrackStatusColor = (status: TrackStatus): string => {
   switch (status) {
     case "on_track":
-      return "theme-success";
+      return "text-[var(--success)]";
     case "slightly_behind":
-      return "theme-warning";
+      return "text-[var(--warning)]";
     case "off_track":
-      return "theme-error";
+      return "text-[var(--danger)]";
     case "no_date":
-      return "theme-text-tertiary";
+      return "text-[var(--text-tertiary)]";
   }
 };
 
 export const getTrackDotColor = (status: TrackStatus): string => {
   switch (status) {
     case "on_track":
-      return "bg-green-500";
+      return "bg-[var(--success)]";
     case "slightly_behind":
-      return "bg-yellow-500";
+      return "bg-[var(--warning)]";
     case "off_track":
-      return "bg-red-500";
+      return "bg-[var(--danger)]";
     case "no_date":
-      return "theme-bg-tertiary";
+      return "bg-[var(--text-tertiary)]";
   }
 };
 
 export const getProgressBarColor = (percentage: number): string => {
-  if (percentage >= 80) return "bg-green-500/70";
-  if (percentage >= 60) return "bg-blue-500/70";
-  if (percentage >= 40) return "bg-yellow-500/70";
-  if (percentage >= 20) return "bg-orange-500/70";
-  return "bg-red-500/70";
+  if (percentage >= 80) return "bg-[var(--success)]/70";
+  if (percentage >= 60) return "bg-[var(--accent)]/70";
+  if (percentage >= 40) return "bg-[var(--warning)]/70";
+  if (percentage >= 20) return "bg-[var(--warning)]/70";
+  return "bg-[var(--danger)]/70";
 };
 
 // Utility functions

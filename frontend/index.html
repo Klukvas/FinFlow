@@ -12,10 +12,11 @@
     </script>
     
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" sizes="180x180" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#2563eb" />
+    <meta name="theme-color" content="#080C12" />
     
     <!-- Primary Meta Tags -->
     <title>FinFlow - Умный учет финансов и бюджетирование</title>
@@ -58,7 +59,7 @@
       "@type": "Organization",
       "name": "FluxLab",
       "url": "https://finflow.ltd",
-      "logo": "https://finflow.ltd/favicon.png",
+      "logo": "https://finflow.ltd/favicon.svg",
       "email": "finflow@flux-lab.dev"
     }
     </script>
@@ -115,13 +116,24 @@
     }
     </script>
     
+    <!-- Theme initialization — prevents FOUC (must be in <head>) -->
+    <script>
+      (function(){
+        var t=localStorage.getItem('theme')||'dark';
+        var d=t==='system'
+          ?(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light')
+          :t;
+        document.documentElement.setAttribute('data-theme',d);
+      })();
+    </script>
+
     <!-- Paddle.js for checkout overlay -->
     <script defer src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
 
     <!-- Preconnect to external domains -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
     
     <!-- Canonical URL -->
     <link rel="canonical" href="https://finflow.ltd/" />

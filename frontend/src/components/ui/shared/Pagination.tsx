@@ -73,7 +73,7 @@ export const Pagination: React.FC<PaginationProps> = ({
  <select
  value={itemsPerPage}
  onChange={(e) => onPageSizeChange(Number(e.target.value))}
- className="px-2 py-1 bg-elevated border border-[var(--color-border)] rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]"
+ className="px-2 py-1 bg-elevated border border-[var(--border)] rounded text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
  data-testid="page-size-selector"
  >
  {pageSizeOptions.map(size => (
@@ -90,7 +90,7 @@ export const Pagination: React.FC<PaginationProps> = ({
  <button
  onClick={() => onPageChange(currentPage - 1)}
  disabled={currentPage === 1}
- className="px-3 py-2 bg-elevated border border-[var(--color-border)] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-alt transition-colors flex items-center gap-1 text-sm"
+ className="px-3 py-2 bg-elevated border border-[var(--border)] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-alt transition-colors flex items-center gap-1 text-sm"
  data-testid="pagination-prev"
  >
  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -111,7 +111,7 @@ export const Pagination: React.FC<PaginationProps> = ({
  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
  currentPage === page
  ? 'bg-accent-base text-white'
- : 'bg-elevated border border-[var(--color-border)] hover:bg-surface-alt text-content'
+ : 'bg-elevated border border-[var(--border)] hover:bg-surface-alt text-content'
  }`}
  data-testid={`pagination-page-${page}`}
  >
@@ -126,7 +126,7 @@ export const Pagination: React.FC<PaginationProps> = ({
  <button
  onClick={() => onPageChange(currentPage + 1)}
  disabled={currentPage === totalPages}
- className="px-3 py-2 bg-elevated border border-[var(--color-border)] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-alt transition-colors flex items-center gap-1 text-sm"
+ className="px-3 py-2 bg-elevated border border-[var(--border)] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-alt transition-colors flex items-center gap-1 text-sm"
  data-testid="pagination-next"
  >
  Вперед

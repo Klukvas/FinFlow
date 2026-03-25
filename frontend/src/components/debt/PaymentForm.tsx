@@ -159,7 +159,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
  <>
  <CardContent>
  {/* Current Balance Info */}
- <div className="p-4 rounded-lg mb-6 bg-[var(--color-accent-light)]">
+ <div className="p-4 rounded-lg mb-6 bg-[var(--accent-dim)]">
  <div className="flex justify-between items-center">
  <span className="text-sm font-medium text-content-secondary">
  Current Balance
@@ -169,7 +169,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
  </span>
  </div>
  {formData.amount > 0 && (
- <div className="flex justify-between items-center mt-2 pt-2 border-[var(--color-border)] border-t">
+ <div className="flex justify-between items-center mt-2 pt-2 border-[var(--border)] border-t">
  <span className="text-sm font-medium text-content-secondary">
  After Payment
  </span>
@@ -213,7 +213,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
  onChange={(e) =>
  handleInputChange("payment_date", e.target.value)
  }
- className={`pl-10 bg-elevated border-[var(--color-border)] border text-content ${errors.payment_date ? "border-danger-base" : ""}`}
+ className={`pl-10 bg-elevated border-[var(--border)] border text-content ${errors.payment_date ? "border-danger-base" : ""}`}
  />
  </div>
  {errors.payment_date && (
@@ -230,10 +230,10 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
  handleInputChange("payment_method", value || null)
  }
  >
- <SelectTrigger className="bg-elevated border-[var(--color-border)] border text-content">
+ <SelectTrigger className="bg-elevated border-[var(--border)] border text-content">
  <SelectValue placeholder="Select payment method (optional)" />
  </SelectTrigger>
- <SelectContent className="bg-elevated border-[var(--color-border)] border">
+ <SelectContent className="bg-elevated border-[var(--border)] border">
  <SelectItem
  value=""
  className="text-content hover:bg-surface-alt"
@@ -258,7 +258,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
  {/* Breakdown (Optional) */}
  <div className="space-y-4">
- <div className="p-3 rounded-lg bg-[var(--color-accent-light)]">
+ <div className="p-3 rounded-lg bg-[var(--accent-dim)]">
  <Label className="text-sm font-medium text-content-secondary">
  Payment Breakdown (Optional)
  </Label>
@@ -313,7 +313,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
  onChange={(e) => handleInputChange("description", e.target.value)}
  placeholder="Payment notes or reference..."
  rows={3}
- className="bg-elevated border-[var(--color-border)] border text-content placeholder:text-content-tertiary"
+ className="bg-elevated border-[var(--border)] border text-content placeholder:text-content-tertiary"
  />
  </div>
 
@@ -342,7 +342,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
  }
 
  return (
- <Card className="max-w-lg mx-auto bg-elevated border-[var(--color-border)] border">
+ <Card className="max-w-lg mx-auto bg-elevated border-[var(--border)] border">
  <CardHeader>
  <CardTitle className="flex items-center space-x-2 text-content">
  <DollarSign className="w-5 h-5" />

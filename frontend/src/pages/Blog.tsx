@@ -33,7 +33,7 @@ export const Blog: React.FC = () => {
  <Link
  key={post.slug}
  to={`/blog/${post.slug}`}
- className={`group bg-elevated border-[var(--color-border)] border rounded-xl p-6 theme-shadow hover:theme-shadow-hover transition-colors fade-up ${
+ className={`group bg-elevated border-[var(--border)] border rounded-xl p-6 theme-shadow hover:theme-shadow-hover transition-colors fade-up ${
  ANIMATION_DELAYS[Math.min(index, ANIMATION_DELAYS.length - 1)]
  }`}
  >
@@ -42,7 +42,7 @@ export const Blog: React.FC = () => {
  {post.tags.slice(0, 3).map((tag) => (
  <span
  key={tag}
- className="text-xs px-2 py-1 rounded-full bg-[var(--color-accent-light)] text-accent-base font-medium"
+ className="text-xs px-2 py-1 rounded-full bg-[var(--accent-dim)] text-accent-base font-medium"
  >
  {tag}
  </span>

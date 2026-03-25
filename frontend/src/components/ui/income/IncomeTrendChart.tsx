@@ -37,19 +37,19 @@ export const IncomeTrendChart: React.FC<IncomeTrendChartProps> = ({ incomes }) =
  }, [trendData]);
 
  return (
- <div className="bg-elevated p-4 rounded-lg theme-shadow border-[var(--color-border)] border">
+ <div className="bg-elevated p-4 rounded-lg theme-shadow border-[var(--border)] border">
  <h2 className="text-lg font-semibold mb-4 text-content">{t('incomePage.dashboard.trendTitle')}</h2>
  <div className="h-[300px]">
  <ResponsiveContainer width="100%" height="100%">
  <LineChart data={trendData}>
- <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" strokeOpacity={0.5} />
- <XAxis dataKey="month" tick={{ fill: 'var(--color-text)', fontSize: 12 }} axisLine={{ stroke: 'var(--color-border)' }} />
- <YAxis tick={{ fill: 'var(--color-text)', fontSize: 12 }} axisLine={{ stroke: 'var(--color-border)' }} />
+ <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" strokeOpacity={0.5} />
+ <XAxis dataKey="month" tick={{ fill: 'var(--text-primary)', fontSize: 12 }} axisLine={{ stroke: 'var(--border)' }} />
+ <YAxis tick={{ fill: 'var(--text-primary)', fontSize: 12 }} axisLine={{ stroke: 'var(--border)' }} />
  <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
- <Legend wrapperStyle={{ color: 'var(--color-text)' }} />
+ <Legend wrapperStyle={{ color: 'var(--text-primary)' }} />
  <Line type="monotone" dataKey="amount" name={t('incomePage.list.amount')} stroke={CHART_COLORS[4]} strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
  {averageAmount > 0 && (
- <ReferenceLine y={averageAmount} stroke="var(--color-text-tertiary)" strokeDasharray="3 3" />
+ <ReferenceLine y={averageAmount} stroke="var(--text-tertiary)" strokeDasharray="3 3" />
  )}
  </LineChart>
  </ResponsiveContainer>

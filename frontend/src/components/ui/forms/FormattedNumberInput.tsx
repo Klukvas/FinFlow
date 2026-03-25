@@ -110,14 +110,14 @@ const FormattedNumberInput = forwardRef<
  placeholder={placeholder}
  disabled={disabled}
  data-testid={testId || "formatted-number-input"}
- className={`block w-full h-12 px-3 py-3 text-base border-[var(--color-border)] border rounded-lg shadow-sm bg-surface text-content placeholder:text-content-tertiary focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)] focus:border-transparent transition-colors ${
+ className={`block w-full h-12 px-3 py-3 text-base border-[var(--border)] border rounded-lg shadow-sm bg-surface text-content placeholder:text-content-tertiary focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-colors ${
  error
- ? "border-danger-base focus:ring-[var(--color-danger)] focus:border-danger-base"
+ ? "border-danger-base focus:ring-[var(--danger)] focus:border-danger-base"
  : ""
  } ${
  disabled
  ? "bg-surface-alt cursor-not-allowed opacity-50"
- : "hover:border-[var(--color-border-hover)]"
+ : "hover:border-[var(--border-hover)]"
  } ${className || ""}`}
  {...props}
  />

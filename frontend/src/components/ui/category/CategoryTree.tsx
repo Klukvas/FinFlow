@@ -31,7 +31,7 @@ export const CategoryTree: React.FC<CategoryTreeProps> = ({
  if (loading) {
  return (
  <div className="flex justify-center items-center py-12">
- <div className="animate-spin rounded-full h-6 w-6 border-2 border-[var(--color-accent)] border-t-transparent" />
+ <div className="animate-spin rounded-full h-6 w-6 border-2 border-[var(--accent)] border-t-transparent" />
  </div>
  );
  }
@@ -237,7 +237,7 @@ export const CategoryTree: React.FC<CategoryTreeProps> = ({
  return (
  <React.Fragment key={category.id}>
  <div
- className={`${indentClass} bg-surface-alt rounded-lg border border-[var(--color-border)] p-3 transition-colors cursor-pointer hover:bg-surface-alt`}
+ className={`${indentClass} bg-surface-alt rounded-lg border border-[var(--border)] p-3 transition-colors cursor-pointer hover:bg-surface-alt`}
  onClick={() => onRowClick(category)}
  >
  <div className="flex items-start justify-between">
@@ -346,12 +346,12 @@ export const CategoryTree: React.FC<CategoryTreeProps> = ({
  return (
  <div className="w-full">
  {/* Mobile Cards View */}
- <div className="block lg:hidden space-y-2 p-4">
+ <div className="block md:hidden space-y-2 p-4">
  {categories.map((cat) => renderMobileTreeNode(cat, 0))}
  </div>
 
  {/* Desktop Table View */}
- <div className="hidden lg:block">
+ <div className="hidden md:block">
  <div className="overflow-x-auto">
  <table className="w-full">
  <thead className="bg-surface-alt">
@@ -370,7 +370,7 @@ export const CategoryTree: React.FC<CategoryTreeProps> = ({
  </th>
  </tr>
  </thead>
- <tbody className="bg-elevated divide-y border-[var(--color-border)]">
+ <tbody className="bg-elevated divide-y border-[var(--border)]">
  {categories.map((cat) => renderDesktopTreeNode(cat, 0))}
  </tbody>
  </table>
