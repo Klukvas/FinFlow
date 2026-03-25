@@ -112,3 +112,126 @@ class TestMembers:
         data = invites.raise_on_error()
         invite_list = data if isinstance(data, list) else data.get("invites", [])
         assert len(invite_list) >= 1
+
+    async def test_reject_invite(self, primary_user, workspace_id):
+        """Invitee can reject a pending invite."""
+        # Create a fresh user to invite
+        member_email = unique_email()
+        member_api = UserApiClient()
+        member_reg = await member_api.register(member_email, strong_password())
+        member_data = member_reg.raise_on_error()
+        member_token = member_data["access_token"]
+
+        # Owner invites the new user
+        owner = WorkspaceApiClient()
+        owner.set_token(primary_user["token"])
+        invite_result = await owner.create_invite(workspace_id, member_email, role="read")
+        invite_data = invite_result.raise_on_error()
+        invite_id = invite_data["id"]
+
+        # Member rejects the invite
+        invitee = WorkspaceApiClient()
+        invitee.set_token(member_token)
+        reject_result = await invitee.reject_invite(invite_id)
+        assert reject_result.ok or reject_result.status_code in (200, 204)
+
+    async def test_cancel_pending_invite(self, primary_user, workspace_id):
+        """Owner can cancel a pending invite before the invitee accepts."""
+        member_email = unique_email()
+        user_api = UserApiClient()
+        await user_api.register(member_email, strong_password())
+
+        owner = WorkspaceApiClient()
+        owner.set_token(primary_user["token"])
+        invite_result = await owner.create_invite(workspace_id, member_email, role="read")
+        invite_data = invite_result.raise_on_error()
+        invite_id = invite_data["id"]
+
+        # Owner cancels the pending invite
+        cancel_result = await owner.cancel_invite(workspace_id, invite_id)
+        assert cancel_result.ok or cancel_result.status_code in (200, 204)
+
+    async def test_update_member_role(self, primary_user, workspace_id):
+        """Owner can change a member's role after they have joined."""
+        # Create and invite a user with 'read' role
+        member_email = unique_email()
+        member_api = UserApiClient()
+        member_reg = await member_api.register(member_email, strong_password())
+        member_data = member_reg.raise_on_error()
+        member_token = member_data["access_token"]
+
+        owner = WorkspaceApiClient()
+        owner.set_token(primary_user["token"])
+        invite = (await owner.create_invite(workspace_id, member_email, role="read")).raise_on_error()
+
+        invitee = WorkspaceApiClient()
+        invitee.set_token(member_token)
+        await invitee.accept_invite(invite["id"])
+
+        # Find the member's user_id
+        members = (await owner.list_members(workspace_id)).raise_on_error()
+        member_list = members if isinstance(members, list) else members.get("members", [])
+        member_entry = next(
+            (m for m in member_list if m.get("email") == member_email),
+            None,
+        )
+        assert member_entry is not None, "Invited member not found in member list"
+        user_id = member_entry.get("user_id") or member_entry.get("id")
+
+        # Update role from 'read' to 'full'
+        update_result = await owner.update_member_role(workspace_id, user_id, "full")
+        assert update_result.ok or update_result.status_code in (200, 204)
+
+
+class TestWorkspaceArchiveAndLeave:
+
+    async def test_archive_workspace(self):
+        """Owner can archive a workspace they own."""
+        # Create a new user with their own workspace to avoid
+        # breaking other tests that depend on shared_workspace
+        user_api = UserApiClient()
+        user_data = (await user_api.register(unique_email(), strong_password())).raise_on_error()
+        token = user_data["access_token"]
+
+        ws = WorkspaceApiClient()
+        ws.set_token(token)
+        ws_list = (await ws.list_all()).raise_on_error()
+        workspaces = ws_list.get("workspaces", ws_list) if isinstance(ws_list, dict) else ws_list
+        ws_id = str(workspaces[0]["id"])
+
+        # Archive the workspace
+        result = await ws.archive(ws_id)
+        assert result.ok or result.status_code in (200, 204)
+
+        # Verify workspace is archived: listing without include_archived should exclude it,
+        # or the workspace data should show an archived flag
+        listed = (await ws.list_all(include_archived=False)).raise_on_error()
+        active = listed.get("workspaces", listed) if isinstance(listed, dict) else listed
+        active_ids = [str(w["id"]) for w in active]
+        # Either removed from default list or marked archived
+        if ws_id in active_ids:
+            ws_data = next(w for w in active if str(w["id"]) == ws_id)
+            assert ws_data.get("is_archived") or ws_data.get("archived"), \
+                "Workspace should be marked as archived"
+
+    async def test_member_can_leave_workspace(self, primary_user, workspace_id):
+        """A non-owner member can leave a workspace."""
+        member_email = unique_email()
+        member_api = UserApiClient()
+        member_reg = await member_api.register(member_email, strong_password())
+        member_data = member_reg.raise_on_error()
+        member_token = member_data["access_token"]
+
+        # Owner invites the member
+        owner = WorkspaceApiClient()
+        owner.set_token(primary_user["token"])
+        invite = (await owner.create_invite(workspace_id, member_email, role="full")).raise_on_error()
+
+        # Member accepts
+        member_ws = WorkspaceApiClient()
+        member_ws.set_token(member_token)
+        await member_ws.accept_invite(invite["id"])
+
+        # Member leaves the workspace
+        leave_result = await member_ws.leave(workspace_id)
+        assert leave_result.ok or leave_result.status_code in (200, 204)

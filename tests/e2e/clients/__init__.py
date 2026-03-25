@@ -6,3 +6,4 @@ from tests.e2e.clients.expense_client import ExpenseApiClient
 from tests.e2e.clients.income_client import IncomeApiClient
 from tests.e2e.clients.account_client import AccountApiClient
 from tests.e2e.clients.subscription_client import SubscriptionApiClient
+from tests.e2e.clients.bank_sync_client import BankSyncApiClient

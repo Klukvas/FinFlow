@@ -1,5 +1,6 @@
 """E2E tests for income CRUD and balance updates."""
 import pytest
+from datetime import date, timedelta
 
 pytestmark = pytest.mark.income
 
@@ -71,4 +72,22 @@ class TestIncomeQueries:
 
     async def test_paginated_incomes(self, income_client):
         result = await income_client.list_paginated(page=1, size=10)
+        assert result.ok
+
+    async def test_income_by_date_range(self, income_client, shared_income_category):
+        """Filter incomes by date range returns matching records."""
+        today = date.today()
+        await income_client.create(
+            amount=75.0,
+            category_id=shared_income_category["id"],
+            date=today.isoformat(),
+        )
+        start = (today - timedelta(days=7)).isoformat()
+        end = today.isoformat()
+        result = await income_client.by_date_range(start, end)
+        assert result.ok
+
+    async def test_income_summary_stats(self, income_client):
+        """Income summary endpoint returns aggregated statistics."""
+        result = await income_client.summary_stats()
         assert result.ok

@@ -39,3 +39,11 @@ class IncomeApiClient(BaseApiClient):
     async def by_category(self, category_id: int) -> ApiResponse:
         resp = await self._get(f"/incomes/category/{category_id}")
         return self._parse(resp)
+
+    async def by_date_range(self, start_date: str, end_date: str) -> ApiResponse:
+        resp = await self._get("/incomes/date-range/", params={"start_date": start_date, "end_date": end_date})
+        return self._parse(resp)
+
+    async def summary_stats(self) -> ApiResponse:
+        resp = await self._get("/incomes/summary")
+        return self._parse(resp)

@@ -25,6 +25,7 @@ from tests.e2e.clients.goals_client import GoalsApiClient
 from tests.e2e.clients.recurring_client import RecurringApiClient
 from tests.e2e.clients.currency_client import CurrencyApiClient
 from tests.e2e.clients.pdf_parser_client import PdfParserApiClient
+from tests.e2e.clients.bank_sync_client import BankSyncApiClient
 from tests.e2e.helpers.test_data import unique_email, strong_password, workspace_name
 from tests.e2e.helpers.wait import wait_for_services
 
@@ -232,6 +233,20 @@ def pdf_parser_client(primary_user) -> PdfParserApiClient:
 def unauthenticated_pdf_client() -> PdfParserApiClient:
     """PDF parser client without auth token for negative auth tests."""
     return PdfParserApiClient()
+
+
+@pytest.fixture
+def bank_sync_client(primary_user, workspace_id) -> BankSyncApiClient:
+    client = BankSyncApiClient()
+    client.set_token(primary_user["token"])
+    client.set_workspace_id(workspace_id)
+    return client
+
+
+@pytest.fixture
+def unauthenticated_bank_sync_client() -> BankSyncApiClient:
+    """Bank sync client without auth token for negative auth tests."""
+    return BankSyncApiClient()
 
 
 @pytest.fixture

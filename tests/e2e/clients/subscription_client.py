@@ -40,3 +40,15 @@ class SubscriptionApiClient(BaseApiClient):
             extra_headers=extra,
         )
         return self._parse(resp)
+
+    async def cancel_subscription(self, user_id: int) -> ApiResponse:
+        resp = await self._post(f"/v1/subscriptions/{user_id}:cancel")
+        return self._parse(resp)
+
+    async def list_features(self) -> ApiResponse:
+        resp = await self._get("/v1/features")
+        return self._parse(resp)
+
+    async def get_plan_features(self, plan_code: str) -> ApiResponse:
+        resp = await self._get(f"/v1/plans/{plan_code}/features")
+        return self._parse(resp)

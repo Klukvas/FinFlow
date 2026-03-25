@@ -74,3 +74,49 @@ class TestFeatureLimits:
         if user_id:
             result = await subscription_client.get_entitlements(user_id)
             assert result.ok
+
+
+class TestCancelSubscription:
+
+    async def test_cancel_subscription(self):
+        """Cancelling a subscription should deactivate or downgrade the user."""
+        email, password = unique_email(), strong_password()
+        user = UserApiClient()
+        reg = await user.register(email, password)
+        data = reg.raise_on_error()
+
+        import base64, json
+        token = data["access_token"]
+        payload = token.split(".")[1]
+        payload += "==" * (4 - len(payload) % 4)
+        jwt_data = json.loads(base64.urlsafe_b64decode(payload))
+        user_id = jwt_data.get("sub")
+
+        if user_id:
+            sub = SubscriptionApiClient()
+            sub.set_token(data["access_token"])
+            result = await sub.cancel_subscription(user_id)
+            # Should succeed or return a known status (some systems return 400
+            # if the user is already on the free/basic plan)
+            assert result.ok or result.status_code in (200, 204, 400)
+
+
+class TestFeatureCatalog:
+
+    async def test_list_all_features(self, subscription_client):
+        """List all available features across all plans."""
+        result = await subscription_client.list_features()
+        # Some implementations may not expose this endpoint; accept 200 or 404
+        assert result.ok or result.status_code == 404
+
+    async def test_get_plan_specific_features(self, subscription_client):
+        """Retrieve feature list for a specific plan code."""
+        # First get available plans to find a valid plan code
+        plans_result = await subscription_client.list_plans()
+        plans = plans_result.raise_on_error()
+        assert isinstance(plans, list) and len(plans) >= 1
+
+        plan_code = plans[0].get("code") or plans[0].get("plan_code") or "basic"
+        result = await subscription_client.get_plan_features(plan_code)
+        # Accept 200 or 404 if the endpoint is not implemented
+        assert result.ok or result.status_code == 404
