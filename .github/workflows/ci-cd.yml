@@ -20,6 +20,7 @@ on:
       - 'scripts/**'
       - 'tests/e2e/**'
       - '**/tests/**'
+      - 'e2e_ui_tests/**'
   workflow_dispatch:
     inputs:
       environment:
@@ -66,6 +67,7 @@ jobs:
       workspace_service: ${{ steps.detect.outputs.workspace_service }}
       ai_assistant_service: ${{ steps.detect.outputs.ai_assistant_service }}
       bank_sync_service: ${{ steps.detect.outputs.bank_sync_service }}
+      e2e_ui_tests: ${{ steps.detect.outputs.e2e_ui_tests }}
       services_list: ${{ steps.detect.outputs.services_list }}
     steps:
       - name: Checkout
@@ -97,6 +99,7 @@ jobs:
           WORKSPACE_SERVICE="false"
           AI_ASSISTANT_SERVICE="false"
           BANK_SYNC_SERVICE="false"
+          E2E_UI_TESTS="false"
 
           # If manual dispatch with specific services
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]] && [[ -n "${INPUT_SERVICES}" ]]; then
@@ -120,6 +123,7 @@ jobs:
                 workspace_service) WORKSPACE_SERVICE="true" ;;
                 ai_assistant_service) AI_ASSISTANT_SERVICE="true" ;;
                 bank_sync_service) BANK_SYNC_SERVICE="true" ;;
+                e2e_ui_tests) E2E_UI_TESTS="true" ;;
               esac
             done
           else
@@ -179,6 +183,9 @@ jobs:
             if git diff --name-only HEAD^..HEAD | grep -q "^bank_sync_service/"; then
               BANK_SYNC_SERVICE="true"
             fi
+            if git diff --name-only HEAD^..HEAD | grep -q "^e2e_ui_tests/"; then
+              E2E_UI_TESTS="true"
+            fi
 
             # If no service directories changed, skip individual service builds/tests.
             # E2E tests still run and cover all services via docker-compose.
@@ -223,6 +230,7 @@ jobs:
           echo "workspace_service=$WORKSPACE_SERVICE" >> $GITHUB_OUTPUT
           echo "ai_assistant_service=$AI_ASSISTANT_SERVICE" >> $GITHUB_OUTPUT
           echo "bank_sync_service=$BANK_SYNC_SERVICE" >> $GITHUB_OUTPUT
+          echo "e2e_ui_tests=$E2E_UI_TESTS" >> $GITHUB_OUTPUT
 
           # Build list for deployment
           SERVICES_LIST=""
@@ -303,6 +311,86 @@ jobs:
           poetry install --with dev --no-interaction
           poetry run pip install ../shared
           poetry run pytest -v --tb=short
+
+      - name: Run ai_assistant_service tests
+        if: needs.detect-changes.outputs.ai_assistant_service == 'true'
+        working-directory: ai_assistant_service
+        run: |
+          poetry install --with dev --no-interaction
+          poetry run pip install ../shared
+          poetry run pytest -v --tb=short
+
+      - name: Run income_service tests
+        if: needs.detect-changes.outputs.income_service == 'true'
+        working-directory: income_service
+        run: |
+          pip install -r requirements.txt pytest pytest-asyncio ../shared
+          pytest app/tests/ -v --tb=short
+
+      - name: Run recurring_service tests
+        if: needs.detect-changes.outputs.recurring_service == 'true'
+        working-directory: recurring_service
+        run: |
+          poetry install --with dev --no-interaction
+          poetry run pip install ../shared
+          poetry run pytest -v --tb=short
+
+      - name: Run account_service tests
+        if: needs.detect-changes.outputs.account_service == 'true'
+        working-directory: account_service
+        run: |
+          pip install -r requirements.txt pytest pytest-asyncio ../shared
+          pytest app/tests/ -v --tb=short
+
+      - name: Run bank_sync_service tests
+        if: needs.detect-changes.outputs.bank_sync_service == 'true'
+        working-directory: bank_sync_service
+        run: |
+          pip install -r requirements.txt pytest pytest-asyncio ../shared
+          pytest app/tests/ -v --tb=short
+
+      - name: Run currency_service tests
+        if: needs.detect-changes.outputs.currency_service == 'true'
+        working-directory: currency_service
+        run: |
+          pip install -r requirements.txt pytest pytest-asyncio ../shared
+          pytest app/tests/ -v --tb=short
+
+      - name: Run debt_service tests
+        if: needs.detect-changes.outputs.debt_service == 'true'
+        working-directory: debt_service
+        run: |
+          poetry install --with dev --no-interaction
+          poetry run pip install ../shared
+          poetry run pytest -v --tb=short
+
+      - name: Run goals_service tests
+        if: needs.detect-changes.outputs.goals_service == 'true'
+        working-directory: goals_service
+        run: |
+          pip install -r requirements.txt pytest pytest-asyncio ../shared
+          pytest app/tests/ -v --tb=short
+
+      - name: Run pdf_parser_service tests
+        if: needs.detect-changes.outputs.pdf_parser_service == 'true'
+        working-directory: pdf_parser_service
+        run: |
+          pip install -r requirements.txt pytest pytest-asyncio ../shared
+          pytest app/tests/ -v --tb=short
+
+      - name: Run scheduler_service tests
+        if: needs.detect-changes.outputs.scheduler_service == 'true'
+        working-directory: scheduler_service
+        run: |
+          pip install -r requirements.txt pytest pytest-asyncio ../shared
+          pytest app/tests/ -v --tb=short
+
+      - name: Run subscription_service tests
+        if: needs.detect-changes.outputs.subscription_service == 'true'
+        working-directory: subscription_service
+        run: |
+          pip install -r requirements.txt pytest pytest-asyncio ../shared
+          pytest app/tests/ -v --tb=short
 
   # Stage 1: Frontend Build
   stage1-frontend:
@@ -1154,6 +1242,320 @@ jobs:
         if: always()
         run: docker compose down -v
 
+  # E2E UI Tests: run Playwright tests against the full stack
+  e2e-ui-tests:
+    name: "E2E UI Tests (Playwright)"
+    needs: [detect-changes, unit-tests]
+    if: needs.detect-changes.outputs.e2e_ui_tests == 'true' || needs.detect-changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate secrets
+        run: |
+          echo "E2E_SECRET_KEY=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "E2E_INTERNAL_TOKEN=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+
+      - name: Generate .env.docker files
+        run: |
+          # Shared values — must not be placeholder strings (startup validation rejects them)
+          SECRET="$E2E_SECRET_KEY"
+          ALGO="HS256"
+          INTERNAL_TOKEN="$E2E_INTERNAL_TOKEN"
+
+          # user_service
+          cat > user_service/.env.docker << EOF
+          DATABASE_URL=postgresql://postgres:postgres@db:5432/user_db
+          SECRET_KEY=$SECRET
+          ALGORITHM=$ALGO
+          CORS_ORIGINS=*
+          LOG_LEVEL=INFO
+          RATE_LIMIT_PER_MINUTE=400
+          INTERNAL_SECRET_TOKEN=$INTERNAL_TOKEN
+          EOF
+
+          # expense_service
+          cat > expense_service/.env.docker << EOF
+          DATABASE_URL=postgresql://postgres:postgres@db:5432/expense_db
+          SECRET_KEY=$SECRET
+          ALGORITHM=$ALGO
+          CATEGORY_SERVICE_URL=http://category_service:8000
+          ACCOUNT_SERVICE_URL=http://account_service:8000
+          INTERNAL_SECRET_TOKEN=$INTERNAL_TOKEN
+          CORS_ORIGINS=*
+          LOG_LEVEL=INFO
+          MAX_AMOUNT=999999.99
+          MAX_DESCRIPTION_LENGTH=500
+          HTTP_TIMEOUT=5.0
+          HTTP_RETRY_ATTEMPTS=3
+          EOF
+
+          # income_service
+          cat > income_service/.env.docker << EOF
+          DATABASE_URL=postgresql://postgres:postgres@db:5432/income_db
+          SECRET_KEY=$SECRET
+          ALGORITHM=$ALGO
+          CATEGORY_SERVICE_URL=http://category_service:8000
+          ACCOUNT_SERVICE_URL=http://account_service:8000
+          INTERNAL_SECRET_TOKEN=$INTERNAL_TOKEN
+          CORS_ORIGINS=*
+          LOG_LEVEL=INFO
+          EOF
+
+          # recurring_service
+          cat > recurring_service/.env.docker << EOF
+          DATABASE_URL=postgresql://postgres:postgres@db:5432/recurring_db
+          SECRET_KEY=$SECRET
+          INTERNAL_SECRET_TOKEN=$INTERNAL_TOKEN
+          CORS_ORIGINS=*
+          LOG_LEVEL=INFO
+          EOF
+
+          # goals_service
+          cat > goals_service/.env.docker << EOF
+          DATABASE_URL=postgresql://postgres:postgres@db:5432/goals_db
+          SECRET_KEY=$SECRET
+          INTERNAL_SECRET_TOKEN=$INTERNAL_TOKEN
+          CORS_ORIGINS=*
+          LOG_LEVEL=INFO
+          EOF
+
+          # pdf_parser_service
+          cat > pdf_parser_service/.env.docker << EOF
+          DATABASE_URL=postgresql://postgres:postgres@db:5432/pdf_parser_db
+          INTERNAL_SERVICE_TOKEN=$INTERNAL_TOKEN
+          SECRET_KEY=$SECRET
+          ALGORITHM=$ALGO
+          CORS_ORIGINS=*
+          LOG_LEVEL=INFO
+          EOF
+
+          # debt_service
+          cat > debt_service/.env.docker << EOF
+          DATABASE_URL=postgresql://postgres:postgres@db:5432/debt_db
+          SECRET_KEY=$SECRET
+          INTERNAL_SECRET_TOKEN=$INTERNAL_TOKEN
+          CORS_ORIGINS=*
+          LOG_LEVEL=INFO
+          EOF
+
+          # account_service
+          cat > account_service/.env.docker << EOF
+          DATABASE_URL=postgresql://postgres:postgres@db:5432/account_db
+          REDIS_URL=redis://redis:6379
+          SECRET_KEY=$SECRET
+          ALGORITHM=$ALGO
+          INTERNAL_SECRET_TOKEN=$INTERNAL_TOKEN
+          CORS_ORIGINS=*
+          LOG_LEVEL=INFO
+          EXPENSE_SERVICE_URL=http://expense_service:8000
+          INCOME_SERVICE_URL=http://income_service:8000
+          USER_SERVICE_URL=http://user_service:8000
+          CURRENCY_SERVICE_URL=http://currency_service:8000
+          HTTP_TIMEOUT=5.0
+          HTTP_RETRY_ATTEMPTS=3
+          MAX_BALANCE=999999999.99
+          MAX_NAME_LENGTH=100
+          MAX_DESCRIPTION_LENGTH=500
+          MAX_CURRENCY_LENGTH=3
+          EOF
+
+          # currency_service
+          cat > currency_service/.env.docker << EOF
+          REDIS_URL=redis://redis:6379
+          CORS_ORIGINS=*
+          LOG_LEVEL=INFO
+          INTERNAL_SECRET_TOKEN=$INTERNAL_TOKEN
+          EOF
+
+          # subscription_service
+          cat > subscription_service/.env.docker << EOF
+          DATABASE_URL=postgresql://postgres:postgres@db:5432/subscription_db
+          SECRET_KEY=$SECRET
+          ALGORITHM=$ALGO
+          CORS_ORIGINS=*
+          LOG_LEVEL=INFO
+          RATE_LIMIT_PER_MINUTE=400
+          EOF
+
+          # ai_assistant_service
+          cat > ai_assistant_service/.env.docker << EOF
+          ANTHROPIC_API_KEY=sk-ant-test-key-not-real
+          ANTHROPIC_MODEL=claude-haiku-4-5-20251001
+          REDIS_URL=redis://redis:6379
+          SECRET_KEY=$SECRET
+          ALGORITHM=$ALGO
+          INTERNAL_SECRET_TOKEN=$INTERNAL_TOKEN
+          CORS_ORIGINS=*
+          LOG_LEVEL=INFO
+          EOF
+
+          # bank_sync_service
+          BANK_ENCRYPTION_KEY=$(python3 -c "import os, base64; print(base64.urlsafe_b64encode(os.urandom(32)).decode())")
+          cat > bank_sync_service/.env.docker << EOF
+          DATABASE_URL=postgresql://postgres:postgres@db:5432/bank_sync_db
+          SECRET_KEY=$SECRET
+          ALGORITHM=$ALGO
+          INTERNAL_SECRET_TOKEN=$INTERNAL_TOKEN
+          CORS_ORIGINS=*
+          LOG_LEVEL=INFO
+          BANK_TOKEN_ENCRYPTION_KEY=$BANK_ENCRYPTION_KEY
+          EOF
+
+          # payment_service
+          cat > payment_service/.env.docker << EOF
+          DATABASE_URL=postgresql://postgres:postgres@db:5432/payment_db
+          REDIS_URL=redis://redis:6379/0
+          LOG_LEVEL=INFO
+          JWT_SECRET_KEY=$SECRET
+          JWT_ALGORITHM=$ALGO
+          INTERNAL_SECRET_TOKEN=$INTERNAL_TOKEN
+          PADDLE_API_KEY=test_paddle_key
+          PADDLE_WEBHOOK_SECRET=test_webhook_secret
+          PADDLE_ENVIRONMENT=sandbox
+          PADDLE_SUCCESS_URL=http://localhost:3000/payment/return
+          PADDLE_CANCEL_URL=http://localhost:3000/pricing
+          SERVICE_BASE_URL=http://payment_service:8000
+          SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
+          IDEMPOTENCY_TTL_SECONDS=86400
+          PAYMENTS_ENABLED=false
+          EOF
+
+          # workspace_service
+          cat > workspace_service/.env.docker << EOF
+          DATABASE_URL=postgresql://postgres:postgres@db:5432/workspace_db
+          SECRET_KEY=$SECRET
+          ALGORITHM=$ALGO
+          INTERNAL_SECRET_TOKEN=$INTERNAL_TOKEN
+          USER_SERVICE_URL=http://user_service:8000
+          SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
+          CORS_ORIGINS=*
+          LOG_LEVEL=INFO
+          EOF
+
+          # category_service
+          cat > category_service/.env.docker << EOF
+          DATABASE_URL=postgresql://postgres:postgres@db:5432/category_db
+          SECRET_KEY=$SECRET
+          ALGORITHM=$ALGO
+          INTERNAL_SECRET_TOKEN=$INTERNAL_TOKEN
+          WORKSPACE_SERVICE_URL=http://workspace_service:8000
+          SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
+          CORS_ORIGINS=*
+          LOG_LEVEL=INFO
+          EOF
+
+      - name: Build and start services
+        env:
+          SECRET_KEY: ${{ env.E2E_SECRET_KEY }}
+          JWT_SECRET_KEY: ${{ env.E2E_SECRET_KEY }}
+          INTERNAL_SECRET_TOKEN: ${{ env.E2E_INTERNAL_TOKEN }}
+          ANTHROPIC_API_KEY: "sk-ant-test-key-not-real"
+        run: docker compose up --build -d
+
+      - name: Wait for services to be healthy
+        run: |
+          SERVICES="8001 8002 8003 8004 8005 8006 8007 8008 8009 8010 8011 8012 8013 8014 8015 8016"
+          MAX_WAIT=180
+          ELAPSED=0
+          INTERVAL=5
+
+          health_url() {
+            case "$1" in
+              8013|8014) echo "http://localhost:$1/health/live" ;;
+              *) echo "http://localhost:$1/health" ;;
+            esac
+          }
+
+          while [ $ELAPSED -lt $MAX_WAIT ]; do
+            ALL_HEALTHY=true
+            for PORT in $SERVICES; do
+              URL=$(health_url "$PORT")
+              if ! curl -sf "$URL" > /dev/null 2>&1; then
+                ALL_HEALTHY=false
+                break
+              fi
+            done
+
+            if [ "$ALL_HEALTHY" = true ]; then
+              echo "All services healthy after ${ELAPSED}s"
+              exit 0
+            fi
+
+            echo "[${ELAPSED}s] Waiting for services..."
+            sleep $INTERVAL
+            ELAPSED=$((ELAPSED + INTERVAL))
+          done
+
+          echo "Services not ready after ${MAX_WAIT}s"
+          docker compose ps
+          docker compose logs --tail=20
+          exit 1
+
+      - name: Wait for frontend to be ready
+        run: |
+          MAX_WAIT=60
+          ELAPSED=0
+          INTERVAL=5
+          while [ $ELAPSED -lt $MAX_WAIT ]; do
+            if curl -sf "http://localhost:3000" > /dev/null 2>&1; then
+              echo "Frontend ready after ${ELAPSED}s"
+              exit 0
+            fi
+            echo "[${ELAPSED}s] Waiting for frontend..."
+            sleep $INTERVAL
+            ELAPSED=$((ELAPSED + INTERVAL))
+          done
+          echo "Frontend not ready after ${MAX_WAIT}s"
+          docker compose ps
+          docker compose logs frontend --tail=20
+          exit 1
+
+      - name: Seed test data
+        continue-on-error: true
+        run: |
+          pip install psycopg2-binary bcrypt
+          python scripts/seed_demo_data.py --clean --host localhost --port 5433
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Playwright dependencies
+        working-directory: e2e_ui_tests
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Run Playwright E2E tests
+        working-directory: e2e_ui_tests
+        env:
+          CI: "true"
+          BASE_URL: "http://localhost:3000"
+        run: npx playwright test
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: e2e_ui_tests/playwright-report/
+
+      - name: Upload Playwright test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results
+          path: e2e_ui_tests/test-results/
+
+      - name: Cleanup
+        if: always()
+        run: docker compose down -v
+
   # Final Stage: Deploy
   deploy:
     name: Deploy to ${{ github.event.inputs.environment || 'production' }}
@@ -1161,6 +1563,7 @@ jobs:
       - detect-changes
       - unit-tests
       - e2e-tests
+      - e2e-ui-tests
       - stage1-frontend
       - stage2-account-service
       - stage3-category-service
