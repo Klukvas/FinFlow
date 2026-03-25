@@ -185,22 +185,22 @@ class TestMembers:
 
 class TestWorkspaceArchiveAndLeave:
 
-    async def test_archive_workspace(self):
-        """Owner can archive a non-personal workspace they own."""
+    async def test_archive_personal_workspace_rejected(self):
+        """Archiving a personal workspace should be rejected."""
         user_api = UserApiClient()
         user_data = (await user_api.register(unique_email(), strong_password())).raise_on_error()
         token = user_data["access_token"]
 
         ws = WorkspaceApiClient()
         ws.set_token(token)
+        ws_list = (await ws.list_all()).raise_on_error()
+        workspaces = ws_list.get("workspaces", ws_list) if isinstance(ws_list, dict) else ws_list
+        ws_id = str(workspaces[0]["id"])
 
-        # Create a separate (non-personal) workspace to archive
-        created = (await ws.create(workspace_name())).raise_on_error()
-        ws_id = str(created["id"])
-
-        # Archive the workspace
+        # Personal workspace cannot be archived
         result = await ws.archive(ws_id)
-        assert result.ok or result.status_code in (200, 204)
+        assert not result.ok
+        assert result.status_code == 400
 
     async def test_member_can_leave_workspace(self, primary_user, workspace_id):
         """A non-owner member can leave a workspace."""
