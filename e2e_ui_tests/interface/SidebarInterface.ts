@@ -49,10 +49,36 @@ export class SidebarInterface {
   }
 
   /**
+   * Business workflow: Navigate to debts page
+   */
+  async navigateToDebts(): Promise<void> {
+    await this.page.getByTestId("sidebar-debts-link").click();
+    await this.page.waitForLoadState("networkidle");
+    await this.page.waitForURL("**/debts**");
+  }
+
+  /**
+   * Business workflow: Navigate to recurring page
+   */
+  async navigateToRecurring(): Promise<void> {
+    await this.page.getByTestId("sidebar-recurring-link").click();
+    await this.page.waitForLoadState("networkidle");
+    await this.page.waitForURL("**/recurring**");
+  }
+
+  /**
    * Business workflow: Navigate to goals page
    */
   async navigateToGoals(): Promise<void> {
     await this.sidebarComponent.goalsLink.click();
+    await this.page.waitForLoadState("networkidle");
+  }
+
+  /**
+   * Business workflow: Navigate to workspaces page
+   */
+  async navigateToWorkspaces(): Promise<void> {
+    await this.sidebarComponent.workspacesLink.click();
     await this.page.waitForLoadState("networkidle");
   }
 

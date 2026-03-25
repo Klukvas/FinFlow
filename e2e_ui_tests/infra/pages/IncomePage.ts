@@ -1,7 +1,7 @@
 import { Page, expect } from "@playwright/test";
 import { BasePage } from "../BasePage";
 
-export class ExpensePage extends BasePage {
+export class IncomePage extends BasePage {
   constructor(page: Page) {
     super(page);
   }
@@ -11,8 +11,8 @@ export class ExpensePage extends BasePage {
     return this.page.locator("h1");
   }
 
-  // Add expense button (primary button with plus icon in header)
-  get addExpenseButton() {
+  // Add income button (last primary button in header area)
+  get addIncomeButton() {
     return this.page
       .locator('button:has(svg path[d="M12 4v16m8-8H4"])')
       .first();
@@ -28,6 +28,12 @@ export class ExpensePage extends BasePage {
   // Summary strip (KPI cards)
   get summaryStrip() {
     return this.page.locator(".grid.grid-cols-2");
+  }
+
+  get summaryCards() {
+    return this.summaryStrip
+      .locator('[class*="Card"]')
+      .or(this.summaryStrip.locator(".bg-elevated, .rounded-xl"));
   }
 
   // Table
@@ -48,7 +54,7 @@ export class ExpensePage extends BasePage {
     return this.filterBar.locator("select").nth(0);
   }
 
-  // Modals
+  // Modal
   get modal() {
     return this.page.locator('[data-testid="modal"]');
   }
@@ -63,18 +69,14 @@ export class ExpensePage extends BasePage {
     return this.modal.locator(".flex.justify-end.gap-3 button").last();
   }
 
-  // Row helpers
-  getExpenseRowByAmount(amount: string) {
+  // Income row actions
+  getIncomeRowByAmount(amount: string) {
     return this.table.locator("tbody tr").filter({
       hasText: amount,
     });
   }
 
-  getEditButtonInRow(row: ReturnType<typeof this.getExpenseRowByAmount>) {
-    return row.getByTestId("edit-button");
-  }
-
-  getDeleteButtonInRow(row: ReturnType<typeof this.getExpenseRowByAmount>) {
+  getDeleteButtonInRow(row: ReturnType<typeof this.getIncomeRowByAmount>) {
     return row.locator('button:has(svg path[d*="M19 7l-.867 12.142"])');
   }
 
@@ -91,5 +93,10 @@ export class ExpensePage extends BasePage {
 
   async expectTableVisible(): Promise<void> {
     await expect(this.table).toBeVisible();
+  }
+
+  async expectEmptyState(): Promise<void> {
+    const emptyMessage = this.page.locator("text=/no.*income|нет.*доходов/i");
+    await expect(emptyMessage).toBeVisible();
   }
 }

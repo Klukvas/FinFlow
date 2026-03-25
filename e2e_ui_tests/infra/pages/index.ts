@@ -1,4 +1,10 @@
 export { BasePage } from "../BasePage";
 export { CategoryPage } from "./CategoryPage";
 export { ExpensePage } from "./ExpensePage";
+export { IncomePage } from "./IncomePage";
 export { HeaderPage } from "./HeaderPage";
+export { DashboardPage } from "./DashboardPage";
+export { AccountPage } from "./AccountPage";
+export { GoalsPage } from "./GoalsPage";
+export { WorkspacesPage } from "./WorkspacesPage";
+export { ProfilePage } from "./ProfilePage";

@@ -1,7 +1,7 @@
 import { Page, expect, Locator } from "@playwright/test";
 import { BasePage } from "../BasePage";
 
-export class CreateExpenseModal extends BasePage {
+export class CreateIncomeModal extends BasePage {
   readonly modal: Locator;
 
   constructor(page: Page) {
@@ -9,7 +9,7 @@ export class CreateExpenseModal extends BasePage {
     this.modal = this.page.locator('[data-testid="modal"]');
   }
 
-  // Form fields
+  // Form fields - use the same ids as the CreateIncome component
   get amountInput() {
     return this.modal.locator('input[inputmode="decimal"]');
   }
@@ -38,29 +38,9 @@ export class CreateExpenseModal extends BasePage {
     return this.modal.getByTestId("modal-close-button");
   }
 
-  // Edit-specific selectors (edit form has data-testid attributes)
-  get editAmountInput() {
-    return this.modal.getByTestId("expense-amount-input");
-  }
-
-  get editDescriptionInput() {
-    return this.modal.getByTestId("expense-description-input");
-  }
-
-  get editDateInput() {
-    return this.modal.getByTestId("expense-date-input");
-  }
-
-  get editAccountSelect() {
-    return this.modal.getByTestId("expense-account-select");
-  }
-
-  get editSaveButton() {
-    return this.modal.getByTestId("save-expense-button");
-  }
-
   async expectModalVisible(): Promise<void> {
     await expect(this.modal).toBeVisible();
+    await expect(this.amountInput).toBeVisible();
   }
 
   async expectModalHidden(): Promise<void> {
@@ -134,59 +114,6 @@ export class CreateExpenseModal extends BasePage {
 
     if (data.date) {
       await this.fillDate(data.date);
-    }
-  }
-
-  // Edit form methods (uses data-testid attributes)
-  async fillEditAmount(amount: string): Promise<void> {
-    const input = this.editAmountInput;
-    await input.click();
-    await input.fill(amount);
-  }
-
-  async fillEditDescription(description: string): Promise<void> {
-    await this.editDescriptionInput.fill(description);
-  }
-
-  async fillEditDate(date: string): Promise<void> {
-    await this.editDateInput.fill(date);
-  }
-
-  async selectEditAccount(accountName: string): Promise<void> {
-    await this.editAccountSelect.selectOption({
-      label: new RegExp(accountName),
-    });
-  }
-
-  async submitEdit(): Promise<void> {
-    await this.editSaveButton.click();
-  }
-
-  async fillEditForm(data: {
-    amount?: string;
-    description?: string;
-    date?: string;
-    categoryName?: string;
-    accountName?: string;
-  }): Promise<void> {
-    if (data.amount) {
-      await this.fillEditAmount(data.amount);
-    }
-
-    if (data.categoryName) {
-      await this.selectCategory(data.categoryName);
-    }
-
-    if (data.accountName) {
-      await this.selectEditAccount(data.accountName);
-    }
-
-    if (data.description) {
-      await this.fillEditDescription(data.description);
-    }
-
-    if (data.date) {
-      await this.fillEditDate(data.date);
     }
   }
 }

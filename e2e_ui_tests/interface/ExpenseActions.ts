@@ -1,253 +1,145 @@
-import { Page } from '@playwright/test';
-import { ExpensePage } from '../infra/pages';
-import { CreateExpenseModal } from '../infra/modals';
+import { expect, Page } from "@playwright/test";
+import { ExpensePage } from "../infra/pages/ExpensePage";
+import { CreateExpenseModal } from "../infra/modals/CreateExpenseModal";
 
-export interface ExpenseData {
-  amount: string | number;
-  description: string;
-  category: string;
+export interface ExpenseFormData {
+  amount: string;
+  description?: string;
   date?: string;
-  account?: string;
-  tags?: string[];
+  categoryName?: string;
+  accountName?: string;
 }
 
 export class ExpenseActions {
   private page: Page;
   private expensePage: ExpensePage;
-  private createExpenseModal: CreateExpenseModal;
+  private expenseModal: CreateExpenseModal;
 
   constructor(page: Page) {
     this.page = page;
     this.expensePage = new ExpensePage(page);
-    this.createExpenseModal = new CreateExpenseModal(page);
+    this.expenseModal = new CreateExpenseModal(page);
   }
 
-  /**
-   * Navigate to expense page
-   */
-  async goto(): Promise<void> {
-    await this.expensePage.goto();
+  // --- Create ---
+
+  async createExpense(data: ExpenseFormData): Promise<void> {
+    await this.openCreateModal();
+    await this.expenseModal.fillForm(data);
+    await this.expenseModal.submit();
+    await this.expenseModal.waitForModalClose();
+    await this.page.waitForLoadState("networkidle");
   }
 
-  /**
-   * Create a new expense
-   */
-  async create(expenseData: ExpenseData): Promise<void> {
-    await this.expensePage.goto();
-    await this.expensePage.openCreateModal();
-    await this.createExpenseModal.createExpense(expenseData);
-    await this.createExpenseModal.waitForModalClose();
-  }
-
-  /**
-   * Edit existing expense
-   */
-  async edit(expenseDescription: string, updatedData: Partial<ExpenseData>): Promise<void> {
-    await this.expensePage.goto();
-    await this.expensePage.editExpense(expenseDescription);
-    
-    // Fill updated data in edit modal
-    if (updatedData.amount) {
-      await this.createExpenseModal.fillAmount(updatedData.amount);
-    }
-    if (updatedData.description) {
-      await this.createExpenseModal.fillDescription(updatedData.description);
-    }
-    if (updatedData.category) {
-      await this.createExpenseModal.selectCategory(updatedData.category);
-    }
-    if (updatedData.date) {
-      await this.createExpenseModal.fillDate(updatedData.date);
-    }
-    if (updatedData.account) {
-      await this.createExpenseModal.selectAccount(updatedData.account);
-    }
-    if (updatedData.tags) {
-      await this.createExpenseModal.fillTags(updatedData.tags);
-    }
-    
-    await this.createExpenseModal.save();
-    await this.createExpenseModal.waitForModalClose();
-  }
-
-  /**
-   * Delete expense
-   */
-  async delete(expenseDescription: string): Promise<void> {
-    await this.expensePage.goto();
-    await this.expensePage.deleteExpense(expenseDescription);
-    await this.expensePage.confirmDelete();
-  }
-
-  /**
-   * Search for expenses
-   */
-  async search(query: string): Promise<void> {
-    await this.expensePage.goto();
-    await this.expensePage.searchExpenses(query);
-  }
-
-  /**
-   * Filter expenses by category
-   */
-  async filterByCategory(category: string): Promise<void> {
-    await this.expensePage.goto();
-    await this.expensePage.filterByCategory(category);
-  }
-
-  /**
-   * Filter expenses by date range
-   */
-  async filterByDateRange(startDate: string, endDate: string): Promise<void> {
-    await this.expensePage.goto();
-    await this.expensePage.filterByDateRange(startDate, endDate);
-  }
-
-  /**
-   * Clear filters
-   */
-  async clearFilters(): Promise<void> {
-    await this.expensePage.clearFilters();
-  }
-
-  /**
-   * Open create expense modal
-   */
   async openCreateModal(): Promise<void> {
-    await this.expensePage.openCreateModal();
+    await this.expensePage.addExpenseButton.click();
+    await this.expenseModal.expectModalVisible();
   }
 
-  /**
-   * Fill expense form
-   */
-  async fillForm(data: ExpenseData): Promise<void> {
-    await this.createExpenseModal.fillForm(data);
+  // --- Edit ---
+
+  async editExpense(
+    identifyingText: string,
+    updatedData: Partial<ExpenseFormData>,
+  ): Promise<void> {
+    await this.openEditModal(identifyingText);
+    await this.expenseModal.fillEditForm(updatedData);
+    await this.expenseModal.submitEdit();
+    await this.expenseModal.waitForModalClose();
+    await this.page.waitForLoadState("networkidle");
   }
 
-  /**
-   * Save expense
-   */
-  async save(): Promise<void> {
-    await this.createExpenseModal.save();
+  async openEditModal(identifyingText: string): Promise<void> {
+    const row = this.expensePage.table
+      .locator("tbody tr")
+      .filter({ hasText: identifyingText });
+    await expect(row.first()).toBeVisible();
+    const editButton = row.first().getByTestId("edit-button");
+    await editButton.click();
+    await this.expenseModal.expectModalVisible();
+    // Wait for edit form to be present
+    await expect(this.page.getByTestId("edit-expense-modal")).toBeVisible();
   }
 
-  /**
-   * Cancel expense creation
-   */
-  async cancel(): Promise<void> {
-    await this.createExpenseModal.cancel();
+  // --- Delete ---
+
+  async deleteExpense(identifyingText: string): Promise<void> {
+    const row = this.expensePage.table
+      .locator("tbody tr")
+      .filter({ hasText: identifyingText });
+    await expect(row.first()).toBeVisible();
+    const deleteButton = this.expensePage.getDeleteButtonInRow(row.first());
+    await deleteButton.click();
+
+    // Confirm deletion
+    const confirmModal = this.expensePage.modal;
+    await expect(confirmModal).toBeVisible();
+    await this.expensePage.deleteConfirmButton.click();
+    await expect(confirmModal).toBeHidden({ timeout: 10000 });
+    await this.page.waitForLoadState("networkidle");
   }
 
-  /**
-   * Close expense modal
-   */
-  async closeModal(): Promise<void> {
-    await this.createExpenseModal.close();
+  // --- Assertions ---
+
+  async expectExpenseVisible(identifyingText: string): Promise<void> {
+    const row = this.expensePage.table
+      .locator("tbody tr")
+      .filter({ hasText: identifyingText });
+    await expect(row.first()).toBeVisible({ timeout: 10000 });
   }
 
-  /**
-   * Switch to table view
-   */
-  async switchToTableView(): Promise<void> {
-    await this.expensePage.switchToTableView();
+  async expectExpenseNotVisible(identifyingText: string): Promise<void> {
+    // The table might not exist if list is empty (empty state renders instead)
+    const tableVisible = await this.expensePage.table
+      .isVisible()
+      .catch(() => false);
+    if (!tableVisible) {
+      return; // No table means no expenses, so the item is definitely not visible
+    }
+    const row = this.expensePage.table
+      .locator("tbody tr")
+      .filter({ hasText: identifyingText });
+    await expect(row).toHaveCount(0, { timeout: 10000 });
   }
 
-  /**
-   * Switch to dashboard view
-   */
-  async switchToDashboardView(): Promise<void> {
-    await this.expensePage.switchToDashboardView();
+  async expectTableVisible(): Promise<void> {
+    await this.expensePage.expectTableVisible();
   }
 
-  /**
-   * Get expense by description
-   */
-  getExpenseByDescription(description: string) {
-    return this.expensePage.getExpenseByDescription(description);
+  async expectSummaryStripVisible(): Promise<void> {
+    await expect(this.expensePage.summaryStrip).toBeVisible();
   }
 
-  /**
-   * Check if expense exists
-   */
-  async exists(description: string): Promise<boolean> {
-    return await this.expensePage.expenseExists(description);
+  async expectTableRowCount(count: number): Promise<void> {
+    await expect(this.expensePage.tableRows).toHaveCount(count);
   }
 
-  /**
-   * Get all visible expenses
-   */
-  async getAll(): Promise<Array<{ description: string; amount: number; category: string }>> {
-    return await this.expensePage.getVisibleExpenses();
+  // --- Filters ---
+
+  async openFilters(): Promise<void> {
+    await this.expensePage.filterToggleButton.click();
+    await expect(this.expensePage.filterBar).toBeVisible();
   }
 
-  /**
-   * Get total expense amount
-   */
-  async getTotalAmount(): Promise<number> {
-    return await this.expensePage.getTotalAmount();
+  async filterByCategory(categoryName: string): Promise<void> {
+    // Filter bar category select is a native <select>
+    const categorySelect = this.expensePage.filterBar.locator("select").first();
+    await categorySelect.selectOption({ label: categoryName });
+    await this.page.waitForLoadState("networkidle");
+    // Allow time for client-side filtering
+    await this.page.waitForTimeout(500);
   }
 
-  /**
-   * Get expense count
-   */
-  async getCount(): Promise<number> {
-    return await this.expensePage.getExpenseCount();
+  async clearFilters(): Promise<void> {
+    // Click "Clear all" button inside filter bar
+    const clearButton = this.expensePage.filterBar.locator("button").last();
+    await clearButton.click();
+    await this.page.waitForLoadState("networkidle");
   }
 
-  /**
-   * Sort expenses by column
-   */
-  async sortBy(column: 'amount' | 'date' | 'category' | 'description'): Promise<void> {
-    await this.expensePage.sortBy(column);
-  }
+  // --- Pagination ---
 
-  /**
-   * Export expenses
-   */
-  async export(format: 'csv' | 'pdf'): Promise<void> {
-    await this.expensePage.exportExpenses(format);
-  }
-
-  /**
-   * Wait for expense list to load
-   */
-  async waitForList(): Promise<void> {
-    await this.expensePage.waitForExpenseList();
-  }
-
-  /**
-   * Get validation errors from create modal
-   */
-  async getValidationErrors(): Promise<string[]> {
-    return await this.createExpenseModal.getValidationErrors();
-  }
-
-  /**
-   * Check if form is valid
-   */
-  async isFormValid(): Promise<boolean> {
-    return await this.createExpenseModal.isFormValid();
-  }
-
-  /**
-   * Clear form
-   */
-  async clearForm(): Promise<void> {
-    await this.createExpenseModal.clearForm();
-  }
-
-  /**
-   * Get available categories
-   */
-  async getAvailableCategories(): Promise<string[]> {
-    return await this.createExpenseModal.getAvailableCategories();
-  }
-
-  /**
-   * Get available accounts
-   */
-  async getAvailableAccounts(): Promise<string[]> {
-    return await this.createExpenseModal.getAvailableAccounts();
+  async expectPaginationVisible(): Promise<void> {
+    await expect(this.expensePage.pagination.first()).toBeVisible();
   }
 }
-
