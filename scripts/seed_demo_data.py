@@ -272,7 +272,7 @@ def seed_user(conn_params, email: str) -> int:
 
 
 def seed_workspace(conn_params, user_id: int) -> str:
-    # Check if workspace already exists via user's default_workspace_id
+    # 1. Check default_workspace_id on user record
     conn = get_conn(DATABASES["user"], **conn_params)
     conn.autocommit = True
     cur = conn.cursor()
@@ -281,9 +281,46 @@ def seed_workspace(conn_params, user_id: int) -> str:
     cur.close()
     conn.close()
     if row and row[0]:
-        print(f"  Workspace already exists: {row[0]}")
+        print(f"  Workspace already exists (default): {row[0]}")
         return str(row[0])
 
+    # 2. Check workspace_members for existing workspaces (auto-created on first login)
+    conn = get_conn(DATABASES["workspace"], **conn_params)
+    conn.autocommit = True
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT workspace_id FROM workspace_members WHERE user_id = %s ORDER BY joined_at",
+        (user_id,),
+    )
+    existing_rows = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    if existing_rows:
+        workspace_id = str(existing_rows[0][0])
+        # Remove duplicates if any (keep only the first one)
+        if len(existing_rows) > 1:
+            duplicate_ids = [str(r[0]) for r in existing_rows[1:]]
+            conn = get_conn(DATABASES["workspace"], **conn_params)
+            conn.autocommit = True
+            cur = conn.cursor()
+            for dup_id in duplicate_ids:
+                cur.execute("DELETE FROM workspace_members WHERE workspace_id = %s", (dup_id,))
+                cur.execute("DELETE FROM workspaces WHERE id = %s", (dup_id,))
+            cur.close()
+            conn.close()
+            print(f"  Removed {len(duplicate_ids)} duplicate workspace(s)")
+        # Set it as default on user record
+        conn = get_conn(DATABASES["user"], **conn_params)
+        conn.autocommit = True
+        cur = conn.cursor()
+        cur.execute("UPDATE users SET default_workspace_id = %s WHERE id = %s", (workspace_id, user_id))
+        cur.close()
+        conn.close()
+        print(f"  Using existing workspace: {workspace_id}")
+        return workspace_id
+
+    # 3. Create a new workspace
     workspace_id = str(uuid.uuid4())
 
     conn = get_conn(DATABASES["workspace"], **conn_params)
@@ -293,12 +330,12 @@ def seed_workspace(conn_params, user_id: int) -> str:
     cur.execute(
         """INSERT INTO workspaces (id, name, type, owner_user_id, created_at, updated_at)
            VALUES (%s, %s, %s, %s, %s, %s)""",
-        (workspace_id, "Personal", "personal", user_id, USER_CREATED_AT, USER_CREATED_AT),
+        (workspace_id, "Personal", "PERSONAL", user_id, USER_CREATED_AT, USER_CREATED_AT),
     )
     cur.execute(
         """INSERT INTO workspace_members (workspace_id, user_id, role, status, joined_at, created_at, updated_at)
            VALUES (%s, %s, %s, %s, %s, %s, %s)""",
-        (workspace_id, user_id, "owner", "active", USER_CREATED_AT, USER_CREATED_AT, USER_CREATED_AT),
+        (workspace_id, user_id, "OWNER", "ACTIVE", USER_CREATED_AT, USER_CREATED_AT, USER_CREATED_AT),
     )
     cur.close()
     conn.close()
