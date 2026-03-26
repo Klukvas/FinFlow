@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { usePayment } from "@/contexts/PaymentContext";
+import { useApiClients } from "@/hooks/useApiClients";
 import { useAuth } from "@/contexts/AuthContext";
 import { Payment, PaymentStatus } from "@/types/payment";
 import {
@@ -12,11 +12,11 @@ import {
   User,
   CreditCard,
   Receipt,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { logger } from "@/utils/logger";
 
-// Status configuration for cleaner code
 const STATUS_CONFIG = {
   [PaymentStatus.PAID]: {
     icon: CheckCircle2,
@@ -54,8 +54,8 @@ const STATUS_CONFIG = {
     icon: Clock,
     iconBg: "bg-surface-alt",
     iconColor: "text-[var(--text-primary)]",
-    titleKey: "payment.processing.title",
-    messageKey: "payment.processing.message",
+    titleKey: "payment.processingStatus.title",
+    messageKey: "payment.processingStatus.message",
     barColor: "var(--bg-raised)",
   },
 };
@@ -66,170 +66,169 @@ const LOCALE_MAP: Record<string, string> = {
   ru: "ru-RU",
 };
 
+/** Statuses where no further change is expected */
+const TERMINAL_STATUSES: ReadonlySet<string> = new Set([
+  PaymentStatus.PAID,
+  PaymentStatus.EXPIRED,
+  PaymentStatus.CANCELED,
+  PaymentStatus.REFUNDED,
+]);
+
+const POLL_INTERVAL_MS = 3000;
+const MAX_POLL_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+
 export const PaymentReturn: React.FC = () => {
   const { t, i18n } = useTranslation();
   const displayLocale = LOCALE_MAP[i18n.language] || i18n.language;
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { getPayment, getPaymentByOrderRef } = usePayment();
+  const { payment: paymentApi } = useApiClients();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+
   const [payment, setPayment] = useState<Payment | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Prevent double execution due to dependency changes
-  const hasCheckedRef = useRef(false);
-  const paymentIdRef = useRef<string | null>(null);
-  const orderRefRef = useRef<string | null>(null);
-  const cancelledRef = useRef(false);
+  const toastShownRef = useRef(false);
 
-  // Cancel polling on unmount
+  // Resolve payment identifiers once
+  const paymentId =
+    searchParams.get("paymentId") || localStorage.getItem("pending_payment_id");
+  const orderRef = searchParams.get("orderReference");
+
   useEffect(() => {
-    return () => {
-      cancelledRef.current = true;
+    if (authLoading) return;
+
+    if (!isAuthenticated) {
+      setError(t("payment.errors.notAuthenticated"));
+      setLoading(false);
+      return;
+    }
+
+    if (!paymentId && !orderRef) {
+      setError(t("payment.errors.noPaymentId"));
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    const startTime = Date.now();
+
+    const fetchStatus = async (): Promise<Payment | null> => {
+      if (paymentId) {
+        const res = await paymentApi.getPayment(paymentId);
+        return "error" in res ? null : res;
+      }
+      if (orderRef) {
+        const res = await paymentApi.getPaymentByOrderRef(orderRef);
+        return "error" in res ? null : res;
+      }
+      return null;
     };
-  }, []);
 
-  // Capture payment identifiers on mount (before they might be cleared)
-  useEffect(() => {
-    if (!paymentIdRef.current) {
-      // Check URL params first (most reliable after redirect), then localStorage
-      paymentIdRef.current =
-        searchParams.get("paymentId") ||
-        localStorage.getItem("pending_payment_id");
-    }
-    if (!orderRefRef.current) {
-      orderRefRef.current = searchParams.get("orderReference");
-    }
-  }, [searchParams]);
+    const showToast = (status: string) => {
+      if (toastShownRef.current) return;
+      toastShownRef.current = true;
 
-  useEffect(() => {
-    const checkPaymentStatus = async () => {
-      // Skip if already checked or still loading auth
-      if (hasCheckedRef.current || authLoading) return;
+      if (status === PaymentStatus.PAID) {
+        toast.success(t("payment.success.title"), {
+          description: t("payment.success.message"),
+        });
+      } else if (status === PaymentStatus.FAILED) {
+        toast.error(t("payment.failed.title"));
+      } else if (status === PaymentStatus.PENDING) {
+        toast.info(t("payment.pending.message"));
+      }
+    };
 
-      if (!isAuthenticated) {
-        setError(t("payment.errors.notAuthenticated"));
-        setLoading(false);
+    const cleanup = () => {
+      if (intervalId) clearInterval(intervalId);
+      if (timeoutId) clearTimeout(timeoutId);
+      intervalId = null;
+      timeoutId = null;
+    };
+
+    const poll = async () => {
+      if (cancelled) {
+        cleanup();
         return;
       }
-
-      // Use captured refs, with URL params taking priority (most reliable after redirect)
-      const paymentIdFromUrl = searchParams.get("paymentId");
-      const paymentId =
-        paymentIdRef.current ||
-        paymentIdFromUrl ||
-        localStorage.getItem("pending_payment_id");
-      const orderRef =
-        orderRefRef.current || searchParams.get("orderReference");
-
-      logger.info("PaymentReturn: paymentId from URL:", paymentIdFromUrl);
-      logger.info("PaymentReturn: paymentId (combined):", paymentId);
-      logger.info("PaymentReturn: orderRef from URL:", orderRef);
-
-      if (!paymentId && !orderRef) {
-        setError(t("payment.errors.noPaymentId"));
-        setLoading(false);
-        return;
-      }
-
-      // Mark as checked to prevent double execution
-      hasCheckedRef.current = true;
 
       try {
-        let result: Payment | null = null;
+        const result = await fetchStatus();
 
-        // Fetch payment status, retrying for up to 60s
-        // Paddle webhooks may take 10-30s to process; also a retry within the
-        // checkout overlay can turn FAILED → PAID, so we keep polling even
-        // when we see FAILED (it is only truly final after all attempts).
-        const MAX_ATTEMPTS = 24;
-        const POLL_INTERVAL = 2500;
-
-        // Statuses where we can stop immediately (no further change expected)
-        const immediatelyFinalStatuses = [
-          PaymentStatus.PAID,
-          PaymentStatus.EXPIRED,
-          PaymentStatus.CANCELED,
-          PaymentStatus.REFUNDED,
-        ];
-
-        for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-          if (paymentId) {
-            result = await getPayment(paymentId);
-          } else if (orderRef) {
-            result = await getPaymentByOrderRef(orderRef);
-          }
-
-          if (!result) break;
-
-          // PAID / EXPIRED / CANCELED / REFUNDED — stop right away
-          if (immediatelyFinalStatuses.includes(result.status)) break;
-
-          // FAILED / CREATED / PENDING — keep polling (retry may resolve)
-          if (attempt < MAX_ATTEMPTS - 1) {
-            if (cancelledRef.current) break;
-            logger.info(
-              `Payment status: ${result.status}, retrying in ${POLL_INTERVAL}ms... (${attempt + 1}/${MAX_ATTEMPTS})`,
-            );
-            await new Promise((r) => setTimeout(r, POLL_INTERVAL));
-          }
-        }
+        if (cancelled) return;
 
         if (!result) {
-          setError(t("payment.errors.statusCheckFailed"));
-          setLoading(false);
+          logger.warn("PaymentReturn: poll got null, will retry");
           return;
         }
 
+        // Always update the displayed payment data
         setPayment(result);
+        setLoading(false);
 
-        if (result.status === PaymentStatus.PAID) {
-          toast.success(t("payment.success.title"), {
-            description: t("payment.success.message"),
-          });
-          localStorage.removeItem("pending_payment_id");
-          localStorage.removeItem("pending_plan_code");
-        } else if (result.status === PaymentStatus.FAILED) {
-          toast.error(t("payment.failed.title"));
-          localStorage.removeItem("pending_payment_id");
-          localStorage.removeItem("pending_plan_code");
-        } else if (result.status === PaymentStatus.PENDING) {
-          toast.info(t("payment.pending.message"));
+        if (TERMINAL_STATUSES.has(result.status)) {
+          cleanup();
+          showToast(result.status);
+          if (
+            result.status === PaymentStatus.PAID ||
+            result.status === PaymentStatus.FAILED
+          ) {
+            localStorage.removeItem("pending_payment_id");
+            localStorage.removeItem("pending_plan_code");
+          }
+          return;
+        }
+
+        // Stop polling after max duration
+        if (Date.now() - startTime > MAX_POLL_DURATION_MS) {
+          logger.info("PaymentReturn: max poll duration reached, stopping");
+          cleanup();
         }
       } catch (err) {
-        logger.error("Failed to check payment status:", err);
-        setError(t("payment.errors.unexpected"));
-      } finally {
-        setLoading(false);
+        logger.warn("PaymentReturn: poll error, will retry", err);
       }
     };
 
-    checkPaymentStatus();
-  }, [
-    getPayment,
-    getPaymentByOrderRef,
-    t,
-    authLoading,
-    isAuthenticated,
-    searchParams,
-  ]);
+    // Initial fetch, then poll every POLL_INTERVAL_MS
+    poll();
+    intervalId = setInterval(poll, POLL_INTERVAL_MS);
+
+    // Safety net: stop polling after max duration
+    timeoutId = setTimeout(cleanup, MAX_POLL_DURATION_MS);
+
+    return () => {
+      cancelled = true;
+      cleanup();
+    };
+  }, [authLoading, isAuthenticated, paymentId, orderRef, paymentApi, t]);
+
+  const isPolling = payment ? !TERMINAL_STATUSES.has(payment.status) : false;
 
   // Loading state
   if (loading) {
     return (
       <div
-        className="fixed inset-0 flex items-center justify-center"
-        style={{ background: "var(--bg-base)" }}
+        className="fixed inset-0 flex items-center justify-center backdrop-blur-sm"
+        style={{ background: "rgba(0, 0, 0, 0.6)" }}
       >
         <div
-          className="max-w-md w-full mx-4 rounded-2xl p-8 text-center"
+          className="relative max-w-md w-full mx-4 rounded-2xl p-8 text-center"
           style={{
             backgroundColor: "var(--bg-surface)",
             border: "1px solid var(--border)",
             boxShadow: "var(--shadow-modal)",
           }}
         >
+          <button
+            onClick={() => navigate("/profile")}
+            className="absolute top-4 right-4 p-1.5 rounded-lg text-content-tertiary hover:text-[var(--text-primary)] hover:bg-[var(--bg-raised)] transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
           <div className="w-20 h-20 rounded-full bg-[var(--accent-dim)] flex items-center justify-center mx-auto mb-6">
             <Loader2 className="w-10 h-10 text-accent-base animate-spin" />
           </div>
@@ -257,17 +256,23 @@ export const PaymentReturn: React.FC = () => {
   if (error) {
     return (
       <div
-        className="fixed inset-0 flex items-center justify-center"
-        style={{ background: "var(--bg-base)" }}
+        className="fixed inset-0 flex items-center justify-center backdrop-blur-sm"
+        style={{ background: "rgba(0, 0, 0, 0.6)" }}
       >
         <div
-          className="max-w-md w-full mx-4 rounded-2xl p-8 text-center"
+          className="relative max-w-md w-full mx-4 rounded-2xl p-8 text-center"
           style={{
             backgroundColor: "var(--bg-surface)",
             border: "1px solid var(--border)",
             boxShadow: "var(--shadow-modal)",
           }}
         >
+          <button
+            onClick={() => navigate("/profile")}
+            className="absolute top-4 right-4 p-1.5 rounded-lg text-content-tertiary hover:text-[var(--text-primary)] hover:bg-[var(--bg-raised)] transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
           <div className="w-20 h-20 rounded-full bg-[var(--danger-dim)] flex items-center justify-center mx-auto mb-6">
             <XCircle className="w-10 h-10 text-danger-base" />
           </div>
@@ -301,17 +306,27 @@ export const PaymentReturn: React.FC = () => {
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center overflow-y-auto py-8"
-      style={{ background: "var(--bg-base)" }}
+      className="fixed inset-0 flex items-center justify-center overflow-y-auto py-8 backdrop-blur-sm"
+      style={{ background: "rgba(0, 0, 0, 0.6)" }}
     >
       <div
-        className="max-w-lg w-full mx-4 rounded-2xl overflow-hidden"
+        className="relative max-w-lg w-full mx-4 rounded-2xl overflow-hidden"
         style={{
           backgroundColor: "var(--bg-surface)",
           border: "1px solid var(--border)",
           boxShadow: "var(--shadow-modal)",
         }}
       >
+        {/* Close button — only when polling is done */}
+        {!isPolling && (
+          <button
+            onClick={() => navigate("/profile")}
+            className="absolute top-4 right-4 z-10 p-1.5 rounded-lg text-content-tertiary hover:text-[var(--text-primary)] hover:bg-[var(--bg-raised)] transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
+
         {/* Status color bar */}
         <div className="h-2" style={{ backgroundColor: config.barColor }} />
 
@@ -325,7 +340,11 @@ export const PaymentReturn: React.FC = () => {
                 animationIterationCount: isPaid ? 3 : 0,
               }}
             >
-              <StatusIcon className={`w-10 h-10 ${config.iconColor}`} />
+              {isPolling ? (
+                <Loader2 className="w-10 h-10 text-accent-base animate-spin" />
+              ) : (
+                <StatusIcon className={`w-10 h-10 ${config.iconColor}`} />
+              )}
             </div>
 
             <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-2">
@@ -460,11 +479,11 @@ export const PaymentReturn: React.FC = () => {
                 <Clock className="w-5 h-5 text-warning-base flex-shrink-0 mt-0.5" />
                 <div className="text-left">
                   <p className="text-warning-base text-sm font-semibold mb-2">
-                    {t("payment.processing.title", "Processing Payment")}
+                    {t("payment.processingStatus.title", "Processing Payment")}
                   </p>
                   <p className="text-warning-base text-xs">
                     {t(
-                      "payment.processing.detail",
+                      "payment.processingStatus.detail",
                       "Your payment is being processed by the payment provider. This usually takes a few moments. Check your profile shortly for the updated subscription status.",
                     )}
                   </p>
@@ -473,18 +492,20 @@ export const PaymentReturn: React.FC = () => {
             </div>
           )}
 
-          {/* Action button */}
-          <button
-            onClick={() => navigate("/profile")}
-            className="w-full py-3 px-4 rounded-lg font-semibold text-[var(--text-primary)] flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
-            style={{
-              background: "var(--accent)",
-              boxShadow: "0 4px 15px var(--accent-dim)",
-            }}
-          >
-            <User className="w-4 h-4" />
-            {t("payment.goToProfile")}
-          </button>
+          {/* Action button — only when polling is done */}
+          {!isPolling && (
+            <button
+              onClick={() => navigate("/profile")}
+              className="w-full py-3 px-4 rounded-lg font-semibold text-[var(--text-primary)] flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              style={{
+                background: "var(--accent)",
+                boxShadow: "0 4px 15px var(--accent-dim)",
+              }}
+            >
+              <User className="w-4 h-4" />
+              {t("payment.goToProfile")}
+            </button>
+          )}
         </div>
       </div>
     </div>

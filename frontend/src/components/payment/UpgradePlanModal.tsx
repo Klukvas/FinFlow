@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Check, Loader2, ArrowLeft } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { Modal } from "@/components/ui/shared/Modal";
 import { Button } from "@/components/ui/shared/Button";
 import { PaymentButton } from "@/components/payment/PaymentButton";
 import { ChangePlanButton } from "@/components/payment/ChangePlanButton";
-import { ConsentCheckbox } from "@/components/subscription/ConsentCheckbox";
 import { useApiClients } from "@/hooks/useApiClients";
 import { PlanWithFeatures } from "@/types/subscription";
 import { PLAN_PRICING } from "@/config/plans";
@@ -28,11 +27,6 @@ export const UpgradePlanModal: React.FC<UpgradePlanModalProps> = ({
   const [plans, setPlans] = useState<PlanWithFeatures[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedPlan, setSelectedPlan] = useState<PlanWithFeatures | null>(
-    null,
-  );
-  const [showConsentStep, setShowConsentStep] = useState(false);
-  const [consentGiven, setConsentGiven] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -49,7 +43,6 @@ export const UpgradePlanModal: React.FC<UpgradePlanModalProps> = ({
     if ("error" in result) {
       setError(result.error);
     } else {
-      // Sort plans: basic, professional, enterprise
       const sortedPlans = result.sort((a, b) => {
         const order = ["basic", "professional", "enterprise"];
         return order.indexOf(a.code) - order.indexOf(b.code);
@@ -70,32 +63,14 @@ export const UpgradePlanModal: React.FC<UpgradePlanModalProps> = ({
     return `${feature.limit_value} ${feature.name}`;
   };
 
-  const calculateNextBillingDate = () => {
-    const today = new Date();
-    const next = new Date(today);
-    next.setMonth(next.getMonth() + 1);
-    return next.toISOString().split("T")[0] ?? "";
-  };
-
-  const handlePlanSelect = (plan: PlanWithFeatures) => {
-    if ((PLAN_PRICING[plan.code]?.price ?? -1) === 0) {
-      return; // Free plan, no selection needed
-    }
-    setSelectedPlan(plan);
-    setShowConsentStep(true);
-    setConsentGiven(false);
-  };
-
-  const handleBackToPlans = () => {
-    setShowConsentStep(false);
-    setSelectedPlan(null);
-    setConsentGiven(false);
-  };
+  const makeConsentData = () => ({
+    consent_given: true,
+    consent_version: "v1.0.0",
+    consent_timestamp: new Date().toISOString(),
+    consent_language: i18n.language === "uk" ? "uk" : "en",
+  });
 
   const handleClose = () => {
-    setShowConsentStep(false);
-    setSelectedPlan(null);
-    setConsentGiven(false);
     onClose();
   };
 
@@ -103,19 +78,13 @@ export const UpgradePlanModal: React.FC<UpgradePlanModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title={
-        showConsentStep
-          ? t("subscription.reviewTerms", "Review Subscription Terms")
-          : t("subscription.upgradePlan")
-      }
+      title={t("subscription.upgradePlan")}
       size="4xl"
     >
       <div className="space-y-6">
-        {!showConsentStep && (
-          <p className="text-content-secondary text-center">
-            {t("subscription.upgradeDescription")}
-          </p>
-        )}
+        <p className="text-content-secondary text-center">
+          {t("subscription.upgradeDescription")}
+        </p>
 
         {loading ? (
           <div className="flex justify-center items-center py-12">
@@ -128,14 +97,12 @@ export const UpgradePlanModal: React.FC<UpgradePlanModalProps> = ({
               {t("common.retry", "Retry")}
             </Button>
           </div>
-        ) : !showConsentStep ? (
-          // Step 1: Plan Selection
+        ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {plans.map((plan) => {
               const pricing = PLAN_PRICING[plan.code] || { price: 0 };
               const features = Object.values(plan.features);
               const isCurrentPlan = currentPlanCode === plan.code;
-              const canSelect = !isCurrentPlan && pricing.price > 0;
 
               return (
                 <div
@@ -146,10 +113,7 @@ export const UpgradePlanModal: React.FC<UpgradePlanModalProps> = ({
                       : pricing.popular
                         ? "ring-2 ring-[var(--accent)] scale-[1.02]"
                         : ""
-                  } ${canSelect ? "hover:theme-shadow hover:scale-[1.01] cursor-pointer" : ""} ${
-                    isCurrentPlan ? "opacity-80" : ""
-                  }`}
-                  onClick={() => canSelect && handlePlanSelect(plan)}
+                  } ${isCurrentPlan ? "opacity-80" : ""}`}
                 >
                   {isCurrentPlan ? (
                     <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
@@ -206,165 +170,38 @@ export const UpgradePlanModal: React.FC<UpgradePlanModalProps> = ({
                       variant="outline"
                       fullWidth
                       size="md"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleClose();
-                      }}
+                      onClick={handleClose}
                     >
                       {t("pricingPage.free", "Free")}
                     </Button>
-                  ) : (
-                    <Button
+                  ) : paddleSubscriptionId ? (
+                    <ChangePlanButton
+                      newPlanCode={plan.code}
+                      newPlanName={plan.name}
+                      paddleSubscriptionId={paddleSubscriptionId}
                       variant={pricing.popular ? "primary" : "outline"}
-                      fullWidth
                       size="md"
-                      onClick={() => handlePlanSelect(plan)}
-                    >
-                      {t("subscription.selectPlan", "Select Plan")}
-                    </Button>
+                      fullWidth
+                      onSuccess={handleClose}
+                      consentData={makeConsentData()}
+                    />
+                  ) : (
+                    <PaymentButton
+                      planCode={plan.code}
+                      planName={plan.name}
+                      amount={pricing.price}
+                      currency="USD"
+                      variant={pricing.popular ? "primary" : "outline"}
+                      size="md"
+                      fullWidth
+                      onPaymentSuccess={handleClose}
+                      consentData={makeConsentData()}
+                    />
                   )}
                 </div>
               );
             })}
           </div>
-        ) : (
-          selectedPlan && (
-            // Step 2: Consent and Payment
-            <div className="space-y-6">
-              {/* Plan Comparison (shown when changing plans) */}
-              {currentPlanCode && currentPlanCode !== selectedPlan.code && (
-                <div className="flex items-center justify-center gap-4 p-4 rounded-lg bg-surface-alt border border-[var(--border)]">
-                  <div className="text-center">
-                    <p className="text-xs text-content-secondary mb-1">
-                      {t("subscription.currentPlan", "Current Plan")}
-                    </p>
-                    <p className="font-semibold text-content">
-                      {plans.find((p) => p.code === currentPlanCode)?.name ||
-                        currentPlanCode}
-                    </p>
-                    <p className="text-sm text-content-secondary">
-                      ${PLAN_PRICING[currentPlanCode]?.price ?? 0}/
-                      {t("pricingPage.perMonth", "mo")}
-                    </p>
-                  </div>
-                  <div className="text-2xl text-content-secondary">&rarr;</div>
-                  <div className="text-center">
-                    <p className="text-xs text-content-secondary mb-1">
-                      {t("subscription.selectPlan", "New Plan")}
-                    </p>
-                    <p className="font-semibold text-accent-base">
-                      {selectedPlan.name}
-                    </p>
-                    <p className="text-sm text-accent-base">
-                      ${PLAN_PRICING[selectedPlan.code]?.price ?? 0}/
-                      {t("pricingPage.perMonth", "mo")}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              <div className="bg-surface-alt p-4 rounded-lg border border-[var(--border)]">
-                <h3 className="text-lg font-semibold text-content mb-3">
-                  {t(
-                    "subscription.subscriptionDetails",
-                    "Subscription Details",
-                  )}
-                </h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-content-secondary">
-                      {t("subscription.plan", "Plan")}:
-                    </p>
-                    <p className="font-semibold text-content">
-                      {selectedPlan.name}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-content-secondary">
-                      {t("subscription.price", "Price")}:
-                    </p>
-                    <p className="font-semibold text-content">
-                      {PLAN_PRICING[selectedPlan.code]?.price ?? 0} USD/month
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-content-secondary">
-                      {t("subscription.firstBilling", "First Billing")}:
-                    </p>
-                    <p className="font-semibold text-content">
-                      {new Date().toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-content-secondary">
-                      {t("subscription.nextBilling", "Next Billing")}:
-                    </p>
-                    <p className="font-semibold text-content">
-                      {new Date(
-                        calculateNextBillingDate(),
-                      ).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <ConsentCheckbox
-                checked={consentGiven}
-                onChange={setConsentGiven}
-                planName={selectedPlan.name}
-                amount={PLAN_PRICING[selectedPlan.code]?.price ?? 0}
-                currency="USD"
-                nextBillingDate={calculateNextBillingDate()}
-              />
-
-              <div className="flex gap-3 pt-4">
-                <Button
-                  variant="outline"
-                  onClick={handleBackToPlans}
-                  className="flex items-center gap-2"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  {t("common.back", "Back")}
-                </Button>
-                {paddleSubscriptionId ? (
-                  <ChangePlanButton
-                    newPlanCode={selectedPlan.code}
-                    newPlanName={selectedPlan.name}
-                    paddleSubscriptionId={paddleSubscriptionId}
-                    disabled={!consentGiven}
-                    variant="primary"
-                    size="md"
-                    fullWidth
-                    onSuccess={handleClose}
-                    consentData={{
-                      consent_given: consentGiven,
-                      consent_version: "v1.0.0",
-                      consent_timestamp: new Date().toISOString(),
-                      consent_language: i18n.language === "uk" ? "uk" : "en",
-                    }}
-                  />
-                ) : (
-                  <PaymentButton
-                    planCode={selectedPlan.code}
-                    planName={selectedPlan.name}
-                    amount={PLAN_PRICING[selectedPlan.code]?.price ?? 0}
-                    currency="USD"
-                    disabled={!consentGiven}
-                    variant="primary"
-                    size="md"
-                    fullWidth
-                    onPaymentSuccess={handleClose}
-                    consentData={{
-                      consent_given: consentGiven,
-                      consent_version: "v1.0.0",
-                      consent_timestamp: new Date().toISOString(),
-                      consent_language: i18n.language === "uk" ? "uk" : "en",
-                    }}
-                  />
-                )}
-              </div>
-            </div>
-          )
         )}
       </div>
     </Modal>
