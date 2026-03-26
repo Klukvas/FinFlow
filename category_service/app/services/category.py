@@ -795,11 +795,11 @@ class CategoryService(WorkspaceAuthorizationMixin):
 
             # Validate workspace match
             if category.workspace_id != workspace_id:
-                raise CategoryOwnershipError("Category not in specified workspace")
+                raise CategoryOwnershipError(category_id, user_id)
 
             # Validate user ownership
             if category.user_id != user_id:
-                raise CategoryOwnershipError("Category belongs to another user")
+                raise CategoryOwnershipError(category_id, user_id)
 
             return category
         except (CategoryNotFoundError, CategoryOwnershipError):
