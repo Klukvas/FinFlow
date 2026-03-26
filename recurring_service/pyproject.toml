@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Recurring payments service for accounting app"
 authors = ["Your Name <your.email@example.com>"]
 readme = "README.md"
+packages = [{include = "app"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
