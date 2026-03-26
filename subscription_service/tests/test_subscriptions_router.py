@@ -87,15 +87,16 @@ class TestGetSubscription:
         mock_repo.get_active_subscription.assert_called_once_with("user_1")
 
     @patch("app.routers.subscriptions.SubscriptionRepository")
-    def test_not_found_raises_error(self, MockSubRepo, mock_db):
+    def test_returns_none_when_no_subscription(self, MockSubRepo, mock_db):
+        """Must return None (200) when no active subscription exists."""
         mock_repo = MagicMock()
         mock_repo.get_active_subscription.return_value = None
         MockSubRepo.return_value = mock_repo
 
-        with pytest.raises(NotFoundError) as exc_info:
-            get_subscription(user_id="user_unknown", db=mock_db)
+        result = get_subscription(user_id="user_unknown", db=mock_db)
 
-        assert "Subscription not found" in str(exc_info.value)
+        assert result is None
+        mock_repo.get_active_subscription.assert_called_once_with("user_unknown")
 
 
 # ---------------------------------------------------------------------------

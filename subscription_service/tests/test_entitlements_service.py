@@ -74,17 +74,21 @@ class TestInvalidateEntitlementsCache:
 class TestEntitlementsService:
     """Tests for EntitlementsService.get_entitlements."""
 
-    def test_returns_free_when_no_subscription(self, mock_redis):
-        """User without subscription gets free plan with empty entitlements."""
+    def test_returns_basic_when_no_subscription(self, mock_redis):
+        """User without subscription falls back to basic plan entitlements."""
         repo = MagicMock()
         repo.get_active_subscription.return_value = None
+
+        basic_ents = {"accounts": {"enabled": True, "limit_value": 1}}
+        repo.get_entitlements.return_value = (1, basic_ents)
 
         service = EntitlementsService(repo, redis_client=mock_redis)
         plan_code, version, ents = service.get_entitlements("user_1")
 
-        assert plan_code == "free"
+        assert plan_code == "basic"
         assert version == 1
-        assert ents == {}
+        assert ents == basic_ents
+        repo.get_entitlements.assert_called_once_with("basic")
 
     def test_returns_cached_entitlements(self, mock_redis, make_subscription):
         """Must return cached data when available."""

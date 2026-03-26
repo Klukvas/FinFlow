@@ -262,7 +262,8 @@ class TestHandlePaymentFailure:
         query.filter.return_value.order_by.return_value.first.return_value = sub
         mock_db.query.return_value = query
 
-        result = await handle_payment_failure(notification, db=mock_db)
+        with patch("app.routers.internal.invalidate_entitlements_cache"):
+            result = await handle_payment_failure(notification, db=mock_db)
 
         # past_due -> past_due is a no-op (same status), so no InvalidTransitionError
         assert result["status"] == "past_due"
