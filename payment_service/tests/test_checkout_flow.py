@@ -24,7 +24,6 @@ from payment_service.app.models.models import (
     PaymentProvider,
     PaymentPurpose,
     PaymentEventType,
-    PaddlePriceMap,
     ProcessedWebhookEvent,
 )
 from payment_service.app.schemas.payment import (
@@ -48,20 +47,6 @@ class TestCheckoutEndpoint:
         self, payment_service, mock_db, mock_paddle_client,
     ):
         """create_payment must return a Payment with provider_payment_url set."""
-        # Arrange: price mapping exists in DB
-        price_map = MagicMock(spec=PaddlePriceMap)
-        price_map.paddle_price_id = "pri_test_pro"
-        price_map.plan_code = "professional"
-        price_map.is_active = True
-        price_map.amount = Decimal("29.99")
-        price_map.currency = "USD"
-
-        query_mock = MagicMock()
-        query_mock.filter.return_value = query_mock
-        query_mock.first.return_value = price_map
-        mock_db.query.return_value = query_mock
-
-        # Stub repos so the service layer works without a real DB
         payment_service.payment_repo.create = MagicMock(side_effect=lambda p: p)
         payment_service.payment_repo.get_active_payment_for_user_plan = MagicMock(return_value=None)
         payment_service.event_repo.create = MagicMock()
@@ -81,10 +66,8 @@ class TestCheckoutEndpoint:
             },
         )
 
-        # Act
         payment = await payment_service.create_payment(request)
 
-        # Assert
         assert payment.provider_payment_url == "https://checkout.paddle.com/test-session"
         assert payment.paddle_transaction_id == "txn_test_abc123"
         assert payment.status == PaymentStatus.CREATED
@@ -96,12 +79,7 @@ class TestCheckoutEndpoint:
     async def test_missing_plan_price_raises_validation_error(
         self, payment_service, mock_db,
     ):
-        """Must raise ValidationError when no active PaddlePriceMap exists."""
-        query_mock = MagicMock()
-        query_mock.filter.return_value = query_mock
-        query_mock.first.return_value = None  # no price mapping
-        mock_db.query.return_value = query_mock
-
+        """Must raise ValidationError when no price is configured for plan."""
         request = CreatePaymentRequest(
             user_id="user_test_1",
             purpose=PaymentPurpose.SUBSCRIPTION,
@@ -144,18 +122,6 @@ class TestCheckoutEndpoint:
         self, payment_service, mock_db, mock_paddle_client,
     ):
         """A CREATED PaymentEvent must be persisted alongside the payment."""
-        price_map = MagicMock(spec=PaddlePriceMap)
-        price_map.paddle_price_id = "pri_test_1"
-        price_map.plan_code = "professional"
-        price_map.is_active = True
-        price_map.amount = Decimal("29.99")
-        price_map.currency = "USD"
-
-        query_mock = MagicMock()
-        query_mock.filter.return_value = query_mock
-        query_mock.first.return_value = price_map
-        mock_db.query.return_value = query_mock
-
         payment_service.payment_repo.create = MagicMock(side_effect=lambda p: p)
         payment_service.payment_repo.get_active_payment_for_user_plan = MagicMock(return_value=None)
         payment_service.event_repo.create = MagicMock()
@@ -186,18 +152,6 @@ class TestCheckoutEndpoint:
         self, payment_service, mock_db, mock_paddle_client,
     ):
         """Custom data (user_id, workspace_id, plan_code) must be forwarded to Paddle."""
-        price_map = MagicMock(spec=PaddlePriceMap)
-        price_map.paddle_price_id = "pri_test_data"
-        price_map.plan_code = "professional"
-        price_map.is_active = True
-        price_map.amount = Decimal("29.99")
-        price_map.currency = "USD"
-
-        query_mock = MagicMock()
-        query_mock.filter.return_value = query_mock
-        query_mock.first.return_value = price_map
-        mock_db.query.return_value = query_mock
-
         payment_service.payment_repo.create = MagicMock(side_effect=lambda p: p)
         payment_service.payment_repo.get_active_payment_for_user_plan = MagicMock(return_value=None)
         payment_service.event_repo.create = MagicMock()
@@ -221,7 +175,7 @@ class TestCheckoutEndpoint:
 
         call_kwargs = mock_paddle_client.create_checkout_session.call_args.kwargs
         assert call_kwargs["customer_email"] == "custom@example.com"
-        assert call_kwargs["price_id"] == "pri_test_data"
+        assert call_kwargs["price_id"] == "pri_test_pro"
         assert call_kwargs["custom_data"]["user_id"] == "user_42"
         assert call_kwargs["custom_data"]["workspace_id"] == "ws_99"
         assert call_kwargs["custom_data"]["plan_code"] == "professional"
@@ -308,16 +262,9 @@ class TestFullFlow:
 
         # -- Step 1: Create payment via checkout --
 
-        price_map = MagicMock(spec=PaddlePriceMap)
-        price_map.paddle_price_id = "pri_flow_1"
-        price_map.plan_code = "professional"
-        price_map.is_active = True
-        price_map.amount = Decimal("29.99")
-        price_map.currency = "USD"
-
         query_mock = MagicMock()
         query_mock.filter.return_value = query_mock
-        query_mock.first.return_value = price_map
+        query_mock.first.return_value = None
         query_mock.order_by.return_value = query_mock
         mock_db.query.return_value = query_mock
 
@@ -424,16 +371,9 @@ class TestFullFlow:
 
         # -- Step 1: Create payment --
 
-        price_map = MagicMock(spec=PaddlePriceMap)
-        price_map.paddle_price_id = "pri_fail_flow"
-        price_map.plan_code = "professional"
-        price_map.is_active = True
-        price_map.amount = Decimal("29.99")
-        price_map.currency = "USD"
-
         query_mock = MagicMock()
         query_mock.filter.return_value = query_mock
-        query_mock.first.return_value = price_map
+        query_mock.first.return_value = None
         query_mock.order_by.return_value = query_mock
         mock_db.query.return_value = query_mock
 

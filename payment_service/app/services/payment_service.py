@@ -17,7 +17,6 @@ from ..models.models import (
     PaymentPurpose,
     PaymentEventType,
     ProcessedWebhookEvent,
-    PaddlePriceMap,
 )
 from ..repositories.payment_repository import PaymentRepository
 from ..repositories.payment_event_repository import PaymentEventRepository
@@ -50,7 +49,7 @@ class PaymentService:
     async def create_payment(self, request: CreatePaymentRequest) -> Payment:
         """Create a new payment via Paddle checkout.
 
-        Validates the request, resolves the Paddle price from the DB,
+        Validates the request, resolves the Paddle price from config,
         creates a Paddle checkout session, and persists the payment record.
 
         Args:
@@ -71,15 +70,8 @@ class PaymentService:
         if request.purpose == PaymentPurpose.SUBSCRIPTION:
             validate_subscription_consent(request.metadata)
 
-        # Resolve Paddle price_id from DB
-        price_mapping = (
-            self.db.query(PaddlePriceMap)
-            .filter(
-                PaddlePriceMap.plan_code == request.plan_code,
-                PaddlePriceMap.is_active == True,  # noqa: E712
-            )
-            .first()
-        )
+        # Resolve Paddle price_id from config
+        price_mapping = settings.get_price_by_plan(request.plan_code)
 
         if not price_mapping:
             raise ValidationError(
@@ -87,13 +79,8 @@ class PaymentService:
                 error_code="@payment_service/PRICE_NOT_CONFIGURED",
             )
 
-        # Server-side price validation: reject if amount doesn't match configured plan price
-        if price_mapping.amount is not None and request.amount != price_mapping.amount:
-            raise ValidationError(
-                f"Amount mismatch: expected {price_mapping.amount} {price_mapping.currency or 'USD'}, "
-                f"got {request.amount} {request.currency}",
-                error_code="@payment_service/PRICE_MISMATCH",
-            )
+        # Note: no server-side price validation — Paddle is the source of truth
+        # for pricing via price_id. The amount from the frontend is for display only.
 
         # Prevent double-click double-charge: reject if active payment already exists
         existing_payment = self.payment_repo.get_active_payment_for_user_plan(
@@ -393,15 +380,8 @@ class PaymentService:
         # Validate consent
         validate_subscription_consent(request.metadata)
 
-        # Resolve new Paddle price_id from DB
-        price_mapping = (
-            self.db.query(PaddlePriceMap)
-            .filter(
-                PaddlePriceMap.plan_code == request.new_plan_code,
-                PaddlePriceMap.is_active == True,  # noqa: E712
-            )
-            .first()
-        )
+        # Resolve new Paddle price_id from config
+        price_mapping = settings.get_price_by_plan(request.new_plan_code)
 
         if not price_mapping:
             raise ValidationError(
@@ -420,14 +400,7 @@ class PaymentService:
 
         old_plan_code: Optional[str] = None
         if old_price_id:
-            old_mapping = (
-                self.db.query(PaddlePriceMap)
-                .filter(
-                    PaddlePriceMap.paddle_price_id == old_price_id,
-                    PaddlePriceMap.is_active == True,  # noqa: E712
-                )
-                .first()
-            )
+            old_mapping = settings.get_price_by_paddle_id(old_price_id)
             if old_mapping:
                 old_plan_code = old_mapping.plan_code
 
@@ -880,7 +853,7 @@ class PaymentService:
         """Handle subscription.updated -- detect plan changes and notify.
 
         When a subscription's price item changes (upgrade/downgrade),
-        reverse-lookup the new plan_code from PaddlePriceMap and notify
+        reverse-lookup the new plan_code from the price map config and notify
         subscription_service so it can update the user's plan.
         """
         data = event.data
@@ -912,16 +885,9 @@ class PaymentService:
         # Reverse-lookup plan_code for the new price
         new_plan_code: Optional[str] = None
         if new_price_id:
-            price_mapping = (
-                self.db.query(PaddlePriceMap)
-                .filter(
-                    PaddlePriceMap.paddle_price_id == new_price_id,
-                    PaddlePriceMap.is_active == True,  # noqa: E712
-                )
-                .first()
-            )
-            if price_mapping:
-                new_plan_code = price_mapping.plan_code
+            price_entry = settings.get_price_by_paddle_id(new_price_id)
+            if price_entry:
+                new_plan_code = price_entry.plan_code
 
         # If we resolved a plan_code, notify subscription_service
         if user_id and new_plan_code:

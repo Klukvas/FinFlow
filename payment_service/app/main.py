@@ -59,11 +59,13 @@ def create_app() -> FastAPI:
     from .routers.webhooks import router as webhooks_router
     from .routers.internal import router as internal_router
     from .routers.admin_payments import router as admin_payments_router
+    from .routers.pricing import router as pricing_router
 
     app.include_router(payments_router, prefix="/v1", tags=["payments"])
     app.include_router(webhooks_router, prefix="/v1", tags=["webhooks"])
     app.include_router(internal_router, prefix="/v1", tags=["internal"])
     app.include_router(admin_payments_router, prefix="/v1", tags=["admin"])
+    app.include_router(pricing_router, prefix="/v1/plans", tags=["pricing"])
 
     app.add_middleware(GeoIPMiddleware)
     app.add_middleware(GZipMiddleware, minimum_size=500)

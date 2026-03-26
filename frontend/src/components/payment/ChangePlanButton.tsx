@@ -67,7 +67,9 @@ export const ChangePlanButton: React.FC<ChangePlanButtonProps> = ({
             planName: newPlanName,
           }),
         );
-        onSuccess?.();
+        // Hard reload so all contexts (subscription, features, limits) refresh
+        window.location.href = "/profile";
+        return;
       } else {
         toast.error(
           t("subscription.planChangeFailed", {

@@ -8,35 +8,7 @@ from decimal import Decimal
 from unittest.mock import MagicMock, AsyncMock
 from uuid import uuid4
 
-from payment_service.app.models.models import (
-    PaddlePriceMap,
-    ProcessedWebhookEvent,
-)
-
-
-# ======================================================================
-# Helpers
-# ======================================================================
-
-
-def _make_price_map(plan_code: str, price_id: str) -> MagicMock:
-    pm = MagicMock(spec=PaddlePriceMap)
-    pm.plan_code = plan_code
-    pm.paddle_price_id = price_id
-    pm.is_active = True
-    return pm
-
-
-def _setup_db_queries(mock_db, price_map=None):
-    """Configure mock_db queries. Idempotency is now via db.add()+flush(), not a query.
-    The first .first() call returns price_map (for PaddlePriceMap lookup),
-    subsequent calls return None (for payment lookups)."""
-    query_mock = MagicMock()
-    query_mock.filter.return_value = query_mock
-    query_mock.order_by.return_value = query_mock
-    query_mock.first.return_value = price_map
-    mock_db.query.return_value = query_mock
-    return query_mock
+from payment_service.app.models.models import ProcessedWebhookEvent
 
 
 # ======================================================================
@@ -53,22 +25,11 @@ class TestSubscriptionUpdatedPlanChange:
         self, payment_service, mock_db, make_webhook_event,
     ):
         """When items[0].price.id maps to a known plan, notify subscription_service."""
-        price_map = _make_price_map("professional", "pri_pro_updated")
-
-        # DB query: 1st .first() → price_map (price lookup), 2nd+ → None (payment lookup)
-        # Note: idempotency is now via db.add()+flush(), not a query.
-        call_count = {"n": 0}
-
-        def first_side_effect(*args, **kwargs):
-            call_count["n"] += 1
-            if call_count["n"] == 1:
-                return price_map  # price lookup
-            return None  # payment lookup
-
+        # DB queries are only for idempotency and payment lookups (not price map)
         query_mock = MagicMock()
         query_mock.filter.return_value = query_mock
         query_mock.order_by.return_value = query_mock
-        query_mock.first.side_effect = first_side_effect
+        query_mock.first.return_value = None
         mock_db.query.return_value = query_mock
 
         payment_service.event_repo.create = MagicMock()
@@ -80,7 +41,7 @@ class TestSubscriptionUpdatedPlanChange:
                 "customer_id": "ctm_1",
                 "status": "active",
                 "custom_data": {"user_id": "user_change_1"},
-                "items": [{"price": {"id": "pri_pro_updated"}, "quantity": 1}],
+                "items": [{"price": {"id": "pri_test_pro"}, "quantity": 1}],
             },
         )
 
@@ -91,28 +52,17 @@ class TestSubscriptionUpdatedPlanChange:
         assert call_kwargs["user_id"] == "user_change_1"
         assert call_kwargs["plan_code"] == "professional"
         assert call_kwargs["paddle_subscription_id"] == "sub_plan_change_1"
-        assert call_kwargs["paddle_price_id"] == "pri_pro_updated"
+        assert call_kwargs["paddle_price_id"] == "pri_test_pro"
 
     @pytest.mark.asyncio
     async def test_uses_price_id_field_fallback(
         self, payment_service, mock_db, make_webhook_event,
     ):
         """When items use price_id (not nested price.id), it must still resolve."""
-        price_map = _make_price_map("enterprise", "pri_ent_flat")
-
-        # 1st .first() → price_map (price lookup), rest → None (payment lookup)
-        call_count = {"n": 0}
-
-        def first_side_effect(*args, **kwargs):
-            call_count["n"] += 1
-            if call_count["n"] == 1:
-                return price_map  # price lookup
-            return None  # payment lookup
-
         query_mock = MagicMock()
         query_mock.filter.return_value = query_mock
         query_mock.order_by.return_value = query_mock
-        query_mock.first.side_effect = first_side_effect
+        query_mock.first.return_value = None
         mock_db.query.return_value = query_mock
 
         payment_service.event_repo.create = MagicMock()
@@ -124,7 +74,7 @@ class TestSubscriptionUpdatedPlanChange:
                 "customer_id": "ctm_1",
                 "status": "active",
                 "custom_data": {"user_id": "user_flat"},
-                "items": [{"price_id": "pri_ent_flat", "quantity": 1}],
+                "items": [{"price_id": "pri_test_ent", "quantity": 1}],
             },
         )
 
@@ -138,8 +88,13 @@ class TestSubscriptionUpdatedPlanChange:
     async def test_no_notification_when_price_not_mapped(
         self, payment_service, mock_db, make_webhook_event,
     ):
-        """When the price_id doesn't exist in PaddlePriceMap, skip notification."""
-        query_mock = _setup_db_queries(mock_db, price_map=None)
+        """When the price_id doesn't exist in the price map, skip notification."""
+        query_mock = MagicMock()
+        query_mock.filter.return_value = query_mock
+        query_mock.order_by.return_value = query_mock
+        query_mock.first.return_value = None
+        mock_db.query.return_value = query_mock
+
         payment_service.event_repo.create = MagicMock()
 
         event = make_webhook_event(
@@ -162,21 +117,10 @@ class TestSubscriptionUpdatedPlanChange:
         self, payment_service, mock_db, make_webhook_event,
     ):
         """When custom_data has no user_id, skip notification even if price maps."""
-        price_map = _make_price_map("professional", "pri_pro_no_user")
-
-        # 1st .first() → price_map (price lookup), rest → None (payment lookup)
-        call_count = {"n": 0}
-
-        def first_side_effect(*args, **kwargs):
-            call_count["n"] += 1
-            if call_count["n"] == 1:
-                return price_map  # price lookup
-            return None  # payment lookup
-
         query_mock = MagicMock()
         query_mock.filter.return_value = query_mock
         query_mock.order_by.return_value = query_mock
-        query_mock.first.side_effect = first_side_effect
+        query_mock.first.return_value = None
         mock_db.query.return_value = query_mock
 
         payment_service.event_repo.create = MagicMock()
@@ -188,7 +132,7 @@ class TestSubscriptionUpdatedPlanChange:
                 "customer_id": "ctm_1",
                 "status": "active",
                 "custom_data": {"user_id": ""},
-                "items": [{"price": {"id": "pri_pro_no_user"}, "quantity": 1}],
+                "items": [{"price": {"id": "pri_test_pro"}, "quantity": 1}],
             },
         )
 
@@ -201,7 +145,12 @@ class TestSubscriptionUpdatedPlanChange:
         self, payment_service, mock_db, make_webhook_event,
     ):
         """When the webhook has no items array, skip notification."""
-        query_mock = _setup_db_queries(mock_db)
+        query_mock = MagicMock()
+        query_mock.filter.return_value = query_mock
+        query_mock.order_by.return_value = query_mock
+        query_mock.first.return_value = None
+        mock_db.query.return_value = query_mock
+
         payment_service.event_repo.create = MagicMock()
 
         event = make_webhook_event(
@@ -238,15 +187,7 @@ class TestSubscriptionUpdatedAudit:
             paddle_subscription_id="sub_audit_1",
         )
 
-        # First call: idempotency → None; second: price_map → None
-        query_mock = MagicMock()
-        query_mock.filter.return_value = query_mock
-        query_mock.order_by.return_value = query_mock
-        query_mock.first.return_value = None
-        mock_db.query.return_value = query_mock
-
         # _find_payment_by_subscription_or_custom_data must find the payment
-        # We mock the internal lookup by making the subscription query return the payment
         def query_side_effect(model):
             q = MagicMock()
             q.filter.return_value = q
@@ -282,7 +223,12 @@ class TestSubscriptionUpdatedAudit:
         self, payment_service, mock_db, make_webhook_event,
     ):
         """Even without a plan change, the processed event must be recorded."""
-        query_mock = _setup_db_queries(mock_db)
+        query_mock = MagicMock()
+        query_mock.filter.return_value = query_mock
+        query_mock.order_by.return_value = query_mock
+        query_mock.first.return_value = None
+        mock_db.query.return_value = query_mock
+
         payment_service.event_repo.create = MagicMock()
 
         event = make_webhook_event(

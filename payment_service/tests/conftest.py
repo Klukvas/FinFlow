@@ -6,7 +6,7 @@ import os
 
 # Set required env vars before any payment_service imports trigger Settings()
 os.environ.setdefault("DATABASE_URL", "postgresql://test:test@localhost:5432/test_db")
-os.environ.setdefault("internal_secret_token", "test-secret-token")
+os.environ.setdefault("internal_secret_token", "a]3f8b2c9e1d4f6a7b0c5e8d2f4a6b9c1e3d5f7a")
 
 import pytest
 from decimal import Decimal
@@ -118,17 +118,39 @@ def payment_service(mock_db, mock_paddle_client, mock_subscription_client):
     Dependencies are injected by patching the constructors so the real
     ``__init__`` never touches settings or the database.
     """
+    from payment_service.app.config import PaddlePriceEntry
+
+    pro_entry = PaddlePriceEntry(
+        plan_code="professional",
+        paddle_price_id="pri_test_pro",
+        amount=Decimal("29.99"),
+        currency="USD",
+    )
+    ent_entry = PaddlePriceEntry(
+        plan_code="enterprise",
+        paddle_price_id="pri_test_ent",
+        amount=Decimal("49.99"),
+        currency="USD",
+    )
+    price_map_by_plan = {"professional": pro_entry, "enterprise": ent_entry}
+    price_map_by_price_id = {e.paddle_price_id: e for e in price_map_by_plan.values()}
+
     with (
         patch("payment_service.app.services.payment_service.PaddleClient", return_value=mock_paddle_client),
         patch("payment_service.app.services.payment_service.SubscriptionClient", return_value=mock_subscription_client),
         patch("payment_service.app.services.payment_service.settings") as mock_settings,
     ):
         mock_settings.paddle_success_url = "http://localhost:3000/payment/return"
+        mock_settings.get_price_by_plan = MagicMock(
+            side_effect=lambda code: price_map_by_plan.get(code),
+        )
+        mock_settings.get_price_by_paddle_id = MagicMock(
+            side_effect=lambda pid: price_map_by_price_id.get(pid),
+        )
 
         from payment_service.app.services.payment_service import PaymentService
         svc = PaymentService(mock_db)
-
-    return svc
+        yield svc
 
 
 # ---------------------------------------------------------------------------

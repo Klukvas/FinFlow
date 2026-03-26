@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/shared/Button";
@@ -50,17 +50,31 @@ export const PaymentButton: React.FC<PaymentButtonProps> = ({
   const { user } = useAuth();
   const { createPayment, isProcessing } = usePayment();
   const [isCreating, setIsCreating] = useState(false);
+  const checkoutCompletedRef = React.useRef(false);
+
+  const navigateToReturn = useCallback(() => {
+    const pid = localStorage.getItem("pending_payment_id");
+    const url = pid ? `/payment/return?paymentId=${pid}` : "/payment/return";
+    // Hard navigate so all contexts reload with fresh subscription data
+    window.location.href = url;
+  }, []);
 
   const { openCheckout } = usePaddle({
     onCheckoutComplete: () => {
-      toast.success(
-        t("payment.success", { defaultValue: "Payment successful!" }),
-      );
+      checkoutCompletedRef.current = true;
       onPaymentSuccess?.();
-      navigate("/payment/return");
+      navigateToReturn();
     },
     onCheckoutClosed: () => {
       setIsCreating(false);
+      // Only navigate if onCheckoutComplete didn't already handle it
+      if (
+        !checkoutCompletedRef.current &&
+        localStorage.getItem("pending_payment_id")
+      ) {
+        navigateToReturn();
+      }
+      checkoutCompletedRef.current = false;
     },
   });
 

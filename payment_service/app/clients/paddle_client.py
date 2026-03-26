@@ -283,6 +283,18 @@ class PaddleClient:
         return await self._get(url)
 
     # ------------------------------------------------------------------
+    # Prices / Catalog
+    # ------------------------------------------------------------------
+
+    async def get_price(self, price_id: str) -> dict[str, Any]:
+        """Fetch a single price from the Paddle catalog.
+
+        Returns the full price object including unit_price, billing_cycle, etc.
+        """
+        url = f"{self.base_url}/prices/{price_id}"
+        return await self._get(url)
+
+    # ------------------------------------------------------------------
     # Subscription plan changes
     # ------------------------------------------------------------------
 

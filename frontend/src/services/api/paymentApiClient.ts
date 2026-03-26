@@ -13,6 +13,14 @@ export interface PaymentErrorResponse {
   error: string;
 }
 
+export interface PlanPriceResponse {
+  plan_code: string;
+  price: string;
+  currency: string;
+  billing_period: string;
+  paddle_price_id: string;
+}
+
 export class PaymentApiClient {
   private httpClient: AuthHttpClient;
 
@@ -90,6 +98,13 @@ export class PaymentApiClient {
       "/payments/change-plan",
       request,
     );
+  }
+
+  /**
+   * Get plan pricing from Paddle (public, no auth required)
+   */
+  async getPlanPricing(): Promise<PlanPriceResponse[] | PaymentErrorResponse> {
+    return this.httpClient.get<PlanPriceResponse[]>("/plans/pricing");
   }
 
   /**

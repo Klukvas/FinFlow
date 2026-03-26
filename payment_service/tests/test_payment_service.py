@@ -19,7 +19,6 @@ from payment_service.app.models.models import (
     PaymentProvider,
     PaymentPurpose,
     PaymentEventType,
-    PaddlePriceMap,
 )
 from payment_service.app.models.outbox import OutboxEvent
 from payment_service.app.schemas.payment import CreatePaymentRequest
@@ -236,18 +235,6 @@ class TestCreatePaymentEdgeCases:
     @pytest.mark.asyncio
     async def test_duplicate_payment_raises_conflict(self, payment_service, mock_db):
         """Active payment for same user+plan must raise ConflictError."""
-        price_map = MagicMock(spec=PaddlePriceMap)
-        price_map.paddle_price_id = "pri_dup"
-        price_map.plan_code = "professional"
-        price_map.is_active = True
-        price_map.amount = Decimal("29.99")
-        price_map.currency = "USD"
-
-        query_mock = MagicMock()
-        query_mock.filter.return_value = query_mock
-        query_mock.first.return_value = price_map
-        mock_db.query.return_value = query_mock
-
         existing = MagicMock(spec=Payment)
         existing.id = uuid4()
         payment_service.payment_repo.get_active_payment_for_user_plan = MagicMock(
@@ -275,18 +262,6 @@ class TestCreatePaymentEdgeCases:
     @pytest.mark.asyncio
     async def test_price_mismatch_raises_validation_error(self, payment_service, mock_db):
         """Amount not matching configured price must raise ValidationError."""
-        price_map = MagicMock(spec=PaddlePriceMap)
-        price_map.paddle_price_id = "pri_mismatch"
-        price_map.plan_code = "professional"
-        price_map.is_active = True
-        price_map.amount = Decimal("29.99")
-        price_map.currency = "USD"
-
-        query_mock = MagicMock()
-        query_mock.filter.return_value = query_mock
-        query_mock.first.return_value = price_map
-        mock_db.query.return_value = query_mock
-
         payment_service.payment_repo.get_active_payment_for_user_plan = MagicMock(return_value=None)
 
         request = CreatePaymentRequest(

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Check, Loader2 } from "lucide-react";
 import { Modal } from "@/components/ui/shared/Modal";
@@ -7,7 +7,10 @@ import { PaymentButton } from "@/components/payment/PaymentButton";
 import { ChangePlanButton } from "@/components/payment/ChangePlanButton";
 import { useApiClients } from "@/hooks/useApiClients";
 import { PlanWithFeatures } from "@/types/subscription";
-import { PLAN_PRICING } from "@/config/plans";
+import { PlanPriceResponse } from "@/services/api/paymentApiClient";
+
+/** "popular" is a UI concern — not fetched from Paddle */
+const POPULAR_PLANS = new Set(["professional"]);
 
 interface UpgradePlanModalProps {
   isOpen: boolean;
@@ -23,35 +26,54 @@ export const UpgradePlanModal: React.FC<UpgradePlanModalProps> = ({
   paddleSubscriptionId,
 }) => {
   const { t, i18n } = useTranslation();
-  const { subscription } = useApiClients();
+  const { subscription, payment: paymentApi } = useApiClients();
   const [plans, setPlans] = useState<PlanWithFeatures[]>([]);
+  const [pricing, setPricing] = useState<Record<string, PlanPriceResponse>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchPlans();
-    }
-  }, [isOpen]);
-
-  const fetchPlans = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
 
-    const result = await subscription.getPlansWithFeatures();
+    const [plansResult, pricingResult] = await Promise.all([
+      subscription.getPlansWithFeatures(),
+      paymentApi.getPlanPricing(),
+    ]);
 
-    if ("error" in result) {
-      setError(result.error);
-    } else {
-      const sortedPlans = result.sort((a, b) => {
-        const order = ["basic", "professional", "enterprise"];
-        return order.indexOf(a.code) - order.indexOf(b.code);
-      });
-      setPlans(sortedPlans);
+    if ("error" in plansResult) {
+      setError(plansResult.error);
+      setLoading(false);
+      return;
     }
 
+    // Pricing is required to display plans — without it, paid plans show as $0
+    if ("error" in pricingResult) {
+      setError(pricingResult.error);
+      setLoading(false);
+      return;
+    }
+
+    const sortedPlans = [...plansResult].sort((a, b) => {
+      const order = ["basic", "professional", "enterprise"];
+      return order.indexOf(a.code) - order.indexOf(b.code);
+    });
+    setPlans(sortedPlans);
+
+    const map: Record<string, PlanPriceResponse> = {};
+    for (const p of pricingResult) {
+      map[p.plan_code] = p;
+    }
+    setPricing(map);
+
     setLoading(false);
-  };
+  }, [subscription, paymentApi]);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchData();
+    }
+  }, [isOpen, fetchData]);
 
   const formatFeatureLimit = (feature: {
     name: string;
@@ -93,14 +115,22 @@ export const UpgradePlanModal: React.FC<UpgradePlanModalProps> = ({
         ) : error ? (
           <div className="text-center py-8">
             <p className="text-danger-base mb-4">{error}</p>
-            <Button onClick={fetchPlans} variant="outline">
+            <Button onClick={fetchData} variant="outline">
               {t("common.retry", "Retry")}
             </Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {plans.map((plan) => {
-              const pricing = PLAN_PRICING[plan.code] || { price: 0 };
+              const planPrice = pricing[plan.code];
+              const isFreePlan = plan.code === "basic";
+              const rawPrice = planPrice ? Number(planPrice.price) : undefined;
+              // Guard against NaN from malformed API data
+              const price = Number.isFinite(rawPrice) ? rawPrice : undefined;
+              const currency = planPrice?.currency ?? "USD";
+              const hasPricing = price !== undefined;
+              const pricingUnavailable = !isFreePlan && !hasPricing;
+              const isPopular = POPULAR_PLANS.has(plan.code);
               const features = Object.values(plan.features);
               const isCurrentPlan = currentPlanCode === plan.code;
 
@@ -110,7 +140,7 @@ export const UpgradePlanModal: React.FC<UpgradePlanModalProps> = ({
                   className={`relative bg-elevated border-[var(--border)] border rounded-xl p-6 transition-all ${
                     isCurrentPlan
                       ? "ring-2 ring-[var(--success)]"
-                      : pricing.popular
+                      : isPopular
                         ? "ring-2 ring-[var(--accent)] scale-[1.02]"
                         : ""
                   } ${isCurrentPlan ? "opacity-80" : ""}`}
@@ -121,7 +151,7 @@ export const UpgradePlanModal: React.FC<UpgradePlanModalProps> = ({
                         {t("subscription.currentPlan", "Current Plan")}
                       </span>
                     </div>
-                  ) : pricing.popular ? (
+                  ) : isPopular ? (
                     <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                       <span className="bg-[var(--accent-dim)] text-[var(--accent)] px-4 py-1 rounded-full text-xs font-medium">
                         {t("pricingPage.popular", "Most Popular")}
@@ -135,14 +165,21 @@ export const UpgradePlanModal: React.FC<UpgradePlanModalProps> = ({
                     </h3>
                     <div className="mb-4">
                       <span className="text-4xl font-bold text-content">
-                        {pricing.price === 0
-                          ? t("pricingPage.free", "Free")
-                          : `$${pricing.price}`}
+                        {pricingUnavailable
+                          ? "—"
+                          : isFreePlan
+                            ? t("pricingPage.free", "Free")
+                            : `$${price}`}
                       </span>
                       <span className="text-content-secondary text-sm ml-1">
-                        {pricing.price === 0
-                          ? ""
-                          : t("pricingPage.perMonth", "/month")}
+                        {pricingUnavailable
+                          ? t(
+                              "pricingPage.pricingUnavailable",
+                              "Price unavailable",
+                            )
+                          : isFreePlan
+                            ? ""
+                            : t("pricingPage.perMonth", "/month")}
                       </span>
                     </div>
                   </div>
@@ -165,7 +202,11 @@ export const UpgradePlanModal: React.FC<UpgradePlanModalProps> = ({
                     <Button variant="outline" fullWidth size="md" disabled>
                       {t("subscription.currentPlan", "Current Plan")}
                     </Button>
-                  ) : pricing.price === 0 ? (
+                  ) : pricingUnavailable ? (
+                    <Button variant="outline" fullWidth size="md" disabled>
+                      {t("common.unavailable", "Unavailable")}
+                    </Button>
+                  ) : isFreePlan ? (
                     <Button
                       variant="outline"
                       fullWidth
@@ -179,7 +220,7 @@ export const UpgradePlanModal: React.FC<UpgradePlanModalProps> = ({
                       newPlanCode={plan.code}
                       newPlanName={plan.name}
                       paddleSubscriptionId={paddleSubscriptionId}
-                      variant={pricing.popular ? "primary" : "outline"}
+                      variant={isPopular ? "primary" : "outline"}
                       size="md"
                       fullWidth
                       onSuccess={handleClose}
@@ -189,9 +230,9 @@ export const UpgradePlanModal: React.FC<UpgradePlanModalProps> = ({
                     <PaymentButton
                       planCode={plan.code}
                       planName={plan.name}
-                      amount={pricing.price}
-                      currency="USD"
-                      variant={pricing.popular ? "primary" : "outline"}
+                      amount={price!}
+                      currency={currency}
+                      variant={isPopular ? "primary" : "outline"}
                       size="md"
                       fullWidth
                       onPaymentSuccess={handleClose}
