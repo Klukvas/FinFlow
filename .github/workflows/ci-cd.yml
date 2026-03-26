@@ -1608,6 +1608,8 @@ jobs:
       !contains(needs.*.result, 'cancelled') &&
       contains(needs.*.result, 'success')
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     environment:
       name: ${{ github.event.inputs.environment || 'production' }}
     steps:
