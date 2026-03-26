@@ -51,6 +51,13 @@ export const Modal = React.memo<ModalProps>(
     useEffect(() => {
       if (!isOpen) return;
       document.addEventListener("keydown", handleKeyDown);
+      return () => {
+        document.removeEventListener("keydown", handleKeyDown);
+      };
+    }, [isOpen, handleKeyDown]);
+
+    useEffect(() => {
+      if (!isOpen) return;
       document.body.style.overflow = "hidden";
 
       // Focus trap: move focus into modal on open
@@ -60,18 +67,17 @@ export const Modal = React.memo<ModalProps>(
       });
 
       return () => {
-        document.removeEventListener("keydown", handleKeyDown);
         document.body.style.overflow = "";
         // Restore focus on close
         previouslyFocused?.focus();
       };
-    }, [isOpen, handleKeyDown]);
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
     return (
       <div
-        className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4"
+        className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center overflow-y-auto p-4"
         style={{
           backdropFilter: "blur(4px)",
           WebkitBackdropFilter: "blur(4px)",
@@ -79,7 +85,7 @@ export const Modal = React.memo<ModalProps>(
       >
         {/* Overlay */}
         <div
-          className="absolute inset-0 bg-[var(--bg-overlay)] animate-[fadeIn_0.15s_ease]"
+          className="fixed inset-0 bg-[var(--bg-overlay)] animate-[fadeIn_0.15s_ease]"
           onClick={onClose}
           data-testid="modal-overlay"
         />
@@ -89,8 +95,8 @@ export const Modal = React.memo<ModalProps>(
           ref={modalRef}
           tabIndex={-1}
           className={cn(
-            "relative w-full bg-[var(--bg-surface)] border border-[var(--border)] rounded-[var(--radius-xl)] p-7 animate-[slideUp_0.2s_ease] outline-none",
-            "shadow-[var(--shadow-modal)]",
+            "relative w-full bg-[var(--bg-surface)] border border-[var(--border)] rounded-[var(--radius-xl)] p-7 animate-[slideUp_0.2s_ease] outline-none my-auto flex flex-col",
+            "shadow-[var(--shadow-modal)] max-h-[calc(100vh-2rem)]",
             sizeClasses[size],
           )}
           data-testid={testId || "modal"}
@@ -130,7 +136,10 @@ export const Modal = React.memo<ModalProps>(
           )}
 
           {/* Content */}
-          <div data-testid={testId ? `${testId}-content` : "modal-content"}>
+          <div
+            className="overflow-y-auto"
+            data-testid={testId ? `${testId}-content` : "modal-content"}
+          >
             {children}
           </div>
         </div>

@@ -94,6 +94,11 @@ export class AuthHttpClient {
         };
       }
 
+      // 204 No Content — never has a body
+      if (response.status === 204) {
+        return {} as T;
+      }
+
       // Handle empty responses
       const contentType = response.headers.get("content-type");
       if (contentType && contentType.includes("application/json")) {

@@ -39,6 +39,11 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
     password: "",
     currency: "",
   });
+  const [touched, setTouched] = useState<Record<string, boolean>>({
+    email: false,
+    password: false,
+    currency: false,
+  });
 
   const { formData, error, isLoading, handleChange, handleSubmit, setError } =
     useAuthForm({
@@ -69,11 +74,9 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
         }
 
         if (errors.email || errors.password || errors.currency) {
+          setTouched({ email: true, password: true, currency: true });
           setValidationErrors(errors);
           throw new Error("Validation failed");
-        }
-
-        if (config.debug) {
         }
 
         const result = await register(
@@ -82,12 +85,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
           data.base_currency || "USD",
         );
 
-        if (config.debug) {
-        }
-
         if (result.success) {
-          if (config.debug) {
-          }
           onClose();
           navigate("/dashboard", { replace: true });
         } else {
@@ -102,11 +100,18 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
   const handleClose = () => {
     setError("");
     setValidationErrors({ email: "", password: "", currency: "" });
+    setTouched({ email: false, password: false, currency: false });
     onClose();
   };
 
   const handleEmailBlur = () => {
-    if (formData.email && !validateEmail(formData.email)) {
+    setTouched((prev) => ({ ...prev, email: true }));
+    if (!formData.email) {
+      setValidationErrors((prev) => ({
+        ...prev,
+        email: t("auth.emailRequired", { defaultValue: "Email is required" }),
+      }));
+    } else if (!validateEmail(formData.email)) {
       setValidationErrors((prev) => ({
         ...prev,
         email: t("auth.invalidEmail"),
@@ -117,15 +122,14 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
   };
 
   const handlePasswordBlur = () => {
-    if (formData.password) {
-      const validation = validatePasswordStrength(formData.password);
-      setValidationErrors((prev) => ({
-        ...prev,
-        password: validation.isValid
-          ? ""
-          : validation.errors[0] || "Invalid password",
-      }));
-    }
+    setTouched((prev) => ({ ...prev, password: true }));
+    const validation = validatePasswordStrength(formData.password);
+    setValidationErrors((prev) => ({
+      ...prev,
+      password: validation.isValid
+        ? ""
+        : validation.errors[0] || "Invalid password",
+    }));
   };
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -152,6 +156,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
   };
 
   const handleCurrencyBlur = () => {
+    setTouched((prev) => ({ ...prev, currency: true }));
     if (!formData.base_currency) {
       setValidationErrors((prev) => ({
         ...prev,
@@ -162,13 +167,10 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
     }
   };
 
-  const hasValidationErrors = !!(
-    validationErrors.email ||
-    validationErrors.password ||
-    validationErrors.currency
-  );
   const isFormValid =
-    formData.email && formData.password && !hasValidationErrors;
+    validateEmail(formData.email) &&
+    validatePasswordStrength(formData.password).isValid &&
+    !!formData.base_currency;
 
   return (
     <Modal
@@ -196,14 +198,14 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
             value={formData.email}
             onChange={handleEmailChange}
             onBlur={handleEmailBlur}
-            error={validationErrors.email}
+            error={touched.email ? validationErrors.email : ""}
           />
 
           <PasswordInput
             value={formData.password}
             onChange={handlePasswordChange}
             onBlur={handlePasswordBlur}
-            error={validationErrors.password}
+            error={touched.password ? validationErrors.password : ""}
           />
 
           {/* Currency */}
@@ -219,7 +221,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
               showFlags={true}
               dataTestId="currency-select"
             />
-            {validationErrors.currency && (
+            {touched.currency && validationErrors.currency && (
               <p className="text-danger-base text-sm flex items-center gap-1.5 mt-1">
                 <svg
                   className="w-3.5 h-3.5 flex-shrink-0"

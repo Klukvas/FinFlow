@@ -104,9 +104,11 @@ export const SubscriptionLimits: React.FC<SubscriptionLimitsProps> = ({
 
       setFeatures(featuresResponse);
 
-      // Set subscription if exists and not an error
+      // Set subscription (null when no active subscription)
       if (subscriptionResponse && !("error" in subscriptionResponse)) {
         setSubscription(subscriptionResponse);
+      } else {
+        setSubscription(null);
       }
     } catch (err) {
       setError(t("subscription.errors.loadFailed"));
@@ -121,15 +123,8 @@ export const SubscriptionLimits: React.FC<SubscriptionLimitsProps> = ({
   }, [user?.id, subscriptionApi]);
 
   const handleCancelSuccess = async () => {
-    // Reload subscription data after cancellation
-    if (user?.id) {
-      const subscriptionResponse = await subscriptionApi
-        .getUserSubscription(user.id)
-        .catch(() => null);
-      if (subscriptionResponse && !("error" in subscriptionResponse)) {
-        setSubscription(subscriptionResponse);
-      }
-    }
+    // Reload all data after cancellation (subscription + features + counts)
+    await loadSubscriptionLimits();
   };
 
   if (loading) {
@@ -173,13 +168,15 @@ export const SubscriptionLimits: React.FC<SubscriptionLimitsProps> = ({
   }
 
   const isPaidPlan = subscription && subscription.plan_code !== "basic";
-  const isCanceled = subscription && !subscription.auto_renew;
+  const isCanceled = subscription?.canceled_at != null;
   const isPastDue = subscription?.status === "past_due";
   const isPaused = subscription?.status === "paused";
   const isActive = subscription?.status === "active" && !isCanceled;
   const expiresAt = subscription?.expires_at
     ? new Date(subscription.expires_at)
     : null;
+  const isExpired = expiresAt ? expiresAt < new Date() : false;
+  const planCode = subscription?.plan_code ?? "basic";
 
   return (
     <>
@@ -196,29 +193,23 @@ export const SubscriptionLimits: React.FC<SubscriptionLimitsProps> = ({
               <p className="text-sm text-content-secondary">
                 {t("subscription.subtitle")}
               </p>
-              {subscription && (
-                <>
-                  <p className="text-xs text-content-secondary mt-1">
-                    {t("subscription.currentPlan")}:{" "}
-                    <span className="font-semibold text-content">
-                      {subscription.plan_code}
-                    </span>
-                    {isCanceled && (
-                      <span className="ml-2 text-warning-base">
-                        ({t("subscription.canceled")} -{" "}
-                        {t("subscription.accessUntil")}{" "}
-                        {expiresAt?.toLocaleDateString()})
-                      </span>
-                    )}
-                  </p>
-                  {isActive && expiresAt && (
-                    <p className="text-xs text-content-secondary">
-                      {t("subscription.renewsOn", {
-                        date: expiresAt.toLocaleDateString(),
-                      })}
-                    </p>
-                  )}
-                </>
+              <p className="text-xs text-content-secondary mt-1">
+                {t("subscription.currentPlan")}:{" "}
+                <span className="font-semibold text-content">{planCode}</span>
+                {isCanceled && !isExpired && expiresAt && (
+                  <span className="ml-2 text-warning-base">
+                    ({t("subscription.canceled")} -{" "}
+                    {t("subscription.accessUntil")}{" "}
+                    {expiresAt.toLocaleDateString()})
+                  </span>
+                )}
+              </p>
+              {isActive && !isCanceled && expiresAt && (
+                <p className="text-xs text-content-secondary">
+                  {t("subscription.renewsOn", {
+                    date: expiresAt.toLocaleDateString(),
+                  })}
+                </p>
               )}
             </div>
           </div>
@@ -260,8 +251,8 @@ export const SubscriptionLimits: React.FC<SubscriptionLimitsProps> = ({
  `}</style>
         </div>
 
-        {/* Cancellation Warning Banner */}
-        {isCanceled && expiresAt && (
+        {/* Cancellation Warning Banner — only while access is still active */}
+        {isCanceled && expiresAt && !isExpired && (
           <div className="mb-4 p-4 rounded-lg bg-[var(--warning-dim)] border-2 border-warning-base flex items-start gap-3">
             <AlertTriangle className="w-5 h-5 text-warning-base flex-shrink-0 mt-0.5" />
             <div className="flex-1">

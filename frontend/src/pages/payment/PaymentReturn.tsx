@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { useApiClients } from "@/hooks/useApiClients";
 import { useAuth } from "@/contexts/AuthContext";
 import { Payment, PaymentStatus } from "@/types/payment";
@@ -80,7 +80,6 @@ const MAX_POLL_DURATION_MS = 5 * 60 * 1000; // 5 minutes
 export const PaymentReturn: React.FC = () => {
   const { t, i18n } = useTranslation();
   const displayLocale = LOCALE_MAP[i18n.language] || i18n.language;
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { payment: paymentApi } = useApiClients();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
@@ -90,6 +89,11 @@ export const PaymentReturn: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const toastShownRef = useRef(false);
+
+  /** Hard-navigate to /profile so all contexts (subscription, features, limits) reload fresh. */
+  const goToProfile = () => {
+    window.location.href = "/profile";
+  };
 
   // Resolve payment identifiers once
   const paymentId =
@@ -224,7 +228,7 @@ export const PaymentReturn: React.FC = () => {
           }}
         >
           <button
-            onClick={() => navigate("/profile")}
+            onClick={() => goToProfile()}
             className="absolute top-4 right-4 p-1.5 rounded-lg text-content-tertiary hover:text-[var(--text-primary)] hover:bg-[var(--bg-raised)] transition-colors"
           >
             <X className="w-5 h-5" />
@@ -268,7 +272,7 @@ export const PaymentReturn: React.FC = () => {
           }}
         >
           <button
-            onClick={() => navigate("/profile")}
+            onClick={() => goToProfile()}
             className="absolute top-4 right-4 p-1.5 rounded-lg text-content-tertiary hover:text-[var(--text-primary)] hover:bg-[var(--bg-raised)] transition-colors"
           >
             <X className="w-5 h-5" />
@@ -281,7 +285,7 @@ export const PaymentReturn: React.FC = () => {
           </h1>
           <p className="text-content-tertiary mb-6">{error}</p>
           <button
-            onClick={() => navigate("/profile")}
+            onClick={() => goToProfile()}
             className="w-full py-3 px-4 rounded-lg font-semibold text-[var(--text-primary)] flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
             style={{
               background: "var(--accent)",
@@ -320,7 +324,7 @@ export const PaymentReturn: React.FC = () => {
         {/* Close button — only when polling is done */}
         {!isPolling && (
           <button
-            onClick={() => navigate("/profile")}
+            onClick={() => goToProfile()}
             className="absolute top-4 right-4 z-10 p-1.5 rounded-lg text-content-tertiary hover:text-[var(--text-primary)] hover:bg-[var(--bg-raised)] transition-colors"
           >
             <X className="w-5 h-5" />
@@ -495,7 +499,7 @@ export const PaymentReturn: React.FC = () => {
           {/* Action button — only when polling is done */}
           {!isPolling && (
             <button
-              onClick={() => navigate("/profile")}
+              onClick={() => goToProfile()}
               className="w-full py-3 px-4 rounded-lg font-semibold text-[var(--text-primary)] flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
               style={{
                 background: "var(--accent)",

@@ -39,7 +39,6 @@ export const CancelSubscriptionModal: React.FC<
 > = ({ isOpen, onClose, subscription, onCancelSuccess }) => {
   const { t } = useTranslation();
   const { subscription: subscriptionApi } = useApiClients();
-  const [cancelImmediately, setCancelImmediately] = useState(false);
   const [reason, setReason] = useState("");
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -62,7 +61,7 @@ export const CancelSubscriptionModal: React.FC<
       const result = await subscriptionApi.cancelSubscription(subscription.id, {
         ...(reason ? { cancellation_reason: reason } : {}),
         ...(comment ? { cancellation_comment: comment } : {}),
-        cancel_immediately: cancelImmediately,
+        cancel_immediately: false,
       });
 
       if ("error" in result) {
@@ -70,15 +69,10 @@ export const CancelSubscriptionModal: React.FC<
       }
 
       toast.success(
-        cancelImmediately
-          ? t(
-              "cancellation.successImmediate",
-              "Subscription canceled immediately",
-            )
-          : t("cancellation.successPeriodEnd", {
-              date: formattedExpiryDate,
-              defaultValue: `Subscription canceled. Access until ${formattedExpiryDate}`,
-            }),
+        t("cancellation.successPeriodEnd", {
+          date: formattedExpiryDate,
+          defaultValue: `Subscription canceled. Access until ${formattedExpiryDate}`,
+        }),
       );
 
       onCancelSuccess();
@@ -148,56 +142,6 @@ export const CancelSubscriptionModal: React.FC<
           </div>
         </div>
 
-        {/* Cancellation Options */}
-        <div className="space-y-4">
-          <h4 className="font-semibold text-content">
-            {t("cancellation.whenToCancel", "When to cancel?")}
-          </h4>
-
-          <label className="flex items-start gap-3 p-4 rounded-lg border border-[var(--border)] cursor-pointer hover:bg-surface-alt transition-colors">
-            <input
-              type="radio"
-              name="cancelType"
-              checked={!cancelImmediately}
-              onChange={() => setCancelImmediately(false)}
-              className="mt-1 w-4 h-4 border-accent-base"
-            />
-            <div className="flex-1">
-              <p className="font-medium text-content mb-1">
-                {t("cancellation.endOfPeriod", "Cancel at end of period")} (
-                {t("cancellation.recommended", "Recommended")})
-              </p>
-              <p className="text-sm text-content-secondary">
-                {t(
-                  "cancellation.endOfPeriodDesc",
-                  `Keep full access until ${formattedExpiryDate}. No refund needed.`,
-                )}
-              </p>
-            </div>
-          </label>
-
-          <label className="flex items-start gap-3 p-4 rounded-lg border border-[var(--border)] cursor-pointer hover:bg-surface-alt transition-colors">
-            <input
-              type="radio"
-              name="cancelType"
-              checked={cancelImmediately}
-              onChange={() => setCancelImmediately(true)}
-              className="mt-1 w-4 h-4 border-accent-base"
-            />
-            <div className="flex-1">
-              <p className="font-medium text-content mb-1">
-                {t("cancellation.immediately", "Cancel immediately")}
-              </p>
-              <p className="text-sm text-content-secondary">
-                {t(
-                  "cancellation.immediatelyDesc",
-                  "Lose access now. May issue pro-rata refund.",
-                )}
-              </p>
-            </div>
-          </label>
-        </div>
-
         {/* Reason (Optional) */}
         <div className="space-y-2">
           <label
@@ -265,17 +209,15 @@ export const CancelSubscriptionModal: React.FC<
                 )}
               </span>
             </li>
-            {!cancelImmediately && (
-              <li className="flex items-start gap-2">
-                <span className="text-success-base mt-1">✓</span>
-                <span>
-                  {t("cancellation.keepAccess", {
-                    date: formattedExpiryDate,
-                    defaultValue: `Keep full access until ${formattedExpiryDate}`,
-                  })}
-                </span>
-              </li>
-            )}
+            <li className="flex items-start gap-2">
+              <span className="text-success-base mt-1">✓</span>
+              <span>
+                {t("cancellation.keepAccess", {
+                  date: formattedExpiryDate,
+                  defaultValue: `Keep full access until ${formattedExpiryDate}`,
+                })}
+              </span>
+            </li>
             <li className="flex items-start gap-2">
               <span className="text-success-base mt-1">✓</span>
               <span>
