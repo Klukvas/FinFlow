@@ -28,12 +28,39 @@ from uuid import UUID
 from faker import Faker
 from fastapi.testclient import TestClient
 from jose import jwt
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, String, TypeDecorator
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import sessionmaker
 from unittest.mock import patch, MagicMock, AsyncMock
 
 from app.main import app
 from app.database import Base, get_db
+
+
+class SQLiteUUID(TypeDecorator):
+    """Store UUID as a 36-char string in SQLite."""
+    impl = String(36)
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if value is not None:
+            return str(value)
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value is not None:
+            return str(value)
+        return value
+
+
+def _patch_uuid_columns_for_sqlite():
+    for table in Base.metadata.tables.values():
+        for column in table.columns:
+            if isinstance(column.type, PG_UUID):
+                column.type = SQLiteUUID()
+
+
+_patch_uuid_columns_for_sqlite()
 from app.models.income import Income
 from shared.auth.dependencies import get_workspace_id
 
