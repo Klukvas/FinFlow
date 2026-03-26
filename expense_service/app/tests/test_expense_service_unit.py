@@ -669,8 +669,8 @@ class TestGetByDateRange:
         with patch.object(service, "authorize_workspace_access", return_value="owner"):
             with pytest.raises(ExpenseValidationError) as exc_info:
                 service.get_by_date_range(start, end, USER_ID, WORKSPACE_ID)
-        # The inner INVALID_DATE_RANGE error is re-raised wrapped in EXPENSE_RETRIEVAL_FAILED
-        assert exc_info.value.error_code == ErrorCode.EXPENSE_RETRIEVAL_FAILED
+        # INVALID_DATE_RANGE is now re-raised directly (not wrapped)
+        assert exc_info.value.error_code == ErrorCode.INVALID_DATE_RANGE
 
     def test_same_start_and_end_passes(self, service, db_session):
         db_session.query.return_value.filter.return_value.order_by.return_value.all.return_value = []
