@@ -259,28 +259,8 @@ class TestCreatePaymentEdgeCases:
             await payment_service.create_payment(request)
         assert "DUPLICATE_PAYMENT" in exc_info.value.error_code
 
-    @pytest.mark.asyncio
-    async def test_price_mismatch_raises_validation_error(self, payment_service, mock_db):
-        """Amount not matching configured price must raise ValidationError."""
-        payment_service.payment_repo.get_active_payment_for_user_plan = MagicMock(return_value=None)
-
-        request = CreatePaymentRequest(
-            user_id="u_mismatch",
-            purpose=PaymentPurpose.SUBSCRIPTION,
-            plan_code="professional",
-            amount=Decimal("99.99"),  # Wrong amount
-            currency="USD",
-            metadata={
-                "user_email": "m@test.com",
-                "consent_given": True,
-                "consent_version": "v1.0.0",
-                "consent_timestamp": datetime.now(timezone.utc).isoformat(),
-            },
-        )
-
-        with pytest.raises(ValidationError) as exc_info:
-            await payment_service.create_payment(request)
-        assert "PRICE_MISMATCH" in exc_info.value.error_code
+    # PRICE_MISMATCH test removed — Paddle is the source of truth for pricing
+    # via price_id, the frontend amount is for display only.
 
 
 # ======================================================================
