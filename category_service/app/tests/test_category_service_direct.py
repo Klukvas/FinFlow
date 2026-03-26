@@ -349,7 +349,7 @@ class TestCategoryServiceGetByIdInternal:
         user_id = randint(200000, 205000)
         service = CategoryService(db)
 
-        with pytest.raises(CategoryValidationError):
+        with pytest.raises(CategoryNotFoundError):
             service.get_by_id_internal(999999999, user_id, TEST_WORKSPACE_ID)
 
     def test_raises_when_wrong_workspace(self, db):
@@ -358,7 +358,7 @@ class TestCategoryServiceGetByIdInternal:
         other_ws = UUID("660e8400-e29b-41d4-a716-446655440004")
         cat = _create_category(db, user_id, TEST_WORKSPACE_ID, "InternalWsMismatch" + str(user_id))
 
-        with pytest.raises(CategoryValidationError):
+        with pytest.raises(CategoryOwnershipError):
             service.get_by_id_internal(cat.id, user_id, other_ws)
 
     def test_raises_when_wrong_user(self, db):
@@ -367,7 +367,7 @@ class TestCategoryServiceGetByIdInternal:
         service = CategoryService(db)
         cat = _create_category(db, user1_id, TEST_WORKSPACE_ID, "InternalWrongUser" + str(user1_id))
 
-        with pytest.raises(CategoryValidationError):
+        with pytest.raises(CategoryOwnershipError):
             service.get_by_id_internal(cat.id, user2_id, TEST_WORKSPACE_ID)
 
 

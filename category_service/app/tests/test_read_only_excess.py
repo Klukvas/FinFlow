@@ -298,6 +298,10 @@ class TestRouterIsReadOnly:
              patch(
                  "shared.clients.subscription.SubscriptionClient.check_limit",
                  return_value=(True, None),
+             ), \
+             patch(
+                 "shared.clients.subscription.SubscriptionClient.get_read_only_ids",
+                 return_value=set(),
              ):
             from app.main import app
             from app.dependencies import get_workspace_id
@@ -337,6 +341,7 @@ class TestRouterIsReadOnly:
             cats.append(cat)
 
         # Oldest 2 (cats[0], cats[1]) editable; cats[2], cats[3] read-only
+        excess_ids = {cats[2].id, cats[3].id}
         with patch("shared.auth.dependencies.decode_token", return_value=user_id), \
              patch(
                  "shared.clients.subscription.SubscriptionClient.get_user_features",
@@ -345,6 +350,10 @@ class TestRouterIsReadOnly:
              patch(
                  "shared.clients.subscription.SubscriptionClient.check_limit",
                  return_value=(True, None),
+             ), \
+             patch(
+                 "shared.clients.subscription.SubscriptionClient.get_read_only_ids",
+                 return_value=excess_ids,
              ):
             from app.main import app
             from app.dependencies import get_workspace_id
@@ -401,6 +410,7 @@ class TestRouterIsReadOnly:
         )
 
         # limit=2 => cat_b (oldest) and cat_a (second oldest) editable, cat_c read-only
+        excess_ids = {cat_c.id}
         with patch("shared.auth.dependencies.decode_token", return_value=user_id), \
              patch(
                  "shared.clients.subscription.SubscriptionClient.get_user_features",
@@ -409,6 +419,10 @@ class TestRouterIsReadOnly:
              patch(
                  "shared.clients.subscription.SubscriptionClient.check_limit",
                  return_value=(True, None),
+             ), \
+             patch(
+                 "shared.clients.subscription.SubscriptionClient.get_read_only_ids",
+                 return_value=excess_ids,
              ):
             from app.main import app
             from app.dependencies import get_workspace_id
