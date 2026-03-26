@@ -46,6 +46,14 @@ inputs:
     description: Fernet key for encrypting bank tokens (generated on first deploy if empty)
     required: false
     default: ""
+  telegram-bot-token:
+    description: Telegram bot token for support messages
+    required: false
+    default: ""
+  telegram-support-chat-id:
+    description: Telegram chat ID for support messages
+    required: false
+    default: ""
   services:
     description: Space-separated services to deploy (empty = all)
     required: false
@@ -100,6 +108,8 @@ runs:
         DOMAIN: ${{ inputs.domain }}
         ANTHROPIC_API_KEY: ${{ inputs['anthropic-api-key'] }}
         PAYMENTS_ENABLED: ${{ inputs['payments-enabled'] }}
+        TELEGRAM_BOT_TOKEN: ${{ inputs['telegram-bot-token'] }}
+        TELEGRAM_SUPPORT_CHAT_ID: ${{ inputs['telegram-support-chat-id'] }}
         SERVICES: ${{ inputs.services }}
       run: |
         set -euo pipefail
@@ -149,6 +159,8 @@ runs:
         echo "ALGORITHM=\$ALGORITHM" >> .env
         echo "INTERNAL_SECRET_TOKEN=\$INTERNAL_SECRET_TOKEN" >> .env
         echo "BANK_TOKEN_ENCRYPTION_KEY=\$BANK_TOKEN_ENCRYPTION_KEY" >> .env
+        echo "TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}" >> .env
+        echo "TELEGRAM_SUPPORT_CHAT_ID=${TELEGRAM_SUPPORT_CHAT_ID}" >> .env
 
         # Ensure all service databases exist (init.sql only runs on first Postgres start)
         echo "Ensuring databases exist..."

@@ -2640,5 +2640,15 @@
     "dismissButton": "Not now",
     "dontShowAgain": "Don't show again",
     "headerButton": "Install"
+  },
+  "support": {
+    "buttonLabel": "Support",
+    "title": "Contact Support",
+    "subtitle": "Have a question or found a bug? Let us know.",
+    "messageLabel": "Your message",
+    "messagePlaceholder": "Describe your issue or question...",
+    "send": "Send",
+    "messageSent": "Message sent! We'll get back to you soon.",
+    "errorSending": "Failed to send message. Please try again."
   }
 }

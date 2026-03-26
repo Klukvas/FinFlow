@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request
 from starlette.middleware.base import BaseHTTPMiddleware
-from app.routers import auth, logging, internal, admin
+from app.routers import auth, logging, internal, admin, support
 from fastapi.exceptions import RequestValidationError
 from app.exception_handlers import (
     custom_validation_exception_handler,
@@ -150,6 +150,7 @@ app.include_router(auth.router)
 app.include_router(logging.router)
 app.include_router(internal.router)
 app.include_router(admin.router)
+app.include_router(support.router, prefix="/v1")
 
 # Middleware order matters! Added LAST = runs FIRST
 # 1. RequestLoggingMiddleware (added first, runs last)

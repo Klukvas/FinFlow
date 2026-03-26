@@ -51,7 +51,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   useEffect(() => {
     if (!user?.id) return;
     subscriptionApi.getUserSubscription(user.id).then((res) => {
-      if (!("error" in res)) setPlanCode(res.plan_code);
+      if (res && !("error" in res)) setPlanCode(res.plan_code);
+      else setPlanCode("basic");
     });
   }, [user?.id, subscriptionApi]);
 

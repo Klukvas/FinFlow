@@ -1632,6 +1632,8 @@ jobs:
           domain: ${{ secrets.DOMAIN || 'finflow.ltd' }}
           payments-enabled: ${{ secrets.PAYMENTS_ENABLED || 'false' }}
           bank-token-encryption-key: ${{ secrets.BANK_TOKEN_ENCRYPTION_KEY }}
+          telegram-bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          telegram-support-chat-id: ${{ secrets.TELEGRAM_SUPPORT_CHAT_ID }}
           services: ${{ needs.detect-changes.outputs.services_list }}
 
       - name: Tag last successful deploy

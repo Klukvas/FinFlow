@@ -65,8 +65,10 @@ export const Profile = () => {
         setSubscriptionLoading(true);
         const response = await subscriptionApi.getUserSubscription(user.id);
 
-        if (!("error" in response)) {
+        if (response && !("error" in response)) {
           setSubscription(response);
+        } else {
+          setSubscription(null);
         }
       } catch (err) {
         logger.error("Failed to load subscription:", err);

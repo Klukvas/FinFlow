@@ -41,6 +41,8 @@ services:
       SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
       WORKSPACE_SERVICE_URL: "http://workspace_service:8000"
       INTERNAL_SECRET_TOKEN: "${INTERNAL_SECRET_TOKEN:-}"
+      TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN:-}"
+      TELEGRAM_SUPPORT_CHAT_ID: "${TELEGRAM_SUPPORT_CHAT_ID:-}"
     env_file:
       - ./user_service/.env.docker
     depends_on:

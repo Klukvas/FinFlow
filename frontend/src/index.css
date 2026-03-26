@@ -668,6 +668,14 @@ body {
 }
 
 /* ============================================
+   SUPPORT BUTTON PULSE
+   ============================================ */
+@keyframes supportPulse {
+  0%, 100% { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15); }
+  50% { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), 0 0 0 6px rgba(var(--accent-rgb, 99, 102, 241), 0.15); }
+}
+
+/* ============================================
    REDUCED MOTION
    ============================================ */
 @media (prefers-reduced-motion: reduce) {

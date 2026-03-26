@@ -107,8 +107,7 @@ export const useDashboardData = (periodMonths: number = 1): DashboardData => {
       } else {
         logger.warn("Failed to fetch recurring payments:", recPayRes.error);
       }
-      if ("error" in subRes) {
-        logger.warn("Subscription check failed, defaulting to basic plan");
+      if (!subRes || "error" in subRes) {
         setPlanCode("basic");
       } else {
         setPlanCode(

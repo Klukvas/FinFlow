@@ -5,6 +5,7 @@ import { Sidebar } from "./Sidebar";
 import { AppHeader } from "./MobileHeader";
 import { AnimatedBackground } from "./AnimatedBackground";
 import { useTutorial } from "@/contexts/TutorialContext";
+import { SupportButton } from "@/components/ui/support/SupportButton";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -100,6 +101,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           </main>
         </div>
       </div>
+
+      {/* Floating support button */}
+      <SupportButton />
     </div>
   );
 };

@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     LOCKOUT_DURATION_MINUTES: int = 15
     RATE_LIMIT_PER_MINUTE: int = 10
     
+    # Telegram support
+    TELEGRAM_BOT_TOKEN: str = ""
+    TELEGRAM_SUPPORT_CHAT_ID: str = ""
+
     # Internal services
     SUBSCRIPTION_SERVICE_URL: str = "http://subscription_service:8080"
     CURRENCY_SERVICE_URL: str = "http://currency_service:8080"
