@@ -405,8 +405,8 @@ jobs:
         if: needs.detect-changes.outputs.subscription_service == 'true'
         working-directory: subscription_service
         run: |
-          pip install -r requirements.txt pytest pytest-asyncio ../shared
-          pytest app/tests/ -v --tb=short
+          pip install -r requirements.txt pytest pytest-asyncio faker ../shared
+          pytest tests/ -v --tb=short
 
   # Stage 1: Frontend Build
   stage1-frontend:
