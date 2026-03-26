@@ -5,13 +5,6 @@ import { Sidebar } from "./Sidebar";
 import { AppHeader } from "./MobileHeader";
 import { AnimatedBackground } from "./AnimatedBackground";
 import { useTutorial } from "@/contexts/TutorialContext";
-import { usePWAInstallContext } from "@/contexts/PWAInstallContext";
-import { InstallPWAModal } from "../pwa/InstallPWAModal";
-import {
-  getPWADismissed,
-  getPWAPromptShown,
-  setPWAPromptShown,
-} from "@/hooks/usePWAInstall";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -25,21 +18,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const { t } = useTranslation();
   const { isActive: isTutorialActive } = useTutorial();
-  const { isInstallable, isInstalled, platform, install } =
-    usePWAInstallContext();
-  const [showPWAModal, setShowPWAModal] = useState(false);
-
-  // Show PWA install modal after dashboard loads (once per session)
-  useEffect(() => {
-    if (getPWAPromptShown()) return;
-    if (isInstalled) return;
-    if (!isInstallable && platform !== "ios") return;
-    if (getPWADismissed()) return;
-
-    setPWAPromptShown();
-    const timer = setTimeout(() => setShowPWAModal(true), 2000);
-    return () => clearTimeout(timer);
-  }, [isInstallable, isInstalled, platform]);
 
   useLayoutEffect(() => {
     const checkMobile = () => {
@@ -122,14 +100,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           </main>
         </div>
       </div>
-
-      {/* PWA Install Modal */}
-      <InstallPWAModal
-        isOpen={showPWAModal}
-        onClose={() => setShowPWAModal(false)}
-        platform={platform}
-        onInstall={install}
-      />
     </div>
   );
 };

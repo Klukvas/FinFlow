@@ -17,7 +17,6 @@ import {
   BookOpen,
   LineChart,
 } from "lucide-react";
-import { InstallPWAButton } from "../pwa/InstallPWAButton";
 import { FinFlowLogo, FinFlowWordmark } from "./FinFlowLogo";
 
 export const PublicHeader: React.FC = () => {
@@ -75,7 +74,6 @@ export const PublicHeader: React.FC = () => {
             </Link>
 
             <div className="flex items-center space-x-2">
-              <InstallPWAButton />
               <LanguageSelector />
               <ThemeToggle />
               {isAuthenticated ? (
@@ -150,7 +148,6 @@ export const PublicHeader: React.FC = () => {
               className="flex items-center space-x-4"
               data-testid="header-actions"
             >
-              <InstallPWAButton />
               <LanguageSelector />
               <ThemeToggle />
 

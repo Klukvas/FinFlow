@@ -11,7 +11,7 @@ import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import { TutorialProvider } from "@/contexts/TutorialContext";
 import { PaymentProvider } from "@/contexts/PaymentContext";
-import { PWAInstallProvider } from "@/contexts/PWAInstallContext";
+
 import { AppRoutes } from "@/components/AppRoutes";
 import { TutorialOverlay } from "@/components/ui/tutorial";
 import "@/i18n";
@@ -25,28 +25,26 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
     <ErrorBoundary>
       <HelmetProvider>
         <ThemeProvider>
-          <PWAInstallProvider>
-            <ModalProvider>
-              <AuthProvider>
-                <PaymentProvider>
-                  <WorkspaceProvider>
-                    <CategoriesProvider>
-                      <AccountsProvider>
-                        <CurrencyProvider>
-                          <TutorialProvider>
-                            <Router>
-                              {children || <AppRoutes />}
-                              <TutorialOverlay />
-                            </Router>
-                          </TutorialProvider>
-                        </CurrencyProvider>
-                      </AccountsProvider>
-                    </CategoriesProvider>
-                  </WorkspaceProvider>
-                </PaymentProvider>
-              </AuthProvider>
-            </ModalProvider>
-          </PWAInstallProvider>
+          <ModalProvider>
+            <AuthProvider>
+              <PaymentProvider>
+                <WorkspaceProvider>
+                  <CategoriesProvider>
+                    <AccountsProvider>
+                      <CurrencyProvider>
+                        <TutorialProvider>
+                          <Router>
+                            {children || <AppRoutes />}
+                            <TutorialOverlay />
+                          </Router>
+                        </TutorialProvider>
+                      </CurrencyProvider>
+                    </AccountsProvider>
+                  </CategoriesProvider>
+                </WorkspaceProvider>
+              </PaymentProvider>
+            </AuthProvider>
+          </ModalProvider>
         </ThemeProvider>
       </HelmetProvider>
     </ErrorBoundary>

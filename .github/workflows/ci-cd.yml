@@ -127,63 +127,79 @@ jobs:
               esac
             done
           else
+            # Determine diff base: compare against last successful deploy tag,
+            # falling back to HEAD^ if no deploy tag exists yet.
+            # This ensures ALL changes since last deploy are detected,
+            # not just changes in the latest commit.
+            if git rev-parse --verify last-deploy >/dev/null 2>&1; then
+              DIFF_BASE="last-deploy"
+              echo "Comparing against last-deploy tag ($(git rev-parse --short last-deploy))"
+            else
+              DIFF_BASE="HEAD^"
+              echo "No last-deploy tag found, comparing against HEAD^"
+            fi
+
+            CHANGED_FILES=$(git diff --name-only "${DIFF_BASE}..HEAD")
+            echo "Changed files since ${DIFF_BASE}:"
+            echo "$CHANGED_FILES" | head -50
+
             # Auto-detect changes
-            if git diff --name-only HEAD^..HEAD | grep -q "^frontend/"; then
+            if echo "$CHANGED_FILES" | grep -q "^frontend/"; then
               FRONTEND="true"
             fi
-            if git diff --name-only HEAD^..HEAD | grep -q "^account_service/"; then
+            if echo "$CHANGED_FILES" | grep -q "^account_service/"; then
               ACCOUNT_SERVICE="true"
             fi
             # admin_panel disabled for now
-            # if git diff --name-only HEAD^..HEAD | grep -q "^admin_panel/"; then
+            # if echo "$CHANGED_FILES" | grep -q "^admin_panel/"; then
             #   ADMIN_PANEL="true"
             # fi
-            if git diff --name-only HEAD^..HEAD | grep -q "^category_service/"; then
+            if echo "$CHANGED_FILES" | grep -q "^category_service/"; then
               CATEGORY_SERVICE="true"
             fi
-            if git diff --name-only HEAD^..HEAD | grep -q "^currency_service/"; then
+            if echo "$CHANGED_FILES" | grep -q "^currency_service/"; then
               CURRENCY_SERVICE="true"
             fi
-            if git diff --name-only HEAD^..HEAD | grep -q "^debt_service/"; then
+            if echo "$CHANGED_FILES" | grep -q "^debt_service/"; then
               DEBT_SERVICE="true"
             fi
-            if git diff --name-only HEAD^..HEAD | grep -q "^expense_service/"; then
+            if echo "$CHANGED_FILES" | grep -q "^expense_service/"; then
               EXPENSE_SERVICE="true"
             fi
-            if git diff --name-only HEAD^..HEAD | grep -q "^goals_service/"; then
+            if echo "$CHANGED_FILES" | grep -q "^goals_service/"; then
               GOALS_SERVICE="true"
             fi
-            if git diff --name-only HEAD^..HEAD | grep -q "^income_service/"; then
+            if echo "$CHANGED_FILES" | grep -q "^income_service/"; then
               INCOME_SERVICE="true"
             fi
-            if git diff --name-only HEAD^..HEAD | grep -q "^payment_service/"; then
+            if echo "$CHANGED_FILES" | grep -q "^payment_service/"; then
               PAYMENT_SERVICE="true"
             fi
-            if git diff --name-only HEAD^..HEAD | grep -q "^pdf_parser_service/"; then
+            if echo "$CHANGED_FILES" | grep -q "^pdf_parser_service/"; then
               PDF_PARSER_SERVICE="true"
             fi
-            if git diff --name-only HEAD^..HEAD | grep -q "^recurring_service/"; then
+            if echo "$CHANGED_FILES" | grep -q "^recurring_service/"; then
               RECURRING_SERVICE="true"
             fi
-            if git diff --name-only HEAD^..HEAD | grep -q "^scheduler_service/"; then
+            if echo "$CHANGED_FILES" | grep -q "^scheduler_service/"; then
               SCHEDULER_SERVICE="true"
             fi
-            if git diff --name-only HEAD^..HEAD | grep -q "^user_service/"; then
+            if echo "$CHANGED_FILES" | grep -q "^user_service/"; then
               USER_SERVICE="true"
             fi
-            if git diff --name-only HEAD^..HEAD | grep -q "^subscription_service/"; then
+            if echo "$CHANGED_FILES" | grep -q "^subscription_service/"; then
               SUBSCRIPTION_SERVICE="true"
             fi
-            if git diff --name-only HEAD^..HEAD | grep -q "^workspace_service/"; then
+            if echo "$CHANGED_FILES" | grep -q "^workspace_service/"; then
               WORKSPACE_SERVICE="true"
             fi
-            if git diff --name-only HEAD^..HEAD | grep -q "^ai_assistant_service/"; then
+            if echo "$CHANGED_FILES" | grep -q "^ai_assistant_service/"; then
               AI_ASSISTANT_SERVICE="true"
             fi
-            if git diff --name-only HEAD^..HEAD | grep -q "^bank_sync_service/"; then
+            if echo "$CHANGED_FILES" | grep -q "^bank_sync_service/"; then
               BANK_SYNC_SERVICE="true"
             fi
-            if git diff --name-only HEAD^..HEAD | grep -q "^e2e_ui_tests/"; then
+            if echo "$CHANGED_FILES" | grep -q "^e2e_ui_tests/"; then
               E2E_UI_TESTS="true"
             fi
 
@@ -1615,6 +1631,11 @@ jobs:
           payments-enabled: ${{ secrets.PAYMENTS_ENABLED || 'false' }}
           bank-token-encryption-key: ${{ secrets.BANK_TOKEN_ENCRYPTION_KEY }}
           services: ${{ needs.detect-changes.outputs.services_list }}
+
+      - name: Tag last successful deploy
+        run: |
+          git tag -f last-deploy HEAD
+          git push origin last-deploy --force
 
       - name: Build Summary
         if: always()
