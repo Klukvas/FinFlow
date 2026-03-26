@@ -340,7 +340,7 @@ jobs:
         if: needs.detect-changes.outputs.income_service == 'true'
         working-directory: income_service
         run: |
-          pip install -r requirements.txt pytest pytest-asyncio ../shared
+          pip install -r requirements.txt pytest pytest-asyncio faker ../shared
           pytest app/tests/ -v --tb=short
 
       - name: Run recurring_service tests
