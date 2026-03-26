@@ -9,6 +9,7 @@ import {
   WorkspaceMembers,
 } from "@/components/ui/workspace";
 import { Plus, Users, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 // Modal Component
 interface ModalProps {
@@ -106,7 +107,6 @@ export const Workspaces: React.FC = () => {
     archiveWorkspace,
     leaveWorkspace,
   } = useWorkspace();
-
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(
@@ -130,6 +130,10 @@ export const Workspaces: React.FC = () => {
       const result = await createWorkspace(data as WorkspaceCreate);
       if (result) {
         setShowCreateModal(false);
+      } else if (error) {
+        toast.error(error);
+      } else {
+        toast.error(t("workspace.errors.genericError"));
       }
     } finally {
       setIsSubmitting(false);

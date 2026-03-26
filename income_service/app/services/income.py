@@ -349,7 +349,7 @@ class IncomeService(WorkspaceAuthorizationMixin):
             
         except Exception as e:
             self.db.rollback()
-            if isinstance(e, (IncomeAmountError, IncomeDateError, IncomeDescriptionError, IncomeValidationError)):
+            if isinstance(e, (IncomeAmountError, IncomeDateError, IncomeDescriptionError, IncomeValidationError, ExternalServiceError)):
                 raise
             logger.error(f"Error updating income: {e}")
             raise IncomeValidationError("Failed to update income", IncomeErrorCodes.INCOME_VALIDATION_FAILED)

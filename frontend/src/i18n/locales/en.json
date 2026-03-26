@@ -240,6 +240,14 @@
       "loadCategoriesError": "Error loading categories",
       "loadAccountsError": "Error loading accounts"
     },
+    "errors": {
+      "limitExceeded": "You have reached the expense limit for your plan. Upgrade to add more.",
+      "invalidCategory": "Invalid category selected",
+      "invalidAccount": "Invalid account selected",
+      "invalidAmount": "Invalid expense amount",
+      "validationError": "Expense validation error",
+      "genericError": "An error occurred while processing the expense"
+    },
     "dashboard": {
       "loading": "Loading analytics...",
       "loadError": "Error loading data"
@@ -282,6 +290,10 @@
       "creating": "Creating...",
       "createIncome": "Create income",
       "createError": "Error creating income"
+    },
+    "errors": {
+      "limitExceeded": "You have reached the income limit for your plan. Upgrade to add more.",
+      "genericError": "An error occurred while processing the income"
     }
   },
   "recurring": {
@@ -307,6 +319,10 @@
       "deleteFailed": "Error deleting recurring payment",
       "pauseFailed": "Error pausing recurring payment",
       "resumeFailed": "Error resuming recurring payment"
+    },
+    "errors": {
+      "limitExceeded": "You have reached the recurring payment limit for your plan. Upgrade to add more.",
+      "genericError": "An error occurred while processing the recurring payment"
     },
     "pagination": {
       "previous": "Previous",
@@ -1052,7 +1068,21 @@
       "createAccount": "Error creating account",
       "updateAccount": "Error updating account",
       "archiveAccount": "Error archiving account",
-      "operationError": "Account operation error"
+      "operationError": "Account operation error",
+      "limitExceeded": "You have reached the account limit for your plan. Upgrade to add more.",
+      "genericError": "An error occurred while processing the account"
+    }
+  },
+  "debt": {
+    "errors": {
+      "limitExceeded": "You have reached the debt limit for your plan. Upgrade to add more.",
+      "genericError": "An error occurred while processing the debt"
+    }
+  },
+  "goals": {
+    "errors": {
+      "limitExceeded": "You have reached the goal limit for your plan. Upgrade to add more.",
+      "genericError": "An error occurred while processing the goal"
     }
   },
   "debtPage": {
@@ -2054,6 +2084,10 @@
       "title": "Leave Workspace",
       "message": "Are you sure you want to leave this workspace? You will lose access to all data in this workspace."
     },
+    "errors": {
+      "limitExceeded": "You have reached the workspace limit for your plan. Upgrade to create more.",
+      "genericError": "An error occurred while processing the workspace"
+    },
     "empty": {
       "title": "No workspaces yet",
       "description": "Create your first workspace to get started"
@@ -2187,7 +2221,7 @@
       "message": "Your payment is being processed. This may take a few moments.",
       "detail": "If the status doesn't update, please check back in a few minutes."
     },
-    "processing": {
+    "processingStatus": {
       "title": "Processing Payment",
       "message": "We are processing your payment. Please wait...",
       "detail": "Your payment is being processed by the payment provider. This usually takes a few moments. Check your profile shortly for the updated subscription status."

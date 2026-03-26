@@ -257,8 +257,8 @@ class ExpenseService(WorkspaceAuthorizationMixin):
                 )
             
             
-        except (ExpenseValidationError, ExpenseAmountError, ExpenseDateError, 
-                ExpenseDescriptionError, ExternalServiceError):
+        except (ExpenseValidationError, ExpenseAmountError, ExpenseDateError,
+                ExpenseDescriptionError, ExpenseLimitExceededError, ExternalServiceError):
             self.db.rollback()
             raise
         except IntegrityError as e:
@@ -283,11 +283,13 @@ class ExpenseService(WorkspaceAuthorizationMixin):
         try:
             # 1. Authorize workspace access (viewer role required for read)
             self.authorize_workspace_access(workspace_id, user_id, "viewer", "list_expenses")
-            
+
             # 2. Filter by workspace
             return self.db.query(Expense).filter(
                 Expense.workspace_id == workspace_id
             ).order_by(Expense.date.desc()).all()
+        except (ExpenseValidationError, ExternalServiceError):
+            raise
         except Exception as e:
             self.logger.error(f"Error retrieving expenses: {e}")
             raise ExpenseValidationError(
@@ -301,19 +303,21 @@ class ExpenseService(WorkspaceAuthorizationMixin):
         try:
             # 1. Authorize workspace access (viewer role required for read)
             self.authorize_workspace_access(workspace_id, user_id, "viewer", "list_expenses_paginated")
-            
+
             # Calculate offset
             offset = (page - 1) * size
-            
+
             # 2. Get total count filtered by workspace
             total = self.db.query(Expense).filter(Expense.workspace_id == workspace_id).count()
-            
+
             # 3. Get paginated results filtered by workspace
             expenses = self.db.query(Expense).filter(
                 Expense.workspace_id == workspace_id
             ).order_by(Expense.date.desc()).offset(offset).limit(size).all()
-            
+
             return expenses, total
+        except (ExpenseValidationError, ExternalServiceError):
+            raise
         except Exception as e:
             self.logger.error(f"Error retrieving paginated expenses: {e}")
             raise ExpenseValidationError(
@@ -530,6 +534,8 @@ class ExpenseService(WorkspaceAuthorizationMixin):
                 expenses=expense_responses,
                 statistics=statistics
             )
+        except (ExpenseValidationError, ExternalServiceError):
+            raise
         except Exception as e:
             self.logger.error(f"Error retrieving expenses by category: {e}")
             raise ExpenseValidationError(
@@ -557,6 +563,8 @@ class ExpenseService(WorkspaceAuthorizationMixin):
                 Expense.date >= start_date,
                 Expense.date <= end_date
             ).order_by(Expense.date.desc()).all()
+        except (ExpenseValidationError, ExternalServiceError):
+            raise
         except Exception as e:
             self.logger.error(f"Error retrieving expenses by date range: {e}")
             raise ExpenseValidationError(

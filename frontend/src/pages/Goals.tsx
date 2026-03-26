@@ -23,11 +23,13 @@ import { Button } from "@/components/ui/shared/Button";
 import { exportGoalsCsv } from "@/utils/exportGoalsCsv";
 import { toast } from "sonner";
 import { logger } from "@/utils/logger";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 
 export const Goals = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { goals: goalsApi } = useApiClients();
+  const { handleGoalsError } = useErrorHandler();
 
   // Modal state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -180,7 +182,10 @@ export const Goals = () => {
   // Create handler
   const handleCreate = async (data: CreateGoalRequest | UpdateGoalRequest) => {
     const result = await goalsApi.createGoal(data as CreateGoalRequest);
-    if (result && "error" in result) return;
+    if (result && "error" in result) {
+      handleGoalsError(result);
+      return;
+    }
     setIsCreateModalOpen(false);
     toast.success(t("goalsPage.messages.goalCreated"));
     fetchAllData();

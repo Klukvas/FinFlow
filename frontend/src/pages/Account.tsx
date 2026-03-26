@@ -23,11 +23,13 @@ import { Card } from "@/components/ui/shared/Card";
 import { Button } from "@/components/ui/shared/Button";
 import { exportAccountsCsv } from "@/utils/exportAccountsCsv";
 import { toast } from "sonner";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { logger } from "@/utils/logger";
 
 export const Account: React.FC = () => {
   const { t } = useTranslation();
   const { account: accountApi } = useApiClients();
+  const { handleAccountError } = useErrorHandler();
 
   // Modal state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -172,7 +174,10 @@ export const Account: React.FC = () => {
   // Create handler
   const handleCreateAccount = async (accountData: any) => {
     const result = await accountApi.createAccount(accountData);
-    if (result && "error" in result) return;
+    if (result && "error" in result) {
+      handleAccountError(result);
+      return;
+    }
     setIsCreateModalOpen(false);
     toast.success(t("accountPage.messages.accountCreated"));
     fetchAllData();

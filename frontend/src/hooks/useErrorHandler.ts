@@ -79,6 +79,13 @@ export const useErrorHandler = (options: UseErrorHandlerOptions = {}) => {
     return handleError(error, "recurring", showToast);
   };
 
+  const handleWorkspaceError = (
+    error: ErrorType,
+    showToast: boolean = true,
+  ) => {
+    return handleError(error, "workspace", showToast);
+  };
+
   const handleUserError = (error: ErrorType, showToast: boolean = true) => {
     return handleError(error, "user", showToast);
   };
@@ -93,6 +100,7 @@ export const useErrorHandler = (options: UseErrorHandlerOptions = {}) => {
     handleGoalsError,
     handleCurrencyError,
     handleRecurringError,
+    handleWorkspaceError,
     handleUserError,
   };
 };

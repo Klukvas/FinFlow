@@ -247,6 +247,9 @@ class DebtService(WorkspaceAuthorizationMixin):
             
             return DebtResponse.model_validate(debt_dict)
             
+        except (HTTPException, DebtNotFoundError, DebtValidationError, DebtReadOnlyExcessError):
+            self.db.rollback()
+            raise
         except Exception as e:
             self.db.rollback()
             self.logger.error(f"Error updating debt: {e}")
@@ -275,6 +278,9 @@ class DebtService(WorkspaceAuthorizationMixin):
             log_operation(self.logger, "Debt deleted", user_id, f"Debt ID: {debt_id}, Name: {debt.name}")
             return True
             
+        except (HTTPException, DebtNotFoundError):
+            self.db.rollback()
+            raise
         except Exception as e:
             self.db.rollback()
             self.logger.error(f"Error deleting debt: {e}")

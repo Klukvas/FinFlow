@@ -315,16 +315,17 @@ class CategoryService(WorkspaceAuthorizationMixin):
             
             return category
             
-        except (CategoryNotFoundError, CategoryValidationError, CategoryNameConflictError, 
-                CircularRelationshipError, CategoryOwnershipError, CategoryDepthExceededError) as e:
+        except (CategoryNotFoundError, CategoryValidationError, CategoryNameConflictError,
+                CategoryLimitExceededError, CircularRelationshipError, CategoryOwnershipError,
+                CategoryDepthExceededError) as e:
             duration_ms = (time.time() - start_time) * 1000
             self.db.rollback()
-            
+
             # Add more context to the error message
             error_msg = f"MCC-based category creation failed: {str(e)}"
             if hasattr(e, 'detail') and isinstance(e.detail, dict):
                 error_msg += f" (errorCode: {e.detail.get('errorCode', 'N/A')})"
-            
+
             self.logger.error(
                 error_msg,
                 category="business",
@@ -336,12 +337,12 @@ class CategoryService(WorkspaceAuthorizationMixin):
                 error_type=type(e).__name__,
                 duration_ms=duration_ms
             )
-            
+
             # Re-raise with more context if possible
             if hasattr(e, 'detail') and isinstance(e.detail, dict):
                 # Update the detail with more information
                 e.detail['error'] = f"Failed to create category: {e.detail.get('error', str(e))}"
-            
+
             raise
         except IntegrityError as e:
             duration_ms = (time.time() - start_time) * 1000
@@ -507,7 +508,7 @@ class CategoryService(WorkspaceAuthorizationMixin):
     def get_all(self, user_id: int, workspace_id: UUID, page: int = 1, size: int = 50) -> tuple[List[Category], int]:
         """Get root categories with their full hierarchy (paginated, filtered by workspace)"""
         start_time = time.time()
-        
+
         try:
             # Authorize user (requires 'viewer' role for GET)
             self.authorize_workspace_access(
@@ -522,14 +523,14 @@ class CategoryService(WorkspaceAuthorizationMixin):
                 Category.workspace_id == workspace_id,
                 Category.parent_id == None  # Root categories only
             ).order_by(Category.created_at.desc())
-            
+
             total = query.count()
             categories = query.offset((page - 1) * size).limit(size).all()
-            
+
             result = (categories, total)
-            
+
             duration_ms = (time.time() - start_time) * 1000
-            
+
             self.logger.info(
                 f"Categories retrieved successfully",
                 category="business",
@@ -539,12 +540,14 @@ class CategoryService(WorkspaceAuthorizationMixin):
                 total=total,
                 duration_ms=duration_ms
             )
-            
+
             return result
-            
+
+        except CategoryOwnershipError:
+            raise
         except Exception as e:
             duration_ms = (time.time() - start_time) * 1000
-            
+
             self.logger.error(
                 f"Error getting categories for user {user_id}: {str(e)}",
                 category="business",
@@ -566,16 +569,18 @@ class CategoryService(WorkspaceAuthorizationMixin):
                 required_role="viewer",
                 operation="list_categories_flat"
             )
-            
+
             # Query all categories filtered by workspace_id (flat list)
             query = self.db.query(Category).filter(
                 Category.workspace_id == workspace_id
             ).order_by(Category.created_at.desc())
-            
+
             total = query.count()
             categories = query.offset((page - 1) * size).limit(size).all()
-            
+
             return categories, total
+        except CategoryOwnershipError:
+            raise
         except Exception as e:
             self.logger.error(f"Error retrieving flat categories: {e}")
             raise CategoryValidationError("Failed to retrieve categories")
@@ -618,25 +623,27 @@ class CategoryService(WorkspaceAuthorizationMixin):
                 required_role="viewer",
                 operation="get_category_children"
             )
-            
+
             # Get parent category and validate
             parent = self.db.query(Category).filter(Category.id == category_id).first()
             if not parent:
                 raise CategoryNotFoundError(category_id)
-            
+
             self.validate_workspace_match(
                 parent.workspace_id,
                 workspace_id,
                 category_id
             )
-            
+
             # Get children filtered by workspace
             children = self.db.query(Category).filter(
                 Category.parent_id == category_id,
                 Category.workspace_id == workspace_id
             ).all()
-            
+
             return children
+        except (CategoryNotFoundError, CategoryOwnershipError):
+            raise
         except Exception as e:
             self.logger.error(f"Error retrieving category children: {e}")
             raise CategoryValidationError("Failed to retrieve category children")
@@ -785,16 +792,18 @@ class CategoryService(WorkspaceAuthorizationMixin):
             category = self.db.query(Category).filter(Category.id == category_id).first()
             if not category:
                 raise CategoryNotFoundError(category_id)
-            
+
             # Validate workspace match
             if category.workspace_id != workspace_id:
                 raise CategoryOwnershipError("Category not in specified workspace")
-            
+
             # Validate user ownership
             if category.user_id != user_id:
                 raise CategoryOwnershipError("Category belongs to another user")
-            
+
             return category
+        except (CategoryNotFoundError, CategoryOwnershipError):
+            raise
         except Exception as e:
             self.logger.error(f"Error in internal category retrieval: {e}")
             raise CategoryValidationError("Failed to retrieve category for internal validation")
@@ -940,7 +949,7 @@ class CategoryService(WorkspaceAuthorizationMixin):
                 required_role="viewer",
                 operation="get_statistics"
             )
-            
+
             self.logger.info(
                 f"Retrieving category statistics for user {user_id} in workspace {workspace_id}",
                 category="business",
@@ -948,12 +957,12 @@ class CategoryService(WorkspaceAuthorizationMixin):
                 user_id=user_id,
                 workspace_id=str(workspace_id)
             )
-            
+
             # Query all categories for the workspace
             categories = self.db.query(Category).filter(
                 Category.workspace_id == workspace_id
             ).all()
-            
+
             # Calculate statistics
             # Compare by .value because cat.type is models.CategoryType (enum.Enum)
             # while the imported CategoryType is schemas.CategoryType (str, Enum)
@@ -962,7 +971,7 @@ class CategoryService(WorkspaceAuthorizationMixin):
             income_categories = sum(1 for cat in categories if cat.type.value == "INCOME")
             parent_categories = sum(1 for cat in categories if cat.parent_id is None)
             child_categories = sum(1 for cat in categories if cat.parent_id is not None)
-            
+
             statistics = {
                 "total_categories": total_categories,
                 "expense_categories": expense_categories,
@@ -970,7 +979,7 @@ class CategoryService(WorkspaceAuthorizationMixin):
                 "parent_categories": parent_categories,
                 "child_categories": child_categories
             }
-            
+
             self.logger.info(
                 f"Category statistics retrieved successfully",
                 category="business",
@@ -978,9 +987,11 @@ class CategoryService(WorkspaceAuthorizationMixin):
                 user_id=user_id,
                 **statistics
             )
-            
+
             return statistics
-            
+
+        except CategoryOwnershipError:
+            raise
         except Exception as e:
             self.logger.error(
                 f"Error retrieving category statistics for user {user_id}: {str(e)}",

@@ -34,6 +34,7 @@ import { Table2, BookUser } from "lucide-react";
 import { exportDebtsCsv } from "@/utils/exportDebtsCsv";
 import { toast } from "sonner";
 import { logger } from "@/utils/logger";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 
 type TabType = "debts" | "contacts";
 
@@ -41,6 +42,7 @@ export const Debts = () => {
   const { t } = useTranslation();
   const { debt: debtApi, contact: contactApi } = useApiClients();
   const { categories } = useCategories();
+  const { handleDebtError } = useErrorHandler();
 
   // Modal state
   const [isCreateDebtModalOpen, setIsCreateDebtModalOpen] = useState(false);
@@ -220,13 +222,15 @@ export const Debts = () => {
   const handleCreateDebt = async (debtData: DebtCreate | DebtUpdate) => {
     try {
       const result = await debtApi.createDebt(debtData as DebtCreate);
-      if (!("error" in result)) {
-        setAllDebts((prev) => [...prev, result]);
-        setIsCreateDebtModalOpen(false);
-        const summaryResult = await debtApi.getDebtSummary();
-        if (!("error" in summaryResult)) setSummary(summaryResult);
-        toast.success(t("debtPage.messages.debtCreated"));
+      if ("error" in result) {
+        handleDebtError(result);
+        return;
       }
+      setAllDebts((prev) => [...prev, result]);
+      setIsCreateDebtModalOpen(false);
+      const summaryResult = await debtApi.getDebtSummary();
+      if (!("error" in summaryResult)) setSummary(summaryResult);
+      toast.success(t("debtPage.messages.debtCreated"));
     } catch (err) {
       logger.error("Error creating debt:", err);
     }

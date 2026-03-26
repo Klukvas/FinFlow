@@ -8,6 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 from app.models.account import Account
 from app.schemas.account import AccountCreate, AccountUpdate, AccountSummary, AccountTransaction, AccountTransactionSummary
 from app.exceptions import (
+    AccountServiceError,
     AccountNotFoundError,
     AccountValidationError,
     AccountOwnershipError,
@@ -94,6 +95,9 @@ class AccountService(WorkspaceAuthorizationMixin):
             
             return account
             
+        except AccountServiceError:
+            self.db.rollback()
+            raise
         except IntegrityError as e:
             self.db.rollback()
             self.logger.error(f"Database integrity error creating account: {e}")
@@ -199,6 +203,9 @@ class AccountService(WorkspaceAuthorizationMixin):
             
             return account
             
+        except AccountServiceError:
+            self.db.rollback()
+            raise
         except Exception as e:
             self.db.rollback()
             self.logger.error(f"Unexpected error updating account: {e}")
@@ -231,6 +238,9 @@ class AccountService(WorkspaceAuthorizationMixin):
             
             return account
             
+        except AccountServiceError:
+            self.db.rollback()
+            raise
         except Exception as e:
             self.db.rollback()
             self.logger.error(f"Unexpected error archiving account: {e}")
@@ -266,6 +276,9 @@ class AccountService(WorkspaceAuthorizationMixin):
             
             return account
             
+        except AccountServiceError:
+            self.db.rollback()
+            raise
         except Exception as e:
             self.db.rollback()
             self.logger.error(f"Unexpected error updating balance: {e}")
@@ -344,7 +357,7 @@ class AccountService(WorkspaceAuthorizationMixin):
             
             return self.update_balance(account_id, new_balance, user_id, actual_workspace_id)
 
-        except AccountBalanceError:
+        except AccountServiceError:
             raise
         except Exception as e:
             self.logger.error(f"Unexpected error in balance update with conversion: {e}")
@@ -463,6 +476,8 @@ class AccountService(WorkspaceAuthorizationMixin):
                 net_change=total_income - total_expenses
             )
             
+        except AccountServiceError:
+            raise
         except Exception as e:
             self.logger.error(f"Failed to fetch account transactions: {e}")
             raise AccountValidationError(f"Failed to fetch transactions: {str(e)}", AccountErrorCode.EXTERNAL_SERVICE_ERROR)
@@ -523,6 +538,8 @@ class AccountService(WorkspaceAuthorizationMixin):
             
             return summaries
             
+        except AccountServiceError:
+            raise
         except Exception as e:
             self.logger.error(f"Failed to get user account summaries: {e}")
             raise AccountValidationError(f"Failed to fetch account summaries: {str(e)}", AccountErrorCode.EXTERNAL_SERVICE_ERROR)
