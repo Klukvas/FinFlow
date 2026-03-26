@@ -26,19 +26,21 @@ class FeatureRepository:
         )
 
     def get_user_features(self, user_id: str) -> List[dict]:
-        """Get user's feature entitlements with plan context"""
+        """Get user's feature entitlements with plan context.
+
+        Falls back to 'basic' plan features when no active subscription exists.
+        """
         repo = SubscriptionRepository(self.db)
         sub = repo.get_active_subscription(user_id)
-        if sub is None:
-            return []
-        
-        plan_features = self.get_plan_features(sub.plan_code)
+        plan_code = sub.plan_code if sub else "basic"
+
+        plan_features = self.get_plan_features(plan_code)
         return [
             {
                 "feature_code": pf.feature_code,
                 "enabled": pf.enabled,
                 "limit_value": pf.limit_value,
-                "plan_code": sub.plan_code
+                "plan_code": plan_code,
             }
             for pf in plan_features
         ]

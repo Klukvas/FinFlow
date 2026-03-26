@@ -18,15 +18,15 @@ router = APIRouter()
 _IDEMPOTENCY_KEYS: dict[str, str] = {}
 
 
-@router.get("/subscriptions/{user_id}", response_model=SubscriptionOut)
+@router.get("/subscriptions/{user_id}", response_model=SubscriptionOut | None)
 def get_subscription(user_id: str, db: Session = Depends(get_db)):
-    """Get user's current subscription"""
+    """Get user's current subscription. Returns null if no active subscription."""
     repo = SubscriptionRepository(db)
     subscription = repo.get_active_subscription(user_id)
-    
+
     if subscription is None:
-        raise NotFoundError("Subscription not found", error_code="@subscription_service/SUBSCRIPTION_NOT_FOUND")
-    
+        return None
+
     return SubscriptionOut.model_validate(subscription, from_attributes=True)
 
 

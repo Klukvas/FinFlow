@@ -55,13 +55,11 @@ class EntitlementsService:
 
     def get_entitlements(self, user_id: str) -> tuple[str, int, dict]:
         sub = self.repo.get_active_subscription(user_id)
-        if sub is None:
-            return "free", 1, {}
+        plan_code = sub.plan_code if sub else "basic"
 
         try:
-            version, ents = self.repo.get_entitlements(sub.plan_code)
+            version, ents = self.repo.get_entitlements(plan_code)
         except Exception:
-            # Surface a well-formed service error
             raise ServiceError(
                 "Entitlements not available",
                 error_code="@subscription_service/ENTITLEMENTS_NOT_AVAILABLE",
@@ -73,12 +71,12 @@ class EntitlementsService:
         cached = self.redis.get(key)
         if cached:
             data = json.loads(cached)
-            return sub.plan_code, version, data
+            return plan_code, version, data
 
         # compute and store
         ttl = settings.ents_ttl_max
         self.redis.setex(key, ttl, json.dumps(ents))
-        return sub.plan_code, version, ents
+        return plan_code, version, ents
 
     def invalidate_cache(self, user_id: str) -> int:
         """Convenience wrapper around the module-level function."""
