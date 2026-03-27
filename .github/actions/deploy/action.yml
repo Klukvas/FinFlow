@@ -1,5 +1,5 @@
-name: Deploy via SSH and Compose
-description: SSH to single server, sync configs, pull images, and recreate services
+name: Deploy via Docker Context
+description: Deploy to single server using Docker Context — full output visibility, reliable error handling
 
 inputs:
   host:
@@ -68,39 +68,85 @@ inputs:
 runs:
   using: "composite"
   steps:
+    # ------------------------------------------------------------------
+    # 1. SSH + Docker Context setup
+    # ------------------------------------------------------------------
     - name: Setup SSH
       uses: webfactory/ssh-agent@v0.9.0
       with:
         ssh-private-key: ${{ inputs['ssh-private-key'] }}
 
-    - name: Add host key
-      shell: bash
-      run: |
-        set -euo pipefail
-        mkdir -p ~/.ssh
-        ssh-keyscan -H "${{ inputs.host }}" >> ~/.ssh/known_hosts
-
-    - name: Sync config files to server
+    - name: Configure SSH and Docker context
       shell: bash
       env:
         HOST: ${{ inputs.host }}
         USER: ${{ inputs.user }}
       run: |
         set -euo pipefail
-        echo "Syncing config files to server..."
 
-        # Ensure directories exist
-        ssh -o StrictHostKeyChecking=accept-new "$USER@$HOST" "mkdir -p ~/app/init ~/app/backup"
+        # Host key
+        mkdir -p ~/.ssh
+        ssh-keyscan -H "${HOST}" >> ~/.ssh/known_hosts
 
-        # Sync all config files
-        scp deploy/docker-compose.yml "$USER@$HOST:~/app/docker-compose.yml"
-        scp deploy/Caddyfile "$USER@$HOST:~/app/Caddyfile"
-        scp init/init.sql "$USER@$HOST:~/app/init/init.sql"
-        scp deploy/backup/backup.sh "$USER@$HOST:~/app/backup/backup.sh"
+        # SSH multiplexing — reuse connection across steps
+        cat >> ~/.ssh/config <<EOF
+        Host ${HOST}
+          ControlMaster auto
+          ControlPath ~/.ssh/cm-%C
+          ControlPersist 120
+        EOF
 
+        # Docker context pointing to the remote daemon via SSH
+        docker context rm prod --force 2>/dev/null || true
+        docker context create prod --docker "host=ssh://${USER}@${HOST}"
+        echo "Docker context 'prod' → ${USER}@${HOST}"
+
+        # Resolve remote home directory for volume path mapping
+        REMOTE_APP_DIR=$(ssh "${USER}@${HOST}" 'echo $HOME/app')
+        if [[ ! "${REMOTE_APP_DIR}" =~ ^/[^[:space:]]+ ]]; then
+          echo "ERROR: REMOTE_APP_DIR is invalid: '${REMOTE_APP_DIR}'"
+          exit 1
+        fi
+        echo "REMOTE_APP_DIR=${REMOTE_APP_DIR}" >> "$GITHUB_ENV"
+
+    # ------------------------------------------------------------------
+    # 2. Sync config files to server (for bind-mount volumes)
+    # ------------------------------------------------------------------
+    - name: Sync config files
+      shell: bash
+      env:
+        HOST: ${{ inputs.host }}
+        USER: ${{ inputs.user }}
+      run: |
+        set -euo pipefail
+        ssh "${USER}@${HOST}" "mkdir -p ~/app/init ~/app/backup"
+        scp deploy/docker-compose.yml "${USER}@${HOST}:~/app/docker-compose.yml"
+        scp deploy/Caddyfile "${USER}@${HOST}:~/app/Caddyfile"
+        scp init/init.sql "${USER}@${HOST}:~/app/init/init.sql"
+        scp deploy/backup/backup.sh "${USER}@${HOST}:~/app/backup/backup.sh"
         echo "Config files synced."
 
-    - name: Deploy
+    # ------------------------------------------------------------------
+    # 3. Prepare compose file for Docker Context
+    #    Docker Context reads compose locally but runs containers remotely.
+    #    Bind-mount paths (./Caddyfile) must resolve to remote absolute paths.
+    # ------------------------------------------------------------------
+    - name: Prepare compose file
+      shell: bash
+      run: |
+        set -euo pipefail
+        cp deploy/docker-compose.yml /tmp/deploy-compose.yml
+
+        # Convert relative bind-mount sources to absolute remote paths
+        # ./Caddyfile → /root/app/Caddyfile (or /home/user/app/...)
+        sed -i "s|- \./|- ${REMOTE_APP_DIR}/|g" /tmp/deploy-compose.yml
+
+        echo "Compose file prepared (volumes → ${REMOTE_APP_DIR}/)"
+
+    # ------------------------------------------------------------------
+    # 4. Generate .env — locally, then SCP to server
+    # ------------------------------------------------------------------
+    - name: Generate .env
       shell: bash
       env:
         HOST: ${{ inputs.host }}
@@ -116,39 +162,39 @@ runs:
         PAYMENTS_ENABLED: ${{ inputs['payments-enabled'] }}
         TELEGRAM_BOT_TOKEN: ${{ inputs['telegram-bot-token'] }}
         TELEGRAM_SUPPORT_CHAT_ID: ${{ inputs['telegram-support-chat-id'] }}
-        DOCKER_USERNAME: ${{ inputs['docker-username'] }}
-        DOCKER_PASSWORD: ${{ inputs['docker-password'] }}
-        SERVICES: ${{ inputs.services }}
+        INPUT_BANK_KEY: ${{ inputs['bank-token-encryption-key'] }}
       run: |
         set -euo pipefail
-        echo "Starting deployment to $HOST..."
 
-        # Default services if none specified
-        if [ -z "${SERVICES:-}" ]; then
-          SERVICES="caddy postgres redis frontend account_service ai_assistant_service bank_sync_service category_service currency_service debt_service expense_service goals_service income_service payment_service pdf_parser_service recurring_service scheduler_service subscription_service user_service workspace_service"
+        # Read existing .env from server to preserve generated secrets
+        ssh "${USER}@${HOST}" "cat ~/app/.env 2>/dev/null" > /tmp/existing.env || true
+
+        get_val() { grep "^${1}=" /tmp/existing.env 2>/dev/null | head -1 | cut -d= -f2- || true; }
+
+        SECRET_KEY="$(get_val SECRET_KEY)"
+        SECRET_KEY="${SECRET_KEY:-$(openssl rand -hex 32)}"
+
+        ALGORITHM="$(get_val ALGORITHM)"
+        ALGORITHM="${ALGORITHM:-HS256}"
+
+        INTERNAL_SECRET_TOKEN="$(get_val INTERNAL_SECRET_TOKEN)"
+        INTERNAL_SECRET_TOKEN="${INTERNAL_SECRET_TOKEN:-$(openssl rand -hex 32)}"
+
+        EXISTING_BANK_KEY="$(get_val BANK_TOKEN_ENCRYPTION_KEY)"
+        if [ -n "${INPUT_BANK_KEY}" ]; then
+          BANK_TOKEN_ENCRYPTION_KEY="${INPUT_BANK_KEY}"
+        elif [ -n "${EXISTING_BANK_KEY}" ]; then
+          BANK_TOKEN_ENCRYPTION_KEY="${EXISTING_BANK_KEY}"
+        else
+          BANK_TOKEN_ENCRYPTION_KEY=$(python3 -c 'import os,base64;print(base64.urlsafe_b64encode(os.urandom(32)).decode())')
         fi
 
-        # URL-encode the DB password
         DB_PASSWORD_ENCODED=$(python3 -c "import urllib.parse, os; print(urllib.parse.quote_plus(os.environ['DB_PASSWORD']))")
 
-        # Generate .env on server
-        ssh -o StrictHostKeyChecking=accept-new "$USER@$HOST" 'bash -s' <<REMOTE_SCRIPT
-        set -euxo pipefail
-        cd ~/app
-
-        # Preserve existing secrets if present
-        if [ -f .env ]; then
-          source .env 2>/dev/null || true
-        fi
-
-        SECRET_KEY="\${SECRET_KEY:-$(openssl rand -hex 32)}"
-        ALGORITHM="\${ALGORITHM:-HS256}"
-        INTERNAL_SECRET_TOKEN="\${INTERNAL_SECRET_TOKEN:-$(openssl rand -hex 32)}"
-        INPUT_BANK_KEY="${{ inputs['bank-token-encryption-key'] }}"
-        BANK_TOKEN_ENCRYPTION_KEY="\${INPUT_BANK_KEY:-\${BANK_TOKEN_ENCRYPTION_KEY:-\$(python3 -c 'import os,base64;print(base64.urlsafe_b64encode(os.urandom(32)).decode())')}}"
-
-        install -m 600 /dev/null .env
-        cat >> .env <<'ENVEOF'
+        # Write local .env (used by docker compose --env-file)
+        ENV_FILE=/tmp/deploy.env
+        install -m 600 /dev/null "${ENV_FILE}"
+        cat > "${ENV_FILE}" <<ENVEOF
         REGISTRY=${REGISTRY}
         IMAGE_PREFIX=${IMAGE_PREFIX}
         DB_USER=${DB_USER}
@@ -160,79 +206,190 @@ runs:
         NODE_ENV=production
         PAYMENTS_ENABLED=${PAYMENTS_ENABLED:-false}
         ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+        SECRET_KEY=${SECRET_KEY}
+        ALGORITHM=${ALGORITHM}
+        INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
+        BANK_TOKEN_ENCRYPTION_KEY=${BANK_TOKEN_ENCRYPTION_KEY}
+        TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+        TELEGRAM_SUPPORT_CHAT_ID=${TELEGRAM_SUPPORT_CHAT_ID}
         ENVEOF
 
-        # Append generated secrets (not overwritten on re-deploy)
-        echo "SECRET_KEY=\$SECRET_KEY" >> .env
-        echo "ALGORITHM=\$ALGORITHM" >> .env
-        echo "INTERNAL_SECRET_TOKEN=\$INTERNAL_SECRET_TOKEN" >> .env
-        echo "BANK_TOKEN_ENCRYPTION_KEY=\$BANK_TOKEN_ENCRYPTION_KEY" >> .env
-        echo "TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}" >> .env
-        echo "TELEGRAM_SUPPORT_CHAT_ID=${TELEGRAM_SUPPORT_CHAT_ID}" >> .env
+        # Also deploy to server (for SSH debugging, backup scripts, etc.)
+        scp "${ENV_FILE}" "${USER}@${HOST}:~/app/.env"
+        ssh "${USER}@${HOST}" "chmod 600 ~/app/.env"
 
-        # Ensure all service databases exist (init.sql only runs on first Postgres start)
+        rm -f /tmp/existing.env
+        echo ".env generated and deployed."
+
+    # ------------------------------------------------------------------
+    # 5. Compute service lists
+    # ------------------------------------------------------------------
+    - name: Determine services
+      shell: bash
+      env:
+        SERVICES: ${{ inputs.services }}
+      run: |
+        set -euo pipefail
+
+        if [ -z "${SERVICES:-}" ]; then
+          SERVICES="caddy postgres redis frontend account_service ai_assistant_service bank_sync_service category_service currency_service debt_service expense_service goals_service income_service payment_service pdf_parser_service recurring_service scheduler_service subscription_service user_service workspace_service"
+        fi
+
+        APP_SERVICES=$(echo "${SERVICES}" | tr ' ' '\n' | grep -vE '^(caddy|postgres|redis)$' | tr '\n' ' ' | sed 's/ $//')
+
+        echo "DEPLOY_SERVICES=${SERVICES}" >> "$GITHUB_ENV"
+        echo "APP_SERVICES=${APP_SERVICES}" >> "$GITHUB_ENV"
+        echo "Services: ${SERVICES}"
+        echo "Pull targets: ${APP_SERVICES}"
+
+    # ------------------------------------------------------------------
+    # 6. Ensure databases exist (only if postgres is running)
+    # ------------------------------------------------------------------
+    - name: Ensure databases
+      shell: bash
+      env:
+        DB_USER: ${{ inputs['db-user'] }}
+      run: |
+        set -euo pipefail
+
+        COMPOSE="docker --context prod compose -f /tmp/deploy-compose.yml --env-file /tmp/deploy.env --project-name app"
+
+        # Check if postgres is running (skip on first deploy)
+        if ! ${COMPOSE} ps --status running 2>/dev/null | grep -q postgres; then
+          echo "Postgres not running yet — skipping (init.sql handles first start)"
+          exit 0
+        fi
+
         echo "Ensuring databases exist..."
-        for DB_NAME in user_db category_db expense_db income_db recurring_db goals_db debt_db account_db subscription_db payment_db scheduler_db currency_db workspace_db bank_sync_db pdf_parser_db; do
-          docker compose exec -T postgres psql -U \${DB_USER} -tc "SELECT 1 FROM pg_database WHERE datname = '\${DB_NAME}'" | grep -q 1 || \
-            docker compose exec -T postgres psql -U \${DB_USER} -c "CREATE DATABASE \${DB_NAME};" 2>/dev/null || true
+        DBS="user_db category_db expense_db income_db recurring_db goals_db debt_db account_db subscription_db payment_db scheduler_db currency_db workspace_db bank_sync_db pdf_parser_db"
+        for DB_NAME in ${DBS}; do
+          ${COMPOSE} exec -T postgres \
+            psql -U "${DB_USER}" -tc "SELECT 1 FROM pg_database WHERE datname = '${DB_NAME}'" \
+            | grep -q 1 \
+          || ${COMPOSE} exec -T postgres \
+            psql -U "${DB_USER}" -c "CREATE DATABASE ${DB_NAME};" 2>/dev/null \
+          || true
         done
         echo "Databases verified."
 
-        # Pull images
-        # Login to Docker registry on server
-        echo "${DOCKER_PASSWORD}" | docker login ${REGISTRY} -u "${DOCKER_USERNAME}" --password-stdin
+    # ------------------------------------------------------------------
+    # 7. Docker login (via Docker Context — auth passed to remote daemon)
+    # ------------------------------------------------------------------
+    - name: Docker login
+      shell: bash
+      env:
+        REGISTRY: ${{ inputs.registry }}
+        DOCKER_USERNAME: ${{ inputs['docker-username'] }}
+        DOCKER_PASSWORD: ${{ inputs['docker-password'] }}
+      run: |
+        set -euo pipefail
+        echo "${DOCKER_PASSWORD}" | docker --context prod login "${REGISTRY}" -u "${DOCKER_USERNAME}" --password-stdin
+        echo "Docker login successful."
 
-        echo "Pulling images..."
-        # Pull app images (skip infra: caddy, postgres, redis which are built/pulled separately)
-        APP_SERVICES=\$(echo "${SERVICES}" | tr ' ' '\n' | grep -vE '^(caddy|postgres|redis)$' | tr '\n' ' ')
-        echo "App services to pull: \${APP_SERVICES}"
-        docker compose pull \${APP_SERVICES}
+    # ------------------------------------------------------------------
+    # 8. Pull images
+    # ------------------------------------------------------------------
+    - name: Pull images
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        if [ -z "${APP_SERVICES:-}" ]; then
+          echo "No app services to pull — skipping."
+          exit 0
+        fi
+
+        echo "Pulling images: ${APP_SERVICES}"
+        docker --context prod compose \
+          -f /tmp/deploy-compose.yml \
+          --env-file /tmp/deploy.env \
+          --project-name app \
+          pull ${APP_SERVICES}
+
         echo "Pull complete."
 
-        # Save current state for rollback
-        docker compose ps --format json > /tmp/pre-deploy-state.json 2>/dev/null || true
+    # ------------------------------------------------------------------
+    # 9. Deploy (recreate services)
+    # ------------------------------------------------------------------
+    - name: Deploy services
+      shell: bash
+      run: |
+        set -euo pipefail
 
-        # Recreate services
-        echo "Recreating services: ${SERVICES}"
-        if docker compose up -d --force-recreate --remove-orphans ${SERVICES}; then
-          echo "Services started successfully"
+        # Save current state for rollback reference
+        docker --context prod compose \
+          -f /tmp/deploy-compose.yml \
+          --env-file /tmp/deploy.env \
+          --project-name app \
+          ps --format json > /tmp/pre-deploy-state.json 2>/dev/null || true
+
+        echo "Recreating services: ${DEPLOY_SERVICES}"
+        if docker --context prod compose \
+          -f /tmp/deploy-compose.yml \
+          --env-file /tmp/deploy.env \
+          --project-name app \
+          up -d --force-recreate --remove-orphans ${DEPLOY_SERVICES}; then
+          echo "Services started successfully."
         else
-          echo "Deployment failed - attempting rollback..."
-          docker compose up -d --remove-orphans || true
+          echo "Deployment failed — attempting rollback..."
+          docker --context prod compose \
+            -f /tmp/deploy-compose.yml \
+            --env-file /tmp/deploy.env \
+            --project-name app \
+            up -d --remove-orphans || true
           exit 1
         fi
 
-        # Prune old images
-        docker image prune -f || true
+    # ------------------------------------------------------------------
+    # 10. Health check
+    # ------------------------------------------------------------------
+    - name: Health check
+      shell: bash
+      run: |
+        set -euo pipefail
 
-        # Health check (wait for services, then report)
+        COMPOSE="docker --context prod compose -f /tmp/deploy-compose.yml --env-file /tmp/deploy.env --project-name app"
+
         echo "Waiting 30s for services to stabilize..."
         sleep 30
+
         echo ""
         echo "=== Deployment Status ==="
-        docker compose ps
+        ${COMPOSE} ps
         echo ""
 
-        # Check for unhealthy containers (only deployed services)
-        UNHEALTHY=\$(docker compose ps --format json ${SERVICES} | python3 -c "
+        # Check for unhealthy/stopped containers
+        UNHEALTHY=$(${COMPOSE} ps --format json ${DEPLOY_SERVICES} | python3 -c "
         import sys, json
         unhealthy = []
         for line in sys.stdin:
-          line = line.strip()
-          if not line: continue
-          try:
-            c = json.loads(line)
-            if c.get('Health','') == 'unhealthy' or c.get('State','') != 'running':
-              unhealthy.append(c.get('Name','unknown'))
-          except: pass
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                c = json.loads(line)
+                if c.get('Health','') == 'unhealthy' or c.get('State','') != 'running':
+                    unhealthy.append(c.get('Name','unknown'))
+            except:
+                pass
         if unhealthy:
-          print(','.join(unhealthy))
+            print(','.join(unhealthy))
         " 2>/dev/null || echo "")
 
-        if [ -n "\$UNHEALTHY" ]; then
-          echo "WARNING: Unhealthy containers: \$UNHEALTHY"
+        if [ -n "${UNHEALTHY}" ]; then
+          echo "WARNING: Unhealthy containers: ${UNHEALTHY}"
           exit 1
         fi
 
         echo "Deployment completed successfully!"
-        REMOTE_SCRIPT
+
+    # ------------------------------------------------------------------
+    # 11. Cleanup (always runs)
+    # ------------------------------------------------------------------
+    - name: Cleanup
+      if: always()
+      shell: bash
+      run: |
+        docker --context prod image prune -f 2>/dev/null || true
+        rm -f /tmp/deploy.env /tmp/deploy-compose.yml /tmp/existing.env /tmp/pre-deploy-state.json
+        docker context rm prod --force 2>/dev/null || true

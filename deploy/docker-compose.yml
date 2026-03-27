@@ -5,6 +5,8 @@
 # Secrets via .env file. Redis password-protected. PostgreSQL internal only.
 # =============================================================================
 
+name: app
+
 x-logging: &default-logging
   driver: "json-file"
   options:
