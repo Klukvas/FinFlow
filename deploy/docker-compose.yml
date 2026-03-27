@@ -150,6 +150,8 @@ services:
       - CORS_ORIGINS=${CORS_ORIGINS}
       - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
       - WORKSPACE_SERVICE_URL=http://workspace_service:8000
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+      - TELEGRAM_SUPPORT_CHAT_ID=${TELEGRAM_SUPPORT_CHAT_ID:-}
       - DOCS_ENABLED=false
     networks:
       - app_network
