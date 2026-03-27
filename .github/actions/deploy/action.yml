@@ -345,21 +345,22 @@ runs:
     # ------------------------------------------------------------------
     - name: Health check
       shell: bash
+      env:
+        HOST: ${{ inputs.host }}
+        USER: ${{ inputs.user }}
       run: |
         set -euo pipefail
-
-        COMPOSE="docker --context prod compose -f /tmp/deploy-compose.yml --env-file /tmp/deploy.env --project-name app"
 
         echo "Waiting 30s for services to stabilize..."
         sleep 30
 
         echo ""
         echo "=== Deployment Status ==="
-        ${COMPOSE} ps
+        ssh "${USER}@${HOST}" "cd ~/app && docker compose ps"
         echo ""
 
-        # Check for unhealthy/stopped containers
-        UNHEALTHY=$(${COMPOSE} ps --format json ${DEPLOY_SERVICES} | python3 -c "
+        # Check for unhealthy/stopped containers (single SSH call)
+        UNHEALTHY=$(ssh "${USER}@${HOST}" "cd ~/app && docker compose ps --format json ${DEPLOY_SERVICES}" | python3 -c "
         import sys, json
         unhealthy = []
         for line in sys.stdin:
@@ -389,7 +390,10 @@ runs:
     - name: Cleanup
       if: always()
       shell: bash
+      env:
+        HOST: ${{ inputs.host }}
+        USER: ${{ inputs.user }}
       run: |
-        docker --context prod image prune -f 2>/dev/null || true
+        ssh "${USER}@${HOST}" "docker image prune -f" 2>/dev/null || true
         rm -f /tmp/deploy.env /tmp/deploy-compose.yml /tmp/existing.env /tmp/pre-deploy-state.json
         docker context rm prod --force 2>/dev/null || true
