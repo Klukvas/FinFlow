@@ -20,10 +20,13 @@ from app.exceptions import (
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 from shared.geoip import GeoIPMiddleware
+from shared.sentry import init_sentry
 from app.config import settings
 from app.utils.logger import get_logger
 import time
 import uuid
+
+init_sentry("category_service")
 
 logger = get_logger(__name__)
 

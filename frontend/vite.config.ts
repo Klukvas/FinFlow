@@ -121,6 +121,7 @@ export default defineConfig({
           vendor: ["react", "react-dom"],
           router: ["react-router-dom"],
           seo: ["react-helmet-async"],
+          sentry: ["@sentry/react"],
         },
       },
     },

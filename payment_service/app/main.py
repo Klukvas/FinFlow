@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 from shared.geoip import GeoIPMiddleware
+from shared.sentry import init_sentry
 
 from .database import engine, SessionLocal
 from .utils.errors import service_exception_handler, unhandled_exception_handler, ServiceError
@@ -16,6 +17,7 @@ from .services.outbox_processor import run_outbox_processor
 from .services.reconciliation import run_reconciliation_loop
 
 
+init_sentry("payment_service")
 setup_logging()
 logger = logging.getLogger("payment_service")
 

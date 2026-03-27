@@ -4,6 +4,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 from shared.geoip import GeoIPMiddleware
+from shared.sentry import init_sentry
 from contextlib import asynccontextmanager
 
 from app.config import settings
@@ -32,6 +33,8 @@ from fastapi import HTTPException
 from app.utils.logger import get_logger
 import time
 import uuid
+
+init_sentry("recurring_service")
 
 logger = get_logger(__name__)
 # Request logging middleware

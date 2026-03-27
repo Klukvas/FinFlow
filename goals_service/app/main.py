@@ -4,6 +4,7 @@ from fastapi import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 from shared.geoip import GeoIPMiddleware
+from shared.sentry import init_sentry
 from app.routers import goal, internal
 from app.exception_handlers import (
     goal_not_found_handler, goal_validation_handler, goal_ownership_handler,
@@ -24,6 +25,8 @@ from app.config import settings
 from app.utils.logger import get_logger
 import time
 import uuid
+
+init_sentry("goals_service")
 
 logger = get_logger(__name__)
 # Request logging middleware

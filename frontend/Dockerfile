@@ -3,6 +3,8 @@ WORKDIR /app
 
 # Build arguments for feature flags
 ARG VITE_PAYMENTS_ENABLED=false
+ARG VITE_SENTRY_DSN=""
+ARG VITE_ENVIRONMENT=production
 
 # Install dependencies first (better cache)
 COPY frontend/package.json frontend/yarn.lock frontend/.npmrc ./
@@ -21,6 +23,8 @@ COPY frontend/ .
 
 # Set environment variables for build
 ENV VITE_PAYMENTS_ENABLED=${VITE_PAYMENTS_ENABLED}
+ENV VITE_SENTRY_DSN=${VITE_SENTRY_DSN}
+ENV VITE_ENVIRONMENT=${VITE_ENVIRONMENT}
 
 RUN yarn build
 

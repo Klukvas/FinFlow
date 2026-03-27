@@ -26,6 +26,7 @@
     "test:types": "node scripts/check-type-compat.mjs"
   },
   "dependencies": {
+    "@sentry/react": "^10.46.0",
     "@tailwindcss/vite": "^4.1.3",
     "dompurify": "^3.3.1",
     "gray-matter": "^4.0.3",

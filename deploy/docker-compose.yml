@@ -153,6 +153,8 @@ services:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
       - TELEGRAM_SUPPORT_CHAT_ID=${TELEGRAM_SUPPORT_CHAT_ID:-}
       - DOCS_ENABLED=false
+      - SENTRY_DSN=${SENTRY_DSN:-}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
     networks:
       - app_network
     depends_on:
@@ -180,6 +182,8 @@ services:
       - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
       - LOG_LEVEL=INFO
       - DOCS_ENABLED=false
+      - SENTRY_DSN=${SENTRY_DSN:-}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
     networks:
       - app_network
     depends_on:
@@ -207,6 +211,8 @@ services:
       - WORKSPACE_SERVICE_URL=http://workspace_service:8000
       - LOG_LEVEL=INFO
       - DOCS_ENABLED=false
+      - SENTRY_DSN=${SENTRY_DSN:-}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
     networks:
       - app_network
     depends_on:
@@ -236,6 +242,8 @@ services:
       - WORKSPACE_SERVICE_URL=http://workspace_service:8000
       - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
       - DOCS_ENABLED=false
+      - SENTRY_DSN=${SENTRY_DSN:-}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
     networks:
       - app_network
     depends_on:
@@ -266,6 +274,8 @@ services:
       - WORKSPACE_SERVICE_URL=http://workspace_service:8000
       - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
       - DOCS_ENABLED=false
+      - SENTRY_DSN=${SENTRY_DSN:-}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
     networks:
       - app_network
     depends_on:
@@ -295,6 +305,8 @@ services:
       - WORKSPACE_SERVICE_URL=http://workspace_service:8000
       - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
       - DOCS_ENABLED=false
+      - SENTRY_DSN=${SENTRY_DSN:-}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
     networks:
       - app_network
     depends_on:
@@ -316,6 +328,8 @@ services:
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
       - cors_origins=${CORS_ORIGINS}
       - DOCS_ENABLED=false
+      - SENTRY_DSN=${SENTRY_DSN:-}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
     networks:
       - app_network
     depends_on:
@@ -343,6 +357,8 @@ services:
       - WORKSPACE_SERVICE_URL=http://workspace_service:8000
       - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
       - DOCS_ENABLED=false
+      - SENTRY_DSN=${SENTRY_DSN:-}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
     networks:
       - app_network
     depends_on:
@@ -369,6 +385,8 @@ services:
       - CURRENCY_SERVICE_URL=http://currency_service:8000
       - WORKSPACE_SERVICE_URL=http://workspace_service:8000
       - DOCS_ENABLED=false
+      - SENTRY_DSN=${SENTRY_DSN:-}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
     networks:
       - app_network
     depends_on:
@@ -393,6 +411,8 @@ services:
       - WORKSPACE_SERVICE_URL=http://workspace_service:8000
       - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
       - DOCS_ENABLED=false
+      - SENTRY_DSN=${SENTRY_DSN:-}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
     networks:
       - app_network
     depends_on:
@@ -416,6 +436,8 @@ services:
       - INTERNAL_SECRET_TOKEN=${INTERNAL_SECRET_TOKEN}
       - CORS_ORIGINS=${CORS_ORIGINS}
       - DOCS_ENABLED=false
+      - SENTRY_DSN=${SENTRY_DSN:-}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
     networks:
       - app_network
     depends_on:
@@ -448,6 +470,8 @@ services:
       - IDEMPOTENCY_TTL_SECONDS=86400
       - PAYMENTS_ENABLED=${PAYMENTS_ENABLED:-false}
       - DOCS_ENABLED=false
+      - SENTRY_DSN=${SENTRY_DSN:-}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
     networks:
       - app_network
     depends_on:
@@ -481,6 +505,8 @@ services:
       - JOB_COALESCE=true
       - JOB_MISFIRE_GRACE_TIME=300
       - DOCS_ENABLED=false
+      - SENTRY_DSN=${SENTRY_DSN:-}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
     networks:
       - app_network
     depends_on:
@@ -519,6 +545,8 @@ services:
       - SUBSCRIPTION_SERVICE_URL=http://subscription_service:8080
       - LOG_LEVEL=INFO
       - DOCS_ENABLED=false
+      - SENTRY_DSN=${SENTRY_DSN:-}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
     networks:
       - app_network
     depends_on:
@@ -551,6 +579,8 @@ services:
       - BANK_TOKEN_ENCRYPTION_KEY=${BANK_TOKEN_ENCRYPTION_KEY}
       - LOG_LEVEL=INFO
       - DOCS_ENABLED=false
+      - SENTRY_DSN=${SENTRY_DSN:-}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
     networks:
       - app_network
     depends_on:
@@ -576,6 +606,8 @@ services:
       - category_service_url=http://category_service:8000
       - cors_origins=${CORS_ORIGINS}
       - DOCS_ENABLED=false
+      - SENTRY_DSN=${SENTRY_DSN:-}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
     volumes:
       - pdf_uploads:/app/uploads
     networks:

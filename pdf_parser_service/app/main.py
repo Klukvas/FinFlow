@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from shared.geoip import GeoIPMiddleware
+from shared.sentry import init_sentry
 from fastapi.exceptions import RequestValidationError
 from app.routers import pdf_parser
 from app.exception_handlers import (
@@ -24,6 +25,8 @@ from app.config import settings
 from app.utils.logger import get_logger
 import time
 import uuid
+
+init_sentry("pdf_parser_service")
 
 logger = get_logger(__name__)
 # Request logging middleware

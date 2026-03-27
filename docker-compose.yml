@@ -43,6 +43,8 @@ services:
       INTERNAL_SECRET_TOKEN: "${INTERNAL_SECRET_TOKEN:-}"
       TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN:-}"
       TELEGRAM_SUPPORT_CHAT_ID: "${TELEGRAM_SUPPORT_CHAT_ID:-}"
+      SENTRY_DSN: "${SENTRY_DSN:-}"
+      ENVIRONMENT: "${ENVIRONMENT:-development}"
     env_file:
       - ./user_service/.env.docker
     depends_on:
@@ -77,6 +79,8 @@ services:
       ALGORITHM: "HS256"
       INTERNAL_SECRET_TOKEN: "${INTERNAL_SECRET_TOKEN:-}"
       LOG_LEVEL: "INFO"
+      SENTRY_DSN: "${SENTRY_DSN:-}"
+      ENVIRONMENT: "${ENVIRONMENT:-development}"
     depends_on:
       db:
         condition: service_healthy
@@ -103,6 +107,8 @@ services:
       DATABASE_URL: "postgresql://postgres:postgres@db:5432/expense_db"
       SECRET_KEY: "${SECRET_KEY:-}"
       SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
+      SENTRY_DSN: "${SENTRY_DSN:-}"
+      ENVIRONMENT: "${ENVIRONMENT:-development}"
     env_file:
       - ./expense_service/.env.docker
     depends_on:
@@ -132,6 +138,8 @@ services:
       DATABASE_URL: "postgresql://postgres:postgres@db:5432/income_db"
       SECRET_KEY: "${SECRET_KEY:-}"
       SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
+      SENTRY_DSN: "${SENTRY_DSN:-}"
+      ENVIRONMENT: "${ENVIRONMENT:-development}"
     env_file:
       - ./income_service/.env.docker
     depends_on:
@@ -165,6 +173,8 @@ services:
       WORKSPACE_SERVICE_URL: "http://workspace_service:8000"
       INTERNAL_SECRET_TOKEN: "${INTERNAL_SECRET_TOKEN:-}"
       SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
+      SENTRY_DSN: "${SENTRY_DSN:-}"
+      ENVIRONMENT: "${ENVIRONMENT:-development}"
     env_file:
       - ./recurring_service/.env.docker
     depends_on:
@@ -200,6 +210,8 @@ services:
       USER_SERVICE_URL: "http://user_service:8000"
       CURRENCY_SERVICE_URL: "http://currency_service:8000"
       WORKSPACE_SERVICE_URL: "http://workspace_service:8000"
+      SENTRY_DSN: "${SENTRY_DSN:-}"
+      ENVIRONMENT: "${ENVIRONMENT:-development}"
     env_file:
       - ./goals_service/.env.docker
     depends_on:
@@ -233,6 +245,8 @@ services:
       INTERNAL_SERVICE_TOKEN: "${INTERNAL_SECRET_TOKEN:-}"
       SECRET_KEY: "${SECRET_KEY:-}"
       ALGORITHM: "HS256"
+      SENTRY_DSN: "${SENTRY_DSN:-}"
+      ENVIRONMENT: "${ENVIRONMENT:-development}"
     env_file:
       - ./pdf_parser_service/.env.docker
     depends_on:
@@ -265,6 +279,8 @@ services:
       CURRENCY_SERVICE_URL: "http://currency_service:8000"
       CATEGORY_SERVICE_URL: "http://category_service:8000"
       SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
+      SENTRY_DSN: "${SENTRY_DSN:-}"
+      ENVIRONMENT: "${ENVIRONMENT:-development}"
     env_file:
       - ./debt_service/.env.docker
     depends_on:
@@ -297,6 +313,8 @@ services:
       WORKSPACE_SERVICE_URL: "http://workspace_service:8000"
       INTERNAL_SECRET_TOKEN: "${INTERNAL_SECRET_TOKEN:-}"
       SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
+      SENTRY_DSN: "${SENTRY_DSN:-}"
+      ENVIRONMENT: "${ENVIRONMENT:-development}"
     env_file:
       - ./account_service/.env.docker
     depends_on:
@@ -327,6 +345,8 @@ services:
       CORS_ORIGINS: "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
       REDIS_URL: "redis://redis:6379"
       INTERNAL_SECRET_TOKEN: "${INTERNAL_SECRET_TOKEN:-}"
+      SENTRY_DSN: "${SENTRY_DSN:-}"
+      ENVIRONMENT: "${ENVIRONMENT:-development}"
     env_file:
       - ./currency_service/.env.docker
     depends_on:
@@ -360,6 +380,8 @@ services:
       INTERNAL_SECRET_TOKEN: "${INTERNAL_SECRET_TOKEN:-}"
       # JWT secret for admin token verification (must match user_service)
       JWT_SECRET_KEY: "${JWT_SECRET_KEY:-}"
+      SENTRY_DSN: "${SENTRY_DSN:-}"
+      ENVIRONMENT: "${ENVIRONMENT:-development}"
     env_file:
       - ./subscription_service/.env.docker
     depends_on:
@@ -401,6 +423,8 @@ services:
       SERVICE_BASE_URL: "http://payment_service:8000"
       SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
       IDEMPOTENCY_TTL_SECONDS: "86400"
+      SENTRY_DSN: "${SENTRY_DSN:-}"
+      ENVIRONMENT: "${ENVIRONMENT:-development}"
       # PAYMENTS_ENABLED is set in payment_service/.env.docker
     depends_on:
       db:
@@ -433,6 +457,8 @@ services:
       REDIS_URL: "redis://redis:6379/0"
       LOG_LEVEL: "INFO"
       INTERNAL_SECRET_TOKEN: "${INTERNAL_SECRET_TOKEN:-}"
+      SENTRY_DSN: "${SENTRY_DSN:-}"
+      ENVIRONMENT: "${ENVIRONMENT:-development}"
       # Service URLs
       SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
       PAYMENT_SERVICE_URL: "http://payment_service:8000"
@@ -479,6 +505,8 @@ services:
       SECRET_KEY: "${SECRET_KEY:-}"
       INTERNAL_SECRET_TOKEN: "${INTERNAL_SECRET_TOKEN:-}"
       ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+      SENTRY_DSN: "${SENTRY_DSN:-}"
+      ENVIRONMENT: "${ENVIRONMENT:-development}"
       ANTHROPIC_MODEL: "claude-haiku-4-5-20251001"
       EXPENSE_SERVICE_URL: "http://expense_service:8000"
       INCOME_SERVICE_URL: "http://income_service:8000"
@@ -521,6 +549,8 @@ services:
       ALGORITHM: "HS256"
       WORKSPACE_SERVICE_URL: "http://workspace_service:8000"
       INTERNAL_SECRET_TOKEN: "${INTERNAL_SECRET_TOKEN:-}"
+      SENTRY_DSN: "${SENTRY_DSN:-}"
+      ENVIRONMENT: "${ENVIRONMENT:-development}"
       EXPENSE_SERVICE_URL: "http://expense_service:8000"
       INCOME_SERVICE_URL: "http://income_service:8000"
       ACCOUNT_SERVICE_URL: "http://account_service:8000"
@@ -569,6 +599,8 @@ services:
       USER_SERVICE_URL: "http://user_service:8000"
       SUBSCRIPTION_SERVICE_URL: "http://subscription_service:8080"
       LOG_LEVEL: "INFO"
+      SENTRY_DSN: "${SENTRY_DSN:-}"
+      ENVIRONMENT: "${ENVIRONMENT:-development}"
     depends_on:
       db:
         condition: service_healthy

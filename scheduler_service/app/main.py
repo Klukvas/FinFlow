@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from starlette.middleware.gzip import GZipMiddleware
 from shared.geoip import GeoIPMiddleware
+from shared.sentry import init_sentry
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
@@ -12,7 +13,8 @@ from .config import settings
 from .utils.logging import setup_logging, get_logger
 from .jobs import renewal_job
 
-# Setup logging
+# Setup logging and Sentry
+init_sentry("scheduler_service")
 setup_logging(settings.log_level)
 logger = get_logger("scheduler_service")
 

@@ -6,6 +6,7 @@ from starlette.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from shared.geoip import GeoIPMiddleware
+from shared.sentry import init_sentry
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.database import Base, engine
@@ -32,6 +33,8 @@ from app.exceptions import (
 from app.schemas.error import ErrorResponse
 import time
 import uuid
+
+init_sentry("bank_sync_service")
 
 # Import models to ensure they are registered with Base
 from app.models.bank_connection import BankConnection

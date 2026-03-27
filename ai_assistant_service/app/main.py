@@ -7,6 +7,7 @@ from starlette.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from shared.geoip import GeoIPMiddleware
+from shared.sentry import init_sentry
 
 from app.config import settings
 from app.exceptions import (
@@ -22,6 +23,8 @@ from app.services.cache_service import close_redis
 import logging
 import time
 import uuid
+
+init_sentry("ai_assistant_service")
 
 logger = logging.getLogger(__name__)
 

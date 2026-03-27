@@ -5,11 +5,13 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 from shared.geoip import GeoIPMiddleware
+from shared.sentry import init_sentry
 
 from .utils.errors import service_exception_handler, unhandled_exception_handler, ServiceError
 from .utils.logging import setup_logging
 
 
+init_sentry("subscription_service")
 setup_logging()
 logger = logging.getLogger("subscription_service")
 

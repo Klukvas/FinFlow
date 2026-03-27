@@ -54,6 +54,10 @@ inputs:
     description: Telegram chat ID for support messages
     required: false
     default: ""
+  sentry-dsn:
+    description: Sentry DSN for backend services
+    required: false
+    default: ""
   docker-username:
     description: Docker registry username
     required: true
@@ -163,6 +167,7 @@ runs:
         TELEGRAM_BOT_TOKEN: ${{ inputs['telegram-bot-token'] }}
         TELEGRAM_SUPPORT_CHAT_ID: ${{ inputs['telegram-support-chat-id'] }}
         INPUT_BANK_KEY: ${{ inputs['bank-token-encryption-key'] }}
+        SENTRY_DSN: ${{ inputs['sentry-dsn'] }}
       run: |
         set -euo pipefail
 
@@ -212,6 +217,8 @@ runs:
         BANK_TOKEN_ENCRYPTION_KEY=${BANK_TOKEN_ENCRYPTION_KEY}
         TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
         TELEGRAM_SUPPORT_CHAT_ID=${TELEGRAM_SUPPORT_CHAT_ID}
+        SENTRY_DSN=${SENTRY_DSN}
+        ENVIRONMENT=production
         ENVEOF
 
         # Also deploy to server (for SSH debugging, backup scripts, etc.)

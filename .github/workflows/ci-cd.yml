@@ -436,6 +436,8 @@ jobs:
           push: true
           build-args: |
             VITE_PAYMENTS_ENABLED=${{ secrets.PAYMENTS_ENABLED || 'false' }}
+            VITE_SENTRY_DSN=${{ secrets.VITE_SENTRY_DSN || '' }}
+            VITE_ENVIRONMENT=${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
           secrets: |
             github_token=${{ secrets.GITHUB_TOKEN }}
           tags: |
@@ -1634,6 +1636,7 @@ jobs:
           bank-token-encryption-key: ${{ secrets.BANK_TOKEN_ENCRYPTION_KEY }}
           telegram-bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           telegram-support-chat-id: ${{ secrets.TELEGRAM_SUPPORT_CHAT_ID }}
+          sentry-dsn: ${{ secrets.SENTRY_DSN }}
           docker-username: ${{ secrets.DOCKER_USERNAME }}
           docker-password: ${{ secrets.DOCKER_PASSWORD }}
           services: ${{ needs.detect-changes.outputs.services_list }}

@@ -14,6 +14,7 @@ dependencies = [
     "sqlalchemy>=2.0.0",
     "fastapi>=0.104.0",
     "geoip2>=4.8.0",
+    "sentry-sdk[fastapi]>=2.0.0",
 ]
 
 [tool.setuptools.packages.find]
