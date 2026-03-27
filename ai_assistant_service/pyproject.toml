@@ -3,6 +3,7 @@ name = "ai-assistant-service"
 version = "1.0.0"
 description = "AI-powered financial analysis service for FinFlow"
 authors = ["FinFlow Team"]
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.11"
