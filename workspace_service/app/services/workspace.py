@@ -230,7 +230,7 @@ class WorkspaceService:
         self._check_modify_allowed(workspace_id, user_id)
 
         # Protect personal workspace - only allow name change, not type change
-        if workspace.type == WorkspaceType.PERSONAL:
+        if workspace.is_personal:
             # Personal workspace name can be changed, but it's recommended to keep it as "Personal"
             if data.name is not None:
                 workspace.name = data.name.strip()
@@ -251,7 +251,7 @@ class WorkspaceService:
         member = self._get_member(workspace_id, user_id)
 
         # Protect personal workspace from being archived
-        if workspace.type == WorkspaceType.PERSONAL:
+        if workspace.is_personal:
             raise PersonalWorkspaceProtectedError("Personal workspace cannot be archived")
 
         if member.role != MemberRole.OWNER:
@@ -405,7 +405,7 @@ class WorkspaceService:
         member = self._get_member(workspace_id, user_id)
 
         # Protect personal workspace - owner cannot leave
-        if workspace.type == WorkspaceType.PERSONAL and member.role == MemberRole.OWNER:
+        if workspace.is_personal and member.role == MemberRole.OWNER:
             raise PersonalWorkspaceProtectedError("Cannot leave personal workspace")
 
         if workspace.is_archived:
@@ -426,7 +426,7 @@ class WorkspaceService:
         new_owner = self._get_member(workspace_id, new_owner_id)
 
         # Protect personal workspace - ownership cannot be transferred
-        if workspace.type == WorkspaceType.PERSONAL:
+        if workspace.is_personal:
             raise PersonalWorkspaceProtectedError("Personal workspace ownership cannot be transferred")
 
         if not new_owner:

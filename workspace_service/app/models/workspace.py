@@ -35,6 +35,14 @@ class Workspace(Base):
     )
 
     @property
+    def is_personal(self) -> bool:
+        """Check if workspace is personal (robust across Python versions)"""
+        ws_type = self.type
+        if isinstance(ws_type, WorkspaceType):
+            return ws_type is WorkspaceType.PERSONAL
+        return str(ws_type) == WorkspaceType.PERSONAL.value
+
+    @property
     def is_archived(self) -> bool:
         """Check if workspace is archived"""
         return self.archived_at is not None
