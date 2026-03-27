@@ -1,5 +1,6 @@
 import os
 import sys
+import sqlite3
 from uuid import UUID
 from unittest.mock import patch, MagicMock
 from datetime import datetime, timezone
@@ -24,20 +25,33 @@ os.environ.setdefault("MONOBANK_API_BASE_URL", "https://api.monobank.ua")
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import String, create_engine
 from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 
 from app.main import app
 from app.database import Base, get_db
 from shared.auth.dependencies import get_current_user_id, get_workspace_id
 
+# Register SQLite adapter so Python UUID objects are stored as strings
+sqlite3.register_adapter(UUID, lambda u: str(u))
+
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
 TEST_USER_ID = 42
-TEST_WORKSPACE_ID = UUID("550e8400-e29b-41d4-a716-446655440000")
-TEST_WORKSPACE_ID_HEADER = str(TEST_WORKSPACE_ID)
+TEST_WORKSPACE_ID = "550e8400-e29b-41d4-a716-446655440000"
+TEST_WORKSPACE_ID_HEADER = TEST_WORKSPACE_ID
 INTERNAL_TOKEN = "test-internal-token"
 INTERNAL_HEADERS = {"X-Internal-Token": INTERNAL_TOKEN}
+
+
+def _patch_uuid_columns_for_sqlite():
+    """Replace PostgreSQL UUID column types with String(36) for SQLite testing."""
+    for table in Base.metadata.tables.values():
+        for column in table.columns:
+            if isinstance(column.type, PG_UUID):
+                column.type = String(36)
+
 
 # Shared connection so all sessions see the same data
 engine = create_engine(
@@ -45,6 +59,7 @@ engine = create_engine(
     connect_args={"check_same_thread": False},
 )
 _connection = engine.connect()
+_patch_uuid_columns_for_sqlite()
 Base.metadata.create_all(bind=_connection)
 
 TestingSessionLocal = sessionmaker(
