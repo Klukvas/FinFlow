@@ -132,7 +132,7 @@ runs:
         DB_PASSWORD_ENCODED=$(python3 -c "import urllib.parse, os; print(urllib.parse.quote_plus(os.environ['DB_PASSWORD']))")
 
         # Generate .env on server
-        ssh -o StrictHostKeyChecking=accept-new "$USER@$HOST" bash -s <<REMOTE_SCRIPT
+        ssh -o StrictHostKeyChecking=accept-new "$USER@$HOST" bash -s 2>&1 <<REMOTE_SCRIPT
         set -euo pipefail
         cd ~/app
 
