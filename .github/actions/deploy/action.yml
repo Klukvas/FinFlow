@@ -98,6 +98,8 @@ runs:
           ControlMaster auto
           ControlPath ~/.ssh/cm-%C
           ControlPersist 120
+          ServerAliveInterval 15
+          ServerAliveCountMax 4
         EOF
 
         # Docker context pointing to the remote daemon via SSH
@@ -323,27 +325,51 @@ runs:
       run: |
         set -euo pipefail
 
-        # Save current state for rollback reference
-        docker --context prod compose \
-          -f /tmp/deploy-compose.yml \
-          --env-file /tmp/deploy.env \
-          --project-name app \
-          ps --format json > /tmp/pre-deploy-state.json 2>/dev/null || true
+        COMPOSE="docker --context prod compose -f /tmp/deploy-compose.yml --env-file /tmp/deploy.env --project-name app"
 
-        echo "Recreating services: ${DEPLOY_SERVICES}"
-        if docker --context prod compose \
-          -f /tmp/deploy-compose.yml \
-          --env-file /tmp/deploy.env \
-          --project-name app \
-          up -d --force-recreate --remove-orphans ${DEPLOY_SERVICES}; then
-          echo "Services started successfully."
+        # Save current state for rollback reference
+        ${COMPOSE} ps --format json > /tmp/pre-deploy-state.json 2>/dev/null || true
+
+        # Deploy in batches to avoid SSH session exhaustion.
+        # The remote SSH server limits concurrent sessions per connection
+        # (MaxSessions, default 10). Deploying all 16+ services at once
+        # overwhelms the multiplexed SSH tunnel.
+        INFRA_SERVICES=""
+        APP_BATCH_1=""
+        APP_BATCH_2=""
+
+        for svc in ${DEPLOY_SERVICES}; do
+          case "${svc}" in
+            caddy|postgres|redis) INFRA_SERVICES="${INFRA_SERVICES} ${svc}" ;;
+            *) APP_BATCH_1="${APP_BATCH_1} ${svc}" ;;
+          esac
+        done
+
+        # Split app services into two batches (max ~8 each)
+        ALL_APP=(${APP_BATCH_1})
+        MID=$(( (${#ALL_APP[@]} + 1) / 2 ))
+        BATCH1="${ALL_APP[@]:0:${MID}}"
+        BATCH2="${ALL_APP[@]:${MID}}"
+
+        deploy_batch() {
+          local label="$1"; shift
+          local services="$*"
+          [ -z "${services}" ] && return 0
+          echo "Deploying ${label}: ${services}"
+          ${COMPOSE} up -d --force-recreate ${services}
+          echo "${label} done."
+          sleep 3
+        }
+
+        if deploy_batch "infrastructure" ${INFRA_SERVICES} && \
+           deploy_batch "batch 1" ${BATCH1} && \
+           deploy_batch "batch 2" ${BATCH2}; then
+          # Remove orphan containers (once, after all batches)
+          ${COMPOSE} up -d --remove-orphans ${DEPLOY_SERVICES} 2>/dev/null || true
+          echo "All services started successfully."
         else
           echo "Deployment failed — attempting rollback..."
-          docker --context prod compose \
-            -f /tmp/deploy-compose.yml \
-            --env-file /tmp/deploy.env \
-            --project-name app \
-            up -d --remove-orphans || true
+          ${COMPOSE} up -d --remove-orphans || true
           exit 1
         fi
 
