@@ -360,6 +360,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/plans/pricing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Plan Pricing
+         * @description Return current plan pricing from Paddle (cached).
+         *
+         *     Falls back to the configured PADDLE_PRICE_MAP amounts if
+         *     Paddle API is unreachable (cached for 5 min instead of 1 hour).
+         */
+        get: operations["get_plan_pricing_v1_plans_pricing_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health/live": {
         parameters: {
             query?: never;
@@ -612,6 +635,19 @@ export interface components {
          * @enum {string}
          */
         PaymentStatus: "CREATED" | "PENDING" | "PAID" | "FAILED" | "EXPIRED" | "REFUNDED" | "PARTIALLY_REFUNDED" | "CANCELED";
+        /** PlanPrice */
+        PlanPrice: {
+            /** Plan Code */
+            plan_code: string;
+            /** Price */
+            price: string;
+            /** Currency */
+            currency: string;
+            /** Billing Period */
+            billing_period: string;
+            /** Paddle Price Id */
+            paddle_price_id: string;
+        };
         /**
          * RefundRequest
          * @description Request to refund a payment
@@ -1150,6 +1186,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_plan_pricing_v1_plans_pricing_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanPrice"][];
                 };
             };
         };

@@ -334,6 +334,26 @@ export interface paths {
         patch: operations["update_user_status_admin_users__user_id__status_patch"];
         trace?: never;
     };
+    "/v1/support/message": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send a support message
+         * @description Send a support message that is forwarded to the team via Telegram
+         */
+        post: operations["send_support_message_v1_support_message_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -517,6 +537,24 @@ export interface components {
              * @description User status
              */
             status: string;
+        };
+        /** SupportMessageRequest */
+        SupportMessageRequest: {
+            /**
+             * Message
+             * @description Support message text
+             */
+            message: string;
+            /**
+             * Page Url
+             * @description URL of the page where user sent the message
+             */
+            page_url?: string | null;
+        };
+        /** SupportMessageResponse */
+        SupportMessageResponse: {
+            /** Success */
+            success: boolean;
         };
         /**
          * TokenResponse
@@ -1318,6 +1356,60 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+        };
+    };
+    send_support_message_v1_support_message_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SupportMessageRequest"];
+            };
+        };
+        responses: {
+            /** @description Message sent successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportMessageResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Rate limit exceeded */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Support service temporarily unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

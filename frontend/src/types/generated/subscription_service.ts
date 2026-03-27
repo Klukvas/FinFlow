@@ -50,7 +50,7 @@ export interface paths {
         };
         /**
          * Get Subscription
-         * @description Get user's current subscription
+         * @description Get user's current subscription. Returns null if no active subscription.
          */
         get: operations["get_subscription_v1_subscriptions__user_id__get"];
         put?: never;
@@ -1350,7 +1350,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__schemas__subscription__SubscriptionOut"];
+                    "application/json": components["schemas"]["app__schemas__subscription__SubscriptionOut"] | null;
                 };
             };
             /** @description Validation Error */

@@ -9,12 +9,12 @@
     "expense_service": "621e5b3cb55fb3bf7aba82a0fe05eae1b83a0fcb698c1f88d1bd4116fa2fefb0",
     "goals_service": "5a33abc6d38eeb958fad612777ecea485990d0b56d2e497ffb8fc9804557631e",
     "income_service": "582de2422a6be7c8f09401af712767ee962dab68c0fe7ae385d51cb12adc0e5a",
-    "payment_service": "0757061a882719fb687e13e683efa8e3d394b533769751376915457c341da0a9",
+    "payment_service": "e975b3bc4d1de1422aa6415d49bbefa78d34cb2052991f02a658189585e869cb",
     "pdf_parser_service": "92efba2b2f99861bef4fd422e83a3f313f1ef79a190e4f432469bc23cf0342c8",
     "recurring_service": "e4d2a629b9397c3309764d97145b9313abb6e9229a975e0a53221df8c375995b",
     "scheduler_service": "c1aebe5ed36957a0dd2dacb499c3ef3bdbca9fc566bdddbd436242c31966ff56",
-    "subscription_service": "921b80d31ce78616365e68eb61c6b72b1ecfaf51772890b811d7386c573978d0",
-    "user_service": "83ca0369536805b4d94d5ef0d14fec9919c40f93a1e0bdcf36c1535116feaa74",
+    "subscription_service": "f94f9bdc0f5491510513147a322b5bae374e98bdff936df8ae26fc4813b6a59a",
+    "user_service": "29ecfdbd88feae3872cba0f128eaf3fc26e3df7c9923c72a34f3e464ce9b0134",
     "workspace_service": "3f77e3be619ee790e17c51f3e302a54b8b9c52552470311026282309b2420eae"
   }
 }
