@@ -3,18 +3,7 @@
 import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
 
-from app.services.subscription_client import check_feature_access, ALLOWED_PLANS
-
-
-class TestAllowedPlans:
-    def test_professional_allowed(self):
-        assert "professional" in ALLOWED_PLANS
-
-    def test_enterprise_allowed(self):
-        assert "enterprise" in ALLOWED_PLANS
-
-    def test_basic_not_allowed(self):
-        assert "basic" not in ALLOWED_PLANS
+from app.services.subscription_client import check_feature_access
 
 
 class TestCheckFeatureAccess:
@@ -34,7 +23,7 @@ class TestCheckFeatureAccess:
         with patch("httpx.AsyncClient", return_value=mock_client):
             result = await check_feature_access(42)
 
-        assert result == "professional"
+        assert result[0] == "professional"
 
     async def test_enterprise_plan_returns_plan_code(self):
         features = [
@@ -52,7 +41,7 @@ class TestCheckFeatureAccess:
         with patch("httpx.AsyncClient", return_value=mock_client):
             result = await check_feature_access(42)
 
-        assert result == "enterprise"
+        assert result[0] == "enterprise"
 
     async def test_basic_plan_returns_none(self):
         features = [
@@ -70,7 +59,7 @@ class TestCheckFeatureAccess:
         with patch("httpx.AsyncClient", return_value=mock_client):
             result = await check_feature_access(42)
 
-        assert result is None
+        assert result == (None, None)
 
     async def test_disabled_feature_returns_none(self):
         features = [
@@ -88,7 +77,7 @@ class TestCheckFeatureAccess:
         with patch("httpx.AsyncClient", return_value=mock_client):
             result = await check_feature_access(42)
 
-        assert result is None
+        assert result == (None, None)
 
     async def test_missing_feature_returns_none(self):
         features = [
@@ -106,7 +95,7 @@ class TestCheckFeatureAccess:
         with patch("httpx.AsyncClient", return_value=mock_client):
             result = await check_feature_access(42)
 
-        assert result is None
+        assert result == (None, None)
 
     async def test_service_error_returns_none(self):
         mock_response = MagicMock()
@@ -120,7 +109,7 @@ class TestCheckFeatureAccess:
         with patch("httpx.AsyncClient", return_value=mock_client):
             result = await check_feature_access(42)
 
-        assert result is None
+        assert result == (None, None)
 
     async def test_network_error_returns_none(self):
         mock_client = AsyncMock()
@@ -131,4 +120,4 @@ class TestCheckFeatureAccess:
         with patch("httpx.AsyncClient", return_value=mock_client):
             result = await check_feature_access(42)
 
-        assert result is None
+        assert result == (None, None)
