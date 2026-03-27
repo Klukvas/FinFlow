@@ -1262,16 +1262,46 @@ jobs:
         run: docker compose down -v
 
   # E2E UI Tests: run Playwright tests against the full stack
+  # Uses pre-built images from the registry (docker-compose.ci.yml override)
+  # instead of rebuilding all 16+ services from Dockerfiles.
   e2e-ui-tests:
     name: "E2E UI Tests (Playwright)"
-    needs: [detect-changes, unit-tests]
-    if: needs.detect-changes.outputs.e2e_ui_tests == 'true' || needs.detect-changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch'
+    needs:
+      - detect-changes
+      - unit-tests
+      - stage1-frontend
+      - stage2-account-service
+      - stage3-category-service
+      - stage4-currency-service
+      - stage5-debt-service
+      - stage6-expense-service
+      - stage7-goals-service
+      - stage8-income-service
+      - stage9-pdf-parser-service
+      - stage10-recurring-service
+      - stage11-user-service
+      - stage12-subscription-service
+      - stage13-workspace-service
+      - stage15-payment-service
+      - stage16-scheduler-service
+      - stage17-ai-assistant-service
+    if: |
+      always() &&
+      needs.unit-tests.result == 'success' &&
+      (needs.detect-changes.outputs.e2e_ui_tests == 'true' || needs.detect-changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     continue-on-error: true
     timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Login to Docker registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Generate secrets
         run: |
@@ -1467,13 +1497,17 @@ jobs:
           LOG_LEVEL=INFO
           EOF
 
-      - name: Build and start services
+      - name: Pull and start services
         env:
           SECRET_KEY: ${{ env.E2E_SECRET_KEY }}
           JWT_SECRET_KEY: ${{ env.E2E_SECRET_KEY }}
           INTERNAL_SECRET_TOKEN: ${{ env.E2E_INTERNAL_TOKEN }}
           ANTHROPIC_API_KEY: "sk-ant-test-key-not-real"
-        run: docker compose up --build -d
+          REGISTRY: ${{ env.REGISTRY }}
+          IMAGE_PREFIX: ${{ env.IMAGE_PREFIX }}
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml pull --ignore-pull-failures
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d
 
       - name: Wait for services to be healthy
         run: |

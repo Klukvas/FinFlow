@@ -1,0 +1,41 @@
+# CI override: pull pre-built images from the registry instead of building.
+# Usage: docker compose -f docker-compose.yml -f docker-compose.ci.yml pull
+#        docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d
+#
+# Requires REGISTRY and IMAGE_PREFIX env vars.
+
+services:
+  user_service:
+    image: ${REGISTRY}/${IMAGE_PREFIX}/user_service:latest
+  category_service:
+    image: ${REGISTRY}/${IMAGE_PREFIX}/category_service:latest
+  expense_service:
+    image: ${REGISTRY}/${IMAGE_PREFIX}/expense_service:latest
+  income_service:
+    image: ${REGISTRY}/${IMAGE_PREFIX}/income_service:latest
+  recurring_service:
+    image: ${REGISTRY}/${IMAGE_PREFIX}/recurring_service:latest
+  goals_service:
+    image: ${REGISTRY}/${IMAGE_PREFIX}/goals_service:latest
+  pdf_parser_service:
+    image: ${REGISTRY}/${IMAGE_PREFIX}/pdf_parser_service:latest
+  debt_service:
+    image: ${REGISTRY}/${IMAGE_PREFIX}/debt_service:latest
+  account_service:
+    image: ${REGISTRY}/${IMAGE_PREFIX}/account_service:latest
+  currency_service:
+    image: ${REGISTRY}/${IMAGE_PREFIX}/currency_service:latest
+  subscription_service:
+    image: ${REGISTRY}/${IMAGE_PREFIX}/subscription_service:latest
+  payment_service:
+    image: ${REGISTRY}/${IMAGE_PREFIX}/payment_service:latest
+  scheduler_service:
+    image: ${REGISTRY}/${IMAGE_PREFIX}/scheduler_service:latest
+  ai_assistant_service:
+    image: ${REGISTRY}/${IMAGE_PREFIX}/ai_assistant_service:latest
+  bank_sync_service:
+    image: ${REGISTRY}/${IMAGE_PREFIX}/bank_sync_service:latest
+  workspace_service:
+    image: ${REGISTRY}/${IMAGE_PREFIX}/workspace_service:latest
+  frontend:
+    image: ${REGISTRY}/${IMAGE_PREFIX}/frontend:latest
