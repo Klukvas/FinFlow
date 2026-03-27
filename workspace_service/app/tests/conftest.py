@@ -192,7 +192,7 @@ def shared_workspace(db_session, owner_user):
     )
     db_session.add(workspace)
     db_session.flush()
-    
+
     # Add owner as member
     owner_member = WorkspaceMember(
         workspace_id=workspace.id,
@@ -203,7 +203,17 @@ def shared_workspace(db_session, owner_user):
     db_session.add(owner_member)
     db_session.commit()
     db_session.refresh(workspace)
-    
+
+    # Diagnostic: verify type persisted correctly (debug CI Python 3.11 issue)
+    from sqlalchemy import text
+    raw = db_session.execute(
+        text(f"SELECT type FROM workspaces WHERE id = '{workspace.id}'")
+    ).scalar()
+    assert workspace.type == WorkspaceType.SHARED, (
+        f"Expected SHARED but got {workspace.type!r} "
+        f"(python type: {type(workspace.type).__name__}, raw DB: {raw!r})"
+    )
+
     return workspace
 
 
