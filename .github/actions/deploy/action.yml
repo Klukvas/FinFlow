@@ -54,6 +54,12 @@ inputs:
     description: Telegram chat ID for support messages
     required: false
     default: ""
+  docker-username:
+    description: Docker registry username
+    required: true
+  docker-password:
+    description: Docker registry password
+    required: true
   services:
     description: Space-separated services to deploy (empty = all)
     required: false
@@ -110,6 +116,8 @@ runs:
         PAYMENTS_ENABLED: ${{ inputs['payments-enabled'] }}
         TELEGRAM_BOT_TOKEN: ${{ inputs['telegram-bot-token'] }}
         TELEGRAM_SUPPORT_CHAT_ID: ${{ inputs['telegram-support-chat-id'] }}
+        DOCKER_USERNAME: ${{ inputs['docker-username'] }}
+        DOCKER_PASSWORD: ${{ inputs['docker-password'] }}
         SERVICES: ${{ inputs.services }}
       run: |
         set -euo pipefail
@@ -171,6 +179,9 @@ runs:
         echo "Databases verified."
 
         # Pull images
+        # Login to Docker registry on server
+        echo "${DOCKER_PASSWORD}" | docker login ${REGISTRY} -u "${DOCKER_USERNAME}" --password-stdin
+
         echo "Pulling images..."
         docker compose pull ${SERVICES} || echo "Warning: some images failed to pull"
 

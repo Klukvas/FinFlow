@@ -1634,6 +1634,8 @@ jobs:
           bank-token-encryption-key: ${{ secrets.BANK_TOKEN_ENCRYPTION_KEY }}
           telegram-bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           telegram-support-chat-id: ${{ secrets.TELEGRAM_SUPPORT_CHAT_ID }}
+          docker-username: ${{ secrets.DOCKER_USERNAME }}
+          docker-password: ${{ secrets.DOCKER_PASSWORD }}
           services: ${{ needs.detect-changes.outputs.services_list }}
 
       - name: Tag last successful deploy
