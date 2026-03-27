@@ -189,11 +189,11 @@ def shared_workspace(db_session, owner_user):
         name="Test Workspace",
         owner_user_id=owner_user.id,
     )
-    # Set type via attribute — `type` as a constructor kwarg conflicts
-    # with Python's builtin `type` on some Python/SQLAlchemy versions
     workspace.type = WorkspaceType.SHARED
+    print(f"[DEBUG] after assign: workspace.type={workspace.type!r}")
     db_session.add(workspace)
     db_session.flush()
+    print(f"[DEBUG] after flush: workspace.type={workspace.type!r}")
 
     # Add owner as member
     owner_member = WorkspaceMember(
@@ -204,7 +204,14 @@ def shared_workspace(db_session, owner_user):
     )
     db_session.add(owner_member)
     db_session.commit()
+    print(f"[DEBUG] after commit: workspace.type={workspace.type!r}")
     db_session.refresh(workspace)
+    print(f"[DEBUG] after refresh: workspace.type={workspace.type!r}")
+
+    # Check raw DB
+    from sqlalchemy import text
+    rows = db_session.execute(text("SELECT id, type, name FROM workspaces")).fetchall()
+    print(f"[DEBUG] all rows: {rows}")
 
     return workspace
 
