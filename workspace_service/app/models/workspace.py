@@ -17,7 +17,10 @@ class Workspace(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String(255), nullable=False)
-    type = Column(Enum(WorkspaceType, native_enum=False, length=50), nullable=False, default=WorkspaceType.PERSONAL)
+    # Use `workspace_type` as Python attr to avoid conflict with Python's
+    # builtin `type` on Python 3.11 (attribute assignment silently ignored).
+    # DB column remains "type" via Column("type", ...).
+    workspace_type = Column("type", Enum(WorkspaceType, native_enum=False, length=50), nullable=False, default=WorkspaceType.PERSONAL)
     owner_user_id = Column(Integer, nullable=False, index=True)
     
     # Timestamps
@@ -36,11 +39,8 @@ class Workspace(Base):
 
     @property
     def is_personal(self) -> bool:
-        """Check if workspace is personal (robust across Python versions)"""
-        ws_type = self.type
-        if isinstance(ws_type, WorkspaceType):
-            return ws_type is WorkspaceType.PERSONAL
-        return str(ws_type) == WorkspaceType.PERSONAL.value
+        """Check if workspace is personal"""
+        return self.workspace_type == WorkspaceType.PERSONAL
 
     @property
     def is_archived(self) -> bool:

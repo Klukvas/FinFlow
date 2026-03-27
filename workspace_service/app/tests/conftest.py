@@ -189,11 +189,9 @@ def shared_workspace(db_session, owner_user):
         name="Test Workspace",
         owner_user_id=owner_user.id,
     )
-    workspace.type = WorkspaceType.SHARED
-    print(f"[DEBUG] after assign: workspace.type={workspace.type!r}")
+    workspace.workspace_type = WorkspaceType.SHARED
     db_session.add(workspace)
     db_session.flush()
-    print(f"[DEBUG] after flush: workspace.type={workspace.type!r}")
 
     # Add owner as member
     owner_member = WorkspaceMember(
@@ -204,14 +202,7 @@ def shared_workspace(db_session, owner_user):
     )
     db_session.add(owner_member)
     db_session.commit()
-    print(f"[DEBUG] after commit: workspace.type={workspace.type!r}")
     db_session.refresh(workspace)
-    print(f"[DEBUG] after refresh: workspace.type={workspace.type!r}")
-
-    # Check raw DB
-    from sqlalchemy import text
-    rows = db_session.execute(text("SELECT id, type, name FROM workspaces")).fetchall()
-    print(f"[DEBUG] all rows: {rows}")
 
     return workspace
 
@@ -224,7 +215,7 @@ def personal_workspace(db_session, owner_user):
         name="Personal",
         owner_user_id=owner_user.id,
     )
-    workspace.type = WorkspaceType.PERSONAL
+    workspace.workspace_type = WorkspaceType.PERSONAL
     db_session.add(workspace)
     db_session.flush()
     
@@ -251,7 +242,7 @@ def archived_workspace(db_session, owner_user):
         owner_user_id=owner_user.id,
         archived_at=datetime.utcnow(),
     )
-    workspace.type = WorkspaceType.SHARED
+    workspace.workspace_type = WorkspaceType.SHARED
     db_session.add(workspace)
     db_session.flush()
     

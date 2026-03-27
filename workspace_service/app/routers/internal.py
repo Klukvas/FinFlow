@@ -82,7 +82,7 @@ async def get_user_workspaces(
             id=ws.id,
             name=ws.name,
             role=role,
-            type=ws.type.value,
+            type=ws.workspace_type.value,
             is_default=(default_workspace and ws.id == default_workspace.id),
         ))
 
@@ -116,7 +116,7 @@ async def get_user_default_workspace(
     return DefaultWorkspaceResponse(
         workspace_id=workspace.id,
         name=workspace.name,
-        type=workspace.type.value,
+        type=workspace.workspace_type.value,
     )
 
 

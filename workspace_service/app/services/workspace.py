@@ -68,7 +68,7 @@ class WorkspaceService:
 
             workspace = Workspace(
                 name=data.name.strip(),
-                type=data.type,
+                workspace_type=data.type,
                 owner_user_id=user_id,
             )
             self.db.add(workspace)
@@ -117,7 +117,7 @@ class WorkspaceService:
 
             workspace = Workspace(
                 name="Personal",
-                type=WorkspaceType.PERSONAL,
+                workspace_type=WorkspaceType.PERSONAL,
                 owner_user_id=user_id,
             )
             self.db.add(workspace)
@@ -196,7 +196,7 @@ class WorkspaceService:
             .filter(
                 WorkspaceMember.user_id == user_id,
                 WorkspaceMember.status == MemberStatus.ACTIVE,
-                Workspace.type == WorkspaceType.PERSONAL,
+                Workspace.workspace_type == WorkspaceType.PERSONAL,
                 Workspace.archived_at.is_(None),
             )
             .first()
@@ -539,7 +539,7 @@ class WorkspaceService:
         return WorkspaceResponse(
             id=workspace.id,
             name=workspace.name,
-            type=workspace.type,
+            type=workspace.workspace_type,
             owner_user_id=workspace.owner_user_id,
             created_at=workspace.created_at,
             updated_at=workspace.updated_at,

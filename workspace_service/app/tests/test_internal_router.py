@@ -102,7 +102,7 @@ class TestGetUserWorkspacesEndpoint:
         mock_role.return_value = MemberRole.OWNER
 
         # Mock the type attribute
-        type(shared_workspace).type = PropertyMock(return_value=WorkspaceType.SHARED)
+        shared_workspace.workspace_type = WorkspaceType.SHARED
 
         response = client.get(
             "/internal/users/1/workspaces", headers=internal_headers
@@ -135,7 +135,7 @@ class TestGetUserWorkspacesEndpoint:
         mock_list.return_value = [shared_workspace]
         mock_default.return_value = shared_workspace
         mock_role.return_value = MemberRole.OWNER
-        type(shared_workspace).type = PropertyMock(return_value=WorkspaceType.PERSONAL)
+        shared_workspace.workspace_type = WorkspaceType.PERSONAL
 
         response = client.get(
             "/internal/users/1/workspaces", headers=internal_headers
@@ -152,7 +152,7 @@ class TestGetDefaultWorkspaceEndpoint:
 
     @patch("app.services.workspace.WorkspaceService.get_user_default_workspace")
     def test_success(self, mock_default, client, shared_workspace, internal_headers):
-        type(shared_workspace).type = PropertyMock(return_value=WorkspaceType.PERSONAL)
+        shared_workspace.workspace_type = WorkspaceType.PERSONAL
         mock_default.return_value = shared_workspace
 
         response = client.get(
