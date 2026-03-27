@@ -30,6 +30,8 @@ from sqlalchemy.orm import sessionmaker
 if "shared" not in sys.modules:
     _shared_mod = ModuleType("shared")
     _shared_geoip_mod = ModuleType("shared.geoip")
+    _shared_sentry_mod = ModuleType("shared.sentry")
+    _shared_sentry_mod.init_sentry = MagicMock()  # type: ignore[attr-defined]
 
     class _NoOpMiddleware:
         """Dummy GeoIPMiddleware that does nothing."""
@@ -41,9 +43,11 @@ if "shared" not in sys.modules:
 
     _shared_geoip_mod.GeoIPMiddleware = _NoOpMiddleware  # type: ignore[attr-defined]
     _shared_mod.geoip = _shared_geoip_mod  # type: ignore[attr-defined]
+    _shared_mod.sentry = _shared_sentry_mod  # type: ignore[attr-defined]
 
     sys.modules["shared"] = _shared_mod
     sys.modules["shared.geoip"] = _shared_geoip_mod
+    sys.modules["shared.sentry"] = _shared_sentry_mod
 
 # ---------------------------------------------------------------------------
 # 2. Build a mock ``settings`` object and inject a pre-built ``app.config``

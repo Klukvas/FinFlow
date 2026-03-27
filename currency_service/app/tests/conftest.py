@@ -59,9 +59,13 @@ _logging_module = ModuleType("shared.logging")
 _logging_module.logger = _logger_module
 _logging_module.logging_utils = _logging_utils_module
 
+_sentry_module = ModuleType("shared.sentry")
+_sentry_module.init_sentry = MagicMock()
+
 _shared_module = ModuleType("shared")
 _shared_module.geoip = _geoip_module
 _shared_module.logging = _logging_module
+_shared_module.sentry = _sentry_module
 
 sys.modules["shared"] = _shared_module
 sys.modules["shared.geoip"] = _geoip_module
@@ -71,6 +75,7 @@ sys.modules["shared.geoip.dependencies"] = MagicMock()
 sys.modules["shared.logging"] = _logging_module
 sys.modules["shared.logging.logger"] = _logger_module
 sys.modules["shared.logging.logging_utils"] = _logging_utils_module
+sys.modules["shared.sentry"] = _sentry_module
 
 # ---------------------------------------------------------------------------
 # Now it is safe to import the app
