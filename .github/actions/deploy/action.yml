@@ -183,7 +183,11 @@ runs:
         echo "${DOCKER_PASSWORD}" | docker login ${REGISTRY} -u "${DOCKER_USERNAME}" --password-stdin
 
         echo "Pulling images..."
-        docker compose pull ${SERVICES} || echo "Warning: some images failed to pull"
+        # Pull app images (skip infra: caddy, postgres, redis which are built/pulled separately)
+        APP_SERVICES=\$(echo "${SERVICES}" | tr ' ' '\n' | grep -vE '^(caddy|postgres|redis)$' | tr '\n' ' ')
+        echo "App services to pull: \${APP_SERVICES}"
+        docker compose pull \${APP_SERVICES}
+        echo "Pull complete."
 
         # Save current state for rollback
         docker compose ps --format json > /tmp/pre-deploy-state.json 2>/dev/null || true
