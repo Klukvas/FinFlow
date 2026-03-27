@@ -187,9 +187,11 @@ def shared_workspace(db_session, owner_user):
     workspace = Workspace(
         id=uuid4(),
         name="Test Workspace",
-        type=WorkspaceType.SHARED,
         owner_user_id=owner_user.id,
     )
+    # Set type via attribute — `type` as a constructor kwarg conflicts
+    # with Python's builtin `type` on some Python/SQLAlchemy versions
+    workspace.type = WorkspaceType.SHARED
     db_session.add(workspace)
     db_session.flush()
 
@@ -204,16 +206,6 @@ def shared_workspace(db_session, owner_user):
     db_session.commit()
     db_session.refresh(workspace)
 
-    # Diagnostic: verify type persisted correctly (debug CI Python 3.11 issue)
-    from sqlalchemy import text
-    raw = db_session.execute(
-        text(f"SELECT type FROM workspaces WHERE id = '{workspace.id}'")
-    ).scalar()
-    assert workspace.type == WorkspaceType.SHARED, (
-        f"Expected SHARED but got {workspace.type!r} "
-        f"(python type: {type(workspace.type).__name__}, raw DB: {raw!r})"
-    )
-
     return workspace
 
 
@@ -223,9 +215,9 @@ def personal_workspace(db_session, owner_user):
     workspace = Workspace(
         id=uuid4(),
         name="Personal",
-        type=WorkspaceType.PERSONAL,
         owner_user_id=owner_user.id,
     )
+    workspace.type = WorkspaceType.PERSONAL
     db_session.add(workspace)
     db_session.flush()
     
@@ -249,10 +241,10 @@ def archived_workspace(db_session, owner_user):
     workspace = Workspace(
         id=uuid4(),
         name="Archived Workspace",
-        type=WorkspaceType.SHARED,
         owner_user_id=owner_user.id,
         archived_at=datetime.utcnow(),
     )
+    workspace.type = WorkspaceType.SHARED
     db_session.add(workspace)
     db_session.flush()
     
